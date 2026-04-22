@@ -15,6 +15,9 @@
 *   **🎵 Audio & Atmosfera**: Un `AudioManager` dedicato gestisce tracce musicali dinamiche e layer sonori multipli per creare un'esperienza immersiva, supportando dissolvenze incrociate ed effetti posizionali.
 *   **🌍 Internazionalizzazione (I18n)**: Supporto nativo multilingua (JSON-based) con caricamento dinamico delle stringhe, permettendo la localizzazione istantanea del gioco.
 *   **⚙️ Architettura basata su Schemi**: Validazione dei dati tramite schemi JSON per assicurare l'integrità di scene, livelli e configurazioni globali.
+*   **🏗️ Build System Dedicato**: Sistema di esportazione EXE automatizzato basato su PyInstaller, con strumenti di analisi per l'ottimizzazione del peso del pacchetto e gestione delle dipendenze.
+*   **🖥️ Editor Visuale Integrato**: Suite di strumenti per la creazione di scene e livelli, che permette il posizionamento degli asset e la configurazione degli eventi senza necessità di scrivere codice.
+*   **📏 Scaling Dinamico**: Gestione intelligente del multi-risoluzione e DPI-awareness, garantendo una resa visiva ottimale su qualsiasi monitor.
 
 ---
 
@@ -29,6 +32,9 @@
 *   **🎵 Audio & Atmosphere**: A dedicated `AudioManager` handles dynamic music tracks and multiple sound layers to create an immersive experience, supporting cross-fades and positional effects.
 *   **🌍 Internationalization (I18n)**: Native multi-language support (JSON-based) with dynamic string loading, enabling instantaneous game localization.
 *   **⚙️ Schema-based Architecture**: Data validation through JSON schemas to ensure the integrity of scenes, levels, and global configurations.
+*   **🏗️ Dedicated Build System**: Automated EXE export system based on PyInstaller, featuring analysis tools for package size optimization and dependency management.
+*   **🖥️ Integrated Visual Editor**: A suite of tools for creating scenes and levels, allowing asset placement and event configuration without writing code.
+*   **📏 Dynamic Scaling**: Intelligent multi-resolution and DPI-awareness management, ensuring optimal visual quality across all displays.
 
 ---
 
@@ -43,6 +49,9 @@
 *   **🎵 Audio y Atmósfera**: Un `AudioManager` dedicado gestiona pistas de música dinámicas y múltiples capas de sonido para crear una experiencia inmersiva, compatible con fundidos cruzados y efectos de posición.
 *   **🌍 Internacionalización (I18n)**: Soporte multilingüe nativo (basado en JSON) con carga dinámica de cadenas, lo que permite la localización instantánea del juego.
 *   **⚙️ Arquitectura basada en Esquemas**: Validación de datos a través de esquemas JSON para asegurar la integridad de las escenas, niveles y configuraciones globales.
+*   **🏗️ Sistema de Build Dedicado**: Sistema de exportación EXE automatizado basado en PyInstaller, con herramientas de análisis para la optimización del tamaño del paquete y gestión de dependencias.
+*   **🖥️ Editor Visual Integrado**: Suite de herramientas para la creación de escenas y niveles, que permite el posicionamiento de recursos y la configuración de eventos sin necesidad de programar.
+*   **📏 Escalado Dinámico**: Gestión inteligente de múltiples resoluciones y sensibilidad DPI, garantizando una calidad visual óptima en cualquier monitor.
 
 ---
 
@@ -57,6 +66,9 @@
 *   **🎵 Audio & Atmosphère**: Un `AudioManager` dédié gère des pistes musicales dynamiques et plusieurs couches sonores pour créer une expérience immersive, prenant en charge les fondus enchaînés et les effets de position.
 *   **🌍 Internationalisation (I18n)**: Support multilingue natif (basé sur JSON) avec chargement dynamique des chaînes, permettant une localisation instantanée du jeu.
 *   **⚙️ Architecture basée sur des Schémas**: Validation des données via des schémas JSON pour assurer l'intégrité des scènes, des niveaux et des configurations globales.
+*   **🏗️ Système de Build Dédié**: Système d'exportation EXE automatisé basé sur PyInstaller, avec des outils d'analyse pour l'optimisation de la taille du paquet et la gestion des dépendances.
+*   **🖥️ Éditeur Visuel Intégré**: Suite d'outils pour la création de scènes et de niveaux, permettant le placement des ressources et la configuration des événements sans écrire de code.
+*   **📏 Mise à l'Échelle Dynamique**: Gestion intelligente du multi-résolution et de la compatibilité DPI, garantissant un rendu visuel optimal sur n'importe quel écran.
 
 ---
 
@@ -71,3 +83,6 @@
 *   **🎵 Audio & Atmosphäre**: Ein dedizierter `AudioManager` verwaltet dynamische Musiktracks und mehrere Soundebenen für ein immersives Erlebnis, einschließlich Cross-Fades und positionaler Effekte.
 *   **🌍 Internationalisierung (I18n)**: Native mehrsprachige Unterstützung (JSON-basiert) mit dynamischem Laden von Texten für eine sofortige Lokalisierung des Spiels.
 *   **⚙️ Schema-basierte Architektur**: Datenvalidierung durch JSON-Schemas zur Gewährleistung der Integrität von Szenen, Levels und globalen Konfigurationen.
+*   **🏗️ Dediziertes Build-System**: Automatisiertes EXE-Exportsystem basierend auf PyInstaller, mit Analysetools zur Optimierung der Paketgröße und Abhängigkeitsverwaltung.
+*   **🖥️ Integrierter Visueller Editor**: Suite von Werkzeugen zur Erstellung von Szenen und Levels, die das Platzieren von Assets und das Konfigurieren von Events ohne Programmierung ermöglicht.
+*   **📏 Dynamische Skalierung**: Intelligentes Multi-Resolution- und DPI-Management, das eine optimale visuelle Darstellung auf jedem Monitor garantiert.
