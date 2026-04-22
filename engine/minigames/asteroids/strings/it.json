@@ -1,0 +1,9 @@
+{
+  "asteroids_title": "ASTEROIDS",
+  "asteroids_start": "PREMI UN TASTO PER INIZIARE",
+  "asteroids_gameover": "PARTITA FINITA",
+  "asteroids_score": "PUNTEGGIO: {score}",
+  "asteroids_instructions": "TASTI: FRECCE/SPAZIO | MOUSE: CLICK DX (MOTORE) / CLICK SX (FUOCO)",
+  "mg_description": "Sopravvivi nello spazio e distruggi gli asteroidi per ottenere il record.",
+  "mg_title": "Asteroids"
+}

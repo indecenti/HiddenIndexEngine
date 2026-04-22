@@ -1,0 +1,34 @@
+{
+  "deck_name": "Classic Vintage Deck - Master Edition",
+  "total_assets": 63,
+  "status": "STANDARD_DECK_COMPLETE",
+  "contents": {
+    "clubs": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+    "diamonds": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+    "hearts": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+    "spades": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+    "jokers": ["card_joker"],
+    "backs": ["card_back_red", "card_back_blue"],
+    "stacks_and_piles": [
+      "card_deck_top_back",
+      "card_deck_top_front",
+      "card_deck_messy",
+      "card_deck_iso",
+      "card_deck_side"
+    ],
+    "other_playing_cards": [
+      "playing_cards",
+      "playing_cards_alt",
+      "tarot_cards",
+      "trading_card",
+      "automatic_card_shuffler"
+    ]
+  },
+  "dimensions": "180x208",
+  "missing_cards_for_full_deck": {
+    "clubs": [],
+    "diamonds": [],
+    "hearts": [],
+    "spades": []
+  }
+}

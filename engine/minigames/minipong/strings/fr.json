@@ -1,0 +1,9 @@
+{
+  "pong_title": "DÉFI MINI PONG",
+  "pong_score": "Score:",
+  "pong_win": "VICTOIRE ! VOUS AVEZ GAGNÉ LE DÉFI",
+  "pong_lose": "DÉFAITE...",
+  "pong_help": "Déplacez la souris pour contrôler la raquette",
+  "mg_description": "Le jeu classique de Pong revisité en mode arcade.",
+  "mg_title": "Mini Pong"
+}

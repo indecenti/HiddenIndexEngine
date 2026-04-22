@@ -1,0 +1,7 @@
+{
+  "id": "arcade_eleven",
+  "name": "Arcade Eleven",
+  "icon": "card_deck_iso.png",
+  "main_class": "ArcadeElevenGame",
+  "version": "1.0.0"
+}

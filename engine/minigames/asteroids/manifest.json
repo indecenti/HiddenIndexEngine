@@ -1,0 +1,7 @@
+{
+  "id": "asteroids",
+  "name": "Asteroids",
+  "icon": "marquee_asteroids.png",
+  "main_class": "AsteroidsGame",
+  "version": "1.0.0"
+}

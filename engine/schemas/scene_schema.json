@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "scene.json",
+  "type": "object",
+  "required": ["id", "background", "objects"],
+  "additionalProperties": false,
+  "properties": {
+    "id":               { "type": "string", "minLength": 1 },
+    "name_key":         { "type": "string" },
+    "background":       { "type": "string", "minLength": 1 },
+    "background_scale": { "type": "number", "minimum": 0.1, "maximum": 10.0 },
+    "objects_to_show":  { "type": "integer", "minimum": 1 },
+    "auto_random_finds": { "type": "boolean" },
+    "num_random_finds":  { "type": "integer", "minimum": 1 },
+    "flashlight":        { "type": "boolean" },
+    "flashlight_radius": { "type": "number", "minimum": 1.0, "maximum": 5000.0 },
+    "random_layer_selection": { "type": "boolean" },
+    "layer_locked": {
+      "type": "object",
+      "additionalProperties": { "type": "boolean" }
+    },
+    "music": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "objects": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["catalog_id", "x", "y", "detection_type"],
+        "additionalProperties": false,
+        "properties": {
+          "catalog_id":     { "type": "string", "minLength": 1 },
+          "x":              { "type": "number" },
+          "y":              { "type": "number" },
+          "detection_type": { "type": "string", "enum": ["circle", "rect", "mask"] },
+          "radius":         { "type": "number", "minimum": 1 },
+          "width":          { "type": "number", "minimum": 1 },
+          "height":         { "type": "number", "minimum": 1 },
+          "mask":           { "type": "string" },
+          "mask_scale":     { "type": "number", "minimum": 0.1 },
+          "mask_scale_x":   { "type": "number", "minimum": 0.1 },
+          "mask_scale_y":   { "type": "number", "minimum": 0.1 },
+          "hint_delay":     { "type": "number", "minimum": 0 },
+          "layer":          { "type": "string" },
+          "always_show":    { "type": "boolean" },
+          "is_goal":        { "type": "boolean" },
+          "rotation":       { "type": "number" },
+          "flip_x":         { "type": "boolean" },
+          "flip_y":         { "type": "boolean" },
+          "alpha":          { "type": "integer", "minimum": 0, "maximum": 255 },
+          "grayscale":      { "type": "boolean" },
+          "grayscale_factor": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "color_filter":   { "type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 255}, "minItems": 3, "maxItems": 3 },
+          "corners":        { "type": "array", "items": { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 }, "minItems": 4, "maxItems": 4 },
+          "minigame_trigger": {
+            "type": "object",
+            "required": ["minigame_id"],
+            "additionalProperties": true,
+            "properties": {
+              "minigame_id": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["effect_id", "type", "x", "y"],
+        "additionalProperties": false,
+        "properties": {
+          "effect_id":    { "type": "string", "minLength": 1 },
+          "type":         { "type": "string" },
+          "x":            { "type": "number" },
+          "y":            { "type": "number" },
+          "radius":       { "type": "number", "minimum": 1, "maximum": 5000 },
+          "color":        { "type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 255}, "minItems": 3, "maxItems": 3 },
+          "intensity":    { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+          "pulse_period": { "type": "number", "minimum": 0.0, "maximum": 60.0 },
+          "pulse_min":    { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+          "phase":        { "type": "number", "minimum": 0.0, "maximum": 2.0 },
+          "width":        { "type": "number", "minimum": 1 },
+          "height":       { "type": "number", "minimum": 1 },
+          "text_key":     { "type": "string" },
+          "trigger":      { "type": "string" },
+          "alpha":        { "type": "integer", "minimum": 0, "maximum": 255 },
+          "font_size":    { "type": "integer", "minimum": 8, "maximum": 120 },
+          "font_color":   { "type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 255}, "minItems": 3, "maxItems": 3 },
+          "layer":        { "type": "string" },
+          "layer_z":      { "type": "integer" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "mg_title": "The Tower Solitaire",
+  "mg_description": "Placez les figures sur le périmètre et défaussez les paires dont la somme est 10 per libérer le centre.",
+  "tower_instr_1": "Objectif : Remplissez le périmètre de Rois (coins), Reines (côtés) et Valets (haut/bas).",
+  "tower_instr_2": "Créez des paires d'une somme de 10 pour libérer des emplacements et vider le paquet.",
+  "tower_draw": "Piocher",
+  "tower_win": "Château Terminé !",
+  "tower_lose": "Paquet Vide - Réessayez !",
+  "tower_score": "Score : {0}",
+  "tower_deck": "Paquet : {0}",
+  "tower_score_label": "SCORE",
+  "tower_deck_label": "PAQUET",
+  "tower_time_label": "TEMPS"
+}

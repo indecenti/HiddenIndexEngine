@@ -1,0 +1,7 @@
+{
+  "id": "centipede",
+  "name": "Centipede Arcade",
+  "icon": "marquee_centipede.png",
+  "main_class": "CentipedeGame",
+  "version": "1.0.0"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "Welcome_To_Malonno",
+  "name_key": "Welcome_To_Malonno_name",
+  "difficulty": "normal",
+  "timer_behavior": "complete",
+  "scenes": [
+    {
+      "id": "Formis",
+      "order": 1,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Welcome",
+      "order": 2,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Brescia_Edolo",
+      "order": 3,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Pizza_King",
+      "order": 4,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Villa_Rosa",
+      "order": 5,
+      "time_limit": 120,
+      "transition_out": "fade"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "centipede_title": "CENTIPEDE ARCADE",
+  "centipede_score": "SCORE: {score}",
+  "centipede_start": "PRESS ANY KEY TO START",
+  "centipede_gameover": "GAME OVER",
+  "centipede_instructions": "ARROWS/MOUSE: MOVE | SPACE/LMB: FIRE",
+  "centipede_help": "Destroy the centipede!",
+  "centipede_exit": "PRESS ANY KEY TO EXIT",
+  "mg_description": "Defend yourself from the invasion of centipedes among the poisonous mushrooms.",
+  "mg_title": "Centipede Arcade"
+}

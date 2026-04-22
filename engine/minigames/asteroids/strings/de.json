@@ -1,0 +1,9 @@
+{
+  "asteroids_title": "ASTEROIDS",
+  "asteroids_start": "DRÜCKEN SIE EINE TASTE ZUM STARTEN",
+  "asteroids_gameover": "SPIEL VORBEI",
+  "asteroids_score": "PUNKTE: {score}",
+  "asteroids_instructions": "TASTEN: PFEILE/LEERTASTE | MAUS: RECHTS (ANTRIEB) / LINKS (FEUER)",
+  "mg_description": "Überlebe im Weltraum und zerstöre Asteroiden, um den Highscore zu erreichen.",
+  "mg_title": "Asteroids"
+}

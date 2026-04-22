@@ -1,0 +1,9 @@
+{
+  "pong_title": "SFIDA MINI PONG",
+  "pong_score": "Punteggio:",
+  "pong_win": "VITTORIA! HAI VINTO LA SFIDA",
+  "pong_lose": "SCONFITTA...",
+  "pong_help": "Muovi il mouse per controllare la racchetta",
+  "mg_description": "Il classico gioco del Pong rivisitato in chiave arcade.",
+  "mg_title": "Mini Pong"
+}

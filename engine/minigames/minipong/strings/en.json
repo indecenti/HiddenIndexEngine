@@ -1,0 +1,9 @@
+{
+  "pong_title": "MINI PONG CHALLENGE",
+  "pong_score": "Score:",
+  "pong_win": "VICTORY! YOU WON THE CHALLENGE",
+  "pong_lose": "DEFEAT...",
+  "pong_help": "Move the mouse to control the paddle",
+  "mg_description": "The classic Pong game revisited in an arcade style.",
+  "mg_title": "Mini Pong"
+}

@@ -1,0 +1,11 @@
+{
+  "centipede_title": "CENTIPEDE ARCADE",
+  "centipede_score": "PT: {score}",
+  "centipede_start": "APPUYEZ SUR UNE TOUCHE POUR COMMENCER",
+  "centipede_gameover": "GAME OVER",
+  "centipede_instructions": "FLÈCHES/SOURIS: BOUGER | ESPACE/LMB: TIRER",
+  "centipede_help": "Détruisez le centipède !",
+  "centipede_exit": "APPUYEZ SUR UNE TOUCHE POUR QUITTER",
+  "mg_description": "Défendez-vous contre l'invasion des mille-pattes parmi les champignons vénéneux.",
+  "mg_title": "Centipede Arcade"
+}

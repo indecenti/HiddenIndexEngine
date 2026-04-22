@@ -1,0 +1,106 @@
+════════════════════════════════════════════════════════════════════════════════
+  TEST PYINSTALLER HANG FIX - SUBITO
+════════════════════════════════════════════════════════════════════════════════
+
+PROBLEMA: PyInstaller si blocca su "checking PYZ" per 6+ minuti
+
+SOLUZIONI APPLICATE:
+
+1. ✅ Timeout aggressivo (kill dopo 120s inattività)
+2. ✅ Opzione Directory Mode (-D) per velocizzare 10x
+
+════════════════════════════════════════════════════════════════════════════════
+  OPZIONE A: QUICK FIX (Prova adesso)
+════════════════════════════════════════════════════════════════════════════════
+
+COSA FARÀ:
+  • Se PyInstaller rimane bloccato >120s, lo killará
+  • Se va bene, completa in 600s (come prima)
+  • Se si blocca, fallisce in 120s (anziché forever)
+
+COMANDI:
+  $ rm -rf build/villa_segreta/1.0/
+  $ python test_build_system.py villa_segreta
+
+ATTESO:
+  • Se completa: ✅ ZIP creato (~100MB)
+  • Se si blocca: ❌ Timeout dopo 120s, ma NON forever!
+
+════════════════════════════════════════════════════════════════════════════════
+  OPZIONE B: FAST MODE (Consigliato - 10x più veloce)
+════════════════════════════════════════════════════════════════════════════════
+
+COSA FARÀ:
+  • Usa Directory Mode (-D) anziché Onefile (-F)
+  • ~10x più veloce: 60-120s anziché 600s
+  • Niente blocchi su "checking PYZ"
+
+COMANDI:
+  1. Apri editor/build_system.py
+  2. Vai a linea ~318
+  3. Cambia: use_onefile = True
+     In:      use_onefile = False
+  4. Salva
+  5. Riesegui:
+     $ rm -rf build/villa_segreta/1.0/
+     $ python test_build_system.py villa_segreta
+
+ATTESO:
+  • Log dice: "Modalità PyInstaller: directory (-D)"
+  • Build completa in 60-120s (NON 600s)
+  • Niente blocchi
+
+════════════════════════════════════════════════════════════════════════════════
+  COSA SCEGLIERE?
+════════════════════════════════════════════════════════════════════════════════
+
+OPZIONE A (Quick Fix):
+  ✅ Facile (niente da modificare)
+  ✅ Minimo rischio (non cambia logica)
+  ❌ Se si blocca, fallisce comunque
+  ❌ Lento se funziona
+
+OPZIONE B (Fast Mode):
+  ✅ 10x più veloce!
+  ✅ No blocchi su "checking PYZ"
+  ✅ Consigliato
+  ❌ Cambia output (cartella anziché file unico)
+  ❌ Devi zippare manualmente per distribuire
+
+════════════════════════════════════════════════════════════════════════════════
+  MIA RACCOMANDAZIONE
+════════════════════════════════════════════════════════════════════════════════
+
+PROVA OPZIONE B (Fast Mode):
+
+  1. Modifica editor/build_system.py linea 318:
+     use_onefile = False
+
+  2. Build test:
+     $ rm -rf build/villa_segreta/1.0/
+     $ python test_build_system.py villa_segreta
+
+  3. Tempo atteso: 60-120 secondi
+     Se dura >120s, dirà "BLOCCO RILEVATO" e killará
+
+  4. Se completa: verifica output
+     $ ls -la build/villa_segreta/1.0/
+     Deve avere cartella "main/" (contenente main.exe, DLL, ecc)
+
+════════════════════════════════════════════════════════════════════════════════
+  SE VUOI TORNARE A ONEFILE DOPO
+════════════════════════════════════════════════════════════════════════════════
+
+Se Fast Mode funzia ma vuoi onefile:
+
+  1. Torna a: use_onefile = True
+  2. Nota: onefile rimane lento (600s) e può bloccarsi
+     Ma almeno sai che è un problema di PyInstaller, non tuo
+
+════════════════════════════════════════════════════════════════════════════════
+
+PRONTO? Scegli:
+  A) Prova Quick Fix ora (niente modifiche)
+  B) Prova Fast Mode ora (modifica 1 linea in editor/build_system.py)
+
+════════════════════════════════════════════════════════════════════════════════

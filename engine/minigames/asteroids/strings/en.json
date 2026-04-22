@@ -1,0 +1,9 @@
+{
+  "asteroids_title": "ASTEROIDS",
+  "asteroids_start": "PRESS ANY KEY TO START",
+  "asteroids_gameover": "GAME OVER",
+  "asteroids_score": "SCORE: {score}",
+  "asteroids_instructions": "KEYS: ARROWS/SPACE | MOUSE: RMB (THRUST) / LMB (FIRE)",
+  "mg_description": "Survive in space and destroy asteroids to get the high score.",
+  "mg_title": "Asteroids"
+}

@@ -1,0 +1,11 @@
+{
+  "centipede_title": "CENTIPEDE ARCADE",
+  "centipede_score": "PT: {score}",
+  "centipede_start": "PULSA UNA TECLA PARA EMPEZAR",
+  "centipede_gameover": "FIN DEL JUEGO",
+  "centipede_instructions": "FLECHAS/RATÓN: MOVER | ESPACIO/LMB: FUEGO",
+  "centipede_help": "¡Destruye el ciempiés!",
+  "centipede_exit": "PULSA UNA TECLA PARA SALIR",
+  "mg_description": "Defiéndete de la invasión de ciempiés entre las setas venenosas.",
+  "mg_title": "Centipede Arcade"
+}

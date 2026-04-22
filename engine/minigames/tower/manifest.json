@@ -1,0 +1,9 @@
+{
+  "id": "tower",
+  "name": "Tower Solitaire",
+  "description": "Un solitario strategico degli anni '90. Costruisci il castello medievale riposizionando le figure e scartando le carte numeriche.",
+  "icon": "card_deck_iso.png",
+  "main_class": "TowerGame",
+  "module": "tower_game",
+  "version": "1.1"
+}

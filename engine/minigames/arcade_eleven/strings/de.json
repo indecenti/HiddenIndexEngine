@@ -1,0 +1,13 @@
+{
+  "arcade_eleven_title": "Arcade Eleven",
+  "arcade_eleven_instructions": "Bilde Paare, die 11 ergeben. Entferne Bildkarten, indem du gleichzeitig einen Buben, eine Dame und einen König auswählst.",
+  "arcade_eleven_score": "PUNKTE",
+  "arcade_eleven_deck": "Deck: ",
+  "arcade_eleven_win": "Sieg!",
+  "arcade_eleven_game_over": "KEINE ZÜGE MEHR! DU HAST VERLOREN.",
+  "arcade_eleven_complete": "Perfekt!",
+  "arcade_eleven_click_to_start": "KLICKEN ZUM STARTEN",
+  "mg_description": "Summieren Sie 11 mit zwei Karten. Eliminieren Sie Figuren (J, Q, K), indem Sie gleichzeitig eine von jedem Typ auswählen.",
+  "mg_title": "Arcade Eleven",
+  "arcade_eleven_time_label": "ZEIT"
+}

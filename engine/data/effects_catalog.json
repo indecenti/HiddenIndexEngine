@@ -1,0 +1,46 @@
+{
+  "effects": [
+    {
+      "id": "golden_glint",
+      "label": "Bagliore Dorato",
+      "type": "glint",
+      "default_radius": 55,
+      "default_color": [255, 215, 60],
+      "default_intensity": 0.85,
+      "default_pulse_period": 2.0,
+      "default_pulse_min": 0.1
+    },
+    {
+      "id": "chimney_smoke",
+      "label": "Fumo Camino",
+      "type": "smoke",
+      "default_radius": 40,
+      "default_color": [100, 100, 105],
+      "default_intensity": 0.6,
+      "default_pulse_period": 0.1,
+      "default_pulse_min": 0.3
+    },
+    {
+      "id": "flies_swarm",
+      "label": "Sciame Mosche",
+      "type": "flies",
+      "default_radius": 120,
+      "default_color": [20, 20, 20],
+      "default_intensity": 0.25,
+      "default_pulse_period": 0.25,
+      "default_pulse_min": 1.2
+    },
+    {
+      "id": "bubble_tip",
+      "label": "Tips Fumetto",
+      "type": "bubble_tip",
+      "default_radius": 150,
+      "default_color": [255, 255, 255],
+      "default_intensity": 1.0,
+      "text_key": "NEW_TIP",
+      "trigger": "start_scene",
+      "default_width": 300,
+      "default_height": 180
+    }
+  ]
+}

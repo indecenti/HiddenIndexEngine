@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "level_config.json",
+  "type": "object",
+  "required": ["id", "scenes"],
+  "additionalProperties": false,
+  "properties": {
+    "id":                { "type": "string", "minLength": 1 },
+    "name_key":          { "type": "string" },
+    "description_key":   { "type": "string" },
+    "thumbnail":         { "type": "string" },
+    "unlock_after":      { "type": ["string", "null"] },
+    "music":             { "type": "string" },
+    "intro_image":       { "type": "string" },
+    "intro_text_key":    { "type": "string" },
+    "difficulty":        { "type": "string", "enum": ["easy", "normal", "hard"] },
+    "timer_behavior":    { "type": "string", "enum": ["complete", "fail"] },
+    "star_thresholds":   { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+    "completion_reward": { "type": "string" },
+    "scenes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "order"],
+        "additionalProperties": false,
+        "properties": {
+          "id":             { "type": "string", "minLength": 1 },
+          "order":          { "type": "integer", "minimum": 1 },
+          "time_limit":     { "type": "integer", "minimum": 0 },
+          "transition_out": { "type": "string", "enum": ["fade", "slide_left", "slide_right"] }
+        }
+      }
+    }
+  }
+}

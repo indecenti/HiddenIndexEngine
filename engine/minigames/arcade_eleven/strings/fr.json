@@ -1,0 +1,13 @@
+{
+  "arcade_eleven_title": "Arcade Eleven",
+  "arcade_eleven_instructions": "Associez les paires dont la somme est 11. Éliminez les figures en sélectionnant un Valet, una Dame e un Roi ensemble.",
+  "arcade_eleven_score": "SCORE",
+  "arcade_eleven_deck": "Paquet: ",
+  "arcade_eleven_win": "Victoire!",
+  "arcade_eleven_game_over": "PLUS DE COUPS! VOUS AVEZ PERDU.",
+  "arcade_eleven_complete": "Parfait!",
+  "arcade_eleven_click_to_start": "CLIQUER POUR COMMENCER",
+  "mg_description": "Sommez 11 avec deux cartes. Éliminez les têtes (J, Q, K) en sélectionnant une de chaque simultanément.",
+  "mg_title": "Arcade Eleven",
+  "arcade_eleven_time_label": "TEMPS"
+}

@@ -1,0 +1,14 @@
+{
+  "mg_title": "The Tower Solitaire",
+  "mg_description": "Place royals on the perimeter and discard pairs summing to 10 to clear the center.",
+  "tower_instr_1": "Goal: Fill the perimeter with Kings (corners), Queens (sides), and Jacks (top/bottom).",
+  "tower_instr_2": "Match pairs summing to 10 to clear slots and empty the deck.",
+  "tower_draw": "Draw",
+  "tower_win": "Castle Completed!",
+  "tower_lose": "Deck Empty - Try Again!",
+  "tower_score": "Score: {0}",
+  "tower_deck": "Deck: {0}",
+  "tower_score_label": "SCORE",
+  "tower_deck_label": "DECK",
+  "tower_time_label": "TIME"
+}

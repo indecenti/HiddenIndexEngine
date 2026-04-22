@@ -1,0 +1,14 @@
+{
+  "mg_title": "The Tower Solitaire",
+  "mg_description": "Posiziona le figure sul perimetro e scarta le coppie che sommano a 10 per liberare il centro.",
+  "tower_instr_1": "Obiettivo: Riempi il perimetro con Re (angoli), Regine (lati) e Jack (sopra/sotto).",
+  "tower_instr_2": "Crea coppie che sommano a 10 per liberare gli spazi e svuotare il mazzo.",
+  "tower_draw": "Pesca",
+  "tower_win": "Castello Completato!",
+  "tower_lose": "Mazzo Esaurito - Riprova!",
+  "tower_score": "Punteggio: {0}",
+  "tower_deck": "Mazzo: {0}",
+  "tower_score_label": "PUNTI",
+  "tower_deck_label": "MAZZO",
+  "tower_time_label": "TEMPO"
+}

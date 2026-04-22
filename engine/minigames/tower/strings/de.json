@@ -1,0 +1,14 @@
+{
+  "mg_title": "The Tower Solitaire",
+  "mg_description": "Platziere die Figuren am Rand und lege Paare ab, die zusammen 10 ergeben, um die Mitte zu leeren.",
+  "tower_instr_1": "Ziel: Fülle den Rand mit Königen (Ecken), Damen (Seiten) und Buben (oben/unten).",
+  "tower_instr_2": "Bilde Paare, die 10 ergeben, um Plätze frei zu machen und den Stapel zu leeren.",
+  "tower_draw": "Ziehen",
+  "tower_win": "Burg Fertiggestellt!",
+  "tower_lose": "Stapel Leer - Versuchen Sie es erneut!",
+  "tower_score": "Punktzahl: {0}",
+  "tower_deck": "Stapel: {0}",
+  "tower_score_label": "PUNKTE",
+  "tower_deck_label": "DECK",
+  "tower_time_label": "ZEIT"
+}

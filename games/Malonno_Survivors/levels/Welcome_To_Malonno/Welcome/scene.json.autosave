@@ -1,0 +1,588 @@
+{
+  "id": "Welcome",
+  "background": "background.png",
+  "background_scale": 1.0,
+  "objects": [
+    {
+      "catalog_id": "candle_stub",
+      "x": 1619,
+      "y": 834,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 25,
+      "width": 40,
+      "height": 77,
+      "is_goal": true,
+      "alpha": 239,
+      "color_filter": [
+        154,
+        146,
+        146
+      ]
+    },
+    {
+      "catalog_id": "venetian_mask",
+      "x": 1164,
+      "y": 605,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "radius": 17,
+      "is_goal": true,
+      "alpha": 129,
+      "color_filter": [
+        96,
+        96,
+        96
+      ]
+    },
+    {
+      "catalog_id": "creature_claw",
+      "x": 759,
+      "y": 770,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "radius": 21.0,
+      "is_goal": false,
+      "alpha": 228,
+      "color_filter": [
+        111,
+        109,
+        109
+      ],
+      "width": 41,
+      "height": 43
+    },
+    {
+      "catalog_id": "hourglass",
+      "x": 866,
+      "y": 641,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 40,
+      "width": 22,
+      "height": 39,
+      "is_goal": false,
+      "alpha": 164
+    },
+    {
+      "catalog_id": "faded_letter",
+      "x": 317,
+      "y": 982,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 95,
+      "height": 72,
+      "is_goal": false,
+      "rotation": 8.2,
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          -8,
+          6
+        ],
+        [
+          -7,
+          -6
+        ],
+        [
+          -5,
+          0
+        ]
+      ],
+      "alpha": 212,
+      "color_filter": [
+        64,
+        79,
+        96
+      ]
+    },
+    {
+      "catalog_id": "pelt_scrap",
+      "x": 1369,
+      "y": 855,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 40,
+      "radius": 41,
+      "is_goal": true,
+      "alpha": 228,
+      "color_filter": [
+        201,
+        193,
+        69
+      ]
+    },
+    {
+      "catalog_id": "ancient_key",
+      "x": 124,
+      "y": 438,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 81,
+      "height": 99,
+      "is_goal": true,
+      "color_filter": [
+        64,
+        64,
+        64
+      ],
+      "rotation": 35.3
+    },
+    {
+      "catalog_id": "magician_wand",
+      "x": 1436,
+      "y": 342,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 94,
+      "height": 102,
+      "is_goal": true,
+      "rotation": 43.2,
+      "alpha": 219,
+      "color_filter": [
+        128,
+        160,
+        176
+      ]
+    },
+    {
+      "catalog_id": "plague_mask",
+      "x": 707,
+      "y": 813,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 40,
+      "width": 82,
+      "height": 66,
+      "is_goal": true,
+      "alpha": 239,
+      "color_filter": [
+        96,
+        96,
+        96
+      ]
+    },
+    {
+      "catalog_id": "top_hat",
+      "x": 1324,
+      "y": 98,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 121,
+      "height": 142,
+      "is_goal": true,
+      "rotation": 89.7,
+      "color_filter": [
+        128,
+        160,
+        176
+      ]
+    },
+    {
+      "catalog_id": "oil_lantern",
+      "x": 275,
+      "y": 575,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "radius": 51.5,
+      "is_goal": false,
+      "width": 81,
+      "height": 125,
+      "color_filter": [
+        110,
+        101,
+        101
+      ],
+      "alpha": 217
+    },
+    {
+      "catalog_id": "runed_skull",
+      "x": 570,
+      "y": 724,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 40,
+      "radius": 41.25,
+      "is_goal": false,
+      "width": 71,
+      "height": 94,
+      "alpha": 58,
+      "color_filter": [
+        96,
+        96,
+        96
+      ]
+    },
+    {
+      "catalog_id": "gas_mask",
+      "x": 1520,
+      "y": 410,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 40,
+      "width": 85,
+      "height": 91,
+      "is_goal": false,
+      "rotation": 24.9,
+      "alpha": 212,
+      "color_filter": [
+        64,
+        79,
+        96
+      ]
+    },
+    {
+      "catalog_id": "silence_poster",
+      "x": 1793,
+      "y": 410,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 40,
+      "width": 107,
+      "height": 152,
+      "is_goal": false,
+      "corners": [
+        [
+          0,
+          10
+        ],
+        [
+          -7,
+          -15
+        ],
+        [
+          -2,
+          6
+        ],
+        [
+          6,
+          2
+        ]
+      ],
+      "alpha": 49
+    },
+    {
+      "catalog_id": "metronome",
+      "x": 1429,
+      "y": 577,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 28,
+      "height": 34,
+      "is_goal": false,
+      "alpha": 228,
+      "color_filter": [
+        96,
+        96,
+        96
+      ]
+    },
+    {
+      "catalog_id": "rusty_stapler",
+      "x": 1398,
+      "y": 921,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 97,
+      "height": 66,
+      "is_goal": true,
+      "color_filter": [
+        118,
+        116,
+        116
+      ],
+      "rotation": 359.5
+    },
+    {
+      "catalog_id": "soda_can",
+      "x": 532,
+      "y": 867,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 25,
+      "width": 30,
+      "height": 73,
+      "is_goal": true,
+      "color_filter": [
+        96,
+        96,
+        96
+      ],
+      "alpha": 211,
+      "flip_x": true
+    },
+    {
+      "catalog_id": "polenta_pack",
+      "x": 1681,
+      "y": 958,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 74,
+      "height": 115,
+      "is_goal": true,
+      "color_filter": [
+        96,
+        96,
+        96
+      ],
+      "alpha": 194
+    },
+    {
+      "catalog_id": "poison_mushroom",
+      "x": 119,
+      "y": 715,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "radius": 28,
+      "is_goal": false,
+      "color_filter": [
+        96,
+        96,
+        96
+      ],
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          -1,
+          -3
+        ],
+        [
+          -8,
+          -2
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "catalog_id": "doll_head_broken",
+      "x": 516,
+      "y": 374,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 35,
+      "radius": 24.25,
+      "is_goal": false,
+      "alpha": 97,
+      "color_filter": [
+        181,
+        166,
+        166
+      ],
+      "width": 48,
+      "height": 49,
+      "rotation": 354.4
+    },
+    {
+      "catalog_id": "lit_candle",
+      "x": 342,
+      "y": 576,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 35,
+      "width": 45,
+      "height": 66,
+      "is_goal": true,
+      "alpha": 219,
+      "color_filter": [
+        143,
+        172,
+        187
+      ]
+    },
+    {
+      "catalog_id": "green_broccoli",
+      "x": 1564,
+      "y": 877,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 35,
+      "radius": 32.75,
+      "is_goal": true,
+      "width": 59,
+      "height": 72,
+      "rotation": 342.1,
+      "alpha": 241,
+      "color_filter": [
+        125,
+        142,
+        161
+      ]
+    },
+    {
+      "catalog_id": "green_artichoke",
+      "x": 273,
+      "y": 1021,
+      "detection_type": "circle",
+      "layer": "scene_global",
+      "hint_delay": 35,
+      "radius": 28,
+      "is_goal": true,
+      "alpha": 236,
+      "color_filter": [
+        128,
+        160,
+        176
+      ]
+    }
+  ],
+  "music": [
+    "Indecenti - Backspace.mp3"
+  ],
+  "effects": [
+    {
+      "effect_id": "golden_glint",
+      "type": "glint",
+      "x": 1042,
+      "y": 564,
+      "radius": 58,
+      "intensity": 0.12,
+      "layer": "effects"
+    },
+    {
+      "effect_id": "golden_glint",
+      "type": "glint",
+      "x": 1591,
+      "y": 209,
+      "radius": 40,
+      "intensity": 0.14,
+      "layer": "effects"
+    },
+    {
+      "effect_id": "golden_glint",
+      "type": "glint",
+      "x": 365,
+      "y": 575,
+      "intensity": 0.25,
+      "layer": "effects"
+    },
+    {
+      "effect_id": "golden_glint",
+      "type": "glint",
+      "x": 1220,
+      "y": 732,
+      "radius": 49,
+      "intensity": 0.09,
+      "pulse_period": 1.95,
+      "pulse_min": 0.29,
+      "phase": 0.29,
+      "layer": "effects"
+    },
+    {
+      "effect_id": "bubble_tip",
+      "type": "bubble_tip",
+      "x": 517,
+      "y": 913,
+      "radius": 150,
+      "color": [
+        152,
+        96,
+        59
+      ],
+      "intensity": 1.0,
+      "layer": "effects",
+      "layer_z": 105,
+      "text_key": "TIP_Welcome_926FB",
+      "trigger": "start_scene",
+      "width": 866,
+      "height": 174,
+      "alpha": 142,
+      "font_size": 36,
+      "font_color": [
+        245,
+        241,
+        241
+      ]
+    },
+    {
+      "effect_id": "bubble_tip",
+      "type": "bubble_tip",
+      "x": 1012,
+      "y": 917,
+      "radius": 150,
+      "color": [
+        152,
+        96,
+        59
+      ],
+      "intensity": 1.0,
+      "layer": "effects",
+      "layer_z": 110,
+      "text_key": "TIP_Welcome_9029E",
+      "trigger": "end_scene",
+      "width": 862,
+      "height": 180,
+      "alpha": 142,
+      "font_size": 51,
+      "font_color": [
+        245,
+        241,
+        241
+      ]
+    },
+    {
+      "effect_id": "chimney_smoke",
+      "type": "smoke",
+      "x": 661,
+      "y": 529,
+      "radius": 28.8,
+      "color": [
+        100,
+        100,
+        105
+      ],
+      "intensity": 1.49,
+      "pulse_period": 0.42,
+      "pulse_min": 0.79,
+      "layer": "effects",
+      "layer_z": 100
+    },
+    {
+      "effect_id": "chimney_smoke",
+      "type": "smoke",
+      "x": 1193,
+      "y": 425,
+      "radius": 40,
+      "color": [
+        100,
+        100,
+        105
+      ],
+      "intensity": 1.81,
+      "pulse_period": 0.21,
+      "pulse_min": 0.3,
+      "layer": "effects",
+      "layer_z": 100
+    }
+  ],
+  "auto_random_finds": true,
+  "num_random_finds": 10,
+  "flashlight": false,
+  "flashlight_radius": 220,
+  "layer_locked": {
+    "objects_low": false,
+    "objects_mid": false,
+    "objects_high": false,
+    "overlay": false,
+    "effects": false
+  }
+}

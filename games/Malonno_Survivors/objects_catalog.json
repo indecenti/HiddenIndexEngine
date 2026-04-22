@@ -1,0 +1,1724 @@
+{
+  "objects": [
+    {
+      "id": "abyssal_crystal",
+      "label_key": "obj_abyssal_crystal",
+      "icon": "objects/abyssal_crystal.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 35,
+      "tags": [
+        "abisso",
+        "cristallo",
+        "decorazione",
+        "medio",
+        "natura",
+        "oceano"
+      ]
+    },
+    {
+      "id": "aged_cheese",
+      "label_key": "obj_aged_cheese",
+      "icon": "objects/aged_cheese.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "biologico",
+        "cibo",
+        "cucina",
+        "horror",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "alarm_clock_retro",
+      "label_key": "obj_alarm_clock_retro",
+      "icon": "objects/alarm_clock_retro.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "arredamento",
+        "casa",
+        "elettronica",
+        "piccolo",
+        "plastica",
+        "tecnologia"
+      ]
+    },
+    {
+      "id": "ancient_key",
+      "label_key": "obj_ancient_key",
+      "icon": "objects/ancient_key.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 80,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "chiave",
+        "medio",
+        "metallo"
+      ]
+    },
+    {
+      "id": "arcade_joystick",
+      "label_key": "obj_arcade_joystick",
+      "icon": "objects/arcade_joystick.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 35,
+      "tags": [
+        "giocattolo",
+        "metallo",
+        "piccolo",
+        "retro",
+        "videogame",
+        "vintage"
+      ]
+    },
+    {
+      "id": "badger",
+      "label_key": "obj_badger",
+      "icon": "objects/badger.png",
+      "default_detection": "circle",
+      "default_radius": 45,
+      "default_hint_delay": 40,
+      "tags": [
+        "biologico",
+        "medio",
+        "natura"
+      ]
+    },
+    {
+      "id": "bankers_lamp",
+      "label_key": "obj_bankers_lamp",
+      "icon": "objects/bankers_lamp.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 65,
+      "default_hint_delay": 35,
+      "tags": [
+        "arredamento",
+        "luce",
+        "medio",
+        "metallo",
+        "vetro",
+        "vintage"
+      ]
+    },
+    {
+      "id": "black_coral",
+      "label_key": "obj_black_coral",
+      "icon": "objects/black_coral.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "abisso",
+        "biologico",
+        "decorazione",
+        "medio",
+        "natura",
+        "oceano"
+      ]
+    },
+    {
+      "id": "bow_tie",
+      "label_key": "obj_bow_tie",
+      "icon": "objects/bow_tie.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "abbigliamento",
+        "piccolo",
+        "stoffa"
+      ]
+    },
+    {
+      "id": "bucket",
+      "label_key": "obj_bucket",
+      "icon": "objects/bucket.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "pulizia"
+      ]
+    },
+    {
+      "id": "cellphone_retro",
+      "label_key": "cellphone_retro",
+      "icon": "objects/cellphone_retro.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "comunicazione",
+        "elettronica",
+        "piccolo",
+        "plastica",
+        "retro",
+        "tecnologia"
+      ]
+    },
+    {
+      "id": "chainsaw_engine",
+      "label_key": "obj_chainsaw_engine",
+      "icon": "objects/chainsaw_engine.png",
+      "default_detection": "rect",
+      "default_width": 95,
+      "default_height": 40,
+      "default_hint_delay": 40,
+      "tags": [
+        "attrezzo",
+        "giardino",
+        "grande",
+        "metallo",
+        "pericolo"
+      ]
+    },
+    {
+      "id": "chef_knife",
+      "label_key": "obj_chef_knife",
+      "icon": "objects/chef_knife.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "arma",
+        "attrezzo",
+        "cucina",
+        "metallo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "console_pin",
+      "label_key": "obj_console_pin",
+      "icon": "objects/console_pin.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 25,
+      "default_hint_delay": 20,
+      "tags": [
+        "giocattolo",
+        "gioco",
+        "metallo",
+        "piccolo",
+        "vintage"
+      ]
+    },
+    {
+      "id": "creature_claw",
+      "label_key": "obj_creature_claw",
+      "icon": "objects/creature_claw.png",
+      "default_detection": "circle",
+      "default_radius": 28,
+      "default_hint_delay": 30,
+      "tags": [
+        "biologico",
+        "horror",
+        "natura",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "desiderius_cross",
+      "label_key": "obj_desiderius_cross",
+      "icon": "objects/desiderius_cross.png",
+      "default_detection": "rect",
+      "default_width": 128,
+      "default_height": 192,
+      "tags": [
+        "arte",
+        "gioiello",
+        "medio",
+        "metallo",
+        "prezioso",
+        "tradizione",
+        "vintage"
+      ]
+    },
+    {
+      "id": "doll_head_broken",
+      "label_key": "obj_doll_head_broken",
+      "icon": "objects/doll_head_broken.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 35,
+      "tags": [
+        "giocattolo",
+        "horror",
+        "piccolo",
+        "plastica",
+        "vintage"
+      ]
+    },
+    {
+      "id": "dried_fish",
+      "label_key": "obj_dried_fish",
+      "icon": "objects/dried_fish.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 25,
+      "default_hint_delay": 35,
+      "tags": [
+        "biologico",
+        "cibo",
+        "cucina",
+        "horror",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "dried_sage",
+      "label_key": "obj_dried_sage",
+      "icon": "objects/dried_sage.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "biologico",
+        "horror",
+        "natura",
+        "occulto",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "dustpan",
+      "label_key": "obj_dustpan",
+      "icon": "objects/dustpan.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "cucina",
+        "piccolo",
+        "plastica",
+        "pulizia"
+      ]
+    },
+    {
+      "id": "electric_drill",
+      "label_key": "obj_electric_drill",
+      "icon": "objects/electric_drill.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 55,
+      "default_hint_delay": 40,
+      "tags": [
+        "attrezzo",
+        "metallo",
+        "officina",
+        "piccolo",
+        "tecnologia"
+      ]
+    },
+    {
+      "id": "error_floppy",
+      "label_key": "obj_error_floppy",
+      "icon": "objects/error_floppy.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "default_hint_delay": 25,
+      "tags": [
+        "dati",
+        "piccolo",
+        "plastica",
+        "retro",
+        "tecnologia",
+        "videogame"
+      ]
+    },
+    {
+      "id": "faded_letter",
+      "label_key": "obj_faded_letter",
+      "icon": "objects/faded_letter.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "horror",
+        "medio",
+        "studio"
+      ]
+    },
+    {
+      "id": "flag_peru",
+      "label_key": "obj_flag_peru",
+      "icon": "objects/flag_peru.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "bandiera",
+        "metallo",
+        "nazione",
+        "piccolo",
+        "stoffa",
+        "sudamerica"
+      ]
+    },
+    {
+      "id": "flintlock_pistol",
+      "label_key": "obj_flintlock_pistol",
+      "icon": "objects/flintlock_pistol.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 30,
+      "default_hint_delay": 45,
+      "tags": [
+        "arma",
+        "metallo",
+        "piccolo",
+        "tecnologia",
+        "vintage"
+      ]
+    },
+    {
+      "id": "forest_acorn",
+      "label_key": "obj_forest_acorn",
+      "icon": "objects/forest_acorn.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "default_hint_delay": 25,
+      "tags": [
+        "biologico",
+        "bosco",
+        "natura",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "forrestgump_poster",
+      "label_key": "obj_forrestgump_poster",
+      "icon": "objects/forrestgump_poster.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "cinema",
+        "commedia",
+        "dramma",
+        "piccolo",
+        "poster"
+      ]
+    },
+    {
+      "id": "fossil_shell",
+      "label_key": "obj_fossil_shell",
+      "icon": "objects/fossil_shell.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "decorazione",
+        "horror",
+        "natura",
+        "piccolo",
+        "pietra"
+      ]
+    },
+    {
+      "id": "fountain_pen",
+      "label_key": "obj_fountain_pen",
+      "icon": "objects/fountain_pen.png",
+      "default_detection": "rect",
+      "default_width": 10,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "arte",
+        "metallo",
+        "piccolo",
+        "ufficio",
+        "vintage"
+      ]
+    },
+    {
+      "id": "funnel",
+      "label_key": "obj_funnel",
+      "icon": "objects/funnel.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "plastica",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "future_poster",
+      "label_key": "obj_future_poster",
+      "icon": "objects/future_poster.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "cinema",
+        "piccolo",
+        "poster",
+        "scifi",
+        "vintage"
+      ]
+    },
+    {
+      "id": "gameboy",
+      "label_key": "gameboy",
+      "icon": "objects/gameboy.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "elettronica",
+        "giocattolo",
+        "gioco",
+        "piccolo",
+        "plastica",
+        "retro",
+        "tecnologia",
+        "vintage"
+      ]
+    },
+    {
+      "id": "gaming_mouse",
+      "label_key": "obj_gaming_mouse",
+      "icon": "objects/gaming_mouse.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 50,
+      "default_hint_delay": 20,
+      "tags": [
+        "elettronica",
+        "mouse",
+        "piccolo",
+        "plastica",
+        "tecnologia"
+      ]
+    },
+    {
+      "id": "garden_shears",
+      "label_key": "obj_garden_shears",
+      "icon": "objects/garden_shears.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "attrezzo",
+        "giardino",
+        "metallo",
+        "pericolo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "glass_eye_loose",
+      "label_key": "obj_glass_eye_loose",
+      "icon": "objects/glass_eye_loose.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "default_hint_delay": 25,
+      "tags": [
+        "cucina",
+        "horror",
+        "piccolo",
+        "vetro"
+      ]
+    },
+    {
+      "id": "globe",
+      "label_key": "obj_globe",
+      "icon": "objects/globe.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 35,
+      "tags": [
+        "carta",
+        "metallo",
+        "piccolo",
+        "studio",
+        "vintage"
+      ]
+    },
+    {
+      "id": "golden_bell",
+      "label_key": "obj_golden_bell",
+      "icon": "objects/golden_bell.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "circo",
+        "decorazione",
+        "metallo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "hammer",
+      "label_key": "obj_hammer",
+      "icon": "objects/hammer.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "arma",
+        "attrezzo",
+        "legno",
+        "metallo",
+        "officina",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "highlighter_yellow",
+      "label_key": "obj_highlighter_yellow",
+      "icon": "objects/highlighter_yellow.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "studio",
+        "plastica",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "hourglass",
+      "label_key": "obj_hourglass",
+      "icon": "objects/hourglass.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 85,
+      "default_hint_delay": 40,
+      "tags": [
+        "cucina",
+        "medio",
+        "vetro",
+        "vintage"
+      ]
+    },
+    {
+      "id": "human_vertebra",
+      "label_key": "obj_human_vertebra",
+      "icon": "objects/human_vertebra.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "default_hint_delay": 40,
+      "tags": [
+        "decorazione",
+        "horror",
+        "osso",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "inkwell_quill",
+      "label_key": "obj_inkwell_quill",
+      "icon": "objects/inkwell_quill.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "biologico",
+        "metallo",
+        "piccolo",
+        "studio",
+        "vintage"
+      ]
+    },
+    {
+      "id": "juggling_club",
+      "label_key": "obj_juggling_club",
+      "icon": "objects/juggling_club.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "attrezzo",
+        "circo",
+        "legno",
+        "medio"
+      ]
+    },
+    {
+      "id": "kitchen_scale",
+      "label_key": "obj_kitchen_scale",
+      "icon": "objects/kitchen_scale.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 70,
+      "default_hint_delay": 40,
+      "tags": [
+        "attrezzo",
+        "bilancia",
+        "cucina",
+        "medio",
+        "metallo"
+      ]
+    },
+    {
+      "id": "ladle",
+      "label_key": "obj_ladle",
+      "icon": "objects/ladle.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "cucina",
+        "legno",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "leather_football",
+      "label_key": "obj_leather_football",
+      "icon": "objects/leather_football.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "pelle",
+        "sport"
+      ]
+    },
+    {
+      "id": "leather_holster",
+      "label_key": "obj_leather_holster",
+      "icon": "objects/leather_holster.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "arma",
+        "cuoio",
+        "piccolo",
+        "tecnologia"
+      ]
+    },
+    {
+      "id": "light_bulb",
+      "label_key": "obj_light_bulb",
+      "icon": "objects/light_bulb.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "default_hint_delay": 25,
+      "tags": [
+        "cucina",
+        "luce",
+        "piccolo",
+        "vetro"
+      ]
+    },
+    {
+      "id": "lit_candle",
+      "label_key": "obj_lit_candle",
+      "icon": "objects/lit_candle.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "cera",
+        "luce",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "magician_wand",
+      "label_key": "obj_magician_wand",
+      "icon": "objects/magician_wand.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 10,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "circo",
+        "legno",
+        "magia",
+        "medio"
+      ]
+    },
+    {
+      "id": "marble_bust",
+      "label_key": "obj_marble_bust",
+      "icon": "objects/marble_bust.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 65,
+      "default_hint_delay": 45,
+      "tags": [
+        "arte",
+        "piccolo",
+        "pietra",
+        "vintage"
+      ]
+    },
+    {
+      "id": "marquee_asteroids",
+      "label_key": "obj_marquee_asteroids",
+      "icon": "objects/marquee_asteroids.png",
+      "default_detection": "rect",
+      "default_width": 120,
+      "default_height": 40,
+      "default_hint_delay": 40,
+      "tags": [
+        "videogame",
+        "vintage",
+        "retro",
+        "pop",
+        "plastica",
+        "medio"
+      ]
+    },
+    {
+      "id": "measuring_tape",
+      "label_key": "obj_measuring_tape",
+      "icon": "objects/measuring_tape.png",
+      "default_detection": "rect",
+      "default_width": 64,
+      "default_height": 64,
+      "tags": [
+        "attrezzo",
+        "plastica",
+        "metallo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "metal_flashlight",
+      "label_key": "obj_metal_flashlight",
+      "icon": "objects/metal_flashlight.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "luce",
+        "medio",
+        "metallo"
+      ]
+    },
+    {
+      "id": "modern_drone_iso",
+      "label_key": "obj_modern_drone_iso",
+      "icon": "objects/modern_drone_iso.png",
+      "default_detection": "circle",
+      "default_radius": 45,
+      "default_hint_delay": 35,
+      "tags": [
+        "elettronica",
+        "grande",
+        "isometrico",
+        "plastica",
+        "tecnologia"
+      ]
+    },
+    {
+      "id": "moldy_bread",
+      "label_key": "obj_moldy_bread",
+      "icon": "objects/moldy_bread.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "biologico",
+        "cibo",
+        "cucina",
+        "horror",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "oil_canister",
+      "label_key": "obj_oil_canister",
+      "icon": "objects/oil_canister.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "attrezzo",
+        "metallo",
+        "medio",
+        "pericolo"
+      ]
+    },
+    {
+      "id": "old_syringe",
+      "label_key": "obj_old_syringe",
+      "icon": "objects/old_syringe.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "abbigliamento",
+        "horror",
+        "medico",
+        "metallo",
+        "pericolo",
+        "piccolo",
+        "vetro"
+      ]
+    },
+    {
+      "id": "ornate_candelabra",
+      "label_key": "obj_ornate_candelabra",
+      "icon": "objects/ornate_candelabra.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 90,
+      "default_hint_delay": 40,
+      "tags": [
+        "decorazione",
+        "grande",
+        "luce",
+        "metallo",
+        "vintage"
+      ]
+    },
+    {
+      "id": "ouija_planchette",
+      "label_key": "obj_ouija_planchette",
+      "icon": "objects/ouija_planchette.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 40,
+      "default_hint_delay": 25,
+      "tags": [
+        "gioco",
+        "horror",
+        "legno",
+        "occulto",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "pelt_scrap",
+      "label_key": "obj_pelt_scrap",
+      "icon": "objects/pelt_scrap.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 40,
+      "tags": [
+        "biologico",
+        "horror",
+        "medio",
+        "natura"
+      ]
+    },
+    {
+      "id": "perfume_bottle_vintage",
+      "label_key": "obj_perfume_bottle_vintage",
+      "icon": "objects/perfume_bottle_vintage.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 65,
+      "default_hint_delay": 35,
+      "tags": [
+        "accessorio",
+        "arredamento",
+        "decorazione",
+        "piccolo",
+        "profumo",
+        "vetro"
+      ]
+    },
+    {
+      "id": "pirate_symbol",
+      "label_key": "obj_pirate_symbol",
+      "icon": "objects/pirate_symbol.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "decorazione",
+        "horror",
+        "legno",
+        "medio",
+        "simbolo"
+      ]
+    },
+    {
+      "id": "pliers",
+      "label_key": "obj_pliers",
+      "icon": "objects/pliers.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "metallo",
+        "officina",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "poison_bottle",
+      "label_key": "obj_poison_bottle",
+      "icon": "objects/poison_bottle.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "cucina",
+        "horror",
+        "medio",
+        "vetro"
+      ]
+    },
+    {
+      "id": "poison_mushroom",
+      "label_key": "obj_poison_mushroom",
+      "icon": "objects/poison_mushroom.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "biologico",
+        "cibo",
+        "horror",
+        "natura",
+        "piccolo",
+        "videogame"
+      ]
+    },
+    {
+      "id": "popcorn_box",
+      "label_key": "obj_popcorn_box",
+      "icon": "objects/popcorn_box.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "biologico",
+        "cibo",
+        "circo",
+        "medio"
+      ]
+    },
+    {
+      "id": "pow_sign",
+      "label_key": "obj_pow_sign",
+      "icon": "objects/pow_sign.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 50,
+      "default_hint_delay": 25,
+      "tags": [
+        "arte",
+        "carta",
+        "fumetti",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "rabbit",
+      "label_key": "obj_rabbit",
+      "icon": "objects/rabbit.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "biologico",
+        "natura",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "rolling_pin",
+      "label_key": "obj_rolling_pin",
+      "icon": "objects/rolling_pin.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 95,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "legno",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "rotten_apple",
+      "label_key": "obj_rotten_apple",
+      "icon": "objects/rotten_apple.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "biologico",
+        "cibo",
+        "cucina",
+        "horror",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "rubber_duck",
+      "label_key": "obj_rubber_duck",
+      "icon": "objects/rubber_duck.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "giocattolo",
+        "piccolo",
+        "plastica",
+        "vintage"
+      ]
+    },
+    {
+      "id": "rusty_stapler",
+      "label_key": "obj_rusty_stapler",
+      "icon": "objects/rusty_stapler.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "rotto",
+        "ufficio"
+      ]
+    },
+    {
+      "id": "sawed_off_shotgun",
+      "label_key": "obj_sawed_off_shotgun",
+      "icon": "objects/sawed_off_shotgun.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 25,
+      "default_hint_delay": 40,
+      "tags": [
+        "arma",
+        "attrezzo",
+        "metallo",
+        "pericolo",
+        "piccolo",
+        "tecnologia"
+      ]
+    },
+    {
+      "id": "screwdriver",
+      "label_key": "obj_screwdriver",
+      "icon": "objects/screwdriver.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 85,
+      "default_hint_delay": 25,
+      "tags": [
+        "attrezzo",
+        "metallo",
+        "officina",
+        "piccolo",
+        "plastica"
+      ]
+    },
+    {
+      "id": "severed_finger",
+      "label_key": "obj_severed_finger",
+      "icon": "objects/severed_finger.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 80,
+      "tags": [
+        "decorazione",
+        "horror",
+        "osso",
+        "pelle",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "silk_tie",
+      "label_key": "obj_silk_tie",
+      "icon": "objects/silk_tie.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 80,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "piccolo",
+        "stoffa",
+        "vintage"
+      ]
+    },
+    {
+      "id": "silver_ring",
+      "label_key": "obj_silver_ring",
+      "icon": "objects/silver_ring.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "default_hint_delay": 25,
+      "tags": [
+        "abbigliamento",
+        "gioiello",
+        "metallo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "skeleton_key_rusty",
+      "label_key": "obj_skeleton_key_rusty",
+      "icon": "objects/skeleton_key_large.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "metallo",
+        "vintage",
+        "horror",
+        "medio"
+      ]
+    },
+    {
+      "id": "skull_candle_lit",
+      "label_key": "obj_skull_candle_lit",
+      "icon": "objects/skull_candle.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "horror",
+        "luce",
+        "cera",
+        "osso",
+        "occulto",
+        "medio"
+      ]
+    },
+    {
+      "id": "smoking_pipe",
+      "label_key": "obj_smoking_pipe",
+      "icon": "objects/smoking_pipe.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "accessorio",
+        "fumo",
+        "legno",
+        "piccolo",
+        "pipa",
+        "vintage"
+      ]
+    },
+    {
+      "id": "spatula",
+      "label_key": "obj_spatula",
+      "icon": "objects/spatula.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "cucina",
+        "metallo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "spinning_top",
+      "label_key": "obj_spinning_top",
+      "icon": "objects/spinning_top.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "metallo",
+        "piccolo",
+        "vintage"
+      ]
+    },
+    {
+      "id": "spirit_level",
+      "label_key": "obj_spirit_level",
+      "icon": "objects/spirit_level.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 20,
+      "default_hint_delay": 35,
+      "tags": [
+        "grande",
+        "metallo",
+        "misura",
+        "officina",
+        "plastica"
+      ]
+    },
+    {
+      "id": "spoiled_milk",
+      "label_key": "obj_spoiled_milk",
+      "icon": "objects/spoiled_milk.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 60,
+      "default_hint_delay": 35,
+      "tags": [
+        "biologico",
+        "cibo",
+        "cucina",
+        "horror",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "sponge",
+      "label_key": "obj_sponge",
+      "icon": "objects/sponge.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 25,
+      "default_hint_delay": 20,
+      "tags": [
+        "bagno",
+        "gomma",
+        "piccolo",
+        "pulizia"
+      ]
+    },
+    {
+      "id": "spray_bottle",
+      "label_key": "obj_spray_bottle",
+      "icon": "objects/spray_bottle.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "pulizia"
+      ]
+    },
+    {
+      "id": "stained_gauze",
+      "label_key": "obj_stained_gauze",
+      "icon": "objects/stained_gauze.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "horror",
+        "medico",
+        "piccolo",
+        "stoffa"
+      ]
+    },
+    {
+      "id": "stained_papers",
+      "label_key": "obj_stained_papers",
+      "icon": "objects/stained_papers.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "horror",
+        "piccolo",
+        "studio"
+      ]
+    },
+    {
+      "id": "stylus_pen",
+      "label_key": "obj_stylus_pen",
+      "icon": "objects/stylus_pen.png",
+      "default_detection": "rect",
+      "default_width": 10,
+      "default_height": 75,
+      "default_hint_delay": 25,
+      "tags": [
+        "elettronica",
+        "piccolo",
+        "plastica",
+        "ufficio"
+      ]
+    },
+    {
+      "id": "sunglasses",
+      "label_key": "obj_sunglasses",
+      "icon": "objects/sunglasses.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "cucina",
+        "piccolo",
+        "plastica",
+        "vetro"
+      ]
+    },
+    {
+      "id": "sunken_skull",
+      "label_key": "obj_sunken_skull",
+      "icon": "objects/sunken_skull.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "abisso",
+        "decorazione",
+        "horror",
+        "osso",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "tamagotchi",
+      "label_key": "tamagotchi",
+      "icon": "objects/tamagotchi.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "giocattolo",
+        "gioco",
+        "piccolo",
+        "plastica",
+        "retro",
+        "vintage"
+      ]
+    },
+    {
+      "id": "tamer_whip",
+      "label_key": "obj_tamer_whip",
+      "icon": "objects/tamer_whip.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 40,
+      "tags": [
+        "arma",
+        "attrezzo",
+        "circo",
+        "cuoio",
+        "medio"
+      ]
+    },
+    {
+      "id": "tape_measure",
+      "label_key": "obj_tape_measure",
+      "icon": "objects/tape_measure.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "misura",
+        "officina",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "tarot_cards",
+      "label_key": "obj_tarot_cards",
+      "icon": "objects/tarot_cards.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "carte_da_gioco",
+        "magia",
+        "medio"
+      ]
+    },
+    {
+      "id": "teddy_bear",
+      "label_key": "obj_teddy_bear",
+      "icon": "objects/teddy_bear.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 35,
+      "tags": [
+        "giocattolo",
+        "horror",
+        "piccolo",
+        "stoffa",
+        "vintage"
+      ]
+    },
+    {
+      "id": "tennis_shoe",
+      "label_key": "obj_tennis_shoe",
+      "icon": "objects/tennis_shoe.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 40,
+      "default_hint_delay": 35,
+      "tags": [
+        "abbigliamento",
+        "calzatura",
+        "gomma",
+        "medio",
+        "sport"
+      ]
+    },
+    {
+      "id": "toothpaste_tube",
+      "label_key": "obj_toothpaste_tube",
+      "icon": "objects/toothpaste_tube.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "pulizia",
+        "plastica",
+        "medio"
+      ]
+    },
+    {
+      "id": "top_hat",
+      "label_key": "obj_top_hat",
+      "icon": "objects/top_hat.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "cappello",
+        "circo",
+        "medio",
+        "stoffa"
+      ]
+    },
+    {
+      "id": "toy_blocks",
+      "label_key": "obj_toy_blocks",
+      "icon": "objects/toy_blocks.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "legno",
+        "piccolo",
+        "vintage"
+      ]
+    },
+    {
+      "id": "toy_soldier",
+      "label_key": "obj_toy_soldier",
+      "icon": "objects/toy_soldier.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "metallo",
+        "piccolo",
+        "vintage"
+      ]
+    },
+    {
+      "id": "trowel",
+      "label_key": "obj_trowel",
+      "icon": "objects/trowel.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "giardino",
+        "metallo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "umbrella_closed",
+      "label_key": "obj_umbrella_closed",
+      "icon": "objects/umbrella_closed.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 100,
+      "default_hint_delay": 35,
+      "tags": [
+        "viaggio",
+        "stoffa",
+        "medio",
+        "ombrello"
+      ]
+    },
+    {
+      "id": "utility_knife",
+      "label_key": "obj_utility_knife",
+      "icon": "objects/utility_knife.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 80,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "metallo",
+        "officina",
+        "pericolo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "venetian_mask",
+      "label_key": "obj_venetian_mask",
+      "icon": "objects/venetian_mask.png",
+      "default_detection": "circle",
+      "default_radius": 32,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "carta",
+        "maschera",
+        "medio",
+        "vintage"
+      ]
+    },
+    {
+      "id": "vintage_comic",
+      "label_key": "obj_vintage_comic",
+      "icon": "objects/vintage_comic.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "fumetti",
+        "piccolo",
+        "retro"
+      ]
+    },
+    {
+      "id": "voodoo_doll",
+      "label_key": "obj_voodoo_doll",
+      "icon": "objects/voodoo_doll.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "horror",
+        "occulto",
+        "piccolo",
+        "stoffa",
+        "vintage"
+      ]
+    },
+    {
+      "id": "walkman",
+      "label_key": "walkman",
+      "icon": "objects/walkman.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "elettronica",
+        "musica",
+        "piccolo",
+        "plastica",
+        "retro",
+        "tecnologia"
+      ]
+    },
+    {
+      "id": "watering_can",
+      "label_key": "obj_watering_can",
+      "icon": "objects/watering_can.png",
+      "default_detection": "circle",
+      "default_radius": 50,
+      "default_hint_delay": 40,
+      "tags": [
+        "abbigliamento",
+        "cibo",
+        "giardino",
+        "grande",
+        "metallo"
+      ]
+    },
+    {
+      "id": "wooden_train",
+      "label_key": "obj_wooden_train",
+      "icon": "objects/wooden_train.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "legno",
+        "piccolo",
+        "vintage"
+      ]
+    },
+    {
+      "id": "worn_pencil",
+      "label_key": "obj_worn_pencil",
+      "icon": "objects/worn_pencil.png",
+      "default_detection": "rect",
+      "default_width": 8,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "arte",
+        "legno",
+        "piccolo",
+        "ufficio"
+      ]
+    }
+  ]
+}

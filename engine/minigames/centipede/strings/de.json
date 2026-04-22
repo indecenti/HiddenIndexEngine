@@ -1,0 +1,11 @@
+{
+  "centipede_title": "CENTIPEDE ARCADE",
+  "centipede_score": "PKT: {score}",
+  "centipede_start": "DRÜCKEN SIE EINE TASTE ZUM STARTEN",
+  "centipede_gameover": "SPIEL VORBEI",
+  "centipede_instructions": "PFEILE/MAUS: BEWEGEN | LEER/LMB: FEUER",
+  "centipede_help": "Zerstöre den Tausendfüßler!",
+  "centipede_exit": "ZUM BEENDEN BELIEBIGE TASTE DRÜCKEN",
+  "mg_description": "Verteidige dich gegen die Invasion der Tausendfüßler inmitten der Giftpilze.",
+  "mg_title": "Centipede Arcade"
+}

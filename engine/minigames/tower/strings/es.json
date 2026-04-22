@@ -1,0 +1,14 @@
+{
+  "mg_title": "The Tower Solitaire",
+  "mg_description": "Coloca las figuras en el perímetro y descarta las parejas que sumen 10 para liberar el centro.",
+  "tower_instr_1": "Objetivo: Llena el perímetro con Reyes (esquinas), Reinas (lados) y Jotas (arriba/abajo).",
+  "tower_instr_2": "Crea parejas que sumen 10 para liberar espacios y vaciar el mazo.",
+  "tower_draw": "Robar",
+  "tower_win": "¡Castillo Completado!",
+  "tower_lose": "Mazo Vacío - ¡Reinténtalo!",
+  "tower_score": "Puntuación: {0}",
+  "tower_deck": "Mazo: {0}",
+  "tower_score_label": "PUNTOS",
+  "tower_deck_label": "MAZO",
+  "tower_time_label": "TIEMPO"
+}

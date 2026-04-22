@@ -1,0 +1,13 @@
+{
+  "arcade_eleven_title": "Arcade Eleven",
+  "arcade_eleven_instructions": "Match pairs summing to 11. Remove face cards by selecting one Jack, one Queen, and one King together.",
+  "arcade_eleven_score": "SCORE",
+  "arcade_eleven_deck": "Deck: ",
+  "arcade_eleven_win": "Victory!",
+  "arcade_eleven_game_over": "NO MOVES! GAME OVER.",
+  "arcade_eleven_complete": "Perfect!",
+  "arcade_eleven_click_to_start": "CLICK TO START",
+  "mg_description": "Sum 11 with two cards. Eliminate faces (J, Q, K) by selecting one of each type simultaneously.",
+  "mg_title": "Arcade Eleven",
+  "arcade_eleven_time_label": "TIME"
+}

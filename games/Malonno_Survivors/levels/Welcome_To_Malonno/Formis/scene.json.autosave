@@ -1,0 +1,1675 @@
+{
+  "id": "Formis",
+  "background": "background.png",
+  "background_scale": 1.0,
+  "objects": [
+    {
+      "catalog_id": "tarot_cards",
+      "x": 2075,
+      "y": 1319,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 185,
+      "height": 180,
+      "is_goal": true,
+      "alpha": 100,
+      "color_filter": [
+        96,
+        64,
+        31
+      ],
+      "rotation": 5,
+      "minigame_trigger": {
+        "minigame_id": "arcade_eleven"
+      }
+    },
+    {
+      "catalog_id": "faded_letter",
+      "x": 1218,
+      "y": 956,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 107,
+      "height": 86,
+      "is_goal": false,
+      "rotation": 345,
+      "alpha": 233,
+      "color_filter": [
+        64,
+        48,
+        48
+      ]
+    },
+    {
+      "catalog_id": "human_vertebra",
+      "x": 259,
+      "y": 1068,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 40,
+      "radius": 35,
+      "is_goal": false,
+      "rotation": 315,
+      "alpha": 241,
+      "color_filter": [
+        85,
+        68,
+        68
+      ]
+    },
+    {
+      "catalog_id": "garden_shears",
+      "x": 2287,
+      "y": 788,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 35,
+      "width": 73,
+      "height": 136,
+      "is_goal": true,
+      "alpha": 249,
+      "color_filter": [
+        184,
+        166,
+        71
+      ],
+      "rotation": 349.4,
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          -2,
+          3
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "catalog_id": "watering_can",
+      "x": 1302,
+      "y": 399,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 40,
+      "radius": 75.0,
+      "is_goal": true,
+      "width": 179,
+      "height": 121,
+      "alpha": 206,
+      "color_filter": [
+        110,
+        90,
+        90
+      ]
+    },
+    {
+      "catalog_id": "rolling_pin",
+      "x": 1102,
+      "y": 391,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 124,
+      "height": 109,
+      "is_goal": true,
+      "rotation": 319.5,
+      "color_filter": [
+        138,
+        121,
+        110
+      ],
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          -2,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "catalog_id": "ladle",
+      "x": 750,
+      "y": 446,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 35,
+      "width": 92,
+      "height": 128,
+      "is_goal": true,
+      "rotation": 35,
+      "alpha": 201
+    },
+    {
+      "catalog_id": "rotten_apple",
+      "x": 1409,
+      "y": 1003,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 25,
+      "radius": 28.0,
+      "is_goal": true,
+      "width": 57,
+      "height": 55,
+      "alpha": 234,
+      "color_filter": [
+        92,
+        85,
+        85
+      ]
+    },
+    {
+      "catalog_id": "dried_fish",
+      "x": 908,
+      "y": 815,
+      "detection_type": "rect",
+      "layer": "objects_high",
+      "hint_delay": 35,
+      "width": 125,
+      "height": 123,
+      "is_goal": true,
+      "rotation": 335,
+      "alpha": 223,
+      "color_filter": [
+        141,
+        138,
+        138
+      ]
+    },
+    {
+      "catalog_id": "pliers",
+      "x": 933,
+      "y": 982,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 93,
+      "height": 81,
+      "is_goal": false,
+      "rotation": 312.3,
+      "color_filter": [
+        113,
+        110,
+        106
+      ],
+      "alpha": 243,
+      "corners": [
+        [
+          3,
+          3
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          -12,
+          -6
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "catalog_id": "electric_drill",
+      "x": 2578,
+      "y": 831,
+      "detection_type": "rect",
+      "layer": "objects_high",
+      "hint_delay": 40,
+      "width": 151,
+      "height": 132,
+      "is_goal": false,
+      "alpha": 231,
+      "color_filter": [
+        123,
+        88,
+        53
+      ]
+    },
+    {
+      "catalog_id": "utility_knife",
+      "x": 200,
+      "y": 1333,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 104,
+      "height": 101,
+      "is_goal": false,
+      "rotation": 355,
+      "alpha": 206,
+      "color_filter": [
+        91,
+        84,
+        84
+      ]
+    },
+    {
+      "catalog_id": "vintage_comic",
+      "x": 128,
+      "y": 1005,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 77,
+      "height": 120,
+      "is_goal": true,
+      "rotation": 20,
+      "alpha": 239,
+      "color_filter": [
+        64,
+        48,
+        48
+      ]
+    },
+    {
+      "catalog_id": "pow_sign",
+      "x": 736,
+      "y": 908,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 25,
+      "width": 135,
+      "height": 140,
+      "is_goal": true,
+      "rotation": 20,
+      "alpha": 82,
+      "color_filter": [
+        64,
+        48,
+        48
+      ]
+    },
+    {
+      "catalog_id": "sawed_off_shotgun",
+      "x": 1472,
+      "y": 1300,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 40,
+      "width": 397,
+      "height": 152,
+      "is_goal": false,
+      "rotation": 115,
+      "alpha": 229,
+      "color_filter": [
+        48,
+        79,
+        96
+      ],
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          -1,
+          -51
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "catalog_id": "inkwell_quill",
+      "x": 2232,
+      "y": 949,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 35,
+      "width": 125,
+      "height": 152,
+      "is_goal": false,
+      "rotation": 355,
+      "color_filter": [
+        208,
+        197,
+        127
+      ],
+      "alpha": 233,
+      "corners": [
+        [
+          -7,
+          20
+        ],
+        [
+          -14,
+          -1
+        ],
+        [
+          1,
+          -6
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "catalog_id": "silk_tie",
+      "x": 1623,
+      "y": 858,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 78,
+      "height": 89,
+      "is_goal": true,
+      "alpha": 236
+    },
+    {
+      "catalog_id": "aged_cheese",
+      "x": 1790,
+      "y": 1002,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 102,
+      "height": 94,
+      "is_goal": false,
+      "rotation": 355,
+      "color_filter": [
+        229,
+        201,
+        105
+      ],
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          9,
+          -3
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "alpha": 242,
+      "grayscale": true,
+      "grayscale_factor": 0.06
+    },
+    {
+      "catalog_id": "error_floppy",
+      "x": 2416,
+      "y": 1305,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 25,
+      "width": 113,
+      "height": 128,
+      "is_goal": false,
+      "rotation": 340,
+      "color_filter": [
+        85,
+        62,
+        40
+      ],
+      "alpha": 192
+    },
+    {
+      "catalog_id": "wooden_train",
+      "x": 2462,
+      "y": 629,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 143,
+      "height": 92,
+      "is_goal": false,
+      "alpha": 239,
+      "color_filter": [
+        199,
+        144,
+        108
+      ],
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          7
+        ],
+        [
+          -1,
+          -4
+        ]
+      ]
+    },
+    {
+      "catalog_id": "toy_blocks",
+      "x": 2216,
+      "y": 625,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 111,
+      "height": 90,
+      "is_goal": true,
+      "corners": [
+        [
+          0,
+          9
+        ],
+        [
+          -4,
+          0
+        ],
+        [
+          -1,
+          5
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "alpha": 228,
+      "color_filter": [
+        220,
+        198,
+        101
+      ]
+    },
+    {
+      "catalog_id": "golden_bell",
+      "x": 1258,
+      "y": 506,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "radius": 36.75,
+      "is_goal": true,
+      "width": 66,
+      "height": 81,
+      "rotation": 30,
+      "color_filter": [
+        172,
+        123,
+        123
+      ],
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          -8,
+          1
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "catalog_id": "creature_claw",
+      "x": 843,
+      "y": 377,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "radius": 56.0,
+      "is_goal": false,
+      "alpha": 226,
+      "color_filter": [
+        136,
+        123,
+        123
+      ],
+      "width": 111,
+      "height": 113,
+      "rotation": 355
+    },
+    {
+      "catalog_id": "toy_soldier",
+      "x": 2321,
+      "y": 359,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 51,
+      "height": 139,
+      "is_goal": true,
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          -1
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          9
+        ]
+      ],
+      "alpha": 213
+    },
+    {
+      "catalog_id": "sunglasses",
+      "x": 1857,
+      "y": 1117,
+      "detection_type": "rect",
+      "layer": "objects_high",
+      "hint_delay": 30,
+      "width": 128,
+      "height": 48,
+      "is_goal": true,
+      "rotation": 350,
+      "alpha": 181
+    },
+    {
+      "catalog_id": "marble_bust",
+      "x": 1656,
+      "y": 369,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 45,
+      "width": 61,
+      "height": 101,
+      "is_goal": true,
+      "color_filter": [
+        96,
+        64,
+        31
+      ],
+      "alpha": 218
+    },
+    {
+      "catalog_id": "cellphone_retro",
+      "x": 2361,
+      "y": 125,
+      "detection_type": "rect",
+      "layer": "objects_high",
+      "hint_delay": 35,
+      "width": 167,
+      "height": 104,
+      "is_goal": false,
+      "rotation": 355,
+      "color_filter": [
+        168,
+        112,
+        75
+      ],
+      "alpha": 228
+    },
+    {
+      "catalog_id": "future_poster",
+      "x": 1937,
+      "y": 859,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 107,
+      "height": 138,
+      "is_goal": false,
+      "corners": [
+        [
+          2,
+          1
+        ],
+        [
+          -4,
+          23
+        ],
+        [
+          -5,
+          37
+        ],
+        [
+          4,
+          -2
+        ]
+      ],
+      "alpha": 92,
+      "color_filter": [
+        223,
+        217,
+        93
+      ]
+    },
+    {
+      "catalog_id": "bow_tie",
+      "x": 1705,
+      "y": 41,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 25,
+      "width": 101,
+      "height": 61,
+      "is_goal": false,
+      "color_filter": [
+        183,
+        126,
+        67
+      ]
+    },
+    {
+      "catalog_id": "sponge",
+      "x": 920,
+      "y": 1120,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 20,
+      "width": 75,
+      "height": 58,
+      "is_goal": false,
+      "color_filter": [
+        84,
+        77,
+        70
+      ],
+      "alpha": 226
+    },
+    {
+      "catalog_id": "hourglass",
+      "x": 1141,
+      "y": 942,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 40,
+      "width": 53,
+      "height": 90,
+      "is_goal": false,
+      "color_filter": [
+        140,
+        112,
+        112
+      ],
+      "rotation": 358.9,
+      "alpha": 233
+    },
+    {
+      "catalog_id": "tamagotchi",
+      "x": 1369,
+      "y": 872,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 25,
+      "radius": 23.0,
+      "is_goal": false,
+      "color_filter": [
+        128,
+        80,
+        48
+      ],
+      "width": 46,
+      "height": 46,
+      "flip_x": true
+    },
+    {
+      "catalog_id": "trowel",
+      "x": 1949,
+      "y": 507,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 43,
+      "height": 136,
+      "is_goal": false,
+      "rotation": 181.6,
+      "alpha": 236
+    },
+    {
+      "catalog_id": "screwdriver",
+      "x": 131,
+      "y": 223,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 25,
+      "width": 34,
+      "height": 150,
+      "is_goal": false,
+      "alpha": 238,
+      "color_filter": [
+        136,
+        231,
+        237
+      ],
+      "rotation": 180.4
+    },
+    {
+      "catalog_id": "silver_ring",
+      "x": 2658,
+      "y": 1274,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 25,
+      "radius": 24.5,
+      "is_goal": false,
+      "rotation": 331.9,
+      "width": 49,
+      "height": 49,
+      "color_filter": [
+        202,
+        160,
+        131
+      ],
+      "alpha": 204
+    },
+    {
+      "catalog_id": "spray_bottle",
+      "x": 710,
+      "y": 1083,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 25,
+      "width": 64,
+      "height": 160,
+      "is_goal": false,
+      "color_filter": [
+        64,
+        97,
+        114
+      ]
+    },
+    {
+      "catalog_id": "pelt_scrap",
+      "x": 390,
+      "y": 1460,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 40,
+      "radius": 76,
+      "is_goal": false,
+      "alpha": 223
+    },
+    {
+      "catalog_id": "voodoo_doll",
+      "x": 1097,
+      "y": 1267,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 114,
+      "height": 155,
+      "is_goal": true,
+      "alpha": 164,
+      "color_filter": [
+        211,
+        172,
+        172
+      ],
+      "rotation": 308.8
+    },
+    {
+      "catalog_id": "teddy_bear",
+      "x": 1183.5,
+      "y": 712.5,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 35,
+      "radius": 41.5,
+      "is_goal": true,
+      "width": 83,
+      "height": 83,
+      "alpha": 192,
+      "color_filter": [
+        245,
+        252,
+        197
+      ]
+    },
+    {
+      "catalog_id": "rubber_duck",
+      "x": 2557,
+      "y": 891,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 25,
+      "radius": 36.75,
+      "is_goal": true,
+      "width": 73,
+      "height": 74
+    },
+    {
+      "catalog_id": "worn_pencil",
+      "x": 2402,
+      "y": 621,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 25,
+      "width": 34,
+      "height": 237,
+      "is_goal": true
+    },
+    {
+      "catalog_id": "dried_sage",
+      "x": 1125,
+      "y": 483,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 119,
+      "height": 111,
+      "is_goal": true,
+      "rotation": 228.3,
+      "alpha": 211,
+      "color_filter": [
+        163,
+        125,
+        87
+      ]
+    },
+    {
+      "catalog_id": "light_bulb",
+      "x": 2563,
+      "y": 1425,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 25,
+      "radius": 37.75,
+      "is_goal": false,
+      "width": 62,
+      "height": 89,
+      "rotation": 294.9,
+      "color_filter": [
+        72,
+        79,
+        86
+      ]
+    },
+    {
+      "catalog_id": "lit_candle",
+      "x": 1419,
+      "y": 395,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 35,
+      "width": 38,
+      "height": 59,
+      "is_goal": true,
+      "alpha": 233,
+      "color_filter": [
+        166,
+        166,
+        161
+      ]
+    },
+    {
+      "catalog_id": "metal_flashlight",
+      "x": 1704,
+      "y": 954,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 95,
+      "height": 45,
+      "is_goal": true,
+      "alpha": 233,
+      "color_filter": [
+        221,
+        200,
+        129
+      ]
+    },
+    {
+      "catalog_id": "ornate_candelabra",
+      "x": 1708,
+      "y": 756,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 40,
+      "width": 120,
+      "height": 155,
+      "is_goal": true,
+      "alpha": 226,
+      "color_filter": [
+        232,
+        199,
+        199
+      ]
+    },
+    {
+      "catalog_id": "juggling_club",
+      "x": 748,
+      "y": 142,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 35,
+      "width": 182,
+      "height": 176,
+      "is_goal": true,
+      "rotation": 286.0,
+      "alpha": 217,
+      "color_filter": [
+        99,
+        76,
+        76
+      ],
+      "grayscale": true
+    },
+    {
+      "catalog_id": "measuring_tape",
+      "x": 2065.0,
+      "y": 1143.5,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "radius": 39.25,
+      "width": 82,
+      "height": 75,
+      "is_goal": false,
+      "alpha": 223,
+      "grayscale": true,
+      "grayscale_factor": 0.41,
+      "color_filter": [
+        156,
+        106,
+        72
+      ]
+    },
+    {
+      "catalog_id": "oil_canister",
+      "x": 394,
+      "y": 1305,
+      "detection_type": "rect",
+      "layer": "objects_low",
+      "hint_delay": 35,
+      "width": 95,
+      "height": 152,
+      "grayscale": true,
+      "grayscale_factor": 0.28,
+      "alpha": 226,
+      "color_filter": [
+        82,
+        131,
+        156
+      ]
+    },
+    {
+      "catalog_id": "abyssal_crystal",
+      "x": 2267,
+      "y": 471,
+      "detection_type": "circle",
+      "layer": "objects_low",
+      "hint_delay": 35,
+      "radius": 51.75,
+      "width": 103,
+      "height": 104,
+      "rotation": 3.1,
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          -2,
+          -2
+        ],
+        [
+          4,
+          -1
+        ],
+        [
+          1,
+          8
+        ]
+      ],
+      "color_filter": [
+        128,
+        80,
+        48
+      ],
+      "grayscale": true,
+      "grayscale_factor": 0.36
+    },
+    {
+      "catalog_id": "sunken_skull",
+      "x": 1565,
+      "y": 623,
+      "detection_type": "circle",
+      "layer": "objects_low",
+      "hint_delay": 30,
+      "radius": 50.5,
+      "width": 87,
+      "height": 115,
+      "grayscale": true,
+      "grayscale_factor": 0.34,
+      "alpha": 188,
+      "color_filter": [
+        197,
+        136,
+        96
+      ]
+    },
+    {
+      "catalog_id": "black_coral",
+      "x": 2596,
+      "y": 568,
+      "detection_type": "rect",
+      "layer": "objects_low",
+      "hint_delay": 35,
+      "width": 153,
+      "height": 150,
+      "alpha": 211,
+      "grayscale": true,
+      "grayscale_factor": 0.06,
+      "color_filter": [
+        96,
+        176,
+        208
+      ]
+    },
+    {
+      "catalog_id": "skull_candle_lit",
+      "x": 2642,
+      "y": 836,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "hint_delay": 30,
+      "width": 86,
+      "height": 128,
+      "color_filter": [
+        205,
+        152,
+        117
+      ],
+      "grayscale": true,
+      "grayscale_factor": 0.24,
+      "alpha": 190
+    },
+    {
+      "catalog_id": "skeleton_key_rusty",
+      "x": 140,
+      "y": 933,
+      "detection_type": "rect",
+      "layer": "objects_low",
+      "hint_delay": 30,
+      "width": 43,
+      "height": 130,
+      "rotation": 289.1,
+      "alpha": 224
+    },
+    {
+      "catalog_id": "funnel",
+      "x": 1148,
+      "y": 1002,
+      "detection_type": "circle",
+      "layer": "objects_low",
+      "hint_delay": 30,
+      "radius": 39.75,
+      "width": 77,
+      "height": 82,
+      "rotation": 58.4,
+      "alpha": 227,
+      "color_filter": [
+        96,
+        64,
+        32
+      ],
+      "grayscale": true,
+      "grayscale_factor": 0.76
+    },
+    {
+      "catalog_id": "smoking_pipe",
+      "x": 1363,
+      "y": 951,
+      "detection_type": "rect",
+      "layer": "objects_low",
+      "hint_delay": 30,
+      "width": 90,
+      "height": 81,
+      "color_filter": [
+        82,
+        132,
+        166
+      ]
+    },
+    {
+      "catalog_id": "perfume_bottle_vintage",
+      "x": 1233,
+      "y": 945,
+      "detection_type": "rect",
+      "layer": "objects_low",
+      "hint_delay": 35,
+      "width": 73,
+      "height": 91,
+      "color_filter": [
+        204,
+        139,
+        95
+      ],
+      "alpha": 172,
+      "grayscale": true,
+      "grayscale_factor": 0.65
+    },
+    {
+      "catalog_id": "kitchen_scale",
+      "x": 1336,
+      "y": 313,
+      "detection_type": "rect",
+      "layer": "objects_low",
+      "hint_delay": 40,
+      "width": 157,
+      "height": 153,
+      "alpha": 231,
+      "color_filter": [
+        132,
+        99,
+        66
+      ]
+    },
+    {
+      "catalog_id": "tennis_shoe",
+      "x": 2147,
+      "y": 1005,
+      "detection_type": "rect",
+      "layer": "objects_low",
+      "hint_delay": 35,
+      "width": 172,
+      "height": 113,
+      "color_filter": [
+        182,
+        125,
+        88
+      ],
+      "alpha": 208
+    },
+    {
+      "catalog_id": "toothpaste_tube",
+      "x": 1954,
+      "y": 787,
+      "detection_type": "rect",
+      "layer": "objects_low",
+      "hint_delay": 35,
+      "width": 127,
+      "height": 34,
+      "rotation": 355.7,
+      "alpha": 233,
+      "color_filter": [
+        201,
+        200,
+        124
+      ]
+    },
+    {
+      "catalog_id": "highlighter_yellow",
+      "x": 904,
+      "y": 1009,
+      "detection_type": "rect",
+      "layer": "objects_low",
+      "hint_delay": 30,
+      "width": 74,
+      "height": 74,
+      "rotation": 275.1,
+      "grayscale": true,
+      "grayscale_factor": 0.63
+    },
+    {
+      "catalog_id": "umbrella_closed",
+      "x": 727,
+      "y": 956,
+      "detection_type": "rect",
+      "layer": "objects_low",
+      "hint_delay": 35,
+      "width": 65,
+      "height": 274,
+      "rotation": 354.0,
+      "alpha": 221,
+      "color_filter": [
+        96,
+        176,
+        208
+      ],
+      "corners": [
+        [
+          6,
+          2
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "catalog_id": "forrestgump_poster",
+      "x": 471,
+      "y": 1071,
+      "detection_type": "rect",
+      "layer": "objects_low",
+      "hint_delay": 30,
+      "width": 141,
+      "height": 150,
+      "corners": [
+        [
+          0,
+          -3
+        ],
+        [
+          -18,
+          -46
+        ],
+        [
+          -18,
+          -51
+        ],
+        [
+          0,
+          7
+        ]
+      ],
+      "alpha": 36,
+      "grayscale": true,
+      "grayscale_factor": 0.46
+    },
+    {
+      "catalog_id": "bankers_lamp",
+      "x": 1120,
+      "y": 341,
+      "detection_type": "rect",
+      "layer": "objects_low",
+      "hint_delay": 35,
+      "width": 126,
+      "height": 121,
+      "alpha": 197,
+      "grayscale": true,
+      "grayscale_factor": 0.39,
+      "color_filter": [
+        186,
+        122,
+        79
+      ]
+    },
+    {
+      "catalog_id": "hourglass",
+      "x": 1126,
+      "y": 938,
+      "detection_type": "rect",
+      "layer": "objects_high",
+      "hint_delay": 40,
+      "width": 55,
+      "height": 100,
+      "alpha": 132
+    },
+    {
+      "catalog_id": "rubber_duck",
+      "x": 213,
+      "y": 1056,
+      "detection_type": "circle",
+      "layer": "objects_high",
+      "hint_delay": 25,
+      "radius": 53.25,
+      "width": 105,
+      "height": 108,
+      "color_filter": [
+        151,
+        205,
+        227
+      ],
+      "alpha": 239
+    },
+    {
+      "catalog_id": "spinning_top",
+      "x": 1431,
+      "y": 995,
+      "detection_type": "circle",
+      "layer": "objects_high",
+      "hint_delay": 30,
+      "radius": 40.0,
+      "width": 73,
+      "height": 87,
+      "rotation": 325.8,
+      "alpha": 234,
+      "color_filter": [
+        128,
+        80,
+        48
+      ]
+    },
+    {
+      "catalog_id": "toy_soldier",
+      "x": 1214,
+      "y": 941,
+      "detection_type": "rect",
+      "layer": "objects_high",
+      "hint_delay": 30,
+      "width": 34,
+      "height": 94,
+      "alpha": 214,
+      "color_filter": [
+        221,
+        176,
+        146
+      ]
+    },
+    {
+      "catalog_id": "arcade_joystick",
+      "x": 1788,
+      "y": 1007,
+      "detection_type": "rect",
+      "layer": "objects_high",
+      "hint_delay": 35,
+      "width": 94,
+      "height": 115,
+      "rotation": 358.3,
+      "corners": [
+        [
+          2,
+          1
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          -4,
+          -1
+        ],
+        [
+          -6,
+          -7
+        ]
+      ],
+      "alpha": 231,
+      "color_filter": [
+        232,
+        179,
+        144
+      ]
+    },
+    {
+      "catalog_id": "tape_measure",
+      "x": 2284.5,
+      "y": 1069.0,
+      "detection_type": "circle",
+      "layer": "objects_high",
+      "hint_delay": 25,
+      "radius": 60.25,
+      "width": 129,
+      "height": 112,
+      "rotation": 353.7,
+      "flip_x": true,
+      "alpha": 234,
+      "color_filter": [
+        215,
+        170,
+        140
+      ]
+    },
+    {
+      "catalog_id": "bucket",
+      "x": 776,
+      "y": 1200,
+      "detection_type": "circle",
+      "layer": "objects_high",
+      "hint_delay": 30,
+      "radius": 63.0,
+      "width": 120,
+      "height": 132,
+      "alpha": 208,
+      "color_filter": [
+        216,
+        232,
+        173
+      ]
+    },
+    {
+      "catalog_id": "fossil_shell",
+      "x": 1411.0,
+      "y": 418.0,
+      "detection_type": "circle",
+      "layer": "objects_high",
+      "hint_delay": 30,
+      "radius": 44.0,
+      "width": 102,
+      "height": 74,
+      "alpha": 184,
+      "color_filter": [
+        195,
+        143,
+        109
+      ]
+    },
+    {
+      "catalog_id": "marquee_asteroids",
+      "x": 2015,
+      "y": 1327,
+      "detection_type": "rect",
+      "layer": "objects_high",
+      "hint_delay": 40,
+      "width": 330,
+      "height": 97,
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          -10,
+          -23
+        ],
+        [
+          -11,
+          -28
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "alpha": 47,
+      "grayscale": true,
+      "grayscale_factor": 0.26,
+      "minigame_trigger": {
+        "minigame_id": "asteroids"
+      }
+    },
+    {
+      "catalog_id": "playing_cards_alt",
+      "x": 1222,
+      "y": 1167,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "radius": 54,
+      "width": 108,
+      "height": 108,
+      "minigame_trigger": {
+        "minigame_id": "tower"
+      }
+    },
+    {
+      "catalog_id": "marquee_pong",
+      "x": 204,
+      "y": 688,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 288,
+      "height": 97,
+      "minigame_trigger": {
+        "minigame_id": "minipong"
+      }
+    },
+    {
+      "catalog_id": "marquee_centipede",
+      "x": 1536,
+      "y": 530,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 360,
+      "height": 94,
+      "minigame_trigger": {
+        "minigame_id": "centipede"
+      }
+    },
+    {
+      "catalog_id": "spoiled_milk",
+      "x": 440,
+      "y": 351,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "always_show": false,
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 146,
+      "height": 209
+    }
+  ],
+  "music": [
+    "Indecenti - Clock Teeth.mp3"
+  ],
+  "name_key": "Formis_name",
+  "effects": [
+    {
+      "effect_id": "golden_glint",
+      "type": "glint",
+      "x": 1763,
+      "y": 432,
+      "radius": 209,
+      "intensity": 0.13,
+      "layer": "effects",
+      "layer_z": 100
+    },
+    {
+      "effect_id": "flies_swarm",
+      "type": "flies",
+      "x": 1158,
+      "y": 1143,
+      "radius": 120,
+      "color": [
+        20,
+        20,
+        20
+      ],
+      "intensity": 0.25,
+      "pulse_period": 0.25,
+      "pulse_min": 1.2,
+      "layer": "effects",
+      "layer_z": 100
+    },
+    {
+      "effect_id": "bubble_tip",
+      "type": "bubble_tip",
+      "x": 1377,
+      "y": 1201,
+      "radius": 150,
+      "color": [
+        152,
+        96,
+        59
+      ],
+      "intensity": 1.0,
+      "layer": "effects",
+      "layer_z": 100,
+      "text_key": "TIP_Formis_63496",
+      "trigger": "start_scene",
+      "width": 1561,
+      "height": 232,
+      "alpha": 142,
+      "font_size": 51,
+      "font_color": [
+        245,
+        241,
+        241
+      ]
+    },
+    {
+      "effect_id": "bubble_tip",
+      "type": "bubble_tip",
+      "x": 438,
+      "y": 713,
+      "radius": 150,
+      "color": [
+        152,
+        96,
+        59
+      ],
+      "intensity": 1.0,
+      "layer": "effects",
+      "layer_z": 100,
+      "text_key": "TIP_Formis_32D7E",
+      "trigger": "end_scene",
+      "width": 829,
+      "height": 232,
+      "alpha": 142,
+      "font_size": 51,
+      "font_color": [
+        245,
+        241,
+        241
+      ]
+    }
+  ],
+  "objects_to_show": 17,
+  "auto_random_finds": false,
+  "num_random_finds": 12,
+  "flashlight": false,
+  "flashlight_radius": 297,
+  "random_layer_selection": false,
+  "layer_locked": {
+    "objects_low": false,
+    "objects_mid": false,
+    "objects_high": false,
+    "overlay": false,
+    "effects": false
+  }
+}

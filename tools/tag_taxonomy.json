@@ -1,0 +1,237 @@
+{
+  "_meta": {
+    "version": "1.1",
+    "date": "2026-04-20",
+    "description": "Tassonomia canonica dei tag per global_objects_catalog.json",
+    "stats": {
+      "objects": 1084,
+      "tag_instances": 5396,
+      "unique_tags": 301,
+      "avg_tags_per_object": 4.98,
+      "objects_without_size": 0,
+      "objects_without_material": 0,
+      "objects_without_domain": 0
+    },
+    "namespaces": ["dimensione", "materiale", "dominio", "tema", "mood", "natura", "geografia", "colore", "tecnici"]
+  },
+
+  "namespaces": {
+
+    "dimensione": {
+      "description": "Dimensione fisica dell'oggetto nel gioco",
+      "tags": {
+        "piccolo":  "< 40px circa (radius <25 o lato <40)",
+        "medio":    "40-80px circa",
+        "grande":   "> 80px circa"
+      }
+    },
+
+    "materiale": {
+      "description": "Materiale prevalente dell'oggetto",
+      "tags": {
+        "metallo":    "Ferro, acciaio, alluminio, rame, ottone",
+        "legno":      "Legno grezzo o lavorato",
+        "carta":      "Carta, cartone, cartoncino",
+        "plastica":   "Polimeri sintetici, resine",
+        "vetro":      "Vetro, cristallo trasparente",
+        "stoffa":     "Tessuto, tela, imbottitura",
+        "ceramica":   "Ceramica, terracotta, porcellana, maiolica",
+        "gomma":      "Gomma naturale o sintetica, latex",
+        "cuoio":      "Pelle conciata, cuoio lavorato",
+        "pietra":     "Pietra, marmo, minerali, fossili",
+        "cristallo":  "Cristallo, gemme trasparenti",
+        "cera":       "Cera d'api o paraffina",
+        "osso":       "Ossa, avorio, corno animale",
+        "biologico":  "Materiale organico non-animale: piante, funghi, semi, natura organica"
+      }
+    },
+
+    "dominio": {
+      "description": "Categoria funzionale/tematica dell'oggetto. Ogni oggetto deve averne almeno uno.",
+      "tags": {
+        "abbigliamento":  "Vestiti, indumenti, capi di moda",
+        "accessorio":     "Accessori indossabili: spille, ciondoli, occhiali, borse piccole",
+        "calzatura":      "Scarpe, stivali, sandali, pantofole, pattini",
+        "cappello":       "Cappelli, berretti, elmetti, copricapi in genere",
+        "gioiello":       "Gioielli: anelli, collane, bracciali, amuleti",
+        "orologio":       "Orologi da polso, da tavolo, sveglie, pendoli",
+        "arma":           "Armi offensive: spade, pistole, coltelli, asce",
+        "attrezzo":       "Utensili manuali: martelli, chiavi inglesi, pinze, righelli",
+        "officina":       "Attrezzatura da officina o laboratorio: trapani, calibri, saldatori",
+        "chiave":         "Chiavi di ogni tipo: porta, antiche, digitali, magiche",
+        "elettronica":    "Dispositivi elettronici: computer, console, sensori, chip, circuiti",
+        "tecnologia":     "Oggetti tecnici moderni o meccanici avanzati (più ampio di elettronica)",
+        "comunicazione":  "Dispositivi di comunicazione: telefoni, radio, walkie-talkie",
+        "dati":           "Supporti dati: floppy, USB, CD, hard disk, schede di memoria",
+        "audio":          "Oggetti audio: cuffie, speaker, walkman, microfoni",
+        "video":          "Oggetti video: VHS, DVD, proiettori, display, webcam",
+        "cucina":         "Oggetti da cucina: pentole, coltelli, elettrodomestici culinari",
+        "cibo":           "Alimenti solidi: frutta, pane, carne, dolci, verdura",
+        "bevanda":        "Liquidi potabili: bottiglie piene, tazze con contenuto",
+        "salume":         "Salumi italiani: prosciutto, salame, mortadella, speck, bresaola",
+        "dolce":          "Dolciumi: torte, caramelle, gelati, cioccolata, biscotti",
+        "salato":         "Snack salati: patatine, pretzel, crackers, noccioline",
+        "arredamento":    "Mobili e oggetti d'arredo fissi: specchi, cornici, cuscini",
+        "decorazione":    "Oggetti decorativi senza funzione pratica primaria",
+        "casa":           "Oggetti domestici generici non classificabili altrove",
+        "luce":           "Sorgenti luminose: lampade, lanterne, torce, candele",
+        "pulizia":        "Oggetti per la pulizia: scope, spugne, detergenti, mop",
+        "bagno":          "Oggetti igienici: rasoio, spazzolino, sapone, asciugamano",
+        "giardino":       "Attrezzi e oggetti da giardino: vasi, gnomi, annaffiatoi",
+        "gioco":          "Giochi da tavolo, carte, puzzle, ouija, quiz",
+        "giocattolo":     "Giocattoli: pupazzi, peluche, action figure, modellini",
+        "videogame":      "Oggetti del mondo videoludico: controller, console, cartucce",
+        "carte_da_gioco": "Mazzi di carte: poker, tarocchi, UNO, magic",
+        "carta_individuale": "Singola carta estratta da un mazzo",
+        "slot":           "Icone e componenti da slot machine (reel icons)",
+        "casinò":         "Oggetti da casinò: fiches, roulette, tavoli da gioco",
+        "sport":          "Attrezzatura sportiva: racchette, palloni, pesi, trofei",
+        "collezione":     "Oggetti da collezione: edizioni limitate, rarità, memorabilia",
+        "modello":        "Modellini in scala: aerei, navi, auto, treni, veicoli",
+        "musica":         "Strumenti musicali e oggetti connessi alla musica",
+        "arte":           "Oggetti delle arti visive: pennelli, tele, sculture, palette",
+        "cinema":         "Oggetti cinematografici: pellicole, ciak, DVD, locandine",
+        "fumetti":        "Fumetti, manga, albi illustrati, gadget supereroi",
+        "poster":         "Poster, manifesti, locandine da appendere a parete",
+        "foto":           "Fotografie, macchine fotografiche, album, polaroid",
+        "maschera":       "Maschere facciali: veneziane, di carnevale, teatrali, horror",
+        "ufficio":        "Cancelleria: penne, graffette, pinzatrici, stampanti",
+        "studio":         "Libri, atlanti, globi, dizionari, oggetti da biblioteca",
+        "medico":         "Strumenti medici: siringhe, garze, mascherine, kit PS",
+        "viaggio":        "Oggetti da viaggio/campeggio: zaini, bussole, tende, borracce",
+        "veicolo":        "Veicoli o loro componenti: bici, moto, unicycle, drone",
+        "simbolo":        "Simboli, stemmi, amuleti, icone grafiche (pace, yin-yang)",
+        "denaro":         "Denaro: monete, banconote, portafogli, salvadanai",
+        "bandiera":       "Bandiere nazionali o simboliche",
+        "nazione":        "Oggetti simbolo di una nazione specifica",
+        "segnaletica":    "Cartelli stradali, segnali di pericolo, indicatori",
+        "tradizione":     "Oggetti della tradizione locale o folkloristica",
+        "colore":         "Materiali pittorici: vernici, pennelli, spray",
+        "colore_tecnico": "DEPRECATED — usa 'arte' o 'colore' secondo contesto"
+      }
+    },
+
+    "tema": {
+      "description": "Estetica o tema narrativo prevalente",
+      "tags": {
+        "horror":    "Oggetti inquietanti, legati al terrore o all'orrore",
+        "vintage":   "Estetica pre-anni '60: antico, vittoriano, art déco, coloniale",
+        "retro":     "Estetica anni '60-'90: nostalgia pop, retrocomputing",
+        "scifi":     "Fantascienza: futuro, spazio, robot, alieni",
+        "noir":      "Estetica noir: ombra, detective, anni '40-'50",
+        "cult":      "Oggetti iconici di cultura pop o cult",
+        "pop":       "Cultura pop contemporanea: mainstream, colorato, mass market",
+        "fantasy":   "Oggetti fantastici: magia, draghi, elfumetti",
+        "mistero":   "Oggetti enigmatici, con storia nascosta o ambiguità",
+        "circo":     "Estetica circense: clown, acrobati, tende da circo",
+        "oceano":    "Oggetti marini, navali, subacquei",
+        "isometrico":"Oggetti rappresentati in prospettiva isometrica"
+      }
+    },
+
+    "mood": {
+      "description": "Attributo emotivo o qualitativo dell'oggetto",
+      "tags": {
+        "pericolo":  "Oggetto pericoloso o che evoca rischio",
+        "macabro":   "Lugubre, morboso, legato alla morte",
+        "occulto":   "Occulto, esoterico, legato a rituali o simboli segreti",
+        "magia":     "Oggetto magico o con proprietà soprannaturali",
+        "prezioso":  "Oggetto di valore elevato, raro o pregiato",
+        "rotto":     "Oggetto danneggiato, consumato, usurato",
+        "variante":  "Variante estetica di un oggetto già presente nel catalogo",
+        "gruppo_oggetti": "Oggetto che rappresenta un insieme di elementi"
+      }
+    },
+
+    "natura": {
+      "description": "Oggetti del mondo naturale, esseri viventi, piante, funghi",
+      "tags": {
+        "natura":    "Oggetti naturali in generale: piante, rocce, animali, elementi outdoor",
+        "biologico": "Materiale organico: parti di corpo, tessuti viventi, materia organica, funghi, semi",
+        "insetto":   "Insetti e artropodi",
+        "vola":      "Animali o oggetti capaci di volare",
+        "bosco":     "Oggetti del bosco: ghiande, pigne, nidi, muschio, funghi boschivi",
+        "abisso":    "Oggetti delle profondità oceaniche: creature abissali, relitti, coralli profondi"
+      }
+    },
+
+    "geografia": {
+      "description": "Provenienza geografica o culturale dell'oggetto",
+      "tags": {
+        "europa":       "Europa occidentale e orientale",
+        "nordamerica":  "Stati Uniti, Canada, Messico settentrionale",
+        "sudamerica":   "America del Sud",
+        "centroamerica":"America Centrale e Caraibi",
+        "orientale":    "Asia: Giappone, Cina, India, Medio Oriente",
+        "nordico":      "Scandinavia, culture nordiche"
+      }
+    },
+
+    "era": {
+      "description": "Periodo storico o culturale di riferimento",
+      "tags": {
+        "vintage": "pre-anni '60 (condiviso con tema)",
+        "retro":   "anni '60-'90 (condiviso con tema)"
+      },
+      "_note": "vintage e retro sono condivisi col namespace tema, non duplicati qui"
+    },
+
+    "stato": {
+      "description": "Stato fisico o meta-informazione sull'oggetto",
+      "tags": {
+        "rotto":         "Oggetto danneggiato (condiviso con mood)",
+        "variante":      "Variante di un oggetto base (condiviso con mood)",
+        "gruppo_oggetti":"Insieme di oggetti (condiviso con mood)",
+        "isometrico":    "Vista isometrica (condiviso con tema)"
+      },
+      "_note": "Questi tag sono già presenti in altri namespace per semantica, qui per chiarezza strutturale"
+    },
+
+    "colore": {
+      "description": "Colore dominante — usare solo quando il colore è l'identificatore primario dell'oggetto",
+      "tags": {
+        "rosso":    "Rosso dominante",
+        "verde":    "Verde dominante",
+        "blu":      "Blu dominante",
+        "giallo":   "Giallo dominante",
+        "nero":     "Nero dominante",
+        "bianco":   "Bianco dominante",
+        "arancione":"Arancione dominante",
+        "viola":    "Viola dominante",
+        "cyan":     "Ciano dominante",
+        "rosa":     "Rosa dominante",
+        "marrone":  "Marrone dominante",
+        "argento":  "Argento/grigio metallico dominante"
+      }
+    }
+  },
+
+  "tecnici": {
+    "description": "Tag a bassa frequenza per disambiguazione o attributi tecnici interni. Non creare nuovi senza approvazione.",
+    "tags": {
+      "geometria":    "Forme geometriche pure: tetramino, cubi, rune geometriche",
+      "minerale":     "Frammenti minerali/rocce grezze",
+      "smoker":       "Accessori per fumatori: posacenere, tagliasigaretti, portasigari",
+      "prigione":     "Oggetti di contenzione/prigionia: catene, manette, sbarre",
+      "lento":        "Animale lento come tratto identificativo (es. lumaca)",
+      "notturno":     "Animale notturno come tratto identificativo (es. pipistrello)",
+      "mimetico":     "Animale o oggetto mimetico (es. camaleonte)",
+      "volante":      "Drone o oggetto volante meccanico",
+      "mouse":        "Mouse da computer (disambiguazione da animale topo)",
+      "tablet":       "Tablet digitale (disambiguazione da compressa)",
+      "tastiera":     "Tastiera da computer (disambiguazione)",
+      "visore":       "Visore VR (disambiguazione)",
+      "radio":        "Radio (disambiguazione da walkie-talkie)",
+      "casco":        "Casco protettivo/sportivo (diverso da cappello decorativo)",
+      "piume":        "Piume di uccello come oggetto decorativo o naturale",
+      "fossile":      "Fossile geologico (disambiguazione da pietra)",
+      "misura":       "Strumento di misura (metro, livella, calibro)",
+      "casa":         "Uso interno: oggetto domestico generico"
+    }
+  },
+
+  "migration_history": [
+    {"version": "1.0", "date": "2026-04-20", "description": "Prima tassonomia canonica applicata al catalogo. -71 tag unici, fix encoding, normalizzazione lingua, merge sinonimi."},
+    {"version": "1.1", "date": "2026-04-20", "description": "Audit completo: zero oggetti senza dimensione/materiale/dominio. +126 tag aggiunti a 91 oggetti sotto-taggati. +259 materiali su 215 oggetti. Tag unici stabili a 301. Documentazione completa in docs/ASSETS_WORKFLOW.md."}
+  ]
+}

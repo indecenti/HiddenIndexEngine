@@ -1,0 +1,32 @@
+# IDE / Editor
+.claude/
+.gemini/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+ENV/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Project Specific (Temporary/Build)
+build/
+dist/
+scratch/
+brain/
+saves/
+*.bak
+*.tmp
+*.log
+# saves/ # Decommenta se vuoi ignorare i salvataggi locali

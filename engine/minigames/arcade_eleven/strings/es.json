@@ -1,0 +1,13 @@
+{
+  "arcade_eleven_title": "Arcade Eleven",
+  "arcade_eleven_instructions": "Combina parejas que sumen 11. Elimina las figuras seleccionando una Sota, una Reina e un Rey a la vez.",
+  "arcade_eleven_score": "PUNTOS",
+  "arcade_eleven_deck": "Mazo: ",
+  "arcade_eleven_win": "¡Victoria!",
+  "arcade_eleven_game_over": "¡SIN MOVIMIENTOS! HAS PERDIDO.",
+  "arcade_eleven_complete": "¡Perfecto!",
+  "arcade_eleven_click_to_start": "CLIC PARA EMPEZAR",
+  "mg_description": "Suma 11 con dos cartas. Elimina las figuras (J, Q, K) seleccionando una de cada tipo simultáneamente.",
+  "mg_title": "Arcade Eleven",
+  "arcade_eleven_time_label": "TIEMPO"
+}

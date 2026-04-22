@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "game_config.json",
+  "type": "object",
+  "required": ["game_id", "version", "title_key", "menu", "default_language"],
+  "additionalProperties": false,
+  "properties": {
+    "game_id":          { "type": "string", "minLength": 1 },
+    "version":          { "type": "string" },
+    "title_key":        { "type": "string" },
+    "default_language": { "type": "string", "minLength": 2 },
+    "fallback_language":{ "type": "string" },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "logo":             { "type": "string" },
+        "icon":             { "type": "string" },
+        "splash_background":{ "type": "string" }
+      }
+    },
+    "menu": {
+      "type": "object",
+      "required": ["background"],
+      "additionalProperties": false,
+      "properties": {
+        "background":            { "type": "string" },
+        "music":                 { "type": "string" },
+        "level_select_background":{ "type": "string" }
+      }
+    },
+    "hud": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "frame":        { "type": "string" },
+        "font":         { "type": "string" },
+        "text_color":   { "type": "array", "items": { "type": "integer" }, "minItems": 3, "maxItems": 4 },
+        "accent_color": { "type": "array", "items": { "type": "integer" }, "minItems": 3, "maxItems": 4 },
+        "position":     { "type": "string", "enum": ["bottom", "top"] }
+      }
+    },
+    "layer_hint_intensity": {
+      "type": "object",
+      "additionalProperties": { "type": "number", "minimum": 0.0 }
+    },
+    "custom_layers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "z_value"],
+        "additionalProperties": false,
+        "properties": {
+          "id":            { "type": "string" },
+          "z_value":       { "type": "integer" },
+          "label":         { "type": "string" },
+          "hint_intensity":{ "type": "number", "minimum": 0.0 }
+        }
+      }
+    },
+    "achievements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name_key", "condition"],
+        "additionalProperties": false,
+        "properties": {
+          "id":              { "type": "string" },
+          "name_key":        { "type": "string" },
+          "description_key": { "type": "string" },
+          "icon":            { "type": "string" },
+          "condition":       { "type": "string" },
+          "params":          { "type": "object" }
+        }
+      }
+    }
+  }
+}

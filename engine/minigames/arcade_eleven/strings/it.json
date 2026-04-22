@@ -1,0 +1,13 @@
+{
+  "arcade_eleven_title": "Arcade Eleven",
+  "arcade_eleven_instructions": "Somma 11 con due carte. Elimina le figure (J, Q, K) selezionandone una per tipo contemporaneamente.",
+  "arcade_eleven_score": "PUNTAZZO",
+  "arcade_eleven_deck": "Mazzo: ",
+  "arcade_eleven_win": "Vittoria!",
+  "arcade_eleven_game_over": "NESSUNA MOSSA! HAI PERSO.",
+  "arcade_eleven_complete": "Perfetto!",
+  "arcade_eleven_click_to_start": "CLICCA PER INIZIARE",
+  "mg_description": "Somma 11 con due carte. Elimina le figure (J, Q, K) selezionandone una per tipo contemporaneamente.",
+  "mg_title": "Arcade Eleven",
+  "arcade_eleven_time_label": "TEMPO"
+}

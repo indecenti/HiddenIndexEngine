@@ -1,0 +1,7 @@
+{
+  "id": "minipong",
+  "name": "Mini Pong",
+  "description": "Una sfida classica al volo. Segna 3 punti per vincere.",
+  "icon": "marquee_pong.png",
+  "main_class": "MiniPongGame"
+}

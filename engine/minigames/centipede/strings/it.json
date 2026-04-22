@@ -1,0 +1,11 @@
+{
+  "centipede_title": "CENTIPEDE ARCADE",
+  "centipede_score": "PT: {score}",
+  "centipede_start": "PREMI UN TASTO PER INIZIARE",
+  "centipede_gameover": "GAME OVER",
+  "centipede_instructions": "FRECCE/MOUSE: MUOVI | SPAZIO/LMB: FUOCO",
+  "centipede_help": "Distruggi il centopiedi!",
+  "centipede_exit": "PREMI UN TASTO PER USCIRE",
+  "mg_description": "Difenditi dall'invasione dei millepiedi tra i funghi velenosi.",
+  "mg_title": "Centipede Arcade"
+}
