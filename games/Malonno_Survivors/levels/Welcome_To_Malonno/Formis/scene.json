@@ -819,8 +819,8 @@
     },
     {
       "catalog_id": "pelt_scrap",
-      "x": 390,
-      "y": 1460,
+      "x": 406,
+      "y": 1452,
       "detection_type": "circle",
       "layer": "objects_mid",
       "hint_delay": 40,

@@ -156,54 +156,63 @@ class RenderTopbarMixin:
     def _r_status(self, w, h):
         from editor.constants import UI_TIPS
         y = h - STATUS_H
+        # Background barra con linea di separazione chiara
         _rect(self.screen, STATUS, (0, y, w, STATUS_H))
-        pygame.draw.line(self.screen, BORDER, (0, y), (w, y))
+        pygame.draw.line(self.screen, (60, 60, 75), (0, y), (w, y))
 
         mx2, my2 = pygame.mouse.get_pos()
-
-        # Pulsante < SELETTORE
-        btn_r    = pygame.Rect(4, y+4, 110, STATUS_H-8)
-        hov_back = _in_rect((mx2, my2), btn_r)
-        if hov_back: self.active_tooltip = UI_TIPS.get("btn_back")
         
-        _rect(self.screen, BTN_HO if hov_back else BTN, btn_r, radius=3)
-        _rect(self.screen, BORDER, btn_r, 1, radius=3)
-        sb = _txt(self._TR("tb_back_selector"), "sm", TXT_HI)
-        self.screen.blit(sb, (btn_r.centerx - sb.get_width()//2,
-                               btn_r.centery - sb.get_height()//2))
+        # Geometria pulsanti basata sulla nuova altezza
+        padding = 6
+        btn_h = STATUS_H - (padding * 2)
+        btn_y = y + padding
 
-        # Pulsante SALVA
-        if hasattr(self, "scene_path") and self.scene_path:
-            save_r   = pygame.Rect(118, y+4, 100, STATUS_H-8)
-            hov_save = _in_rect((mx2, my2), save_r)
-            if hov_save: self.active_tooltip = UI_TIPS.get("btn_save")
-            
-            scol = OK_C if self.scene_dirty else BTN
-            _rect(self.screen, BTN_HO if hov_save else scol, save_r, radius=3)
-            _rect(self.screen, (ACCENT if self.scene_dirty else BORDER), save_r, 1, radius=3)
-            ss = _txt(self._TR("tb_save"), "sm", TXT_HI if self.scene_dirty else TXT_DIM)
-            self.screen.blit(ss, (save_r.centerx - ss.get_width()//2,
-                                   save_r.centery - ss.get_height()//2))
+        # Pulsante < SELETTORE (Professional _button) - Nascosto se siamo già lì
+        msg_x = 20
+        if getattr(self, "state", "") != "game_select":
+            back_label = self._TR("tb_back_selector")
+            back_w = 150
+            btn_r = pygame.Rect(10, btn_y, back_w, btn_h)
+            hov_back = _in_rect((mx2, my2), btn_r)
+            if hov_back: self.active_tooltip = UI_TIPS.get("btn_back")
+            _button(self.screen, btn_r, back_label, hov_back, icon="close")
+            msg_x = btn_r.right + 20
 
-        # Messaggio status
-        msg_x = 224 if getattr(self, "scene_path", None) else 114
+            # Pulsante SALVA
+            if hasattr(self, "scene_path") and self.scene_path:
+                save_w = 120
+                save_r = pygame.Rect(btn_r.right + 10, btn_y, save_w, btn_h)
+                hov_save = _in_rect((mx2, my2), save_r)
+                if hov_save: self.active_tooltip = UI_TIPS.get("btn_save")
+                
+                # Colore dinamico: OK_C se modificato, BTN se salvato
+                scol = OK_C if self.scene_dirty else BTN
+                _button(self.screen, save_r, self._TR("tb_save"), hov_save, 
+                        active=self.scene_dirty, icon="save", custom_bg=scol)
+                msg_x = save_r.right + 25
+
+        # Messaggio status (Chirurgicamente spostato a destra)
+        # Centratura verticale nella barra
+        ty = y + (STATUS_H - 18) // 2
         _draw_text(self.screen, self.status_msg, "sm", self.status_col,
-                   msg_x, y+8, w//2 - msg_x)
+                   msg_x, ty, w // 2 - msg_x)
 
-        # Info destra
+        # Info destra (Game / Scene / Undo)
         parts = []
-        if getattr(self, "game_name", None):  parts.append(f"{self._TR('tb_game')} {self.game_name}")
+        if getattr(self, "game_name", None):
+            parts.append(f"{self._TR('tb_game')} {self.game_name}")
         if getattr(self, "scene_path", None):
             parts.append(f"{self._TR('tb_scene')} {self.scene_path.name}")
             if self.scene_dirty: parts.append(self._TR("tb_not_saved"))
         parts.append(f"{self._TR('tb_undo')} {len(self.undo_stack)}")
+        
         info = "  |  ".join(parts)
-        si = _txt(info, "sm", TXT_DIM)
-        self.screen.blit(si, (w - si.get_width() - 8, y+8))
+        si_w, si_h = _txt(info, "sm", TXT_DIM).get_size()
+        _draw_text(self.screen, info, "sm", TXT_DIM, w - si_w - 15, y + (STATUS_H - si_h)//2)
 
-        # Shortcut hint (centro, solo se c'è spazio)
+        # Shortcut hint (centrato, solo se c'è spazio sufficiente)
         hints = self._TR("tb_shortcuts")
-        hs = _txt(hints, "sm", (70, 70, 88))
-        hx = (w - hs.get_width()) // 2
-        if hx > w // 3:
-            self.screen.blit(hs, (hx, y+8))
+        hw, hh = _txt(hints, "sm", (75, 75, 95)).get_size()
+        hx = (w - hw) // 2
+        if hx > msg_x + 200 and hx + hw < w - si_w - 50:
+            _draw_text(self.screen, hints, "sm", (75, 75, 95), hx, y + (STATUS_H - hh)//2)

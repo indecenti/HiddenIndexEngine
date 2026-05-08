@@ -424,8 +424,7 @@ class BackgroundModalMixin:
         
         mx, my = pygame.mouse.get_pos()
         xr = pygame.Rect(dx + dw - 45, dy + 20, 30, 30)
-        _rect(self.screen, (200, 50, 50) if _in_rect((mx, my), xr) else (50, 55, 75), xr, radius=8)
-        _draw_text(self.screen, "x", "md", TXT_HI, xr.x + 10, xr.y + 2)
+        _button(self.screen, xr, "X", _in_rect((mx, my), xr), danger=True)
 
         # Barra di ricerca
         search_r = pygame.Rect(dx + 30, dy + 70, dw - 60, 38)

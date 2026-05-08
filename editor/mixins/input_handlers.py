@@ -375,95 +375,96 @@ class InputHandlersMixin:
         btn = ev.button
         w, h = self.screen.get_size()
 
-        # --- RESIZE SIDEBARS (Edge Detection) ---
-        EDGE = 10
-        if btn == 1 and self.panels_visible:
-            # Bordo Sidebar Sinistra
-            if abs(mx - self.panel_l_w) <= EDGE:
-                self._resizing_l = True; return
-            # Bordo Sidebar Destra
-            if abs(mx - (w - self.panel_r_w)) <= EDGE:
-                self._resizing_r = True; return
-
-        if my_raw < TOP_BAR_H:
-            self._menu_click(mx, my_raw)
-            return
-
-        # Se clicchiamo altrove e c'è un menu aperto, lo chiudiamo
-        if self._active_menu:
-            # Controlla se il click è dentro il dropdown
-            root_r = self._menu_bounds.get(self._active_menu)
-            if root_r:
-                from editor.constants import MENU_W
-                items = self._get_menu_items(self._active_menu)
-                items_count = len(items)
-                
-                drop_r = pygame.Rect(root_r.x, TOP_BAR_H, MENU_W, items_count * 26)
-                if not _in_rect((mx, my_raw), drop_r):
-                    self._active_menu = None
-                else:
-                    # Click dentro il dropdown
-                    self._menu_click(mx, my_raw)
-                    return
-
-        # Se clicchiamo altrove, confermiamo l'input numerico attivo
-        if self._editing_prop and btn == 1:
-            self._prop_commit()
-
-        if btn == 1:
-            w2, h2 = self.screen.get_size()
-            if self._newobj_modal:
-                self._newobj_click(mx, my_raw, w2, h2); return
-            if self._lang_modal:
-                self._lang_click(mx, my_raw, w2, h2); return
-            if getattr(self, "_music_modal", False):
-                self._music_modal_click(mx, my_raw, w2, h2); return
-            if getattr(self, "_bg_modal", False):
-                self._bg_modal_click(mx, my_raw, w2, h2); return
-            if getattr(self, "_vid_modal", False):
-                self._vid_modal_click(mx, my_raw, w2, h2); return
-            if getattr(self, "_minigame_modal", False):
-                self._minigame_click(mx, my_raw); return
-            if self._img_editor_active:
-                return # Gestito da _handle_events -> _img_editor_handle_event
-            if self._ctx_menu:
-                keep_open = self._ctx_menu_click(mx, my_raw)
-                if not keep_open:
-                    self._ctx_menu = None
-                return
-
-        if self.state == STATE_GAME_SELECT:
-            # Delega tutto a GameSelectMixin (inclusi i dialog di conferma e creazione)
-            self._gs_click(mx, my_raw); return
-
-        cr = self._canvas_rect()
-        h_win = h
-
-        status_btn_r = (4, h_win - STATUS_H + 4, 110, STATUS_H - 8)
+        # 1. STATUS BAR (In fondo, ma sopra tutto tranne tooltip)
+        status_btn_r = (10, h - STATUS_H, 150, STATUS_H)
         if btn == 1 and _in_rect((mx, my_raw), status_btn_r):
             self.state    = STATE_GAME_SELECT
             self.gs_games = _discover_games(self.base_path)
             return
 
-        save_btn_r = (118, h_win - STATUS_H + 4, 100, STATUS_H - 8)
-        if btn == 1 and _in_rect((mx, my_raw), save_btn_r):
-            self._save(); return
+        if hasattr(self, "scene_path") and self.scene_path:
+            save_btn_r = (170, h - STATUS_H, 120, STATUS_H)
+            if btn == 1 and _in_rect((mx, my_raw), save_btn_r):
+                self._save(); return
 
-        if self.panels_visible and mx < self.panel_l_w:
-            cur_pos = pygame.mouse.get_pos()
-            scr_size = self.screen.get_size()
-            logging.info(f"[INPUT] PANEL_L CLICK - Event: {ev.pos} | Cursor: {cur_pos} | Screen: {scr_size} | Tab: {self.l_tab}")
-            if btn == 1:
-                self._left_click(mx, my_raw)
-            return True
+        # 2. CONTEXT MENU & MODALS (Massima priorità al centro/area di lavoro)
+        if btn == 1:
+            # IL CONTEXT MENU è disegnato sopra i modali, quindi controlliamo prima lui
+            if self._ctx_menu:
+                items = self._get_ctx_items()
+                m_w, m_h, mx_m, my_m = self._get_ctx_menu_info(items)
+                menu_rect = pygame.Rect(mx_m, my_m, m_w, m_h)
+                
+                if _in_rect((mx, my_raw), menu_rect):
+                    keep_open = self._ctx_menu_click(mx, my_raw)
+                    if not keep_open:
+                        self._ctx_menu = None
+                    return # Intercettato dal menu contestuale
+                else:
+                    # Click fuori: chiudi e lascia passare (pass-through)
+                    self._ctx_menu = None
 
-        if self.panels_visible and mx > w - self.panel_r_w:
-            if btn == 1:
-                self._right_click(mx - (w - self.panel_r_w), my_raw)
-            elif btn == 3:
-                self._pan_moved = False
+            if self._newobj_modal:
+                self._newobj_click(mx, my_raw, w, h); return
+            if self._lang_modal:
+                self._lang_click(mx, my_raw, w, h); return
+            if getattr(self, "_music_modal", False):
+                self._music_modal_click(mx, my_raw, w, h); return
+            if getattr(self, "_bg_modal", False):
+                self._bg_modal_click(mx, my_raw, w, h); return
+            if getattr(self, "_vid_modal", False):
+                self._vid_modal_click(mx, my_raw, w, h); return
+            if getattr(self, "_minigame_modal", False):
+                self._minigame_click(mx, my_raw); return
+            if self._img_editor_active:
+                return 
+
+        # 3. TOP BAR MENUS
+        if my_raw < TOP_BAR_H:
+            self._menu_click(mx, my_raw)
             return
 
+        # Se clicchiamo fuori da un menu a tendina Top Bar aperto, lo chiudiamo
+        if self._active_menu:
+            root_r = self._menu_bounds.get(self._active_menu)
+            if root_r:
+                from editor.constants import MENU_W
+                items = self._get_menu_items(self._active_menu)
+                drop_r = pygame.Rect(root_r.x, TOP_BAR_H, MENU_W, len(items) * 26)
+                if not _in_rect((mx, my_raw), drop_r):
+                    self._active_menu = None
+                else:
+                    self._menu_click(mx, my_raw)
+                    return
+
+        # 4. SIDEBAR RESIZING (Edge Detection)
+        EDGE = 10
+        if btn == 1 and self.panels_visible:
+            if abs(mx - self.panel_l_w) <= EDGE:
+                self._resizing_l = True; return
+            if abs(mx - (w - self.panel_r_w)) <= EDGE:
+                self._resizing_r = True; return
+
+        # 5. DASHBOARD (STATE_GAME_SELECT)
+        if self.state == STATE_GAME_SELECT:
+            self._gs_click(mx, my_raw); return
+
+        # 6. NUMERIC PROP EDITING COMMIT
+        if self._editing_prop and btn == 1:
+            self._prop_commit()
+
+        # 7. SIDEBAR CONTENT
+        if self.panels_visible and mx < self.panel_l_w:
+            if btn == 1: self._left_click(mx, my_raw)
+            return
+
+        if self.panels_visible and mx > w - self.panel_r_w:
+            if btn == 1: self._right_click(mx - (w - self.panel_r_w), my_raw)
+            elif btn == 3: self._pan_moved = False
+            return
+
+        # 8. CANVAS CONTENT
+        cr = self._canvas_rect()
         if _in_rect((mx, my_raw), cr):
             if btn == 1:
                 if self._toolbar_click(mx, my_raw):
@@ -472,6 +473,7 @@ class InputHandlersMixin:
             elif btn in (2, 3):
                 self._start_pan(mx, my_raw)
                 self._pan_moved = False
+
 
     def _on_mup(self, ev):
         if getattr(self, "_resizing_l", False) or getattr(self, "_resizing_r", False):

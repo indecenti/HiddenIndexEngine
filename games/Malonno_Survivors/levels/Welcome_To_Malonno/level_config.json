@@ -33,6 +33,12 @@
       "order": 5,
       "time_limit": 120,
       "transition_out": "fade"
+    },
+    {
+      "id": "Sotterranei_Villa_Rosa",
+      "order": 6,
+      "time_limit": 120,
+      "transition_out": "fade"
     }
   ]
 }

@@ -15,7 +15,7 @@ from editor.constants import (
     HANDLE_R, REF_W, REF_H,
     layer_color,
 )
-from editor.ui.draw import _txt, _draw_text, _rect, _button, _in_rect, _text_wh
+from editor.ui.draw import _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _draw_shape_icon
 from engine.utils import warp_surface, apply_grayscale
 from engine.effect_renderer import (
     draw_smoke_effect, draw_flies_effect, draw_glint_effect, 
@@ -585,7 +585,7 @@ class RenderCanvasMixin:
         cr = self._canvas_rect()
         x, y = cr.left + 8, cr.top + 8
         tools = [
-            (MODE_SELECT,       self._TR("tb_select_btn"),   90),
+            (MODE_SELECT,       self._TR("tb_select_btn"),   115),
             (MODE_CIRCLE,       self._TR("tb_circle_btn"),   90),
             (MODE_RECT,         self._TR("tb_rect_btn"),  100),
             (MODE_EFFECT_PLACE, self._TR("tb_effect_btn"),      80),
@@ -634,8 +634,19 @@ class RenderCanvasMixin:
             _rect(self.screen, bg, r, radius=4)
             _rect(self.screen, bc, r, 1, radius=4)
             tc = TXT_HI if (active or hov) else TXT
-            tw, th = _text_wh(item['lbl'], "sm")
-            self.screen.blit(_txt(item['lbl'], "sm", tc), (r.x + (r.w-tw)//2, r.y + (r.h-th)//2))
+            
+            if item['id'] == MODE_SELECT:
+                # Icona a sinistra + Scritta a destra
+                icon_sz = 18
+                iy = r.y + (r.h - icon_sz) // 2
+                _draw_shape_icon(self.screen, (r.x + 8, iy, icon_sz, icon_sz), "select_rect", tc)
+                tw, th = _text_wh(item['lbl'], "sm")
+                # Offset correttivo per centratura visuale perfetta (-2px per compensare il font)
+                ty = r.y + (r.h - th) // 2 - 2
+                self.screen.blit(_txt(item['lbl'], "sm", tc), (r.x + icon_sz + 14, ty))
+            else:
+                tw, th = _text_wh(item['lbl'], "sm")
+                self.screen.blit(_txt(item['lbl'], "sm", tc), (r.x + (r.w-tw)//2, r.y + (r.h-th)//2))
 
         zm = _txt(self._TR("canvas_zoom_info").format(self.zoom), "sm", TXT_DIM)
         self.screen.blit(zm, (cr.right - zm.get_width() - 8, cr.top + 8))

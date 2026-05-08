@@ -13,6 +13,43 @@ import pygame
 # ─────────────────────────────────────────────────────────────────────────────
 
 _FONTS: dict = {}
+_ICON_CACHE: dict = {}
+
+def _get_icon(icon_id):
+    """Carica e mette in cache le icone PNG premium."""
+    if icon_id in _ICON_CACHE:
+        return _ICON_CACHE[icon_id]
+    
+    mapping = {
+        "x": "close", "cross": "close", "close": "close", "cancel": "close",
+        "play": "play", "run": "play",
+        "edit": "edit", "pencil": "edit",
+        "build": "build", "exe": "build", "package": "build",
+        "add": "add", "+": "add", "plus": "add",
+        "select_rect": "select_rect", "select": "select_rect",
+        "circle": "circle", "square": "square",
+        "effect": "effect", "fx": "effect", "magic": "effect",
+        "lock_open": "lock_open", "unlock": "lock_open",
+        "lock_closed": "lock_closed", "lock": "lock_closed",
+        "eye_hidden": "eye_hidden", "hide": "eye_hidden",
+        "eye_visible": "eye_visible", "show": "eye_visible",
+        "save": "save", "disk": "save",
+        "delete": "delete", "trash": "delete", "remove": "delete",
+        "settings": "settings", "gear": "settings"
+    }
+    
+    fname = mapping.get(icon_id)
+    if not fname: return None
+    
+    from engine.utils import get_base_path
+    path = get_base_path() / "engine" / "assets" / "icons" / f"{fname}.png"
+    if path.exists():
+        try:
+            surf = pygame.image.load(str(path)).convert_alpha()
+            _ICON_CACHE[icon_id] = surf
+            return surf
+        except: pass
+    return None
 
 
 def _init_fonts():
@@ -77,11 +114,18 @@ def _rect(surf, color, r, border=0, radius=0):
 
 
 def _draw_shape_icon(surf, r, icon_id, color):
-    """Disegna icone procedurali per evitare problemi di font/unicode."""
-    import pygame
+    """Disegna icone premium PNG se disponibili, altrimenti fallback procedurale."""
     cx, cy = r[0] + r[2]//2, r[1] + r[3]//2
     sz = min(r[2], r[3]) // 2 - 5
     
+    icon_surf = _get_icon(icon_id)
+    if icon_surf:
+        # Padding interno per l'icona
+        target_sz = int(min(r[2], r[3]) * 0.8)
+        scaled = pygame.transform.smoothscale(icon_surf, (target_sz, target_sz))
+        surf.blit(scaled, (cx - target_sz//2, cy - target_sz//2))
+        return
+
     if icon_id == "up":
         pts = [(cx, cy - sz), (cx - sz, cy + sz - 2), (cx + sz, cy + sz - 2)]
         pygame.draw.polygon(surf, color, pts)
@@ -115,10 +159,9 @@ def _draw_shape_icon(surf, r, icon_id, color):
         _rect(surf, color, top, 2, radius=1)
 
 
-def _button(surf, r, label, hovered=False, active=False, danger=False, font="sm", custom_bg=None):
+def _button(surf, r, label, hovered=False, active=False, danger=False, font="sm", custom_bg=None, icon=None, center_text=False):
     from editor.constants import BTN, BTN_HO, BTN_AC, BORDER, TXT_HI
     if custom_bg:
-        # Applica una leggera variazione di luminosità al passaggio del mouse
         if hovered:
             bg = tuple(min(255, c + 30) for c in custom_bg)
         else:
@@ -130,14 +173,35 @@ def _button(surf, r, label, hovered=False, active=False, danger=False, font="sm"
     else:
         bg = BTN_HO if hovered else BTN
     
-    _rect(surf, bg, r, radius=4)
-    _rect(surf, BORDER, r, 1, radius=4)
+    # Shadow / Outline soft
+    _rect(surf, bg, r, radius=5)
+    _rect(surf, BORDER, r, 1, radius=5)
     
+    if icon:
+        icon_sz = 18
+        tw, th = _text_wh(label, font)
+        spacing = 8
+        total_w = icon_sz + spacing + tw
+        
+        # Centratura verticale comune
+        iy = r[1] + (r[3] - icon_sz) // 2
+        ty = r[1] + (r[3] - th) // 2
+        
+        if center_text:
+            start_x = r[0] + (r[2] - total_w) // 2
+            _draw_shape_icon(surf, (start_x, iy, icon_sz, icon_sz), icon, TXT_HI)
+            _draw_text(surf, label, font, TXT_HI, start_x + icon_sz + spacing, ty)
+        else:
+            _draw_shape_icon(surf, (r[0] + 12, iy, icon_sz, icon_sz), icon, TXT_HI)
+            _draw_text(surf, label, font, TXT_HI, r[0] + 12 + icon_sz + spacing, ty)
+        return
+
     # Riconoscimento Icone
     icon_map = {
         "^": "up", "v": "down", "▴": "up", "▾": "down", 
         "▲": "up", "▼": "down", "▶": "play", "✎": "edit", 
-        "×": "cross", "+": "plus", "⬆": "up"
+        "×": "cross", "X": "x", "+": "plus", "⬆": "up",
+        "EXE": "build", "BUILD": "build"
     }
     if label in icon_map:
         _draw_shape_icon(surf, r, icon_map[label], TXT_HI)

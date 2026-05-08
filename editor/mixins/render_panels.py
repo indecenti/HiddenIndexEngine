@@ -17,7 +17,7 @@ from editor.constants import (
 )
 from editor.core.io import _load_scene_data
 from editor.ui.draw import (
-    _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _slider, _input_box, _scrollbar,
+    _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _slider, _input_box, _scrollbar, _draw_shape_icon,
 )
 
 
@@ -600,23 +600,17 @@ class RenderPanelsMixin:
             if not is_scn:
                 # Occhio
                 er = pygame.Rect(rx0+self.panel_r_w-80, y+8, 24, 24)
-                ecx, ecy = er.center
                 ecol = (TXT_HI if vis else TXT_DIM) if not _in_rect((mx, my_raw), er) else ACCENT
                 if _in_rect((mx, my_raw), er): self.active_tooltip = self._TR("tip_layer_visible")
-                pygame.draw.ellipse(self.screen, ecol, (ecx-8, ecy-5, 16, 10), 2)
-                if vis: pygame.draw.circle(self.screen, ecol, (ecx, ecy), 3)
-                else: pygame.draw.line(self.screen, ecol, (ecx-6, ecy-4), (ecx+6, ecy+4), 2)
+                _draw_shape_icon(self.screen, er.inflate(0, -6), "eye_visible" if vis else "eye_hidden", ecol)
+
                 # Lucchetto
                 if not is_fx:
                     lr = pygame.Rect(rx0+self.panel_r_w-50, y+8, 24, 24)
                     lkd = self.layer_locked.get(lid, False)
-                    lcx, lcy = lr.center
                     lcol = (WARN_C if lkd else TXT_DIM) if not _in_rect((mx, my_raw), lr) else ACCENT
                     if _in_rect((mx, my_raw), lr): self.active_tooltip = self._TR("tip_layer_locked")
-                    pygame.draw.rect(self.screen, lcol, (lcx-5, lcy, 10, 8), border_radius=1)
-                    ay = lcy-5 if lkd else lcy-7
-                    pygame.draw.rect(self.screen, lcol, (lcx-3, ay, 6, 6), 2, border_radius=2)
-                    if not lkd: pygame.draw.line(self.screen, PANEL, (lcx+3, lcy-4), (lcx+3, lcy-1), 2)
+                    _draw_shape_icon(self.screen, lr, "lock_closed" if lkd else "lock_open", lcol)
             y += row_h + 4
 
         y += 8
@@ -794,7 +788,7 @@ class RenderPanelsMixin:
             pygame.draw.line(self.screen, BORDER, (rx0, y), (rx0+self.panel_r_w, y)); y += 8
             save_r = pygame.Rect(rx0+4, y, self.panel_r_w-8, 28)
             _button(self.screen, save_r, self._TR("prop_btn_save_scene"),
-                    _in_rect((mx, my_raw), save_r), active=self.scene_dirty)
+                    _in_rect((mx, my_raw), save_r), active=self.scene_dirty, icon="save", center_text=True)
             self._set_hbox_scene("save_btn", 4, y, self.panel_r_w-8, 28)
 
             y += 34

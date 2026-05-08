@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Optional
 
 import pygame
+import math
 
 # ── Costanti e UI primitives ─────────────────────────────────────────────────
 from editor.constants import (
@@ -38,10 +39,10 @@ from editor.constants import (
     TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_LAYERS, TAB_PROPS,
     MODE_SELECT, MODE_CIRCLE, MODE_RECT, MODE_EFFECT_PLACE,
     DEFAULT_LAYERS,
-    BG, TXT_DIM,
+    BG, TXT_DIM, TXT_HI, ACCENT,
     AUTOSAVE_SECS, SND_CLICK,
 )
-from editor.ui.draw import _init_fonts, _draw_tooltip
+from editor.ui.draw import _init_fonts, _draw_tooltip, _rect, _draw_text, _draw_shape_icon
 from editor.core.io import _discover_games
 from engine.utils import setup_logging
 from engine.language_manager import LanguageManager
@@ -262,13 +263,16 @@ class LevelEditor(
         self.gs_cur_scenes:  list  = []
         self._gs_new_mode:   str   = None
         self._gs_new_buf:    str   = ""
-        self._gs_edit_mode:  str   = None   # "level" | "scene" | "game"
-        self._gs_edit_buf:   str   = ""
+        self._gs_edit_mode:       str   = None   # "level" | "scene" | "game"
+        self._gs_edit_buf:        str   = ""
+        self._gs_edit_lang_bufs:  dict  = {}     # {lang: str} per level/scene
+        self._gs_edit_active_field: str = "it"   # campo lingua attivo nel dialog
         self._gs_edit_bg_path: str = ""
         self._gs_edit_vid_path: str = ""
         self._gs_new_vid_path: str = ""
         self._gs_edit_music_paths: list = []
         self._gs_new_music_paths:  list = []
+        self.gs_edit_mu_scroll      = 0
         self._gs_last_click: float = 0.0
         self._gs_last_col:   int   = -1
         self.gs_scroll_game         = 0
@@ -304,6 +308,9 @@ class LevelEditor(
         
         # Cache per aspect ratio originali (cat_id -> ratio)
         self._asset_ratios_cache: dict = {}
+        
+        # ── UI State ─────────────────────────────────────────────────────────
+        self._loading: bool = False
         
         # Inizializza dati extra (recent_scenes, modals, etc)
         self._build_processes: list[subprocess.Popen] = []
@@ -447,8 +454,12 @@ class LevelEditor(
             self._r_game_select()
         else:
             self._r_main()
+            
         w, h = self.screen.get_size()
+        # La Top Bar va disegnata DOPO il contenuto principale (Canvas/Dashboard)
+        # per garantire che i menu dropdown siano sopra tutto.
         self._r_top_bar(w)
+        
         if self.state != STATE_GAME_SELECT:
             if self._lang_modal:
                 self._r_lang_modal(w, h)
@@ -469,19 +480,60 @@ class LevelEditor(
         if getattr(self, "_vid_modal", False):
             self._r_video_modal(w, h)
         
+        # Overlay di caricamento (massima priorità)
+        if self._loading:
+            self._r_loading_overlay(w, h)
+
+        # Status Bar (Globale, disegnata sopra tutto tranne tooltip)
+        self._r_status(w, h)
+
         # Tooltip finale
         if self.active_tooltip:
             _draw_tooltip(self.screen, self.active_tooltip, pygame.mouse.get_pos())
 
     def _r_main(self):
         w, h = self.screen.get_size()
-        self._r_top_bar(w)
         self._update_layout()
+        
+        # 1. Canvas (Sotto tutto)
+        self._r_canvas(w, h)
+        
+        # 2. Pannelli laterali (Sopra il canvas)
         if self.panels_visible:
             self._r_left(h)
             self._r_right(w, h)
-        self._r_canvas(w, h)
-        self._r_status(w, h)
+
+    def _r_loading_overlay(self, w: int, h: int):
+        """Disegna un overlay premium per il caricamento."""
+        # Overlay semi-trasparente scuro
+        overlay = pygame.Surface((w, h), pygame.SRCALPHA)
+        overlay.fill((15, 15, 20, 200)) # Leggermente più opaco per immediatezza
+        self.screen.blit(overlay, (0, 0))
+        
+        # Box centrale
+        bw, bh = 340, 120
+        bx, by = (w - bw) // 2, (h - bh) // 2
+        
+        # Ombra box
+        _rect(self.screen, (10, 10, 15, 100), (bx + 4, by + 4, bw, bh), radius=12)
+        # Background box
+        _rect(self.screen, (40, 42, 54), (bx, by, bw, bh), radius=12)
+        # Bordo accentato
+        _rect(self.screen, ACCENT, (bx, by, bw, bh), 2, radius=12)
+        
+        # Icona animata (pulsazione semplice basata sul tempo)
+        import math
+        pulse = (math.sin(time.time() * 10) + 1) / 2 # 0 to 1
+        icon_size = 40 + int(pulse * 10)
+        ix, iy = bx + 30, by + (bh - icon_size) // 2
+        
+        # Disegna icona FX (scintilla) come caricamento
+        _draw_shape_icon(self.screen, (ix, iy, icon_size, icon_size), "fx", ACCENT)
+        
+        # Testo tradotto
+        msg = self._TR("msg_loading")
+        _draw_text(self.screen, msg, "lg", TXT_HI, bx + 95, by + bh // 2 - 12)
+        _draw_text(self.screen, "Please wait...", "xs", (120, 120, 140), bx + 95, by + bh // 2 + 14)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

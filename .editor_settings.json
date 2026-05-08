@@ -1,34 +1,22 @@
 {
   "recent_scenes": [
     {
+      "name": "Sotterranei_Villa_Rosa",
+      "path": "G:\\HIE git\\games\\Malonno_Survivors\\levels\\Welcome_To_Malonno\\Sotterranei_Villa_Rosa",
+      "game": "Malonno_Survivors",
+      "time": 1778240966.264198
+    },
+    {
       "name": "Formis",
-      "path": "G:\\HiddenIndexEngine\\games\\Malonno_Survivors\\levels\\Welcome_To_Malonno\\Formis",
+      "path": "G:\\HIE git\\games\\Malonno_Survivors\\levels\\Welcome_To_Malonno\\Formis",
       "game": "Malonno_Survivors",
-      "time": 1776892096.1739736
-    },
-    {
-      "name": "Welcome",
-      "path": "G:\\HiddenIndexEngine\\games\\Malonno_Survivors\\levels\\Welcome_To_Malonno\\Welcome",
-      "game": "Malonno_Survivors",
-      "time": 1776799930.331334
-    },
-    {
-      "name": "Brescia_Edolo",
-      "path": "G:\\HiddenIndexEngine\\games\\Malonno_Survivors\\levels\\Welcome_To_Malonno\\Brescia_Edolo",
-      "game": "Malonno_Survivors",
-      "time": 1776799657.701621
+      "time": 1778239535.6722028
     },
     {
       "name": "Villa_Rosa",
-      "path": "G:\\HiddenIndexEngine\\games\\Malonno_Survivors\\levels\\Welcome_To_Malonno\\Villa_Rosa",
+      "path": "G:\\HIE git\\games\\Malonno_Survivors\\levels\\Welcome_To_Malonno\\Villa_Rosa",
       "game": "Malonno_Survivors",
-      "time": 1776723912.5163882
-    },
-    {
-      "name": "Pizza_King",
-      "path": "G:\\HiddenIndexEngine\\games\\Malonno_Survivors\\levels\\Welcome_To_Malonno\\Pizza_King",
-      "game": "Malonno_Survivors",
-      "time": 1776598984.2002816
+      "time": 1776938387.214853
     }
   ],
   "language": "it"

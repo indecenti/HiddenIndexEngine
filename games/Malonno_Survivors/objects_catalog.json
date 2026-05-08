@@ -204,6 +204,36 @@
       ]
     },
     {
+      "id": "chicken_foot",
+      "label_key": "obj_chicken_foot",
+      "icon": "objects/chicken_foot.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "horror",
+        "biologico",
+        "accessorio",
+        "piccolo",
+        "occulto",
+        "natura"
+      ]
+    },
+    {
+      "id": "coat_rack",
+      "label_key": "obj_coat_rack",
+      "icon": "objects/coat_rack.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 180,
+      "default_hint_delay": 45,
+      "tags": [
+        "arredamento",
+        "legno",
+        "grande"
+      ]
+    },
+    {
       "id": "console_pin",
       "label_key": "obj_console_pin",
       "icon": "objects/console_pin.png",
@@ -597,6 +627,21 @@
       ]
     },
     {
+      "id": "harmonica",
+      "label_key": "obj_harmonica",
+      "icon": "objects/harmonica.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 20,
+      "default_hint_delay": 25,
+      "tags": [
+        "musica",
+        "metallo",
+        "piccolo",
+        "tradizione"
+      ]
+    },
+    {
       "id": "highlighter_yellow",
       "label_key": "obj_highlighter_yellow",
       "icon": "objects/highlighter_yellow.png",
@@ -607,6 +652,20 @@
       "tags": [
         "studio",
         "plastica",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "honey_jar",
+      "label_key": "obj_honey_jar",
+      "icon": "objects/honey_jar.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "cibo",
+        "vetro",
+        "dolce",
         "piccolo"
       ]
     },
@@ -864,6 +923,72 @@
       ]
     },
     {
+      "id": "obj_accordion_camera",
+      "label_key": "obj_accordion_camera",
+      "icon": "objects/obj_accordion_camera.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 60,
+      "default_hint_delay": 40,
+      "tags": [
+        "tecnologia",
+        "vintage",
+        "pelle",
+        "retro",
+        "medio"
+      ]
+    },
+    {
+      "id": "obj_bench_vice",
+      "label_key": "obj_bench_vice",
+      "icon": "objects/obj_bench_vice.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 60,
+      "default_hint_delay": 40,
+      "tags": [
+        "attrezzo",
+        "vintage",
+        "metallo",
+        "officina",
+        "medio"
+      ]
+    },
+    {
+      "id": "obj_garden_spade_long",
+      "label_key": "obj_garden_spade_long",
+      "icon": "objects/obj_garden_spade_long.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 100,
+      "default_hint_delay": 40,
+      "tags": [
+        "giardino",
+        "legno",
+        "metallo",
+        "grande"
+      ]
+    },
+    {
+      "id": "obj_tetrimino_s",
+      "label_key": "obj_tetrimino_s",
+      "icon": "objects/obj_tetrimino_s.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 50,
+      "default_hint_delay": 40,
+      "tags": [
+        "colore",
+        "geometria",
+        "gioco",
+        "piccolo",
+        "plastica",
+        "tetris",
+        "verde",
+        "videogame"
+      ]
+    },
+    {
       "id": "oil_canister",
       "label_key": "obj_oil_canister",
       "icon": "objects/oil_canister.png",
@@ -926,6 +1051,35 @@
         "legno",
         "occulto",
         "piccolo"
+      ]
+    },
+    {
+      "id": "oyster_mushroom",
+      "label_key": "obj_oyster_mushroom",
+      "icon": "objects/oyster_mushroom.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "biologico",
+        "cibo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "peacock",
+      "label_key": "obj_peacock",
+      "icon": "objects/peacock.png",
+      "default_detection": "circle",
+      "default_radius": 50,
+      "default_hint_delay": 45,
+      "tags": [
+        "natura",
+        "vola",
+        "grande",
+        "biologico",
+        "prezioso"
       ]
     },
     {
@@ -1065,6 +1219,21 @@
       ]
     },
     {
+      "id": "ritual_skull",
+      "label_key": "obj_ritual_skull",
+      "icon": "objects/ritual_skull.png",
+      "default_detection": "circle",
+      "default_radius": 38,
+      "default_hint_delay": 45,
+      "tags": [
+        "horror",
+        "osso",
+        "decorazione",
+        "medio",
+        "occulto"
+      ]
+    },
+    {
       "id": "rolling_pin",
       "label_key": "obj_rolling_pin",
       "icon": "objects/rolling_pin.png",
@@ -1153,6 +1322,21 @@
         "officina",
         "piccolo",
         "plastica"
+      ]
+    },
+    {
+      "id": "seashell",
+      "label_key": "obj_seashell",
+      "icon": "objects/seashell.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "oceano",
+        "decorazione",
+        "piccolo",
+        "pietra"
       ]
     },
     {

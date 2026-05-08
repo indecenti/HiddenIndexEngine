@@ -1,0 +1,258 @@
+{
+  "id": "Sotterranei_Villa_Rosa",
+  "background": "image (29).png",
+  "background_scale": 1.0,
+  "objects": [
+    {
+      "catalog_id": "peacock",
+      "x": 1515,
+      "y": 1883,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "radius": 284,
+      "width": 568,
+      "height": 568,
+      "alpha": 239,
+      "grayscale": true,
+      "grayscale_factor": 0.5,
+      "color_filter": [
+        96,
+        96,
+        96
+      ]
+    },
+    {
+      "catalog_id": "seashell",
+      "x": 534,
+      "y": 1556,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 25,
+      "radius": 142.25,
+      "width": 315,
+      "height": 254,
+      "grayscale": true,
+      "grayscale_factor": 0.16,
+      "color_filter": [
+        171,
+        165,
+        165
+      ]
+    },
+    {
+      "catalog_id": "harmonica",
+      "x": 3621,
+      "y": 1977,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 25,
+      "width": 216,
+      "height": 160,
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          6,
+          11
+        ],
+        [
+          -7,
+          16
+        ]
+      ],
+      "rotation": 7.3,
+      "color_filter": [
+        249,
+        247,
+        124
+      ]
+    },
+    {
+      "catalog_id": "ritual_skull",
+      "x": 4925,
+      "y": 2937,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "radius": 127.5,
+      "width": 244,
+      "height": 266,
+      "alpha": 218,
+      "color_filter": [
+        190,
+        188,
+        188
+      ],
+      "grayscale": true,
+      "grayscale_factor": 0.36
+    },
+    {
+      "catalog_id": "chicken_foot",
+      "x": 2193,
+      "y": 1154,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "radius": 100.25,
+      "width": 144,
+      "height": 257
+    },
+    {
+      "catalog_id": "coat_rack",
+      "x": 4414,
+      "y": 1273,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "width": 241,
+      "height": 952,
+      "alpha": 239,
+      "color_filter": [
+        126,
+        126,
+        126
+      ]
+    },
+    {
+      "catalog_id": "honey_jar",
+      "x": 4231,
+      "y": 2018,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 25,
+      "radius": 96.5,
+      "width": 181,
+      "height": 205,
+      "grayscale": true,
+      "grayscale_factor": 0.09,
+      "color_filter": [
+        249,
+        240,
+        161
+      ]
+    },
+    {
+      "catalog_id": "obj_garden_spade_long",
+      "x": 3406,
+      "y": 2278,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 552,
+      "height": 674,
+      "rotation": 22.5,
+      "color_filter": [
+        96,
+        96,
+        96
+      ]
+    },
+    {
+      "catalog_id": "obj_tetrimino_s",
+      "x": 4750,
+      "y": 1434,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 463,
+      "height": 235,
+      "rotation": 269.5
+    },
+    {
+      "catalog_id": "obj_accordion_camera",
+      "x": 751,
+      "y": 2234,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 383,
+      "height": 369,
+      "rotation": 1.2,
+      "color_filter": [
+        202,
+        151,
+        117
+      ]
+    },
+    {
+      "catalog_id": "obj_bench_vice",
+      "x": 2624,
+      "y": 1722,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 297,
+      "height": 264,
+      "alpha": 234,
+      "grayscale": true,
+      "grayscale_factor": 0.36,
+      "color_filter": [
+        215,
+        163,
+        128
+      ]
+    },
+    {
+      "catalog_id": "oyster_mushroom",
+      "x": 3306,
+      "y": 957,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "radius": 53.0,
+      "width": 100,
+      "height": 112,
+      "alpha": 112,
+      "color_filter": [
+        149,
+        186,
+        223
+      ]
+    }
+  ],
+  "effects": [
+    {
+      "effect_id": "golden_glint",
+      "type": "glint",
+      "x": 3876,
+      "y": 1835,
+      "radius": 187,
+      "intensity": 0.16,
+      "layer": "effects",
+      "layer_z": 100
+    }
+  ],
+  "music": [
+    "Indecenti - Static Lullaby.mp3"
+  ],
+  "flashlight": false,
+  "flashlight_radius": 150.0,
+  "layer_locked": {
+    "objects_low": false,
+    "objects_mid": false,
+    "objects_high": false,
+    "overlay": false,
+    "effects": false
+  },
+  "auto_random_finds": true,
+  "num_random_finds": 2
+}

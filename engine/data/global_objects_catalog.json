@@ -19037,13 +19037,433 @@
       "label_key": "obj_clothes_steamer",
       "icon": "objects/clothes_steamer.png",
       "default_detection": "rect",
-      "default_width": 40,
       "default_height": 130,
       "tags": [
         "attrezzo",
         "elettronica",
         "plastica",
         "grande"
+      ]
+    },
+    {
+      "id": "voodoo_doll_bloody",
+      "label_key": "obj_voodoo_doll_bloody",
+      "icon": "objects/voodoo_doll_bloody.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 40,
+      "tags": [
+        "horror",
+        "stoffa",
+        "giocattolo",
+        "medio",
+        "occulto",
+        "biologico"
+      ]
+    },
+    {
+      "id": "voodoo_doll",
+      "label_key": "obj_voodoo_doll",
+      "icon": "objects/voodoo_doll.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 35,
+      "tags": [
+        "horror",
+        "stoffa",
+        "giocattolo",
+        "medio",
+        "occulto"
+      ]
+    },
+    {
+      "id": "chicken_foot",
+      "label_key": "obj_chicken_foot",
+      "icon": "objects/chicken_foot.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "horror",
+        "biologico",
+        "accessorio",
+        "piccolo",
+        "occulto",
+        "natura"
+      ]
+    },
+    {
+      "id": "ritual_skull",
+      "label_key": "obj_ritual_skull",
+      "icon": "objects/ritual_skull.png",
+      "default_detection": "circle",
+      "default_radius": 38,
+      "default_hint_delay": 45,
+      "tags": [
+        "horror",
+        "osso",
+        "decorazione",
+        "medio",
+        "occulto"
+      ]
+    },
+    {
+      "id": "dark_potion",
+      "label_key": "obj_dark_potion",
+      "icon": "objects/dark_potion.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 60,
+      "default_hint_delay": 35,
+      "tags": [
+        "horror",
+        "vetro",
+        "bevanda",
+        "medio",
+        "occulto",
+        "magia"
+      ]
+    },
+    {
+      "id": "gris_gris_bag",
+      "label_key": "obj_gris_gris_bag",
+      "icon": "objects/gris_gris_bag.png",
+      "default_detection": "circle",
+      "default_radius": 28,
+      "default_hint_delay": 30,
+      "tags": [
+        "horror",
+        "cuoio",
+        "accessorio",
+        "piccolo",
+        "occulto"
+      ]
+    },
+    {
+      "id": "sacrificial_knife",
+      "label_key": "obj_sacrificial_knife",
+      "icon": "objects/sacrificial_knife.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 85,
+      "default_hint_delay": 40,
+      "tags": [
+        "horror",
+        "pietra",
+        "arma",
+        "medio",
+        "occulto",
+        "pericolo"
+      ]
+    },
+    {
+      "id": "voodoo_powder",
+      "label_key": "obj_voodoo_powder",
+      "icon": "objects/voodoo_powder.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "horror",
+        "vetro",
+        "piccolo",
+        "occulto",
+        "magia"
+      ]
+    },
+    {
+      "id": "ritual_candle",
+      "label_key": "obj_ritual_candle",
+      "icon": "objects/ritual_candle.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "horror",
+        "cera",
+        "luce",
+        "medio",
+        "occulto"
+      ]
+    },
+    {
+      "id": "garden_gnome",
+      "label_key": "obj_garden_gnome",
+      "icon": "objects/garden_gnome.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 35,
+      "tags": [
+        "arredamento",
+        "giardino",
+        "ceramica",
+        "medio",
+        "tradizione"
+      ]
+    },
+    {
+      "id": "red_rose",
+      "label_key": "obj_red_rose",
+      "icon": "objects/red_rose.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "biologico",
+        "decorazione",
+        "piccolo",
+        "rosso"
+      ]
+    },
+    {
+      "id": "eagle",
+      "label_key": "obj_eagle",
+      "icon": "objects/eagle.png",
+      "default_detection": "circle",
+      "default_radius": 45,
+      "default_hint_delay": 40,
+      "tags": [
+        "natura",
+        "vola",
+        "grande",
+        "biologico"
+      ]
+    },
+    {
+      "id": "harmonica",
+      "label_key": "obj_harmonica",
+      "icon": "objects/harmonica.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 20,
+      "default_hint_delay": 25,
+      "tags": [
+        "musica",
+        "metallo",
+        "piccolo",
+        "tradizione"
+      ]
+    },
+    {
+      "id": "accordion",
+      "label_key": "obj_accordion",
+      "icon": "objects/accordion.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 55,
+      "default_hint_delay": 40,
+      "tags": [
+        "musica",
+        "medio",
+        "tradizione",
+        "metallo",
+        "stoffa"
+      ]
+    },
+    {
+      "id": "harp",
+      "label_key": "obj_harp",
+      "icon": "objects/harp.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 90,
+      "default_hint_delay": 45,
+      "tags": [
+        "musica",
+        "grande",
+        "legno",
+        "metallo",
+        "prezioso"
+      ]
+    },
+    {
+      "id": "golden_horseshoe",
+      "label_key": "obj_golden_horseshoe",
+      "icon": "objects/golden_horseshoe.png",
+      "default_detection": "circle",
+      "default_radius": 28,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "prezioso",
+        "piccolo",
+        "simbolo",
+        "tradizione"
+      ]
+    },
+    {
+      "id": "rotary_phone",
+      "label_key": "obj_rotary_phone",
+      "icon": "objects/rotary_phone.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 50,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "comunicazione",
+        "medio",
+        "plastica",
+        "vintage"
+      ]
+    },
+    {
+      "id": "ping_pong_paddle",
+      "label_key": "obj_ping_pong_paddle",
+      "icon": "objects/ping_pong_paddle.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "sport",
+        "gioco",
+        "medio",
+        "legno",
+        "gomma"
+      ]
+    },
+    {
+      "id": "peacock",
+      "label_key": "obj_peacock",
+      "icon": "objects/peacock.png",
+      "default_detection": "circle",
+      "default_radius": 50,
+      "default_hint_delay": 45,
+      "tags": [
+        "natura",
+        "vola",
+        "grande",
+        "biologico",
+        "prezioso"
+      ]
+    },
+    {
+      "id": "scuba_mask",
+      "label_key": "obj_scuba_mask",
+      "icon": "objects/scuba_mask.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "maschera",
+        "accessorio",
+        "medio",
+        "gomma",
+        "vetro",
+        "oceano"
+      ]
+    },
+    {
+      "id": "scuba_goggles",
+      "label_key": "obj_scuba_goggles",
+      "icon": "objects/scuba_goggles.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "abbigliamento",
+        "accessorio",
+        "piccolo",
+        "plastica",
+        "vetro",
+        "oceano"
+      ]
+    },
+    {
+      "id": "sand_toys",
+      "label_key": "obj_sand_toys",
+      "icon": "objects/sand_toys.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 35,
+      "tags": [
+        "giocattolo",
+        "gioco",
+        "medio",
+        "plastica",
+        "gruppo_oggetti"
+      ]
+    },
+    {
+      "id": "purple_broccoli",
+      "label_key": "obj_purple_broccoli",
+      "icon": "objects/purple_broccoli.png",
+      "default_detection": "circle",
+      "default_radius": 28,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "biologico",
+        "cibo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "seashell",
+      "label_key": "obj_seashell",
+      "icon": "objects/seashell.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "oceano",
+        "decorazione",
+        "piccolo",
+        "pietra"
+      ]
+    },
+    {
+      "id": "sea_urchin",
+      "label_key": "obj_sea_urchin",
+      "icon": "objects/sea_urchin.png",
+      "default_detection": "circle",
+      "default_radius": 28,
+      "default_hint_delay": 40,
+      "tags": [
+        "natura",
+        "oceano",
+        "biologico",
+        "piccolo",
+        "pericolo"
+      ]
+    },
+    {
+      "id": "emergency_button",
+      "label_key": "obj_emergency_button",
+      "icon": "objects/emergency_button.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "tecnologia",
+        "elettronica",
+        "piccolo",
+        "plastica",
+        "pericolo",
+        "rosso"
+      ]
+    },
+    {
+      "id": "wire_brush",
+      "label_key": "obj_wire_brush",
+      "icon": "objects/wire_brush.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 25,
+      "default_hint_delay": 35,
+      "tags": [
+        "attrezzo",
+        "officina",
+        "medio",
+        "metallo",
+        "legno"
       ]
     }
   ]
