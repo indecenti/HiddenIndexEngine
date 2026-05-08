@@ -82,14 +82,14 @@
     },
     {
       "catalog_id": "la_ferro_cavallo",
-      "x": 679,
-      "y": 595,
+      "x": 664,
+      "y": 587,
       "detection_type": "rect",
       "layer": "objects_mid",
       "is_goal": true,
       "hint_delay": 30,
-      "width": 249,
-      "height": 259
+      "width": 285,
+      "height": 282
     },
     {
       "catalog_id": "la_ancora",

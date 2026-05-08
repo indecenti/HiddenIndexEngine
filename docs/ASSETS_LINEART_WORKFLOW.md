@@ -67,3 +67,10 @@ Nel catalogo specifico dell'engine (`global_lineart_catalog.json`), questi ogget
 "icon": "objects_lineart/nome_oggetto.png"
 ```
 Ciò permette al livello o all'editor di filtrare gli asset corretti, garantendo che una scena "Line Art" non si mescoli involontariamente con oggetti in stile fotografico/realistico.
+
+## 5. Regole per i Tag (Classificazione)
+Per garantire la coerenza del sistema di ricerca e dei filtri nell'Editor, è fondamentale rispettare la seguente regola di catalogazione:
+- **Divieto di nuovi Tag**: Non devono mai essere creati nuovi tag durante l'inserimento di nuovi asset.
+- **Utilizzo Tag Esistenti**: Bisogna mappare i nuovi oggetti esclusivamente sui tag già definiti nell'engine (es. `giocattolo`, `natura`, `strumento`, `casa`, ecc.). 
+
+L'aggiunta di tag non censiti frammenta il database e impedisce la corretta visualizzazione degli asset nelle categorie predefinite della UI.

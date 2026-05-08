@@ -16,8 +16,8 @@
     },
     {
       "catalog_id": "la_robot_giocattolo",
-      "x": 1259,
-      "y": 1913,
+      "x": 1274,
+      "y": 1907,
       "detection_type": "rect",
       "layer": "objects_mid",
       "is_goal": true,
@@ -82,14 +82,14 @@
     },
     {
       "catalog_id": "la_ferro_cavallo",
-      "x": 679,
-      "y": 595,
+      "x": 664,
+      "y": 587,
       "detection_type": "rect",
       "layer": "objects_mid",
       "is_goal": true,
       "hint_delay": 30,
-      "width": 249,
-      "height": 259
+      "width": 285,
+      "height": 282
     },
     {
       "catalog_id": "la_ancora",
@@ -218,6 +218,30 @@
       "width": 249,
       "height": 262,
       "rotation": 43.3
+    },
+    {
+      "catalog_id": "la_pc_desktop",
+      "x": 1638,
+      "y": 2515,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "always_show": false,
+      "is_goal": true,
+      "hint_delay": 50,
+      "width": 476,
+      "height": 422
+    },
+    {
+      "catalog_id": "la_xilofono",
+      "x": 2141,
+      "y": 2262,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "always_show": false,
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 380,
+      "height": 383
     }
   ],
   "effects": [],

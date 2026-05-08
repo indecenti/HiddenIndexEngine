@@ -83,7 +83,7 @@
       "default_hint_delay": 30,
       "tags": [
         "metallo",
-        "fortuna"
+        "vintage"
       ],
       "style": "line art"
     },
@@ -151,8 +151,8 @@
       "default_radius": 40,
       "default_hint_delay": 35,
       "tags": [
-        "scuola",
-        "mappa"
+        "studio",
+        "viaggio"
       ],
       "style": "line art"
     },
@@ -215,6 +215,22 @@
       "style": "line art"
     },
     {
+      "id": "la_pc_desktop",
+      "label_key": "obj_la_pc_desktop",
+      "icon": "objects_lineart/la_pc_desktop.png",
+      "default_detection": "rect",
+      "default_width": 90,
+      "default_height": 85,
+      "default_hint_delay": 50,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "ufficio",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_pennino",
       "label_key": "obj_la_pennino",
       "icon": "objects_lineart/la_pennino.png",
@@ -251,7 +267,6 @@
       "default_height": 90,
       "default_hint_delay": 25,
       "tags": [
-        "uccello",
         "natura"
       ],
       "style": "line art"
@@ -303,12 +318,13 @@
       "id": "la_tamburo",
       "label_key": "obj_la_tamburo",
       "icon": "objects_lineart/la_tamburo.png",
-      "default_detection": "circle",
-      "default_radius": 40,
-      "default_hint_delay": 35,
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 50,
+      "default_hint_delay": 30,
       "tags": [
         "musica",
-        "metallo",
+        "legno",
         "medio"
       ],
       "style": "line art"
@@ -329,6 +345,21 @@
       "style": "line art"
     },
     {
+      "id": "la_xilofono",
+      "label_key": "obj_la_xilofono",
+      "icon": "objects_lineart/la_xilofono.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 45,
+      "default_hint_delay": 40,
+      "tags": [
+        "giocattolo",
+        "legno",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_zaino",
       "label_key": "obj_la_zaino",
       "icon": "objects_lineart/la_zaino.png",
@@ -338,7 +369,7 @@
       "default_hint_delay": 40,
       "tags": [
         "viaggio",
-        "tessuto"
+        "stoffa"
       ],
       "style": "line art"
     }

@@ -1518,6 +1518,380 @@
         "stoffa"
       ],
       "style": "line art"
+    },
+    {
+      "id": "la_violino",
+      "label_key": "obj_la_violino",
+      "icon": "objects_lineart/la_violino.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 90,
+      "default_hint_delay": 40,
+      "tags": [
+        "musica",
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tromba",
+      "label_key": "obj_la_tromba",
+      "icon": "objects_lineart/la_tromba.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 40,
+      "default_hint_delay": 35,
+      "tags": [
+        "musica",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tamburo",
+      "label_key": "obj_la_tamburo",
+      "icon": "objects_lineart/la_tamburo.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "musica",
+        "legno",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_flauto",
+      "label_key": "obj_la_flauto",
+      "icon": "objects_lineart/la_flauto.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 85,
+      "default_hint_delay": 25,
+      "tags": [
+        "musica",
+        "legno",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pianoforte",
+      "label_key": "obj_la_pianoforte",
+      "icon": "objects_lineart/la_pianoforte.png",
+      "default_detection": "rect",
+      "default_width": 90,
+      "default_height": 80,
+      "default_hint_delay": 50,
+      "tags": [
+        "musica",
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sassofono",
+      "label_key": "obj_la_sassofono",
+      "icon": "objects_lineart/la_sassofono.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 85,
+      "default_hint_delay": 45,
+      "tags": [
+        "musica",
+        "metallo",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_uva",
+      "label_key": "obj_la_uva",
+      "icon": "objects_lineart/la_uva.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_banana",
+      "label_key": "obj_la_banana",
+      "icon": "objects_lineart/la_banana.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 40,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mela",
+      "label_key": "obj_la_mela",
+      "icon": "objects_lineart/la_mela.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pera",
+      "label_key": "obj_la_pera",
+      "icon": "objects_lineart/la_pera.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ciliegie",
+      "label_key": "obj_la_ciliegie",
+      "icon": "objects_lineart/la_ciliegie.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_arancia",
+      "label_key": "obj_la_arancia",
+      "icon": "objects_lineart/la_arancia.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_limone",
+      "label_key": "obj_la_limone",
+      "icon": "objects_lineart/la_limone.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_anguria",
+      "label_key": "obj_la_anguria",
+      "icon": "objects_lineart/la_anguria.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 45,
+      "default_hint_delay": 40,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fragola",
+      "label_key": "obj_la_fragola",
+      "icon": "objects_lineart/la_fragola.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_walkman",
+      "label_key": "obj_la_walkman",
+      "icon": "objects_lineart/la_walkman.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "audio",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_gameboy",
+      "label_key": "obj_la_gameboy",
+      "icon": "objects_lineart/la_gameboy.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "gioco",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_floppy",
+      "label_key": "obj_la_floppy",
+      "icon": "objects_lineart/la_floppy.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "dati",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pc_desktop",
+      "label_key": "obj_la_pc_desktop",
+      "icon": "objects_lineart/la_pc_desktop.png",
+      "default_detection": "rect",
+      "default_width": 90,
+      "default_height": 85,
+      "default_hint_delay": 50,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "ufficio",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tamagotchi",
+      "label_key": "obj_la_tamagotchi",
+      "icon": "objects_lineart/la_tamagotchi.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "gioco",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_vhs",
+      "label_key": "obj_la_vhs",
+      "icon": "objects_lineart/la_vhs.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "video",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cercapersone",
+      "label_key": "obj_la_cercapersone",
+      "icon": "objects_lineart/la_cercapersone.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 40,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "comunicazione",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_discman",
+      "label_key": "obj_la_discman",
+      "icon": "objects_lineart/la_discman.png",
+      "default_detection": "circle",
+      "default_radius": 45,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "audio",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_controller_90s",
+      "label_key": "obj_la_controller_90s",
+      "icon": "objects_lineart/la_controller_90s.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 50,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "gioco",
+        "medio"
+      ],
+      "style": "line art"
     }
   ]
 }
