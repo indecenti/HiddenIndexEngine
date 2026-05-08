@@ -183,8 +183,8 @@
     },
     {
       "catalog_id": "la_tamburo",
-      "x": 4381,
-      "y": 2697,
+      "x": 4491,
+      "y": 2745,
       "detection_type": "circle",
       "layer": "objects_mid",
       "is_goal": true,
@@ -221,8 +221,8 @@
     },
     {
       "catalog_id": "la_pc_desktop",
-      "x": 1638,
-      "y": 2515,
+      "x": 3685,
+      "y": 2126,
       "detection_type": "rect",
       "layer": "objects_mid",
       "always_show": false,
@@ -242,6 +242,55 @@
       "hint_delay": 40,
       "width": 380,
       "height": 383
+    },
+    {
+      "catalog_id": "la_ventilatore",
+      "x": 1119,
+      "y": 2399,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "always_show": false,
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 294,
+      "height": 387
+    },
+    {
+      "catalog_id": "la_arancia",
+      "x": 5031.0,
+      "y": 1883.0,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "always_show": false,
+      "is_goal": true,
+      "hint_delay": 30,
+      "radius": 62.0,
+      "width": 114,
+      "height": 134
+    },
+    {
+      "catalog_id": "la_ciliegie",
+      "x": 3027,
+      "y": 263,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "always_show": false,
+      "is_goal": true,
+      "hint_delay": 25,
+      "width": 86,
+      "height": 110
+    },
+    {
+      "catalog_id": "la_vanga",
+      "x": 2592,
+      "y": 1861,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "always_show": false,
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 78,
+      "height": 288
     }
   ],
   "effects": [],

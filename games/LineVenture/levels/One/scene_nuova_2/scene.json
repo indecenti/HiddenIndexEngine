@@ -4,17 +4,187 @@
   "background_scale": 1.0,
   "objects": [
     {
-      "catalog_id": "la_sveglia",
-      "x": 2695.0,
-      "y": 1600.0,
+      "catalog_id": "la_biglie",
+      "x": 4738,
+      "y": 2795,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 20,
+      "width": 256,
+      "height": 220
+    },
+    {
+      "catalog_id": "la_bussola",
+      "x": 2820,
+      "y": 2819,
       "detection_type": "circle",
       "layer": "objects_mid",
       "is_goal": true,
+      "hint_delay": 30,
+      "radius": 67,
+      "width": 134,
+      "height": 134
+    },
+    {
+      "catalog_id": "la_birilli",
+      "x": 4358,
+      "y": 2049,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
       "hint_delay": 35,
-      "radius": 1126.0,
-      "width": 2778,
-      "height": 1726,
-      "rotation": 268.5
+      "width": 211,
+      "height": 157
+    },
+    {
+      "catalog_id": "la_aquilone",
+      "x": 4515,
+      "y": 1374,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 276,
+      "height": 318
+    },
+    {
+      "catalog_id": "la_binocolo",
+      "x": 1735,
+      "y": 2433,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 416,
+      "height": 339
+    },
+    {
+      "catalog_id": "la_trottola",
+      "x": 2956,
+      "y": 2276,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "radius": 99.25,
+      "width": 193,
+      "height": 204,
+      "minigame_trigger": {
+        "minigame_id": "tetran"
+      }
+    },
+    {
+      "catalog_id": "la_telefono_fisso",
+      "x": 4475.0,
+      "y": 2424.5,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "radius": 133.75,
+      "width": 276,
+      "height": 259
+    },
+    {
+      "catalog_id": "la_orologio_stazione",
+      "x": 3356,
+      "y": 1053,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 202,
+      "height": 181
+    },
+    {
+      "catalog_id": "la_orologio_digitale",
+      "x": 1729,
+      "y": 797,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 503,
+      "height": 137,
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          -6,
+          -32
+        ],
+        [
+          -6,
+          -53
+        ],
+        [
+          -5,
+          -23
+        ]
+      ]
+    },
+    {
+      "catalog_id": "la_occhiali",
+      "x": 614,
+      "y": 2523,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 20,
+      "width": 223,
+      "height": 86,
+      "rotation": 356.6,
+      "alpha": 217
+    },
+    {
+      "catalog_id": "la_pipa",
+      "x": 3307,
+      "y": 212,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 178,
+      "height": 161,
+      "alpha": 227,
+      "rotation": 49.5
+    },
+    {
+      "catalog_id": "la_robot_giocattolo",
+      "x": 3549,
+      "y": 1960,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 133,
+      "height": 181
+    },
+    {
+      "catalog_id": "la_topo_molla",
+      "x": 4875,
+      "y": 137,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 25,
+      "width": 164,
+      "height": 113
+    },
+    {
+      "catalog_id": "la_flauto",
+      "x": 4477,
+      "y": 659,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 25,
+      "width": 286,
+      "height": 311,
+      "rotation": 43.1
     }
   ],
   "effects": [],

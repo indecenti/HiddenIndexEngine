@@ -29,15 +29,15 @@
     },
     {
       "catalog_id": "la_sveglia",
-      "x": 4249,
-      "y": 1733,
+      "x": 4226,
+      "y": 1725,
       "detection_type": "circle",
       "layer": "objects_mid",
       "is_goal": true,
       "hint_delay": 35,
-      "radius": 95.5,
-      "width": 170,
-      "height": 212,
+      "radius": 88.25,
+      "width": 154,
+      "height": 199,
       "rotation": 0.6
     },
     {
@@ -60,8 +60,8 @@
       "layer": "objects_mid",
       "is_goal": true,
       "hint_delay": 40,
-      "width": 289,
-      "height": 573
+      "width": 256,
+      "height": 544
     },
     {
       "catalog_id": "la_aeroplanino",
@@ -76,8 +76,8 @@
     },
     {
       "catalog_id": "la_candeliere",
-      "x": 4448,
-      "y": 1897,
+      "x": 4392,
+      "y": 1930,
       "detection_type": "rect",
       "layer": "objects_mid",
       "is_goal": true,
@@ -95,16 +95,112 @@
       "hint_delay": 30,
       "width": 203,
       "height": 504
+    },
+    {
+      "catalog_id": "la_dadi",
+      "x": 2447,
+      "y": 2917,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 20,
+      "radius": 84,
+      "width": 168,
+      "height": 168
+    },
+    {
+      "catalog_id": "la_pigna",
+      "x": 2580.5,
+      "y": 1292.0,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "radius": 93.75,
+      "width": 183,
+      "height": 192
+    },
+    {
+      "catalog_id": "la_trottola",
+      "x": 273,
+      "y": 2884,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "radius": 130,
+      "width": 260,
+      "height": 260
+    },
+    {
+      "catalog_id": "la_bussola",
+      "x": 1322,
+      "y": 2878,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "radius": 80,
+      "width": 160,
+      "height": 160
+    },
+    {
+      "catalog_id": "la_radio",
+      "x": 1913.5,
+      "y": 657.0,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "radius": 150.75,
+      "width": 327,
+      "height": 276
+    },
+    {
+      "catalog_id": "la_grattugia",
+      "x": 3856,
+      "y": 804,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "radius": 133,
+      "width": 266,
+      "height": 266
+    },
+    {
+      "catalog_id": "la_microscopio",
+      "x": 3246.5,
+      "y": 2202.0,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "radius": 172.75,
+      "width": 285,
+      "height": 406
+    },
+    {
+      "catalog_id": "la_soldatino",
+      "x": 4569,
+      "y": 2741,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 25,
+      "radius": 75.25,
+      "width": 80,
+      "height": 221
     }
   ],
   "effects": [
     {
       "effect_id": "golden_glint",
       "type": "glint",
-      "x": 4587,
-      "y": 1897,
+      "x": 4531,
+      "y": 1931,
       "radius": 321,
-      "intensity": 0.6,
+      "intensity": 0.75,
       "layer": "effects",
       "layer_z": 100,
       "width": 300,
