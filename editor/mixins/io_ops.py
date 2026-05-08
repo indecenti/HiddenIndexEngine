@@ -64,7 +64,7 @@ class IoOpsMixin:
         icon_rel = cat_entry.get("icon", "")
         if icon_rel:
             icon_name = Path(icon_rel).name
-            master_p = self.base_path / "engine" / "assets" / "objects" / icon_name
+            master_p = self.base_path / "engine" / "assets" / icon_rel
             game_objects_p = self.game_path / "objects"
             game_objects_p.mkdir(parents=True, exist_ok=True)
             dst_p = game_objects_p / icon_name
@@ -345,7 +345,7 @@ class IoOpsMixin:
         #    quali file sono ancora necessari. Confronta per NOME FILE ICONA, non per
         #    catalog_id, per evitare falsi positivi quando id ≠ nome file.
         game_objects_p = self.game_path / "objects"
-        master_objects_p = self.base_path / "engine" / "assets" / "objects"
+        engine_assets_p = self.base_path / "engine" / "assets"
 
         used_catalog_ids, used_icon_names = self._collect_used_assets(data)
 
@@ -353,7 +353,9 @@ class IoOpsMixin:
         for f in game_objects_p.glob("*.png"):
             if f.name not in used_icon_names:
                 # Rimuove solo se il file esiste nel master engine (è recuperabile)
-                if (master_objects_p / f.name).exists():
+                exists_in_engine = any((engine_assets_p / sub / f.name).exists() 
+                                     for sub in ["objects", "objects_lineart"])
+                if exists_in_engine:
                     try:
                         f.unlink()
                         removed_count += 1
@@ -733,9 +735,15 @@ class IoOpsMixin:
         if not path.exists():
             # Fallback al repository centrale del motore
             if "games" in str(path):
-                # Prova a ricostruire il path verso engine/assets/objects
-                master_p = self.base_path / "engine" / "assets" / "objects" / path.name
-                if master_p.exists():
+                # Prova a ricostruire il path verso engine/assets/ (cerca in objects o objects_lineart)
+                master_p = None
+                for sub in ["objects", "objects_lineart"]:
+                    test_p = self.base_path / "engine" / "assets" / sub / path.name
+                    if test_p.exists():
+                        master_p = test_p
+                        break
+                
+                if master_p:
                     path = master_p
                 else:
                     self._img_cache[key] = None

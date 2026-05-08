@@ -1162,12 +1162,14 @@ if __name__ == "__main__":
         # 0. PRIORITÀ: Click dentro dialog "Eliminazione" (se aperto)
         if hasattr(self, '_gs_del_mode') and self._gs_del_mode:
             stage = getattr(self, "_gs_del_stage", 0)
-            dw, dh = 480, 200 if stage == 0 else 240
+            # Dimensioni sincronizzate con _r_gs_del_dialog
+            dw, dh = 480, 200 if stage == 0 else (240 if stage == 1 else 300)
             dx, dy = (w-dw)//2, (h-dh)//2
-            # Bottone OK
+            
+            # Bottone OK (ELIMINA) - Coordinate (dx+20, dy+dh-50, 210, 32)
             if _in_rect((mx, my_raw), (dx + 20, dy + dh - 50, 210, 32)):
                 self._gs_confirm_delete(); return
-            # Bottone Annulla
+            # Bottone Annulla - Coordinate (dx+250, dy+dh-50, 210, 32)
             elif _in_rect((mx, my_raw), (dx + 250, dy + dh - 50, 210, 32)):
                 self._gs_del_mode = None; self._gs_del_stage = 0; return
             return

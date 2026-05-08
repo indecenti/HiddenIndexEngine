@@ -214,6 +214,7 @@ class LevelEditor(
         self.catalog_search    = ""
         self.catalog_searching = False
         self.catalog_tags_scroll = 0
+        self.catalog_style_filter = "tutti"
 
         # ── Numeric Editing ──────────────────────────────────────────────────
         self._editing_prop = None  # (owner_type, id, key) -> owner_type: 'object' or 'effect'
@@ -338,8 +339,8 @@ class LevelEditor(
         
         ip = self.game_path / img_rel
         if not ip.exists():
-            # Fallback master engine
-            master_p = self.base_path / "engine" / "assets" / "objects" / Path(img_rel).name
+            # Fallback master engine (usa il path relativo completo dal catalogo)
+            master_p = self.base_path / "engine" / "assets" / img_rel
             if master_p.exists():
                 ip = master_p
             else:

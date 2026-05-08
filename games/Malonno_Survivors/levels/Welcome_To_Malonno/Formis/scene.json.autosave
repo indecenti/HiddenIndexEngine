@@ -270,8 +270,8 @@
     },
     {
       "catalog_id": "vintage_comic",
-      "x": 128,
-      "y": 1005,
+      "x": 80,
+      "y": 1039,
       "detection_type": "rect",
       "layer": "objects_mid",
       "hint_delay": 30,
@@ -848,8 +848,8 @@
     },
     {
       "catalog_id": "teddy_bear",
-      "x": 1183.5,
-      "y": 712.5,
+      "x": 1164,
+      "y": 715,
       "detection_type": "circle",
       "layer": "objects_mid",
       "hint_delay": 35,
@@ -857,12 +857,14 @@
       "is_goal": true,
       "width": 83,
       "height": 83,
-      "alpha": 192,
+      "alpha": 197,
       "color_filter": [
         245,
         252,
         197
-      ]
+      ],
+      "grayscale": true,
+      "grayscale_factor": 0.42
     },
     {
       "catalog_id": "rubber_duck",
@@ -1602,13 +1604,67 @@
         241,
         241
       ]
+    },
+    {
+      "effect_id": "golden_glint",
+      "type": "glint",
+      "x": 443,
+      "y": 247,
+      "radius": 5,
+      "color": [
+        255,
+        215,
+        60
+      ],
+      "intensity": 0.85,
+      "pulse_period": 2.0,
+      "pulse_min": 0.1,
+      "phase": 0.0,
+      "layer": "effects",
+      "layer_z": 100
+    },
+    {
+      "effect_id": "chimney_smoke",
+      "type": "smoke",
+      "x": 323,
+      "y": 190,
+      "radius": 5.0,
+      "color": [
+        100,
+        100,
+        105
+      ],
+      "intensity": 0.6,
+      "pulse_period": 0.1,
+      "pulse_min": 0.3,
+      "phase": 0.0,
+      "layer": "effects",
+      "layer_z": 100
+    },
+    {
+      "effect_id": "golden_glint",
+      "type": "glint",
+      "x": 493,
+      "y": 126,
+      "radius": 55,
+      "color": [
+        255,
+        215,
+        60
+      ],
+      "intensity": 0.85,
+      "pulse_period": 2.0,
+      "pulse_min": 0.1,
+      "phase": 0.0,
+      "layer": "effects",
+      "layer_z": 100
     }
   ],
   "objects_to_show": 17,
   "auto_random_finds": true,
   "num_random_finds": 14,
   "flashlight": false,
-  "flashlight_radius": 297,
+  "flashlight_radius": 171,
   "random_layer_selection": true,
   "layer_locked": {
     "objects_low": false,

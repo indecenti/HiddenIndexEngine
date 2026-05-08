@@ -730,7 +730,11 @@ class InputHandlersMixin:
                             self._drag_start_x = fx["x"]
                             self._drag_start_y = fx["y"]
                         elif hid == "radius":
-                            self._dragging_slider = ('effect', sel_fx_idx, 'radius', 5, 800, hx, 100)
+                            self._handle_id = "fx_radius"
+                            self._handle_snap = copy.copy(fx)
+                            self._drag_start_mx = mx
+                            self._drag_start_my = my_raw
+                            logging.info(f"[FX_RESIZE] Start dragging radius for {fx.get('effect_id', '?')}")
                         else:
                             self._handle_id = f"fx_{hid}"
                             self._handle_snap = copy.copy(fx)
@@ -883,24 +887,34 @@ class InputHandlersMixin:
             
             # Calcolo basato su simmetria rispetto all'ancora (x, y)
             # in modo che l'ancora resti FISSA.
-            if   "n" in hid: res_h = (oy - ry) - 35
-            elif "s" in hid:
-                # 's' handle è sul bordo inferiore del corpo.
-                # In realtà 's' handle in object_ops è cx, by+h.
-                # Per ora lo manteniamo fisso per evitare che copra l'ancora
-                res_h = 30 
-
-            if   "w" in hid: res_w = (ox - rx) * 2
-            elif "e" in hid: res_w = (rx - ox) * 2
-
-            # Se è un lato verticale/orizzontale puro, usiamo il mouse direttamente
-            if hid == "n": res_h = (oy - ry) - 35
-            if hid == "s": pass # Non ha molto senso far crescere il fumetto verso il basso coprendo l'ancora
+            # L'area del testo è centrata orizzontalmente rispetto a x.
+            # Quindi |rx - ox| è metà larghezza.
+            if "w" in hid or "e" in hid:
+                res_w = abs(rx - ox) * 2
+            
+            # L'area del testo è sopra y con un offset di 35px.
+            # Quindi (oy - ry) - 35 è l'altezza.
+            if "n" in hid:
+                res_h = (oy - ry) - 35
             
             # Applichiamo i limiti e lo snap
             fx["width"]  = max(40, self._snap(res_w))
             fx["height"] = max(30, self._snap(res_h))
-            # x ed y NON vengono modificati: l'ancora è sovrana.
+            self.scene_dirty = True
+            return
+
+        if h == "fx_radius":
+            fx_idx = getattr(self, "sel_effect_idx", None)
+            if fx_idx is None: return
+            fx = self.scene_data["effects"][fx_idx]
+            rx, ry = self._s2r(mx, my)
+            # Calcolo raggio come distanza euclidea tra mouse e centro effetto
+            new_r = math.hypot(rx - fx["x"], ry - fx["y"])
+            fx["radius"] = max(5.0, self._snap(new_r))
+            
+            if pygame.time.get_ticks() % 10 == 0: # Log limitato per non floodare
+                logging.info(f"[FX_RESIZE] New Radius: {fx['radius']:.1f} (mx:{mx}, my:{my})")
+            
             self.scene_dirty = True
             return
 
@@ -1100,6 +1114,16 @@ class InputHandlersMixin:
             else:
                 self.catalog_tag_searching = True; self.catalog_searching = False
             return
+
+        # 2.5 Style Filters
+        style_rects = getattr(self, "_catalog_style_rects", [])
+        for s_id, sr in style_rects:
+            if _in_rect((mx, my_raw), sr):
+                logging.info(f"  [CATALOG] HIT: Style Filter '{s_id}'")
+                self.catalog_style_filter = s_id
+                self.catalog_scroll = 0
+                self._play_click()
+                return
 
         # 3. Chip Tags
         chip_rects = getattr(self, "_catalog_chip_rects", [])

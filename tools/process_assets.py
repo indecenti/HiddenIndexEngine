@@ -1,9 +1,10 @@
 import os
 import sys
+import argparse
 import numpy as np
 from PIL import Image
 
-def process_assets(image_path, output_dir, object_names):
+def process_assets(image_path, output_dir, object_names, style="real"):
     if not os.path.exists(image_path):
         print(f"Errore: File non trovato {image_path}")
         return
@@ -11,29 +12,58 @@ def process_assets(image_path, output_dir, object_names):
     img = Image.open(image_path).convert("RGBA")
     data = np.array(img)
     
-    r, g, b = data[:,:,0].astype(float), data[:,:,1].astype(float), data[:,:,2].astype(float)
-    
-    # Rileva se lo sfondo è prevalentemente verde o bianco
-    # Calcoliamo una media dei pixel agli angoli
-    corners = [data[0,0], data[0,-1], data[-1,0], data[-1,-1]]
-    avg_corner = np.mean(corners, axis=0)
-    
-    is_green = avg_corner[1] > (avg_corner[0] + avg_corner[2]) / 1.5
-    
-    if is_green:
-        # Logica Chroma Key verde originale con spill suppression
-        green_score = g - (r + b) / 2
-        new_alpha = np.clip(255 - (green_score * 1.5), 0, 255).astype(np.uint8)
+    # Estraiamo i canali
+    r = data[:,:,0].astype(float)
+    g = data[:,:,1].astype(float)
+    b = data[:,:,2].astype(float)
+    a = data[:,:,3].astype(float)
+
+    if style == "lineart":
+        print("Modalità Line Art: Applicazione binarizzazione su sfondo grigio #808080...")
+        # Identifica il grigio medio (#808080) con una tolleranza
+        # L'AI potrebbe non essere perfetta, usiamo un range
+        is_gray_bg = (abs(r - 128) < 50) & (abs(g - 128) < 50) & (abs(b - 128) < 50)
         
-        spill_condition = (g > r) & (g > b)
-        data[:,:,1][spill_condition] = np.maximum(r[spill_condition], b[spill_condition])
-        data[:,:,3] = new_alpha
+        # Le linee sono scure (media canali bassa)
+        is_dark_line = (r + g + b) / 3 < 128
+        
+        # Applica trasparenza allo sfondo grigio
+        data[:,:,3][is_gray_bg] = 0
+        
+        # Forza il nero puro sulle linee (dove non è sfondo)
+        mask_line = ~is_gray_bg & is_dark_line
+        data[mask_line, 0] = 0
+        data[mask_line, 1] = 0
+        data[mask_line, 2] = 255 if False else 0 # Nero puro
+        data[mask_line, 3] = 255
+
+        # Forza il bianco puro sui riempimenti (dove non è sfondo e non è linea)
+        mask_fill = ~is_gray_bg & ~is_dark_line
+        data[mask_fill, 0] = 255
+        data[mask_fill, 1] = 255
+        data[mask_fill, 2] = 255
+        data[mask_fill, 3] = 255
     else:
-        # Logica per sfondo bianco (o chiaro)
-        # Se i pixel sono molto vicini al bianco, rendili trasparenti
-        white_threshold = 240
-        is_white = (r > white_threshold) & (g > white_threshold) & (b > white_threshold)
-        data[:,:,3][is_white] = 0
+        # Logica originale (Chroma Key o Bianco)
+        # Rileva se lo sfondo è prevalentemente verde o bianco
+        corners = [data[0,0], data[0,-1], data[-1,0], data[-1,-1]]
+        avg_corner = np.mean(corners, axis=0)
+        
+        is_green = avg_corner[1] > (avg_corner[0] + avg_corner[2]) / 1.5
+        
+        if is_green:
+            print("Sfondo verde rilevato. Applicazione Chroma Key...")
+            green_score = g - (r + b) / 2
+            new_alpha = np.clip(255 - (green_score * 1.5), 0, 255).astype(np.uint8)
+            
+            spill_condition = (g > r) & (g > b)
+            data[:,:,1][spill_condition] = np.maximum(r[spill_condition], b[spill_condition])
+            data[:,:,3] = new_alpha
+        else:
+            print("Sfondo chiaro rilevato. Applicazione rimozione bianco...")
+            white_threshold = 240
+            is_white = (r > white_threshold) & (g > white_threshold) & (b > white_threshold)
+            data[:,:,3][is_white] = 0
     
     final_full_img = Image.fromarray(data)
     
@@ -60,19 +90,22 @@ def process_assets(image_path, output_dir, object_names):
             bbox = cell.getbbox()
             if bbox:
                 final_obj = cell.crop(bbox)
-                save_path = os.path.join(output_dir, f"{object_names[idx]}.png")
+                save_name = object_names[idx].strip()
+                if not save_name.endswith(".png"):
+                    save_name += ".png"
+                save_path = os.path.join(output_dir, save_name)
                 final_obj.save(save_path, "PNG")
-                print(f"  -> Salvato: {object_names[idx]}.png")
+                print(f"  -> Salvato: {save_name}")
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Uso: python process_assets.py <path_master_sheet> <output_dir> [nomi_separati_da_virgola]")
-    else:
-        # Se i nomi non sono passati, usa una lista di default (backup)
-        if len(sys.argv) > 3:
-            names = sys.argv[3].split(",")
-        else:
-            # Lista di fallback se l'utente dimentica i nomi
-            names = [f"asset_{i}" for i in range(9)]
-            
-        process_assets(sys.argv[1], sys.argv[2], names)
+    parser = argparse.ArgumentParser(description="Processa master sheets di oggetti (3x3).")
+    parser.add_argument("image", help="Path della master sheet")
+    parser.add_argument("output", help="Directory di destinazione")
+    parser.add_argument("names", help="Nomi degli oggetti separati da virgola")
+    parser.add_argument("--style", choices=["real", "lineart"], default="real", help="Stile degli oggetti")
+    
+    args = parser.parse_args()
+    
+    names = args.names.split(",")
+    process_assets(args.image, args.output, names, style=args.style)
+

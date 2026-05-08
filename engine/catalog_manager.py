@@ -190,21 +190,41 @@ def search_by_tags(catalog: CatalogDB, tag: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 def _load_global_catalog() -> dict:
-    """Carica il catalogo globale da engine/data/."""
-    path = get_resource_path("engine", "data", "global_objects_catalog.json")
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            catalog = json.load(f)
-        if not isinstance(catalog, dict) or "objects" not in catalog:
-            raise ValueError("Il catalogo globale deve avere la chiave 'objects'")
-        logger.debug("Catalogo globale caricato: %d oggetti", len(catalog["objects"]))
-        return catalog
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Catalogo globale non trovato: {path}")
-    except json.JSONDecodeError as e:
-        raise json.JSONDecodeError(
-            f"JSON non valido nel catalogo globale: {e.msg}", e.doc, e.pos
-        )
+    """Carica tutti i cataloghi globali da engine/data/ (global_*_catalog.json)."""
+    data_dir = get_resource_path("engine", "data")
+    merged_objects = []
+    
+    # Cerchiamo tutti i file che seguono il pattern global_*_catalog.json
+    # Usiamo Path.glob per la scoperta dei file
+    catalog_files = list(Path(data_dir).glob("global_*_catalog.json"))
+    
+    # Se non ne troviamo nessuno con quel pattern, proviamo il file standard per compatibilità
+    if not catalog_files:
+        standard_path = Path(data_dir) / "global_objects_catalog.json"
+        if standard_path.exists():
+            catalog_files = [standard_path]
+
+    if not catalog_files:
+        raise FileNotFoundError(f"Nessun catalogo globale trovato in: {data_dir}")
+
+    for path in catalog_files:
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                catalog = json.load(f)
+            if isinstance(catalog, dict) and "objects" in catalog:
+                merged_objects.extend(catalog["objects"])
+                logger.debug("Catalogo '%s' caricato: %d oggetti", path.name, len(catalog["objects"]))
+        except json.JSONDecodeError as e:
+             logger.error("JSON non valido nel catalogo globale '%s': %s", path.name, e.msg)
+             # In questo caso lanciamo comunque l'errore per il file specifico se critico
+             if path.name == "global_real_catalog.json":
+                 raise
+        except Exception as e:
+            logger.error("Errore caricamento catalogo globale '%s': %s", path.name, e)
+
+    logger.info("Totale oggetti globali caricati: %d (da %d file)", len(merged_objects), len(catalog_files))
+    return {"objects": merged_objects}
+
 
 
 def _load_game_catalog(game_id: str) -> Optional[dict]:

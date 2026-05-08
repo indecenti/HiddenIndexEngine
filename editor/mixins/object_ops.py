@@ -108,7 +108,9 @@ class ObjectOpsMixin:
         else:
             sx, sy = self._r2s(x, y)
             r = fx.get("radius", 55)
-            sx_r, sy_r = self._r2s(x + r, y)
+            # Garantisce che l'handle sia sempre a una distanza minima cliccabile (almeno 20px)
+            display_r = max(20, r)
+            sx_r, sy_r = self._r2s(x + display_r, y)
             return [("move", sx, sy), ("radius", sx_r, sy_r)]
 
     def _hit_handle(self, obj: dict, mpos) -> str:

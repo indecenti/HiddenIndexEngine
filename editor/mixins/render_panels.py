@@ -225,8 +225,34 @@ class RenderPanelsMixin:
             cx2 = tag_search_r.x + 28 + tw2
             pygame.draw.line(self.screen, TXT_HI, (cx2, tag_search_r.y + 6), (cx2, tag_search_r.y + TAG_SEARCH_H - 6))
 
+        # 2.5 Style Filter
+        STYLE_Y = tag_search_r.bottom + 8
+        STYLE_H = 26
+        style_r = pygame.Rect(MARGIN, STYLE_Y, INNER_W, STYLE_H)
+        _rect(self.screen, (20, 21, 28), style_r, radius=4)
+        
+        styles = ["tutti", "real", "line art"]
+        btn_w = INNER_W // 3
+        self._catalog_style_rects = []
+        for j, s in enumerate(styles):
+            sr = pygame.Rect(MARGIN + j * btn_w, STYLE_Y, btn_w, STYLE_H)
+            is_active = getattr(self, "catalog_style_filter", "tutti") == s
+            hov = _in_rect((mx, my_raw), sr)
+            if is_active:
+                _rect(self.screen, ACCENT, sr, radius=4)
+                c = (15, 15, 25)
+            else:
+                if hov:
+                    _rect(self.screen, (40, 44, 58), sr, radius=4)
+                c = TXT_HI if hov else TXT_DIM
+            
+            lbl = self._TR(f"style_{s.replace(' ', '_')}", s.capitalize())
+            ts = _txt(lbl, "sm", c)
+            self.screen.blit(ts, (sr.centerx - ts.get_width() // 2, sr.centery - ts.get_height() // 2))
+            self._catalog_style_rects.append((s, sr))
+
         # 3. Chip Tag: box a dimensione fissa (scrollabile)
-        CHIPS_TOP   = tag_search_r.bottom + 8
+        CHIPS_TOP   = style_r.bottom + 8
         TAG_BOX_H   = 196 
         CHIP_GAP_X  = 6
         CHIP_GAP_Y  = 6
@@ -338,10 +364,12 @@ class RenderPanelsMixin:
 
         q = self.catalog_search.lower().strip()
         q_norm = normalize(q.lstrip("#"))
+        active_style = getattr(self, "catalog_style_filter", "tutti")
         
         filtered = [
             c for c in all_catalog_list 
-            if (not active_tags or all(t in c.get("tags", []) for t in active_tags))
+            if (active_style == "tutti" or c.get("style", "real") == active_style)
+            and (not active_tags or all(t in c.get("tags", []) for t in active_tags))
             and (
                 not q or q in c["id"].lower() 
                 or any(q_norm in normalize(t) for t in c.get("tags", []))

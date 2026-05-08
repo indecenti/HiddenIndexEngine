@@ -270,8 +270,8 @@
     },
     {
       "catalog_id": "vintage_comic",
-      "x": 128,
-      "y": 1005,
+      "x": 80,
+      "y": 1039,
       "detection_type": "rect",
       "layer": "objects_mid",
       "hint_delay": 30,
@@ -848,8 +848,8 @@
     },
     {
       "catalog_id": "teddy_bear",
-      "x": 1183.5,
-      "y": 712.5,
+      "x": 1164,
+      "y": 715,
       "detection_type": "circle",
       "layer": "objects_mid",
       "hint_delay": 35,
@@ -857,12 +857,14 @@
       "is_goal": true,
       "width": 83,
       "height": 83,
-      "alpha": 192,
+      "alpha": 197,
       "color_filter": [
         245,
         252,
         197
-      ]
+      ],
+      "grayscale": true,
+      "grayscale_factor": 0.42
     },
     {
       "catalog_id": "rubber_duck",
@@ -1608,7 +1610,7 @@
   "auto_random_finds": true,
   "num_random_finds": 14,
   "flashlight": false,
-  "flashlight_radius": 297,
+  "flashlight_radius": 171,
   "random_layer_selection": true,
   "layer_locked": {
     "objects_low": false,
