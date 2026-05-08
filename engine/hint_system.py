@@ -181,7 +181,7 @@ class HintSystem:
         """Restituisce intensità glow per oggetto [0-1]."""
         return self.per_object_hint_active.get(obj_id, 0.0)
 
-    def use_manual_hint(self, remaining_objects: list["SceneObject"]) -> tuple[bool, int]:
+    def use_manual_hint(self, remaining_objects: list["SceneObject"], suppress_fx: bool = False) -> tuple[bool, int]:
         """
         Hint manuale: evidenzia il primo oggetto non trovato.
 
@@ -212,22 +212,23 @@ class HintSystem:
         penalty_idx = min(hints_count - 1, len(self.hint_penalties) - 1)
         penalty = self.hint_penalties[penalty_idx]
 
-        # Glow manuale: 1.2 secondi tramite timer separato (sincronizzato con durata particelle hint)
-        self.per_object_manual_hint_timer[obj.instance_id] = 1.2
-
-        # Effetto particelle CENTRATO sull'oggetto
-        if obj.detection_type == "rect":
-            cx = obj.x + obj.width / 2
-            cy = obj.y + obj.height / 2
-        else:
-            cx = obj.x
-            cy = obj.y
-        self.effects_engine.spawn_hint_effect(cx, cy)
-
         # Cooldown e reset timer inattività (così l'auto-hint non ri-scatta subito)
         self.manual_hint_cooldown = self.manual_hint_cooldown_max
         self.per_object_inactivity[obj.instance_id] = 0.0
         self.per_object_glow_timeout[obj.instance_id] = 0.0
+
+        if not suppress_fx:
+            # Glow manuale: 1.2 secondi tramite timer separato (sincronizzato con durata particelle hint)
+            self.per_object_manual_hint_timer[obj.instance_id] = 1.2
+
+            # Effetto particelle CENTRATO sull'oggetto
+            if obj.detection_type == "rect":
+                cx = obj.x + obj.width / 2
+                cy = obj.y + obj.height / 2
+            else:
+                cx = obj.x
+                cy = obj.y
+            self.effects_engine.spawn_hint_effect(cx, cy)
 
         self.logger.info(f"Hint manuale: {obj.instance_id} | Penalità: {penalty} pt | Hints: {self.hints_used_total}")
 

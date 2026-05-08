@@ -203,6 +203,7 @@ class IoOpsMixin:
         self.scene_data  = _load_scene_data(scene_path)
         self._sanitize_effects()
         self.selected_idx = None
+        self.sel_effect_idx = None
         self.undo_stack.clear()
         self.redo_stack.clear()
         self.scene_dirty  = False

@@ -5,13 +5,13 @@
   "timer_behavior": "complete",
   "scenes": [
     {
-      "id": "Formis",
+      "id": "Welcome",
       "order": 1,
       "time_limit": 120,
       "transition_out": "fade"
     },
     {
-      "id": "Welcome",
+      "id": "Formis",
       "order": 2,
       "time_limit": 120,
       "transition_out": "fade"

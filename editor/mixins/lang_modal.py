@@ -48,9 +48,8 @@ class LangModalMixin:
             self._lang_data[lang] = data
 
     def _lang_open(self, context="global", filter_key=None):
-        if not self.game_path:
-            self._status("Nessun gioco aperto", WARN_C, 3)
-            return
+        # Rimossa la restrizione game_path per permettere la consultazione
+        # delle stringhe Engine anche dal selettore progetti.
         
         self._load_strings()
         self._lang_context = context
@@ -75,6 +74,9 @@ class LangModalMixin:
         self._lang_modal  = True
         self._lang_cursor = len(self._lang_buf)
         self._lang_all_sel = False
+        self._lang_search = ""
+        self._lang_search_active = False
+        self._lang_filtered_keys = self._lang_keys[:]
         pygame.key.set_repeat(500, 30) # Consente ripetizione tasti (backspace ecc)
 
     def _lang_save(self):
@@ -160,12 +162,46 @@ class LangModalMixin:
     def _lang_cell_value(self, key: str, lang: str) -> str:
         return self._lang_data.get(lang, {}).get(key, "")
 
+    def _lang_update_filter(self):
+        """Aggiorna la lista delle chiavi filtrate in base alla ricerca."""
+        if not self._lang_search:
+            self._lang_filtered_keys = self._lang_keys[:]
+            return
+
+        q = self._lang_search.lower()
+        filtered = []
+        for k in self._lang_keys:
+            # Ricerca nella chiave
+            if q in k.lower():
+                filtered.append(k)
+                continue
+            
+            # Ricerca nei valori di tutte le lingue
+            found = False
+            for lang in self.LANGS:
+                if q in self._lang_cell_value(k, lang).lower():
+                    found = True
+                    break
+            if found:
+                filtered.append(k)
+        
+        self._lang_filtered_keys = filtered
+        # Se la selezione corrente sparisce, la resettiamo
+        if self._lang_sel:
+            ki, li = self._lang_sel
+            # Nota: ki qui è l'indice della vecchia lista filtrata o di quella globale?
+            # È meglio resettare se cambiamo ricerca per evitare puntatori a caso.
+            self._lang_sel = None
+            self._lang_buf = ""
+        
+        self._lang_scroll = 0
+
     def _lang_commit(self):
-        if not self._lang_sel or not self._lang_keys:
+        if not self._lang_sel or not self._lang_filtered_keys:
             return
         ki, li = self._lang_sel
-        if ki >= len(self._lang_keys): return
-        key  = self._lang_keys[ki]
+        if ki >= len(self._lang_filtered_keys): return
+        key  = self._lang_filtered_keys[ki]
         lang = self.LANGS[li]
         self._lang_data.setdefault(lang, {})[key] = self._lang_buf
         self._lang_dirty = True
@@ -175,6 +211,20 @@ class LangModalMixin:
     # ─────────────────────────────────────────────────────────────────────────
 
     def _lang_key(self, ev):
+        ctrl = (pygame.key.get_mods() & pygame.KMOD_CTRL)
+        
+        # Gestione input barra di ricerca
+        if getattr(self, "_lang_search_active", False):
+            if ev.key == pygame.K_ESCAPE or ev.key == pygame.K_RETURN:
+                self._lang_search_active = False
+            elif ev.key == pygame.K_BACKSPACE:
+                self._lang_search = self._lang_search[:-1]
+                self._lang_update_filter()
+            elif ev.unicode and ev.unicode.isprintable() and not ctrl:
+                self._lang_search += ev.unicode
+                self._lang_update_filter()
+            return
+
         if not self._lang_sel:
             if ev.key == pygame.K_ESCAPE: 
                 self._lang_modal = False
@@ -182,9 +232,8 @@ class LangModalMixin:
             return
 
         ki, li = self._lang_sel
-        key_name = self._lang_keys[ki]
+        key_name = self._lang_filtered_keys[ki] if ki < len(self._lang_filtered_keys) else ""
         lang_code = self.LANGS[li]
-        ctrl = (pygame.key.get_mods() & pygame.KMOD_CTRL)
 
         if ev.key == pygame.K_ESCAPE:
             if self._lang_context == "global":
@@ -208,8 +257,10 @@ class LangModalMixin:
                     self._lang_modal = False
                     pygame.key.set_repeat(0)
             else:
-                self._lang_sel = (min(ki+1, len(self._lang_keys)-1), li)
-                self._lang_buf = self._lang_cell_value(self._lang_keys[self._lang_sel[0]], self.LANGS[li])
+                # Navigazione nella lista filtrata
+                next_ki = min(ki + 1, len(self._lang_filtered_keys) - 1)
+                self._lang_sel = (next_ki, li)
+                self._lang_buf = self._lang_cell_value(self._lang_filtered_keys[next_ki], self.LANGS[li])
                 self._lang_cursor = len(self._lang_buf)
 
         elif ev.key == pygame.K_TAB:
@@ -306,17 +357,28 @@ class LangModalMixin:
             self._lang_modal = False
             pygame.key.set_repeat(0)
             return
-            
+
         if not is_fx:
+            # Barra di ricerca
+            search_r = (dx + 10, dy + 45, dw - 20, 32)
+            if _in_rect((mx, my_raw), search_r):
+                if self._lang_sel: self._lang_commit()
+                self._lang_search_active = True
+                self._lang_sel = None
+                return
+            else:
+                self._lang_search_active = False
+
             add_r = (dx + 10, dy + dh - 40, 160, 30)
             if _in_rect((mx, my_raw), add_r):
                 new_key = f"new_key_{len(self._lang_keys)}"
                 self._lang_keys.append(new_key)
                 for lang in self.LANGS:
                     self._lang_data.setdefault(lang, {})[new_key] = ""
+                self._lang_update_filter()
                 return
 
-        HEADER_H = 44
+        HEADER_H = 44 if is_fx else 118
         ROW_H    = 50 if is_fx else 28
         KEY_W    = 0 if is_fx else 200
         lang_w   = (dw - KEY_W - 20) // (1 if is_fx else len(self.LANGS))
@@ -335,7 +397,7 @@ class LangModalMixin:
                     return
         else:
             # Tabella globale
-            for ki, key in enumerate(self._lang_keys):
+            for ki, key in enumerate(self._lang_filtered_keys):
                 ry = content_y + ki * ROW_H - self._lang_scroll * ROW_H
                 if ry < dy + HEADER_H or ry > dy + dh - 50: continue
                 for li, lang in enumerate(self.LANGS):
@@ -388,6 +450,13 @@ class LangModalMixin:
 
         if is_fx:
             # Rendering verticale per FX (più pulito per una sola chiave)
+            HEADER_H = 44
+            ROW_H    = 50
+            KEY_W    = 0
+            lang_w   = (dw - 20)
+            cx       = dx + 10
+            cy       = dy + HEADER_H
+            
             for li, lang in enumerate(self.LANGS):
                 ry = cy + li * ROW_H
                 is_c = (self._lang_sel == (0, li))
@@ -407,7 +476,6 @@ class LangModalMixin:
                 # Visualizzazione cursore ed evidenziazione pro
                 if is_c:
                     if getattr(self, "_lang_all_sel", False):
-                        # Disegna evidenziazione selezione (tutto il testo)
                         tw_v, _ = _text_wh(val, "sm")
                         _rect(self.screen, (70, 90, 160), (cx + 56, ry + 8, tw_v + 4, ROW_H - 18))
                     
@@ -421,6 +489,26 @@ class LangModalMixin:
                 _draw_text(self.screen, display, "sm", TXT_HI if is_c else TXT, cx + 58, ry + 16, dw - 85)
         else:
             # Traduzione Globale (Tabella)
+            HEADER_H = 118
+            ROW_H    = 28
+            KEY_W    = 200
+            lang_w   = (dw - KEY_W - 20) // len(self.LANGS)
+            cx       = dx + 10
+            cy       = dy + HEADER_H
+
+            # 1. BARRA DI RICERCA
+            search_r = (cx, dy + 48, dw - 20, 32)
+            search_bg = (54, 54, 68) if self._lang_search_active else (44, 44, 56)
+            _rect(self.screen, search_bg, search_r, radius=4)
+            _rect(self.screen, ACCENT if self._lang_search_active else BORDER, search_r, 1, radius=4)
+            
+            s_text = self._lang_search if self._lang_search else "Cerca tra chiavi e traduzioni..."
+            s_color = TXT if self._lang_search else TXT_DIM
+            if self._lang_search_active and (int(time.time() * 2) % 2 == 0):
+                s_text += "|"
+            _draw_text(self.screen, s_text, "sm", s_color, cx + 10, dy + 55, dw - 40)
+
+            # 2. HEADERS TABELLA
             _rect(self.screen, (52, 52, 66), (cx, cy - 22, KEY_W, 20))
             _draw_text(self.screen, "Chiave", "sm", TXT_DIM, cx + 4, cy - 20, KEY_W - 8)
             for li, lang in enumerate(self.LANGS):
@@ -431,9 +519,10 @@ class LangModalMixin:
 
             pygame.draw.line(self.screen, BORDER, (dx, cy), (dx + dw, cy))
 
+            # 3. CONTENUTO FILTRATO
             clip = pygame.Rect(dx, cy, dw, dh - HEADER_H - 48)
             self.screen.set_clip(clip)
-            for ki, key in enumerate(self._lang_keys):
+            for ki, key in enumerate(self._lang_filtered_keys):
                 ry = cy + ki * ROW_H - self._lang_scroll * ROW_H
                 if ry + ROW_H < cy or ry > dy + dh - 48: continue
                 row_bg = (54, 54, 66) if ki % 2 == 0 else (46, 46, 58)

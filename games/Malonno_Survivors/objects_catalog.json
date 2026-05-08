@@ -49,21 +49,6 @@
       ]
     },
     {
-      "id": "ancient_key",
-      "label_key": "obj_ancient_key",
-      "icon": "objects/ancient_key.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 80,
-      "default_hint_delay": 30,
-      "tags": [
-        "attrezzo",
-        "chiave",
-        "medio",
-        "metallo"
-      ]
-    },
-    {
       "id": "arcade_joystick",
       "label_key": "obj_arcade_joystick",
       "icon": "objects/arcade_joystick.png",
@@ -264,38 +249,6 @@
       ]
     },
     {
-      "id": "desiderius_cross",
-      "label_key": "obj_desiderius_cross",
-      "icon": "objects/desiderius_cross.png",
-      "default_detection": "rect",
-      "default_width": 128,
-      "default_height": 192,
-      "tags": [
-        "arte",
-        "gioiello",
-        "medio",
-        "metallo",
-        "prezioso",
-        "tradizione",
-        "vintage"
-      ]
-    },
-    {
-      "id": "doll_head_broken",
-      "label_key": "obj_doll_head_broken",
-      "icon": "objects/doll_head_broken.png",
-      "default_detection": "circle",
-      "default_radius": 30,
-      "default_hint_delay": 35,
-      "tags": [
-        "giocattolo",
-        "horror",
-        "piccolo",
-        "plastica",
-        "vintage"
-      ]
-    },
-    {
       "id": "dried_fish",
       "label_key": "obj_dried_fish",
       "icon": "objects/dried_fish.png",
@@ -376,6 +329,21 @@
       ]
     },
     {
+      "id": "eyeball_jar",
+      "label_key": "obj_eyeball_jar",
+      "icon": "objects/eyeball_jar.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 50,
+      "default_hint_delay": 25,
+      "tags": [
+        "cucina",
+        "horror",
+        "piccolo",
+        "vetro"
+      ]
+    },
+    {
       "id": "faded_letter",
       "label_key": "obj_faded_letter",
       "icon": "objects/faded_letter.png",
@@ -421,20 +389,6 @@
         "piccolo",
         "tecnologia",
         "vintage"
-      ]
-    },
-    {
-      "id": "forest_acorn",
-      "label_key": "obj_forest_acorn",
-      "icon": "objects/forest_acorn.png",
-      "default_detection": "circle",
-      "default_radius": 15,
-      "default_hint_delay": 25,
-      "tags": [
-        "biologico",
-        "bosco",
-        "natura",
-        "piccolo"
       ]
     },
     {
@@ -813,22 +767,6 @@
         "cera",
         "luce",
         "piccolo"
-      ]
-    },
-    {
-      "id": "magician_wand",
-      "label_key": "obj_magician_wand",
-      "icon": "objects/magician_wand.png",
-      "default_detection": "rect",
-      "default_width": 80,
-      "default_height": 10,
-      "default_hint_delay": 30,
-      "tags": [
-        "attrezzo",
-        "circo",
-        "legno",
-        "magia",
-        "medio"
       ]
     },
     {
@@ -1277,21 +1215,6 @@
       ]
     },
     {
-      "id": "rusty_stapler",
-      "label_key": "obj_rusty_stapler",
-      "icon": "objects/rusty_stapler.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 30,
-      "default_hint_delay": 30,
-      "tags": [
-        "metallo",
-        "piccolo",
-        "rotto",
-        "ufficio"
-      ]
-    },
-    {
       "id": "sawed_off_shotgun",
       "label_key": "obj_sawed_off_shotgun",
       "icon": "objects/sawed_off_shotgun.png",
@@ -1599,6 +1522,22 @@
       ]
     },
     {
+      "id": "table_lamp",
+      "label_key": "obj_table_lamp",
+      "icon": "objects/table_lamp.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "arredamento",
+        "casa",
+        "luce",
+        "metallo",
+        "piccolo"
+      ]
+    },
+    {
       "id": "tamagotchi",
       "label_key": "tamagotchi",
       "icon": "objects/tamagotchi.png",
@@ -1793,21 +1732,6 @@
         "officina",
         "pericolo",
         "piccolo"
-      ]
-    },
-    {
-      "id": "venetian_mask",
-      "label_key": "obj_venetian_mask",
-      "icon": "objects/venetian_mask.png",
-      "default_detection": "circle",
-      "default_radius": 32,
-      "default_hint_delay": 30,
-      "tags": [
-        "abbigliamento",
-        "carta",
-        "maschera",
-        "medio",
-        "vintage"
       ]
     },
     {

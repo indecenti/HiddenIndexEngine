@@ -17,7 +17,7 @@ from editor.constants import (
     HANDLE_R, MODE_SELECT, MODE_CIRCLE, MODE_RECT, MODE_SCATTER,
     ACCENT, BORDER, BTN, PANEL,
     TXT, TXT_DIM, TXT_HI, SEL_C, OK_C, ERR_C, WARN_C,
-    TAB_PROPS,
+    TAB_PROPS, REF_W, REF_H,
 )
 from editor.core.io import _default_obj
 from editor.ui.draw import _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _slider
@@ -339,10 +339,19 @@ class ObjectOpsMixin:
         chosen_cats = random.choices(self.catalog, k=count) if len(self.catalog) < count else random.sample(self.catalog, count)
 
         new_indices = []
-        # Offset per evitare sovrapposizione perfetta (vicini ma distinti)
+
+        # Calcolo fattore di scala basato sulla scena (rif 1280x720)
+        sw, sh = (REF_W, REF_H)
+        if getattr(self, "bg_surf", None):
+            sw, sh = self.bg_surf.get_size()
+        
+        scale = sw / REF_W
+        
+        # Offset dinamici scalati
+        off_v = 60 * scale
         offsets = [
-            (-60, -60), (60, -60),
-            (-60,  60), (60,  60)
+            (-off_v, -off_v), (off_v, -off_v),
+            (-off_v,  off_v), (off_v,  off_v)
         ]
 
         for i, cat in enumerate(chosen_cats):
@@ -365,19 +374,21 @@ class ObjectOpsMixin:
                 self._status(f"Scatter interrotto: layer '{lyr}' bloccato!", ERR_C, 2)
                 return
 
-            # Determina tipo rilevamento in base ai default del catalogo
+            # Determina tipo rilevamento in base ai default del catalogo (scalati)
             dt = cat.get("default_detection_type", "circle")
             hd = cat.get("default_hint_delay", 30)
             if dt == "circle":
+                r_def = cat.get("default_radius", 30)
                 obj = _default_obj(cat["id"], tx, ty, "circle", 
-                                   radius=cat.get("default_radius", 30),
+                                   radius=round(r_def * scale),
                                    hint_delay=hd,
                                    layer=lyr)
             else:
-                w = cat.get("default_width", 60)
-                h = cat.get("default_height", 60)
-                obj = _default_obj(cat["id"], tx - w/2, ty - h/2, "rect", 
-                                   width=w, height=h,
+                w_def = cat.get("default_width", 60)
+                h_def = cat.get("default_height", 60)
+                nw, nh = round(w_def * scale), round(h_def * scale)
+                obj = _default_obj(cat["id"], tx - nw/2, ty - nh/2, "rect", 
+                                   width=nw, height=nh,
                                    hint_delay=hd,
                                    layer=lyr)
             
@@ -656,6 +667,7 @@ class ObjectOpsMixin:
             self.sel_effect_idx = idx
             self.selected_idx = None
             self.selected_indices = []
+            self._editing_prop = None  # Reset editing prop quando si cambia oggetto
             self._ctx_menu = {"pos": (mx, my_raw), "idx": idx, "type": "effect"}
             return
             
@@ -665,6 +677,7 @@ class ObjectOpsMixin:
             idx = hits[0]
             self.selected_idx = idx
             self.sel_effect_idx = None
+            self._editing_prop = None  # Reset editing prop
             
             # Estrazione palette per suggerimenti rapidi (primi 10 colori)
             palette = []
@@ -686,7 +699,7 @@ class ObjectOpsMixin:
         # Catalogo
         if self._ctx_menu.get("type") == "catalog":
             cat_id = self._ctx_menu["cat_id"]
-            items = [("edit_png", "Edit PNG (Editor Immagine)"), ("sep", "---")]
+            items = [("edit_png", "Edit PNG (Editor Immagine)"), ("modify_tags", "Modifica Tag..."), ("sep", "---")]
             if self._ctx_menu.get("confirm_delete_cid") == cat_id:
                 items.append(("delete_asset", "!! SICURO? (CLICCA ANCORA)"))
             else: items.append(("delete_asset", "ELIMINA RISORSA"))
@@ -743,6 +756,8 @@ class ObjectOpsMixin:
             ("l_high", "Porta in Primo Piano"),
             ("l_mid",  "Porta nel Mezzo"),
             ("l_low",  "Porta sullo Sfondo"),
+            ("sep",      "---"),
+            ("modify_tags", "Modifica Tag..."),
         ]
         return items
 
@@ -785,6 +800,7 @@ class ObjectOpsMixin:
                 ir = pygame.Rect(mx_m + 4, y_off, m_w - 8, ih - 2)
                 if _in_rect((mx, my_raw), ir):
                     if cid == "edit_png": self._img_editor_open(cat_id); return False
+                    elif cid == "modify_tags": self._tag_modal_open(cat_id); return False
                     elif cid == "delete_asset":
                         if self._ctx_menu.get("confirm_delete_cid") == cat_id: 
                             self._delete_catalog_asset(cat_id)
@@ -896,6 +912,9 @@ class ObjectOpsMixin:
                 elif cid == "l_high": self._set_layer("objects_high"); return False
                 elif cid == "l_mid":  self._set_layer("objects_mid"); return False
                 elif cid == "l_low":  self._set_layer("objects_low"); return False
+                elif cid == "modify_tags":
+                    self._tag_modal_open(obj["catalog_id"])
+                    return False
                 elif cid == "delete": self._delete_sel(); return False
                 elif cid == "fx_dupe":
                     self._push_undo()

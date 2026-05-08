@@ -1,0 +1,9 @@
+{
+  "mg_title": "TETRAN BLITZ",
+  "mg_description": "Fordere die Zeit heraus! Lösche in 60 Sekunden so viele Linien wie möglich mit Combos und Spezialblöcken.",
+  "time_left": "Zeit: {time}s",
+  "score": "Punkte: {score}",
+  "multiplier": "Multiplikator: x{mult}",
+  "game_over": "ZEIT ABGELAUFEN!",
+  "final_score": "Endstand: {score}"
+}

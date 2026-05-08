@@ -819,8 +819,8 @@
     },
     {
       "catalog_id": "pelt_scrap",
-      "x": 390,
-      "y": 1460,
+      "x": 406,
+      "y": 1452,
       "detection_type": "circle",
       "layer": "objects_mid",
       "hint_delay": 40,
@@ -1517,61 +1517,6 @@
       "minigame_trigger": {
         "minigame_id": "asteroids"
       }
-    },
-    {
-      "catalog_id": "playing_cards_alt",
-      "x": 1222,
-      "y": 1167,
-      "detection_type": "circle",
-      "layer": "objects_mid",
-      "is_goal": true,
-      "hint_delay": 35,
-      "radius": 54,
-      "width": 108,
-      "height": 108,
-      "minigame_trigger": {
-        "minigame_id": "tower"
-      }
-    },
-    {
-      "catalog_id": "marquee_pong",
-      "x": 204,
-      "y": 688,
-      "detection_type": "rect",
-      "layer": "objects_mid",
-      "is_goal": true,
-      "hint_delay": 40,
-      "width": 288,
-      "height": 97,
-      "minigame_trigger": {
-        "minigame_id": "minipong"
-      }
-    },
-    {
-      "catalog_id": "marquee_centipede",
-      "x": 1536,
-      "y": 530,
-      "detection_type": "rect",
-      "layer": "objects_mid",
-      "is_goal": true,
-      "hint_delay": 40,
-      "width": 360,
-      "height": 94,
-      "minigame_trigger": {
-        "minigame_id": "centipede"
-      }
-    },
-    {
-      "catalog_id": "spoiled_milk",
-      "x": 440,
-      "y": 351,
-      "detection_type": "rect",
-      "layer": "objects_mid",
-      "always_show": false,
-      "is_goal": true,
-      "hint_delay": 35,
-      "width": 146,
-      "height": 209
     }
   ],
   "music": [
@@ -1660,11 +1605,11 @@
     }
   ],
   "objects_to_show": 17,
-  "auto_random_finds": false,
-  "num_random_finds": 12,
+  "auto_random_finds": true,
+  "num_random_finds": 14,
   "flashlight": false,
   "flashlight_radius": 297,
-  "random_layer_selection": false,
+  "random_layer_selection": true,
   "layer_locked": {
     "objects_low": false,
     "objects_mid": false,

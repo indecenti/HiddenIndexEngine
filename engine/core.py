@@ -173,6 +173,7 @@ class EngineCore:
         self._flashlight_mask = None
         self._flashlight_hole_cache = None  # Cache per il gradiente radiale
         self._flashlight_cached_rad = 0
+        self._hint_flash_timer = 0.0 # Timer per illuminazione temporanea (Hint Flash)
         
         # --- MENU VIDEO ---
         self._menu_video_cap = None
@@ -377,15 +378,27 @@ class EngineCore:
                         if hasattr(self, '_hint_button_rect') and self._hint_button_rect.collidepoint(event.pos):
                             # [FIX] Controllo disponibilità hint prima dell'uso
                             if self.level_manager.get_available_hints() > 0:
-                                success, penalty = self.hint.use_manual_hint(self._current_scene_objects)
+                                # Nuova Logica: Hint Flash per scene con torcia
+                                is_flashlight = self._current_scene_data and getattr(self._current_scene_data, 'flashlight', False)
+                                
+                                success, penalty = self.hint.use_manual_hint(
+                                    self._current_scene_objects, 
+                                    suppress_fx=is_flashlight
+                                )
+                                
                                 if success:
                                     self.audio.play_sfx("engine/assets/sounds/click_Low.wav")
                                     self.level_manager.apply_score_penalty(penalty)
                                     self.level_manager.consume_hint_from_rewards()  # Decrementa conteggio HUD
-                                    # Popup vicino al mouse per il costo dell'hint
-                                    bx, by = self.scaling_manager.screen_to_bg(*event.pos)
-                                    self.effects.spawn_score_popup(bx, by, penalty)
-                                    self.logger.info(f"Hint usato (bottone): penalità {penalty} pt")
+                                    
+                                    if is_flashlight:
+                                        self._hint_flash_timer = 5.0
+                                        self.logger.info("Hint Flash attivato per 5 secondi (torcia presente)")
+                                    else:
+                                        # Popup vicino al mouse per il costo dell'hint standard
+                                        bx, by = self.scaling_manager.screen_to_bg(*event.pos)
+                                        self.effects.spawn_score_popup(bx, by, penalty)
+                                        self.logger.info(f"Hint usato (bottone): penalità {penalty} pt")
                             else:
                                 self.audio.play_sfx("engine/assets/sounds/UI_Forbidden.wav")
                                 self.logger.warning("Tentativo di usare hint ma quantità disponibile è 0!")
@@ -577,14 +590,25 @@ class EngineCore:
                     # Tasto H: Richiedi hint manuale
                     # [FIX] Controllo disponibilità hint prima dell'uso
                     if self.level_manager.get_available_hints() > 0:
-                        success, penalty = self.hint.use_manual_hint(self._current_scene_objects)
+                        is_flashlight = self._current_scene_data and getattr(self._current_scene_data, 'flashlight', False)
+                        
+                        success, penalty = self.hint.use_manual_hint(
+                            self._current_scene_objects, 
+                            suppress_fx=is_flashlight
+                        )
+                        
                         if success:
                             self.level_manager.apply_score_penalty(penalty)
                             self.level_manager.consume_hint_from_rewards()  # Decrementa conteggio HUD
-                            # Popup vicino al mouse per il costo dell'hint (da tastiera)
-                            bx, by = self.scaling_manager.screen_to_bg(*pygame.mouse.get_pos())
-                            self.effects.spawn_score_popup(bx, by, penalty)
-                            self.logger.info(f"Hint usato: penalità {penalty} pt")
+                            
+                            if is_flashlight:
+                                self._hint_flash_timer = 5.0
+                                self.logger.info("Hint Flash attivato (Tasto H) per 5 secondi")
+                            else:
+                                # Popup vicino al mouse per il costo dell'hint (da tastiera)
+                                bx, by = self.scaling_manager.screen_to_bg(*pygame.mouse.get_pos())
+                                self.effects.spawn_score_popup(bx, by, penalty)
+                                self.logger.info(f"Hint usato: penalità {penalty} pt")
                         else:
                             if self.hint.hints_used_total >= self.hint.max_hints_before_disable:
                                 self.logger.debug("Numero massimo di hint raggiunto")
@@ -739,6 +763,13 @@ class EngineCore:
 
             if self._spam_lock_timer > 0:
                 self._spam_lock_timer -= dt
+            
+            # --- Aggiornamento Hint Flash ---
+            if self._hint_flash_timer > 0:
+                self._hint_flash_timer -= dt
+                if self._hint_flash_timer <= 0:
+                    self._hint_flash_timer = 0.0
+                    self.logger.debug("Hint Flash terminato. Torcia ripristinata.")
             
         elif self.state == EngineState.RESULTS:
             # Aggiorna animazioni della schermata di risultati
@@ -1444,7 +1475,11 @@ class EngineCore:
 
             # --- EFFETTO TORCIA (FLASHLIGHT) ---
             if self._current_scene_data and getattr(self._current_scene_data, 'flashlight', False):
-                self._draw_flashlight_effect()
+                # Se l'Hint Flash è attivo, saltiamo il disegno dell'oscurità
+                if self._hint_flash_timer > 0:
+                    self._draw_hint_flash_timer()
+                else:
+                    self._draw_flashlight_effect()
 
             # --- UI E FUMETTI (Sempre in primo piano) ---
             ui_fx = [f for f in self._current_scene_effects if getattr(f, "type", "") == "bubble_tip"]
@@ -1557,6 +1592,33 @@ class EngineCore:
 
         # 5. Rendering finale sopra la scena (copre fumo, glint, etc. se fuori dalla luce)
         self.screen.blit(self._flashlight_mask, (0, 0))
+
+    def _draw_hint_flash_timer(self) -> None:
+        """Disegna il countdown numerico al centro dello schermo durante il Flash."""
+        timer_val = int(math.ceil(self._hint_flash_timer))
+        if timer_val <= 0: return
+        
+        # Uso font Segoe UI Black o Impact per un look premium
+        font_size = int(self.scaling_manager.scale_value(120))
+        try:
+            font = pygame.font.SysFont("segoe ui black", font_size)
+        except:
+            font = pygame.font.SysFont("impact", font_size)
+            
+        text = str(timer_val)
+        cx, cy = self.screen.get_width() // 2, self.screen.get_height() // 2
+        
+        # Rendering con Outline per visibilità perfetta su ogni sfondo
+        offsets = [(-3, -3), (3, -3), (-3, 3), (3, 3), (0, -3), (0, 3), (-3, 0), (3, 0)]
+        for ox, oy in offsets:
+            out_s = font.render(text, True, (20, 20, 30))
+            self.screen.blit(out_s, (cx + ox - out_s.get_width()//2, cy + oy - out_s.get_height()//2))
+            
+        # Testo principale (Bianco con pulsazione alpha)
+        alpha = int(180 + math.sin(pygame.time.get_ticks() * 0.01) * 75)
+        main_s = font.render(text, True, (255, 255, 255))
+        main_s.set_alpha(alpha)
+        self.screen.blit(main_s, (cx - main_s.get_width()//2, cy - main_s.get_height()//2))
 
     def _on_minigame_complete(self, result: dict, obj) -> None:
         """Ritorna alla scena e gestisce i risultati del minigioco."""

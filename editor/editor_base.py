@@ -64,6 +64,7 @@ from editor.mixins.music_modal    import MusicModalMixin
 from editor.mixins.minigame_modal import MinigameModalMixin
 from editor.mixins.background_modal import BackgroundModalMixin
 from editor.mixins.video_modal import VideoModalMixin
+from editor.mixins.tag_modal import TagModalMixin
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -87,6 +88,7 @@ class LevelEditor(
     MinigameModalMixin,
     BackgroundModalMixin,
     VideoModalMixin,
+    TagModalMixin,
 ):
     """
     Editor di livelli HiddenEngine.
@@ -317,6 +319,7 @@ class LevelEditor(
         self._img_editor_init_state()
         self._init_extra_data(initial_game)
         self._load_bubble_presets()
+        self._tag_modal_active = False
 
     def _TR(self, key: str, *args) -> str:
         """Helper rapido per la localizzazione (engine strings)."""
@@ -460,15 +463,17 @@ class LevelEditor(
         # per garantire che i menu dropdown siano sopra tutto.
         self._r_top_bar(w)
         
-        if self.state != STATE_GAME_SELECT:
-            if self._lang_modal:
-                self._r_lang_modal(w, h)
-            if self._newobj_modal:
-                self._r_newobj_modal(w, h)
-            if self._ctx_menu:
-                self._r_ctx_menu(w, h)
-            if self._img_editor_active:
-                self._r_img_editor_modal(w, h)
+        # Modali specifici dell'editor
+        if self._lang_modal:
+            self._r_lang_modal(w, h)
+        if self._newobj_modal:
+            self._r_newobj_modal(w, h)
+        if self._ctx_menu:
+            self._r_ctx_menu(w, h)
+        if self._img_editor_active:
+            self._r_img_editor_modal(w, h)
+        if self._tag_modal_active:
+            self._r_tag_modal(w, h)
         # Modali globali (funzionano sia in dashboard che in editor)
         if getattr(self, "_music_modal", False):
             self._music_modal_modal_active = True # Segnaposto se serve

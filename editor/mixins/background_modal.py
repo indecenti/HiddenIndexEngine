@@ -29,19 +29,21 @@ class BackgroundModalMixin:
         self._bg_modal_context = context
         self._bg_all_files = []
         self._bg_files = []
-        # Stati Scrolling e Cache
+        # Stati Scrolling e Cache (Caching Intelligente)
         self._bg_scroll = 0.0
         self._bg_scroll_target = 0.0
         self._bg_scroll_vel = 0.0
         self._bg_is_dragging = False
-        self._bg_row_cache = OrderedDict()
-        self._bg_cache_max = 40
+        # La cache delle superfici delle celle viene mantenuta tra le aperture per velocità istantanea
+        self._bg_row_cache = getattr(self, "_bg_row_cache", OrderedDict())
+        self._bg_cache_max = 120 
         self._bg_overlay_surf = getattr(self, "_bg_overlay_surf", None)
         
         # Miniature e Ricerca
         self._bg_thumbnails = getattr(self, "_bg_thumbnails", {})
         self._bg_thumb_lock = getattr(self, "_bg_thumb_lock", threading.Lock())
         self._bg_search = ""
+        self._bg_last_query = None
         self._bg_search_active = False
         self._bg_delete_pending = None
         
@@ -108,27 +110,53 @@ class BackgroundModalMixin:
         pygame.key.set_repeat(0, 0) # Disabilita
 
     def _bg_load_thumbnails_task(self):
-        """Carica le miniature in background con protezione thread."""
+        """Carica le miniature con Disk Caching (PNG) per massima compatibilità."""
         self._bg_loading_thumbs = True
+        cache_dir = self._bg_dir / ".thumbs"
         try:
+            cache_dir.mkdir(parents=True, exist_ok=True)
             for name in self._bg_all_files:
                 if not self._bg_modal: break
                 if name in self._bg_thumbnails: continue
-                if name.lower().endswith(".mp4"): continue
+                if name.lower().endswith((".mp4", ".mov", ".mkv")): continue
+                
                 try:
-                    path = self._bg_dir / name
-                    raw = pygame.image.load(str(path))
-                    tw, th = 200, 112
-                    thumb = pygame.transform.smoothscale(raw, (tw, th))
-                    with self._bg_thumb_lock:
-                        self._bg_thumbnails[name] = thumb
-                    self._bg_row_cache.clear() # Invalida cache per mostrare la miniatura carica
-                except: pass
+                    # Usiamo .png esplicito per la cache per evitare errori di formato
+                    thumb_path = cache_dir / f"{name}.png"
+                    thumb = None
+                    
+                    if thumb_path.exists():
+                        try:
+                            # Caricamento da cache disco
+                            thumb = pygame.image.load(str(thumb_path)).convert_alpha()
+                        except:
+                            # Se la cache è corrotta, la eliminiamo per rigenerarla
+                            thumb_path.unlink(missing_ok=True)
+                    
+                    if not thumb:
+                        # Generazione o rigenerazione dall'originale
+                        path = self._bg_dir / name
+                        raw = pygame.image.load(str(path))
+                        tw, th = 250, 140
+                        thumb = pygame.transform.smoothscale(raw, (tw, th))
+                        # Salvataggio con estensione standard
+                        pygame.image.save(thumb, str(thumb_path))
+                    
+                    if thumb:
+                        with self._bg_thumb_lock:
+                            self._bg_thumbnails[name] = thumb
+                        # Invalida cache rendering per mostrare la nuova immagine
+                        if hasattr(self, "_bg_row_cache"): self._bg_row_cache.clear()
+                except Exception as e:
+                    logging.debug(f"Errore caricamento miniatura {name}: {e}")
         finally:
             self._bg_loading_thumbs = False
 
     def _bg_update_filter(self):
         query = self._bg_search.lower().strip()
+        if query == getattr(self, "_bg_last_query", None): return 
+        self._bg_last_query = query
+        
         if not query:
             self._bg_files = list(self._bg_all_files)
         else:
@@ -138,8 +166,9 @@ class BackgroundModalMixin:
                 tags_str = " ".join(tags).lower()
                 if query in f.lower() or query in tags_str:
                     self._bg_files.append(f)
+        
         self._bg_scroll = self._bg_scroll_target = 0
-        self._bg_row_cache.clear()
+        self._bg_row_cache.clear() # Invalida solo al cambio query
 
     def _bg_modal_key(self, ev):
         if not self._bg_modal: return
@@ -165,7 +194,7 @@ class BackgroundModalMixin:
 
         # ── SCORCIATOIE ──
         if ctrl:
-            if ev.key == pygame.K_a: # Seleziona tutto (sposta cursore a fine)
+            if ev.key == pygame.K_a: # Seleziona tutto
                 buf = self._bg_get_buf(active_field)
                 self._bg_cursor = len(buf); return
             if ev.key == pygame.K_c: # Copia
@@ -188,7 +217,6 @@ class BackgroundModalMixin:
             buf = self._bg_get_buf(active_field)
             self._bg_cursor = min(len(buf), self._bg_cursor + 1)
         elif ev.unicode.isprintable():
-            # Filtro caratteri per il nome file
             if active_field == "name" and ev.unicode in r'/\:*?"<>|': return
             self._bg_insert_text(active_field, ev.unicode)
 
@@ -221,11 +249,9 @@ class BackgroundModalMixin:
         self._bg_cursor -= 1
 
     def _bg_update_suggestions(self):
-        """Analizza l'ultimo tag inserito e suggerisce match."""
         parts = [p.strip().lower() for p in self._bg_tags_buffer.split(",")]
         curr = parts[-1] if parts else ""
         if not curr: self._bg_suggestions = []; return
-        
         self._bg_suggestions = [t for t in self._bg_all_library_tags if t.startswith(curr) and t not in parts][:5]
 
     def _bg_apply_suggestion(self, tag):
@@ -254,9 +280,15 @@ class BackgroundModalMixin:
 
     def _bg_modal_click(self, mx, my, w, h):
         if not self._bg_modal: return
-        dw, dh = 1100, 800
+        # Dimensioni dinamiche bilanciate
+        dw, dh = int(w * 0.88), int(h * 0.84)
+        dw = _clamp(dw, 1100, 2000)
+        dh = _clamp(dh, 700, 1200)
         dx, dy = (w - dw) // 2, (h - dh) // 2
-        if not _in_rect((mx, my), (dx, dy, dw, dh)): self._bg_modal_close(); return
+        
+        if not _in_rect((mx, my), (dx, dy, dw, dh)): 
+            self._bg_confirm_rename(); self._bg_confirm_tags()
+            self._bg_modal_close(); return
 
         # Pulsante suggerimenti
         if self._bg_editing_tags and self._bg_suggestions:
@@ -268,45 +300,57 @@ class BackgroundModalMixin:
         xr = pygame.Rect(dx + dw - 42, dy + 15, 26, 26)
         if _in_rect((mx, my), xr): self._bg_modal_close(); return
 
-        search_r = pygame.Rect(dx + 25, dy + 60, dw - 50, 36)
+        search_r = pygame.Rect(dx + 30, dy + 65, dw - 60, 38)
         if _in_rect((mx, my), search_r):
             self._bg_confirm_rename(); self._bg_confirm_tags()
             self._bg_search_active = True; self._bg_cursor = len(self._bg_search)
             return
         
-        list_x, list_y = dx + 25, dy + 130
-        list_w, list_h = dw - 50, dh - 240
-        row_h = 140 
+        list_x, list_y = dx + 30, dy + 130
+        list_w, list_h = dw - 60, dh - 240
+        
+        # Logica Griglia
+        item_w, item_h = 280, 300 
+        padding = 20
+        cols = max(1, (list_w - padding) // (item_w + padding))
         
         if _in_rect((mx, my), (list_x, list_y, list_w, list_h)):
-            rel_y = my - list_y
-            idx = int(rel_y // row_h + self._bg_scroll)
-            if idx < len(self._bg_files):
-                name = self._bg_files[idx]
-                ry = list_y + (idx - self._bg_scroll) * row_h
-                
-                if _in_rect((mx, my), (list_x + list_w - 120, ry + 50, 100, 40)): # SCEGLI
-                    self._bg_confirm_rename(); self._bg_confirm_tags(); self._bg_select(name); return
-                if _in_rect((mx, my), (list_x + list_w - 170, ry + 50, 40, 40)): # ELIMINA
-                    if self._bg_delete_pending == name: self._bg_delete_file(name)
-                    else: self._bg_confirm_rename(); self._bg_confirm_tags(); self._bg_delete_pending = name
-                    return
-                
-                # Hit EDIT NOME
-                if _in_rect((mx, my), (list_x + 240, ry + 20, 400, 30)):
-                    self._bg_confirm_rename(); self._bg_confirm_tags()
-                    self._bg_editing_name = name; self._bg_name_buffer = Path(name).stem
-                    self._bg_cursor = len(self._bg_name_buffer)
-                    return
-                
-                # Hit EDIT TAGS
-                if _in_rect((mx, my), (list_x + 240, ry + 60, 500, 60)):
-                    self._bg_confirm_rename(); self._bg_confirm_tags()
-                    self._bg_editing_tags = name
-                    tags = self._bg_catalog.get(name, {}).get("tags", [])
-                    self._bg_tags_buffer = ", ".join(tags) + (", " if tags else "")
-                    self._bg_cursor = len(self._bg_tags_buffer)
-                    return
+            rel_y = my - list_y + self._bg_scroll
+            rel_x = mx - list_x - padding
+            
+            row = int(rel_y // item_h)
+            col = int(rel_x // (item_w + padding))
+            
+            if 0 <= col < cols:
+                idx = row * cols + col
+                if idx < len(self._bg_files):
+                    name = self._bg_files[idx]
+                    ix = list_x + padding + col * (item_w + padding)
+                    iy = list_y + padding + row * item_h - self._bg_scroll
+                    
+                    # Hit Buttons
+                    if _in_rect((mx, my), (ix + 15, iy + 155, 120, 38)):
+                        self._bg_confirm_rename(); self._bg_confirm_tags(); self._bg_select(name); return
+                    if _in_rect((mx, my), (ix + item_w - 55, iy + 155, 40, 38)):
+                        if self._bg_delete_pending == name: self._bg_delete_file(name)
+                        else: self._bg_confirm_rename(); self._bg_confirm_tags(); self._bg_delete_pending = name
+                        return
+                    
+                    # Edit Nome
+                    if _in_rect((mx, my), (ix + 10, iy + 205, item_w - 20, 30)):
+                        self._bg_confirm_rename(); self._bg_confirm_tags()
+                        self._bg_editing_name = name; self._bg_name_buffer = Path(name).stem
+                        self._bg_cursor = len(self._bg_name_buffer)
+                        return
+                    
+                    # Edit Tags
+                    if _in_rect((mx, my), (ix + 10, iy + 245, item_w - 20, 30)):
+                        self._bg_confirm_rename(); self._bg_confirm_tags()
+                        self._bg_editing_tags = name
+                        tags = self._bg_catalog.get(name, {}).get("tags", [])
+                        self._bg_tags_buffer = ", ".join(tags) + (", " if tags else "")
+                        self._bg_cursor = len(self._bg_tags_buffer)
+                        return
 
         self._bg_confirm_rename(); self._bg_confirm_tags()
         self._bg_search_active = False; self._bg_delete_pending = None
@@ -339,7 +383,6 @@ class BackgroundModalMixin:
     def _bg_select(self, name):
         src = self._bg_dir / name
         is_vid = name.lower().endswith((".mp4", ".mov", ".mkv"))
-        
         ctx = getattr(self, "_bg_modal_context", "scene")
         if ctx.startswith("game") or ctx.startswith("scene_"):
             prefix = "new" if "new" in ctx else "edit"
@@ -349,24 +392,20 @@ class BackgroundModalMixin:
             else:
                 setattr(self, f"_gs_{prefix}_bg_path", str(src))
                 setattr(self, f"_gs_{prefix}_vid_path", "")
-            
             self._gs_update_previews(prefix)
         else:
             if not getattr(self, "scene_path", None): return
             self._push_undo(); dest = self.scene_path / name
             if src.exists() and not dest.exists(): shutil.copy2(str(src), str(dest))
             self.scene_data["background"] = name
-            
-            # Se è un'immagine, carica la surface per l'anteprima canvas
             if not is_vid:
                 try:
                     self.bg_surf = pygame.image.load(str(dest)).convert()
                     self._bg_cache_surf = None; self._fit_canvas(); self.scene_dirty = True
                 except: pass
             else:
-                self.bg_surf = None # Il video verrà renderizzato dal core se supportato
+                self.bg_surf = None 
                 self._fit_canvas(); self.scene_dirty = True
-                
         self._bg_modal_close()
 
     def _bg_delete_file(self, name):
@@ -395,144 +434,147 @@ class BackgroundModalMixin:
                 self._bg_all_files.append(t_name); self._bg_all_files.sort(); self._bg_update_filter()
             if t_name.lower().endswith((".jpg", ".jpeg", ".png", ".bmp")):
                 threading.Thread(target=self._bg_load_thumbnails_task, daemon=True).start()
-            
-            # Scorrimento automatico a fine lista
-            v_rows = (800 - 190) // 140
-            self._bg_scroll = max(0, len(self._bg_files) - v_rows)
-            
             self._status(self._TR("modal_status_loaded").format(t_name), OK_C, 3)
         except: pass
 
     def _bg_modal_wheel(self, dy):
         if not self._bg_modal: return
-        self._bg_scroll_target -= dy * 120.0
+        self._bg_scroll_target -= dy * 180.0
         self._bg_scroll_vel = 0
 
     def _r_background_modal(self, w, h):
         if not getattr(self, "_bg_modal", False): return
         
+        # Overlay Sfondo
         if not self._bg_overlay_surf or self._bg_overlay_surf.get_size() != (w, h):
             self._bg_overlay_surf = pygame.Surface((w, h), pygame.SRCALPHA)
-            self._bg_overlay_surf.fill((0, 0, 0, 235))
+            self._bg_overlay_surf.fill((0, 0, 0, 240))
         self.screen.blit(self._bg_overlay_surf, (0, 0))
 
-        dw, dh = 1100, 800
+        # Dimensioni Dinamiche Bilanciate
+        dw, dh = int(w * 0.88), int(h * 0.84)
+        dw = _clamp(dw, 1100, 2000)
+        dh = _clamp(dh, 700, 1200)
         dx, dy = (w - dw) // 2, (h - dh) // 2
-        _rect(self.screen, (30, 32, 45), (dx, dy, dw, dh), radius=24)
-        _rect(self.screen, ACCENT, (dx, dy, dw, dh), 2, radius=24)
-        _draw_text(self.screen, self._TR("modal_bg_title"), "lg", TXT_HI, dx + 30, dy + 25)
+        
+        _rect(self.screen, (32, 34, 48), (dx, dy, dw, dh), radius=28)
+        _rect(self.screen, ACCENT, (dx, dy, dw, dh), 2, radius=28)
+        _draw_text(self.screen, self._TR("modal_bg_title"), "lg", TXT_HI, dx + 35, dy + 25)
         
         mx, my = pygame.mouse.get_pos()
-        xr = pygame.Rect(dx + dw - 45, dy + 20, 30, 30)
+        xr = pygame.Rect(dx + dw - 48, dy + 20, 32, 32)
         _button(self.screen, xr, "X", _in_rect((mx, my), xr), danger=True)
 
-        # Barra di ricerca
-        search_r = pygame.Rect(dx + 30, dy + 70, dw - 60, 38)
-        s_bg = (20, 22, 32) if self._bg_search_active else (25, 27, 38)
-        _rect(self.screen, s_bg, search_r, radius=12)
-        _rect(self.screen, ACCENT if self._bg_search_active else BORDER, search_r, 1, radius=12)
+        # Barra di ricerca evoluta
+        search_r = pygame.Rect(dx + 35, dy + 70, dw - 70, 42)
+        s_bg = (22, 24, 34) if self._bg_search_active else (28, 30, 42)
+        _rect(self.screen, s_bg, search_r, radius=14)
+        _rect(self.screen, ACCENT if self._bg_search_active else BORDER, search_r, 1, radius=14)
         _draw_text(self.screen, self._bg_search or self._TR("modal_search_placeholder"), "md", 
-                  TXT_HI if self._bg_search or self._bg_search_active else TXT_DIM, search_r.x + 15, search_r.y + 8)
+                  TXT_HI if self._bg_search or self._bg_search_active else TXT_DIM, search_r.x + 18, search_r.y + 10)
         
         if self._bg_search_active and (pygame.time.get_ticks() // 500) % 2:
             tw, _ = _text_wh(self._bg_search[:self._bg_cursor], "md")
-            pygame.draw.line(self.screen, ACCENT, (search_r.x + 15 + tw, search_r.y + 10), (search_r.x + 15 + tw, search_r.y + 28), 2)
+            pygame.draw.line(self.screen, ACCENT, (search_r.x + 18 + tw, search_r.y + 12), (search_r.x + 18 + tw, search_r.y + 30), 2)
 
-        # LIST CONTAINER
-        list_x, list_y, list_w, list_h = dx + 25, dy + 130, dw - 50, dh - 240
-        _rect(self.screen, (15, 17, 26), (list_x, list_y, list_w, list_h), radius=16)
-        _rect(self.screen, (40, 42, 65), (list_x, list_y, list_w, list_h), 1, radius=16) 
+        # LIST CONTAINER (GRIGLIA)
+        list_x, list_y, list_w, list_h = dx + 30, dy + 130, dw - 60, dh - 240
+        _rect(self.screen, (18, 20, 28), (list_x, list_y, list_w, list_h), radius=20)
+        _rect(self.screen, (45, 48, 70), (list_x, list_y, list_w, list_h), 1, radius=20) 
 
-        row_h = 140
+        item_w, item_h = 280, 300 # Altezza aggiornata
+        padding = 20
+        cols = max(1, (list_w - padding) // (item_w + padding))
         total_items = len(self._bg_files)
-        total_h = total_items * row_h
-        max_scroll_px = max(0, total_h - list_h)
+        rows = (total_items + cols - 1) // cols
+        total_h_px = rows * item_h + padding * 2
+        max_scroll_px = max(0, total_h_px - list_h)
 
         # Scrolling Fisico
         self._bg_scroll_target += self._bg_scroll_vel
-        self._bg_scroll_vel *= 0.92
-        if abs(self._bg_scroll_vel) < 0.1: self._bg_scroll_vel = 0.0
+        self._bg_scroll_vel *= 0.90
         self._bg_scroll_target = _clamp(self._bg_scroll_target, 0, max_scroll_px)
-        
-        self._bg_scroll += (self._bg_scroll_target - self._bg_scroll) * 0.15
-        if abs(self._bg_scroll - self._bg_scroll_target) < 0.5: self._bg_scroll = self._bg_scroll_target
-
-        start_idx = max(0, int(self._bg_scroll // row_h))
-        end_idx = min(total_items, start_idx + (list_h // row_h) + 2)
+        self._bg_scroll += (self._bg_scroll_target - self._bg_scroll) * 0.18
 
         self.screen.set_clip(pygame.Rect(list_x, list_y, list_w, list_h))
         
-        for i in range(start_idx, end_idx):
-            name = self._bg_files[i]
-            ry = int(round(list_y + i * row_h - self._bg_scroll))
-            
-            row_r = pygame.Rect(list_x + 12, ry + 10, list_w - 24, row_h - 20)
-            hov = _in_rect((mx, my), row_r)
-            is_del = (self._bg_delete_pending == name)
-            is_ed_n = (self._bg_editing_name == name)
-            is_ed_t = (self._bg_editing_tags == name)
-            
-            # Cache Key
-            cache_key = (name, hov, is_del, is_ed_n, is_ed_t)
-            
-            if cache_key in self._bg_row_cache:
-                row_surf = self._bg_row_cache[cache_key]
-                self._bg_row_cache.move_to_end(cache_key)
-            else:
-                row_surf = pygame.Surface((list_w - 24, row_h - 20), pygame.SRCALPHA)
-                _rect(row_surf, (40, 43, 60) if hov else (24, 26, 38), (0, 0, list_w - 24, row_h - 20), radius=15)
-                if hov: _rect(row_surf, (60, 65, 90), (0, 0, list_w - 24, row_h - 20), 1, radius=15)
+        start_row = int(self._bg_scroll // item_h)
+        end_row = start_row + (list_h // item_h) + 2
 
-                # 1. THUMBNAIL
-                thumb_r = pygame.Rect(16, 4, 200, 112)
-                _rect(row_surf, (10, 12, 18), thumb_r, radius=8)
-                with self._bg_thumb_lock: thumb_surf = self._bg_thumbnails.get(name)
-                if thumb_surf: row_surf.blit(thumb_surf, thumb_r.topleft)
-                else: _draw_shape_icon(row_surf, thumb_r.inflate(-100, -50), "camera", (50, 55, 75))
+        for r in range(start_row, end_row):
+            for c in range(cols):
+                idx = r * cols + c
+                if idx >= total_items: continue
+                
+                name = self._bg_files[idx]
+                ix = list_x + padding + c * (item_w + padding)
+                iy = int(round(list_y + padding + r * item_h - self._bg_scroll))
+                
+                if iy + item_h < list_y or iy > list_y + list_h: continue
 
-                # 2. NOME
-                text_x = 238
-                if not is_ed_n:
-                    _draw_text(row_surf, name, "md", TXT_HI, text_x, 10, 400)
-                    _draw_shape_icon(row_surf, (text_x+_text_wh(name, "md")[0]+12, 10, 24, 24), "edit", ACCENT)
+                item_r = pygame.Rect(ix, iy, item_w, item_h - 10)
+                hov = _in_rect((mx, my), item_r)
+                is_del = (self._bg_delete_pending == name)
+                is_ed_n = (self._bg_editing_name == name)
+                is_ed_t = (self._bg_editing_tags == name)
+                
+                # Cache Cell
+                cache_key = (name, hov, is_del, is_ed_n, is_ed_t)
+                if cache_key in self._bg_row_cache:
+                    cell_surf = self._bg_row_cache[cache_key]
+                    self._bg_row_cache.move_to_end(cache_key)
+                else:
+                    cell_surf = pygame.Surface((item_w, item_h), pygame.SRCALPHA)
+                    _rect(cell_surf, (48, 52, 75) if hov else (28, 30, 42), (0, 0, item_w, item_h - 10), radius=18)
+                    if hov: _rect(cell_surf, ACCENT, (0, 0, item_w, item_h - 10), 1, radius=18)
 
-                # 3. TAGS
-                tags = self._bg_catalog.get(name, {}).get("tags", [])
-                tag_y = 52
-                if not is_ed_t:
-                    if not tags: _draw_text(row_surf, self._TR("modal_add_tag"), "sm", TXT_DIM, text_x, tag_y)
-                    else:
-                        curr_x = text_x
-                        for t in tags:
-                            tw, _ = _text_wh(t, "sm"); tr = pygame.Rect(curr_x, tag_y, tw+20, 24)
-                            _rect(row_surf, (45, 55, 80), (curr_x, tag_y, tw+20, 24), radius=12)
-                            _draw_text(row_surf, t, "sm", TXT_HI, curr_x+10, tag_y+3)
-                            curr_x += tw + 30
-                            if curr_x > 700: break
+                    # Thumbnail
+                    thumb_r = pygame.Rect(15, 12, 250, 140)
+                    _rect(cell_surf, (12, 14, 20), thumb_r, radius=10)
+                    with self._bg_thumb_lock: thumb_surf = self._bg_thumbnails.get(name)
+                    if thumb_surf: cell_surf.blit(thumb_surf, thumb_r.topleft)
+                    else: _draw_shape_icon(cell_surf, thumb_r.inflate(-180, -80), "camera", (60, 65, 85))
 
-                # 4. AZIONI
-                sel_r = pygame.Rect(list_w - 24 - 110, 40, 100, 40)
-                _button(row_surf, sel_r, self._TR("modal_btn_select"), _in_rect((mx - list_x - 12, my - ry - 10), sel_r))
-                del_r = pygame.Rect(list_w - 24 - 160, 40, 40, 40)
-                _button(row_surf, del_r, "X" if not is_del else "!", _in_rect((mx - list_x - 12, my - ry - 10), del_r), danger=True)
-                if is_del: _draw_text(row_surf, self._TR("modal_confirm_delete"), "sm", (255,100,100), del_r[0] - 70, del_r[1] + 12)
+                    # Pulsanti centrati
+                    sel_r = pygame.Rect(15, 155, 120, 38)
+                    _button(cell_surf, sel_r, self._TR("modal_btn_select"), _in_rect((mx-ix, my-iy), sel_r))
+                    
+                    del_r = pygame.Rect(item_w - 55, 155, 40, 38)
+                    _button(cell_surf, del_r, "X" if not is_del else "!", _in_rect((mx-ix, my-iy), del_r), danger=True)
+                    
+                    # Nome e Tag con più spazio
+                    if not is_ed_n:
+                        _draw_text(cell_surf, name, "sm", TXT_HI, 15, 208, item_w - 30)
+                    
+                    tags = self._bg_catalog.get(name, {}).get("tags", [])
+                    if not is_ed_t:
+                        if tags:
+                            t_str = ", ".join(tags)
+                            _draw_text(cell_surf, t_str, "xs", TXT_DIM, 15, 248, item_w - 30)
+                        else:
+                            _draw_text(cell_surf, self._TR("modal_add_tag"), "xs", (80, 85, 105), 15, 248)
 
-                if len(self._bg_row_cache) >= self._bg_cache_max: self._bg_row_cache.popitem(last=False)
-                self._bg_row_cache[cache_key] = row_surf
+                    if len(self._bg_row_cache) >= self._bg_cache_max: self._bg_row_cache.popitem(last=False)
+                    self._bg_row_cache[cache_key] = cell_surf
 
-            self.screen.blit(row_surf, (list_x + 12, ry + 10))
-            
-            # Interactive parts outside row cache
-            text_x = list_x + 250
-            if is_ed_n:
-                _rect(self.screen, (15, 15, 25), (text_x, ry+20, 400, 34), radius=6)
-                _rect(self.screen, OK_C, (text_x, ry+20, 400, 34), 1, radius=6)
-                _draw_text(self.screen, self._bg_name_buffer, "md", TXT_HI, text_x + 10, ry+26)
-            if is_ed_t:
-                _rect(self.screen, (15, 15, 25), (text_x, ry+62, 500, 34), radius=6)
-                _rect(self.screen, ACCENT, (text_x, ry+62, 500, 34), 1, radius=6)
-                _draw_text(self.screen, self._bg_tags_buffer, "sm", TXT_HI, text_x + 10, ry+70)
+                self.screen.blit(cell_surf, (ix, iy))
+                
+                # Input dinamici (usando primitiva _input_box per coerenza e cursore)
+                from editor.ui.draw import _input_box
+                if is_ed_n:
+                    ir = pygame.Rect(ix + 10, iy + 205, item_w - 20, 30)
+                    _input_box(self.screen, ir, self._bg_name_buffer, focused=True)
+                if is_ed_t:
+                    ir = pygame.Rect(ix + 10, iy + 245, item_w - 20, 30)
+                    # Gestione scrolling orizzontale simulato: mostra la parte finale del buffer se lungo
+                    disp_tags = self._bg_tags_buffer
+                    if _text_wh(disp_tags, "mono")[0] > ir.w - 15:
+                        while _text_wh(disp_tags, "mono")[0] > ir.w - 25:
+                            disp_tags = disp_tags[1:]
+                    _input_box(self.screen, ir, disp_tags, focused=True)
+                    self._last_tags_x, self._last_tags_y = ix + 10, iy + 245
 
         self.screen.set_clip(None)
-        _scrollbar(self.screen, list_x + list_w - 12, list_y + 10, 4, list_h - 20, self._bg_scroll, total_items, list_h // row_h)
-        _draw_text(self.screen, self._TR("modal_drag_drop"), "sm", ACCENT, dx + dw - 250, dy + dh - 35)
+        _scrollbar(self.screen, list_x + list_w - 12, list_y + 15, 6, list_h - 30, self._bg_scroll, total_h_px, list_h)
+        _draw_text(self.screen, self._TR("modal_drag_drop"), "sm", ACCENT, dx + dw - 280, dy + dh - 35)
+

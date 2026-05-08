@@ -588,9 +588,12 @@ class RenderCanvasMixin:
             (MODE_SELECT,       self._TR("tb_select_btn"),   115),
             (MODE_CIRCLE,       self._TR("tb_circle_btn"),   90),
             (MODE_RECT,         self._TR("tb_rect_btn"),  100),
-            (MODE_EFFECT_PLACE, self._TR("tb_effect_btn"),      80),
-            (MODE_SCATTER,      self._TR("tb_cluster_btn"),      80),
         ]
+        # Mostra strumento effetti solo se un effetto è selezionato nel catalogo
+        if getattr(self, "effects_catalog_sel", None):
+            tools.append((MODE_EFFECT_PLACE, self._TR("tb_effect_btn"), 80))
+            
+        tools.append((MODE_SCATTER, self._TR("tb_cluster_btn"), 80))
         toggles = [
             ("overlay", self.show_overlay, self._TR("tb_overlay_btn"), 80),
             ("grid",    self.show_grid,    self._TR("tb_grid_btn"), 80),

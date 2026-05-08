@@ -1,0 +1,7 @@
+{
+  "id": "tetran",
+  "name": "Tetran Blitz",
+  "main_class": "TetranGame",
+  "version": "1.0.0",
+  "icon": "icon.png"
+}

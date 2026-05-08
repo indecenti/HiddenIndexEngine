@@ -1,0 +1,9 @@
+{
+  "mg_title": "TETRAN BLITZ",
+  "mg_description": "Sfida il tempo! Completa più linee possibili in 60 secondi sfruttando combo e blocchi speciali.",
+  "time_left": "Tempo: {time}s",
+  "score": "Punti: {score}",
+  "multiplier": "Moltiplicatore: x{mult}",
+  "game_over": "TEMPO SCADUTO!",
+  "final_score": "Punteggio Finale: {score}"
+}

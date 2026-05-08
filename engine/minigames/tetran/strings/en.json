@@ -1,0 +1,9 @@
+{
+  "mg_title": "TETRAN BLITZ",
+  "mg_description": "Challenge time! Clear as many lines as possible in 60 seconds using combos and special blocks.",
+  "time_left": "Time: {time}s",
+  "score": "Score: {score}",
+  "multiplier": "Multiplier: x{mult}",
+  "game_over": "TIME'S UP!",
+  "final_score": "Final Score: {score}"
+}

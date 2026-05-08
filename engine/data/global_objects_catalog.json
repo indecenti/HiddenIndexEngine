@@ -3322,6 +3322,7 @@
       "tags": [
         "bevanda",
         "cucina",
+        "italia",
         "piccolo",
         "tradizione",
         "vetro"
@@ -3338,10 +3339,11 @@
       "tags": [
         "bevanda",
         "cucina",
+        "italia",
         "piccolo",
+        "tradizione",
         "vetro",
-        "vino",
-        "tradizione"
+        "vino"
       ]
     },
     {
@@ -3401,10 +3403,11 @@
       "tags": [
         "bevanda",
         "cucina",
+        "italia",
         "piccolo",
+        "tradizione",
         "vetro",
-        "vino",
-        "tradizione"
+        "vino"
       ]
     },
     {
@@ -3552,6 +3555,7 @@
         "biologico",
         "cibo",
         "dolce",
+        "italia",
         "piccolo"
       ]
     },
@@ -3815,6 +3819,7 @@
       "tags": [
         "bandiera",
         "europa",
+        "italia",
         "medio",
         "stoffa"
       ]
@@ -9545,7 +9550,8 @@
         "plastica",
         "grande",
         "nero",
-        "sacco"
+        "sacco",
+        "città"
       ]
     },
     {
@@ -14411,7 +14417,8 @@
         "veicolo",
         "metallo",
         "medio",
-        "luce"
+        "luce",
+        "città"
       ]
     },
     {
@@ -16782,7 +16789,8 @@
       "tags": [
         "pulizia",
         "metallo",
-        "medio"
+        "medio",
+        "città"
       ]
     },
     {
@@ -19464,6 +19472,1804 @@
         "medio",
         "metallo",
         "legno"
+      ]
+    },
+    {
+      "id": "juice_bottle",
+      "label_key": "obj_juice_bottle",
+      "icon": "objects/obj_juice_bottle.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "bevanda",
+        "medio",
+        "vetro"
+      ]
+    },
+    {
+      "id": "vape",
+      "label_key": "obj_vape",
+      "icon": "objects/obj_vape.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 90,
+      "default_hint_delay": 30,
+      "tags": [
+        "accessorio",
+        "elettronica",
+        "tecnologia",
+        "piccolo",
+        "metallo",
+        "fumo"
+      ]
+    },
+    {
+      "id": "pink_slippers",
+      "label_key": "obj_pink_slippers",
+      "icon": "objects/obj_pink_slippers.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "calzatura",
+        "medio",
+        "stoffa",
+        "rosa"
+      ]
+    },
+    {
+      "id": "medieval_shield",
+      "label_key": "obj_medieval_shield",
+      "icon": "objects/obj_medieval_shield.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 75,
+      "default_hint_delay": 40,
+      "tags": [
+        "arma",
+        "legno",
+        "metallo",
+        "vintage",
+        "fantasy",
+        "grande"
+      ]
+    },
+    {
+      "id": "medieval_banner",
+      "label_key": "obj_medieval_banner",
+      "icon": "objects/obj_medieval_banner.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 90,
+      "default_hint_delay": 40,
+      "tags": [
+        "decorazione",
+        "stoffa",
+        "vintage",
+        "fantasy",
+        "grande"
+      ]
+    },
+    {
+      "id": "statue_liberty",
+      "label_key": "obj_statue_liberty",
+      "icon": "objects/obj_statue_liberty.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 95,
+      "default_hint_delay": 45,
+      "tags": [
+        "decorazione",
+        "nazione",
+        "nordamerica",
+        "piccolo",
+        "metallo"
+      ]
+    },
+    {
+      "id": "eiffel_tower",
+      "label_key": "obj_eiffel_tower",
+      "icon": "objects/obj_eiffel_tower.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 95,
+      "default_hint_delay": 45,
+      "tags": [
+        "decorazione",
+        "nazione",
+        "europa",
+        "piccolo",
+        "metallo"
+      ]
+    },
+    {
+      "id": "c64_boxed",
+      "label_key": "obj_c64_boxed",
+      "icon": "objects/obj_c64_boxed.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 60,
+      "default_hint_delay": 50,
+      "tags": [
+        "elettronica",
+        "gioco",
+        "tecnologia",
+        "retro",
+        "grande",
+        "carta"
+      ]
+    },
+    {
+      "id": "colosseum",
+      "label_key": "obj_colosseum",
+      "icon": "objects/obj_colosseum.png",
+      "default_detection": "circle",
+      "default_radius": 45,
+      "default_hint_delay": 45,
+      "tags": [
+        "decorazione",
+        "nazione",
+        "europa",
+        "piccolo",
+        "pietra"
+      ]
+    },
+    {
+      "id": "pizza_slice",
+      "label_key": "obj_pizza_slice",
+      "icon": "objects/obj_pizza_slice.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "biologico",
+        "medio"
+      ]
+    },
+    {
+      "id": "pizza_box",
+      "label_key": "obj_pizza_box",
+      "icon": "objects/obj_pizza_box.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 70,
+      "default_hint_delay": 40,
+      "tags": [
+        "cucina",
+        "carta",
+        "medio"
+      ]
+    },
+    {
+      "id": "chinese_takeout",
+      "label_key": "obj_chinese_takeout",
+      "icon": "objects/obj_chinese_takeout.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "cucina",
+        "carta",
+        "medio"
+      ]
+    },
+    {
+      "id": "military_binoculars",
+      "label_key": "obj_military_binoculars",
+      "icon": "objects/obj_military_binoculars.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 45,
+      "default_hint_delay": 35,
+      "tags": [
+        "accessorio",
+        "tecnologia",
+        "metallo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "antique_telescope",
+      "label_key": "obj_antique_telescope",
+      "icon": "objects/obj_antique_telescope.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 95,
+      "default_hint_delay": 40,
+      "tags": [
+        "accessorio",
+        "vintage",
+        "metallo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "modern_microscope",
+      "label_key": "obj_modern_microscope",
+      "icon": "objects/obj_modern_microscope.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 85,
+      "default_hint_delay": 45,
+      "tags": [
+        "tecnologia",
+        "elettronica",
+        "metallo",
+        "medio"
+      ]
+    },
+    {
+      "id": "apothecary_jar",
+      "label_key": "obj_apothecary_jar",
+      "icon": "objects/obj_apothecary_jar.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "cucina",
+        "vetro",
+        "dolce",
+        "medio"
+      ]
+    },
+    {
+      "id": "antique_microscope",
+      "label_key": "obj_antique_microscope",
+      "icon": "objects/obj_antique_microscope.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 85,
+      "default_hint_delay": 45,
+      "tags": [
+        "tecnologia",
+        "vintage",
+        "metallo",
+        "medio"
+      ]
+    },
+    {
+      "id": "wurstel_pack",
+      "label_key": "obj_wurstel_pack",
+      "icon": "objects/obj_wurstel_pack.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "salume",
+        "plastica",
+        "medio"
+      ]
+    },
+    {
+      "id": "packaged_baguette",
+      "label_key": "obj_packaged_baguette",
+      "icon": "objects/obj_packaged_baguette.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 110,
+      "default_hint_delay": 40,
+      "tags": [
+        "cibo",
+        "carta",
+        "biologico",
+        "grande"
+      ]
+    },
+    {
+      "id": "oyster",
+      "label_key": "obj_oyster",
+      "icon": "objects/obj_oyster.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 35,
+      "tags": [
+        "natura",
+        "abisso",
+        "biologico",
+        "piccolo",
+        "prezioso"
+      ]
+    },
+    {
+      "id": "piggy_bank",
+      "label_key": "obj_piggy_bank",
+      "icon": "objects/obj_piggy_bank.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "denaro",
+        "ceramica",
+        "medio"
+      ]
+    },
+    {
+      "id": "office_chair",
+      "label_key": "obj_office_chair",
+      "icon": "objects/obj_office_chair.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 95,
+      "default_hint_delay": 50,
+      "tags": [
+        "arredamento",
+        "ufficio",
+        "grande",
+        "plastica"
+      ]
+    },
+    {
+      "id": "moka_pot",
+      "label_key": "obj_moka_pot",
+      "icon": "objects/obj_moka_pot.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "bevanda",
+        "metallo",
+        "tradizione",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "keyring_modern",
+      "label_key": "obj_keyring_modern",
+      "icon": "objects/obj_keyring_modern.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "accessorio",
+        "chiave",
+        "metallo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "80s_lamp",
+      "label_key": "obj_80s_lamp",
+      "icon": "objects/obj_80s_lamp.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 75,
+      "default_hint_delay": 40,
+      "tags": [
+        "luce",
+        "arredamento",
+        "retro",
+        "medio"
+      ]
+    },
+    {
+      "id": "transistor_radio",
+      "label_key": "obj_transistor_radio",
+      "icon": "objects/obj_transistor_radio.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 50,
+      "default_hint_delay": 40,
+      "tags": [
+        "comunicazione",
+        "retro",
+        "plastica",
+        "medio"
+      ]
+    },
+    {
+      "id": "asparagus",
+      "label_key": "obj_asparagus",
+      "icon": "objects/obj_asparagus.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "snow_globe",
+      "label_key": "obj_snow_globe",
+      "icon": "objects/obj_snow_globe.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "decorazione",
+        "vetro",
+        "piccolo",
+        "tradizione"
+      ]
+    },
+    {
+      "id": "egyptian_cat",
+      "label_key": "obj_egyptian_cat",
+      "icon": "objects/obj_egyptian_cat.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 85,
+      "default_hint_delay": 40,
+      "tags": [
+        "decorazione",
+        "pietra",
+        "medio",
+        "orientale"
+      ]
+    },
+    {
+      "id": "gold_pan",
+      "label_key": "obj_gold_pan",
+      "icon": "objects/obj_gold_pan.png",
+      "default_detection": "circle",
+      "default_radius": 45,
+      "default_hint_delay": 35,
+      "tags": [
+        "attrezzo",
+        "metallo",
+        "medio",
+        "prezioso"
+      ]
+    },
+    {
+      "id": "sardine_can",
+      "label_key": "obj_sardine_can",
+      "icon": "objects/obj_sardine_can.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "metallo",
+        "piccolo",
+        "pericolo"
+      ]
+    },
+    {
+      "id": "charcoal_iron",
+      "label_key": "obj_charcoal_iron",
+      "icon": "objects/obj_charcoal_iron.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 55,
+      "default_hint_delay": 40,
+      "tags": [
+        "casa",
+        "metallo",
+        "vintage",
+        "medio"
+      ]
+    },
+    {
+      "id": "vintage_fan",
+      "label_key": "obj_vintage_fan",
+      "icon": "objects/obj_vintage_fan.png",
+      "default_detection": "circle",
+      "default_radius": 45,
+      "default_hint_delay": 45,
+      "tags": [
+        "casa",
+        "metallo",
+        "vintage",
+        "medio"
+      ]
+    },
+    {
+      "id": "metronome",
+      "label_key": "obj_metronome",
+      "icon": "objects/obj_metronome.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "musica",
+        "legno",
+        "medio",
+        "vintage"
+      ]
+    },
+    {
+      "id": "ornate_hourglass",
+      "label_key": "obj_ornate_hourglass",
+      "icon": "objects/obj_ornate_hourglass.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 90,
+      "default_hint_delay": 45,
+      "tags": [
+        "arredamento",
+        "vetro",
+        "medio",
+        "vintage"
+      ]
+    },
+    {
+      "id": "pocket_watch_open",
+      "label_key": "obj_pocket_watch_open",
+      "icon": "objects/obj_pocket_watch_open.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "accessorio",
+        "orologio",
+        "metallo",
+        "piccolo",
+        "prezioso",
+        "vintage"
+      ]
+    },
+    {
+      "id": "steampunk_heart",
+      "label_key": "obj_steampunk_heart",
+      "icon": "objects/obj_steampunk_heart.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 40,
+      "tags": [
+        "simbolo",
+        "metallo",
+        "scifi",
+        "prezioso",
+        "medio"
+      ]
+    },
+    {
+      "id": "eye_grimoire",
+      "label_key": "obj_eye_grimoire",
+      "icon": "objects/obj_eye_grimoire.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 75,
+      "default_hint_delay": 45,
+      "tags": [
+        "studio",
+        "horror",
+        "occulto",
+        "biologico",
+        "medio"
+      ]
+    },
+    {
+      "id": "galaxy_bottle",
+      "label_key": "obj_galaxy_bottle",
+      "icon": "objects/obj_galaxy_bottle.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 55,
+      "default_hint_delay": 35,
+      "tags": [
+        "decorazione",
+        "scifi",
+        "vetro",
+        "magia",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "tentacle_clock",
+      "label_key": "obj_tentacle_clock",
+      "icon": "objects/obj_tentacle_clock.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 85,
+      "default_hint_delay": 50,
+      "tags": [
+        "orologio",
+        "horror",
+        "biologico",
+        "metallo",
+        "medio"
+      ]
+    },
+    {
+      "id": "retro_raygun",
+      "label_key": "obj_retro_raygun",
+      "icon": "objects/obj_retro_raygun.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "arma",
+        "scifi",
+        "retro",
+        "metallo",
+        "medio"
+      ]
+    },
+    {
+      "id": "dragon_egg",
+      "label_key": "obj_dragon_egg",
+      "icon": "objects/obj_dragon_egg.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 40,
+      "tags": [
+        "natura",
+        "fantasy",
+        "magia",
+        "biologico",
+        "medio"
+      ]
+    },
+    {
+      "id": "mini_floating_island",
+      "label_key": "obj_mini_floating_island",
+      "icon": "objects/obj_mini_floating_island.png",
+      "default_detection": "circle",
+      "default_radius": 45,
+      "default_hint_delay": 45,
+      "tags": [
+        "natura",
+        "fantasy",
+        "pietra",
+        "magia",
+        "medio"
+      ]
+    },
+    {
+      "id": "cyber_eye",
+      "label_key": "obj_cyber_eye",
+      "icon": "objects/obj_cyber_eye.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "elettronica",
+        "scifi",
+        "metallo",
+        "biologico",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "glowing_mushroom",
+      "label_key": "obj_glowing_mushroom",
+      "icon": "objects/obj_glowing_mushroom.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "biologico",
+        "fantasy",
+        "magia",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "parking_meter",
+      "label_key": "obj_parking_meter",
+      "icon": "objects/obj_parking_meter.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 95,
+      "default_hint_delay": 40,
+      "tags": [
+        "strada",
+        "città",
+        "metallo",
+        "denaro",
+        "grande"
+      ]
+    },
+    {
+      "id": "fire_extinguisher",
+      "label_key": "obj_fire_extinguisher",
+      "icon": "objects/obj_fire_extinguisher.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "sicurezza",
+        "metallo",
+        "rosso",
+        "medio"
+      ]
+    },
+    {
+      "id": "sewing_machine_vintage",
+      "label_key": "obj_sewing_machine_vintage",
+      "icon": "objects/obj_sewing_machine_vintage.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 75,
+      "default_hint_delay": 45,
+      "tags": [
+        "casa",
+        "metallo",
+        "vintage",
+        "grande"
+      ]
+    },
+    {
+      "id": "traffic_cone",
+      "label_key": "obj_traffic_cone",
+      "icon": "objects/obj_traffic_cone.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "strada",
+        "plastica",
+        "arancione",
+        "medio",
+        "città"
+      ]
+    },
+    {
+      "id": "dental_pliers_antique",
+      "label_key": "obj_dental_pliers_antique",
+      "icon": "objects/obj_dental_pliers_antique.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 65,
+      "default_hint_delay": 40,
+      "tags": [
+        "medicina",
+        "metallo",
+        "vintage",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "seltzer_siphon",
+      "label_key": "obj_seltzer_siphon",
+      "icon": "objects/obj_seltzer_siphon.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "cucina",
+        "vetro",
+        "bevanda",
+        "vintage",
+        "medio"
+      ]
+    },
+    {
+      "id": "popcorn_machine",
+      "label_key": "obj_popcorn_machine",
+      "icon": "objects/obj_popcorn_machine.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 95,
+      "default_hint_delay": 50,
+      "tags": [
+        "cibo",
+        "intrattenimento",
+        "metallo",
+        "grande"
+      ]
+    },
+    {
+      "id": "film_projector_16mm",
+      "label_key": "obj_film_projector_16mm",
+      "icon": "objects/obj_film_projector_16mm.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 85,
+      "default_hint_delay": 45,
+      "tags": [
+        "intrattenimento",
+        "vintage",
+        "metallo",
+        "grande"
+      ]
+    },
+    {
+      "id": "reel_to_reel_recorder",
+      "label_key": "obj_reel_to_reel_recorder",
+      "icon": "objects/obj_reel_to_reel_recorder.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 80,
+      "default_hint_delay": 45,
+      "tags": [
+        "musica",
+        "tecnologia",
+        "vintage",
+        "metallo",
+        "grande"
+      ]
+    },
+    {
+      "id": "wheelchair_vintage",
+      "label_key": "obj_wheelchair_vintage",
+      "icon": "objects/obj_wheelchair_vintage.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 90,
+      "default_hint_delay": 45,
+      "tags": [
+        "salute",
+        "legno",
+        "vintage",
+        "grande"
+      ]
+    },
+    {
+      "id": "dentist_chair_antique",
+      "label_key": "obj_dentist_chair_antique",
+      "icon": "objects/obj_dentist_chair_antique.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 95,
+      "default_hint_delay": 50,
+      "tags": [
+        "medicina",
+        "pelle",
+        "metallo",
+        "grande"
+      ]
+    },
+    {
+      "id": "diver_helmet_antique",
+      "label_key": "obj_diver_helmet_antique",
+      "icon": "objects/obj_diver_helmet_antique.png",
+      "default_detection": "circle",
+      "default_radius": 45,
+      "default_hint_delay": 40,
+      "tags": [
+        "abisso",
+        "metallo",
+        "vintage",
+        "grande"
+      ]
+    },
+    {
+      "id": "railway_lantern",
+      "label_key": "obj_railway_lantern",
+      "icon": "objects/obj_railway_lantern.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "luce",
+        "metallo",
+        "vintage",
+        "medio"
+      ]
+    },
+    {
+      "id": "balance_scale_antique",
+      "label_key": "obj_balance_scale_antique",
+      "icon": "objects/obj_balance_scale_antique.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 65,
+      "default_hint_delay": 40,
+      "tags": [
+        "mercato",
+        "metallo",
+        "vintage",
+        "medio"
+      ]
+    },
+    {
+      "id": "telegraph_key",
+      "label_key": "obj_telegraph_key",
+      "icon": "objects/obj_telegraph_key.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "comunicazione",
+        "metallo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "jukebox_vintage",
+      "label_key": "obj_jukebox_vintage",
+      "icon": "objects/obj_jukebox_vintage.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 95,
+      "default_hint_delay": 50,
+      "tags": [
+        "musica",
+        "intrattenimento",
+        "grande"
+      ]
+    },
+    {
+      "id": "barber_pole",
+      "label_key": "obj_barber_pole",
+      "icon": "objects/obj_barber_pole.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "strada",
+        "metallo",
+        "vintage",
+        "medio",
+        "città"
+      ]
+    },
+    {
+      "id": "weather_vane",
+      "label_key": "obj_weather_vane",
+      "icon": "objects/obj_weather_vane.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 95,
+      "default_hint_delay": 40,
+      "tags": [
+        "casa",
+        "metallo",
+        "vintage",
+        "medio"
+      ]
+    },
+    {
+      "id": "sextant_antique",
+      "label_key": "obj_sextant_antique",
+      "icon": "objects/obj_sextant_antique.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 40,
+      "tags": [
+        "abisso",
+        "metallo",
+        "vintage",
+        "piccolo",
+        "prezioso"
+      ]
+    },
+    {
+      "id": "geiger_counter_vintage",
+      "label_key": "obj_geiger_counter_vintage",
+      "icon": "objects/obj_geiger_counter_vintage.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 50,
+      "default_hint_delay": 35,
+      "tags": [
+        "sicurezza",
+        "tecnologia",
+        "vintage",
+        "plastica",
+        "medio"
+      ]
+    },
+    {
+      "id": "lever_espresso_machine",
+      "label_key": "obj_lever_espresso_machine",
+      "icon": "objects/obj_lever_espresso_machine.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 95,
+      "default_hint_delay": 45,
+      "tags": [
+        "cucina",
+        "bevanda",
+        "metallo",
+        "vintage",
+        "grande"
+      ]
+    },
+    {
+      "id": "slide_projector",
+      "label_key": "obj_slide_projector",
+      "icon": "objects/obj_slide_projector.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 75,
+      "default_hint_delay": 50,
+      "tags": [
+        "intrattenimento",
+        "tecnologia",
+        "vintage",
+        "plastica",
+        "grande"
+      ]
+    },
+    {
+      "id": "ribbon_mic_vintage",
+      "label_key": "obj_ribbon_mic_vintage",
+      "icon": "objects/obj_ribbon_mic_vintage.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "musica",
+        "comunicazione",
+        "metallo",
+        "vintage",
+        "medio"
+      ]
+    },
+    {
+      "id": "mercury_sphygmomanometer",
+      "label_key": "obj_mercury_sphygmomanometer",
+      "icon": "objects/obj_mercury_sphygmomanometer.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 95,
+      "default_hint_delay": 40,
+      "tags": [
+        "medicina",
+        "vetro",
+        "vintage",
+        "medio"
+      ]
+    },
+    {
+      "id": "enigma_machine",
+      "label_key": "obj_enigma_machine",
+      "icon": "objects/obj_enigma_machine.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 65,
+      "default_hint_delay": 50,
+      "tags": [
+        "comunicazione",
+        "metallo",
+        "vintage",
+        "grande",
+        "militare"
+      ]
+    },
+    {
+      "id": "vintage_toaster_spring",
+      "label_key": "obj_vintage_toaster_spring",
+      "icon": "objects/obj_vintage_toaster_spring.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "metallo",
+        "vintage",
+        "medio"
+      ]
+    },
+    {
+      "id": "hand_crank_camera",
+      "label_key": "obj_hand_crank_camera",
+      "icon": "objects/obj_hand_crank_camera.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 85,
+      "default_hint_delay": 45,
+      "tags": [
+        "intrattenimento",
+        "legno",
+        "vintage",
+        "grande"
+      ]
+    },
+    {
+      "id": "bellows_camera",
+      "label_key": "obj_bellows_camera",
+      "icon": "objects/obj_bellows_camera.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 90,
+      "default_hint_delay": 45,
+      "tags": [
+        "intrattenimento",
+        "pelle",
+        "vintage",
+        "grande"
+      ]
+    },
+    {
+      "id": "miners_lamp",
+      "label_key": "obj_miners_lamp",
+      "icon": "objects/obj_miners_lamp.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "luce",
+        "metallo",
+        "vintage",
+        "medio"
+      ]
+    },
+    {
+      "id": "trench_periscope",
+      "label_key": "obj_trench_periscope",
+      "icon": "objects/obj_trench_periscope.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 95,
+      "default_hint_delay": 40,
+      "tags": [
+        "militare",
+        "metallo",
+        "vintage",
+        "grande"
+      ]
+    },
+    {
+      "id": "antique_wall_phone",
+      "label_key": "obj_antique_wall_phone",
+      "icon": "objects/obj_antique_wall_phone.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 95,
+      "default_hint_delay": 45,
+      "tags": [
+        "comunicazione",
+        "legno",
+        "vintage",
+        "grande"
+      ]
+    },
+    {
+      "id": "aneroid_barometer",
+      "label_key": "obj_aneroid_barometer",
+      "icon": "objects/obj_aneroid_barometer.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 35,
+      "tags": [
+        "scienza",
+        "metallo",
+        "vintage",
+        "medio"
+      ]
+    },
+    {
+      "id": "astrolabe",
+      "label_key": "obj_astrolabe",
+      "icon": "objects/obj_astrolabe.png",
+      "default_detection": "circle",
+      "default_radius": 45,
+      "default_hint_delay": 45,
+      "tags": [
+        "scienza",
+        "metallo",
+        "vintage",
+        "prezioso"
+      ]
+    },
+    {
+      "id": "zoetrope",
+      "label_key": "obj_zoetrope",
+      "icon": "objects/obj_zoetrope.png",
+      "default_detection": "circle",
+      "default_radius": 45,
+      "default_hint_delay": 40,
+      "tags": [
+        "intrattenimento",
+        "metallo",
+        "vintage",
+        "grande"
+      ]
+    },
+    {
+      "id": "cylinder_phonograph",
+      "label_key": "obj_cylinder_phonograph",
+      "icon": "objects/obj_cylinder_phonograph.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 70,
+      "default_hint_delay": 45,
+      "tags": [
+        "musica",
+        "metallo",
+        "vintage",
+        "grande"
+      ]
+    },
+    {
+      "id": "mechanical_calculator_retro",
+      "label_key": "obj_mechanical_calculator_retro",
+      "icon": "objects/obj_mechanical_calculator_retro.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 75,
+      "default_hint_delay": 50,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "vintage",
+        "grande"
+      ]
+    },
+    {
+      "id": "vr_headset_modern",
+      "label_key": "obj_vr_headset_modern",
+      "icon": "objects/obj_vr_headset_modern.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 65,
+      "default_hint_delay": 45,
+      "tags": [
+        "elettronica",
+        "tecnologia",
+        "video",
+        "videogame",
+        "grande"
+      ]
+    },
+    {
+      "id": "headphones_premium",
+      "label_key": "obj_headphones_premium",
+      "icon": "objects/obj_headphones_premium.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "elettronica",
+        "audio",
+        "musica",
+        "medio"
+      ]
+    },
+    {
+      "id": "smartwatch_modern",
+      "label_key": "obj_smartwatch_modern",
+      "icon": "objects/obj_smartwatch_modern.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "elettronica",
+        "tecnologia",
+        "accessorio",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "speaker_minimalist",
+      "label_key": "obj_speaker_minimalist",
+      "icon": "objects/obj_speaker_minimalist.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "elettronica",
+        "audio",
+        "musica",
+        "medio"
+      ]
+    },
+    {
+      "id": "drone_foldable",
+      "label_key": "obj_drone_foldable",
+      "icon": "objects/obj_drone_foldable.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 55,
+      "default_hint_delay": 45,
+      "tags": [
+        "elettronica",
+        "tecnologia",
+        "veicolo",
+        "grande"
+      ]
+    },
+    {
+      "id": "streaming_mic_modern",
+      "label_key": "obj_streaming_mic_modern",
+      "icon": "objects/obj_streaming_mic_modern.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 95,
+      "default_hint_delay": 40,
+      "tags": [
+        "elettronica",
+        "audio",
+        "comunicazione",
+        "grande"
+      ]
+    },
+    {
+      "id": "power_bank_aluminum",
+      "label_key": "obj_power_bank_aluminum",
+      "icon": "objects/obj_power_bank_aluminum.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "elettronica",
+        "batteria",
+        "tecnologia",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "gaming_mouse_sleek",
+      "label_key": "obj_gaming_mouse_sleek",
+      "icon": "objects/obj_gaming_mouse_sleek.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "elettronica",
+        "tecnologia",
+        "videogame",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "game_controller_modern",
+      "label_key": "obj_game_controller_modern",
+      "icon": "objects/obj_game_controller_modern.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 60,
+      "default_hint_delay": 35,
+      "tags": [
+        "elettronica",
+        "tecnologia",
+        "videogame",
+        "medio"
+      ]
+    },
+    {
+      "id": "smartphone_gimbal",
+      "label_key": "obj_smartphone_gimbal",
+      "icon": "objects/obj_smartphone_gimbal.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 95,
+      "default_hint_delay": 40,
+      "tags": [
+        "elettronica",
+        "tecnologia",
+        "foto",
+        "video",
+        "medio"
+      ]
+    },
+    {
+      "id": "mechanical_keyboard_lowpro",
+      "label_key": "obj_mechanical_keyboard_lowpro",
+      "icon": "objects/obj_mechanical_keyboard_lowpro.png",
+      "default_detection": "rect",
+      "default_width": 95,
+      "default_height": 35,
+      "default_hint_delay": 45,
+      "tags": [
+        "elettronica",
+        "tecnologia",
+        "ufficio",
+        "scrittura",
+        "grande"
+      ]
+    },
+    {
+      "id": "ultrabook_laptop",
+      "label_key": "obj_ultrabook_laptop",
+      "icon": "objects/obj_ultrabook_laptop.png",
+      "default_detection": "rect",
+      "default_width": 95,
+      "default_height": 65,
+      "default_hint_delay": 50,
+      "tags": [
+        "elettronica",
+        "tecnologia",
+        "ufficio",
+        "studio",
+        "grande"
+      ]
+    },
+    {
+      "id": "graphics_tablet_stylus",
+      "label_key": "obj_graphics_tablet_stylus",
+      "icon": "objects/obj_graphics_tablet_stylus.png",
+      "default_detection": "rect",
+      "default_width": 95,
+      "default_height": 70,
+      "default_hint_delay": 45,
+      "tags": [
+        "elettronica",
+        "tecnologia",
+        "arte",
+        "disegno",
+        "grande"
+      ]
+    },
+    {
+      "id": "mirrorless_camera_modern",
+      "label_key": "obj_mirrorless_camera_modern",
+      "icon": "objects/obj_mirrorless_camera_modern.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 60,
+      "default_hint_delay": 40,
+      "tags": [
+        "elettronica",
+        "foto",
+        "video",
+        "tecnologia",
+        "medio"
+      ]
+    },
+    {
+      "id": "wifi6_router_futuristic",
+      "label_key": "obj_wifi6_router_futuristic",
+      "icon": "objects/obj_wifi6_router_futuristic.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 65,
+      "default_hint_delay": 35,
+      "tags": [
+        "elettronica",
+        "tecnologia",
+        "comunicazione",
+        "casa",
+        "medio"
+      ]
+    },
+    {
+      "id": "wireless_charging_pad",
+      "label_key": "obj_wireless_charging_pad",
+      "icon": "objects/obj_wireless_charging_pad.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "elettronica",
+        "tecnologia",
+        "batteria",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "smart_water_bottle",
+      "label_key": "obj_smart_water_bottle",
+      "icon": "objects/obj_smart_water_bottle.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "casa",
+        "sport",
+        "salute",
+        "plastica",
+        "medio"
+      ]
+    },
+    {
+      "id": "monitor_light_bar",
+      "label_key": "obj_monitor_light_bar",
+      "icon": "objects/obj_monitor_light_bar.png",
+      "default_detection": "rect",
+      "default_width": 95,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "elettronica",
+        "luce",
+        "ufficio",
+        "tecnologia",
+        "medio"
+      ]
+    },
+    {
+      "id": "aroma_diffuser_modern",
+      "label_key": "obj_aroma_diffuser_modern",
+      "icon": "objects/obj_aroma_diffuser_modern.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 65,
+      "default_hint_delay": 35,
+      "tags": [
+        "casa",
+        "bellezza",
+        "benessere",
+        "plastica",
+        "medio"
+      ]
+    },
+    {
+      "id": "mechanical_puzzle_pyramid",
+      "label_key": "obj_mechanical_puzzle_pyramid",
+      "icon": "objects/obj_mechanical_puzzle_pyramid.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "gioco",
+        "giocattolo",
+        "plastica",
+        "colore",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "electric_coffee_grinder_sleek",
+      "label_key": "obj_electric_coffee_grinder_sleek",
+      "icon": "objects/obj_electric_coffee_grinder_sleek.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 85,
+      "default_hint_delay": 40,
+      "tags": [
+        "cucina",
+        "bevanda",
+        "metallo",
+        "elettronica",
+        "medio"
+      ]
+    },
+    {
+      "id": "smart_key_finder_tag",
+      "label_key": "obj_smart_key_finder_tag",
+      "icon": "objects/obj_smart_key_finder_tag.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "accessorio",
+        "plastica",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "water_flosser_modern",
+      "label_key": "obj_water_flosser_modern",
+      "icon": "objects/obj_water_flosser_modern.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 95,
+      "default_hint_delay": 35,
+      "tags": [
+        "salute",
+        "bellezza",
+        "plastica",
+        "elettronica",
+        "medio"
+      ]
+    },
+    {
+      "id": "luggage_scale_digital",
+      "label_key": "obj_luggage_scale_digital",
+      "icon": "objects/obj_luggage_scale_digital.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "viaggio",
+        "misura",
+        "metallo",
+        "tecnologia",
+        "medio"
+      ]
+    },
+    {
+      "id": "portable_power_station_compact",
+      "label_key": "obj_portable_power_station_compact",
+      "icon": "objects/obj_portable_power_station_compact.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 75,
+      "default_hint_delay": 50,
+      "tags": [
+        "tecnologia",
+        "batteria",
+        "metallo",
+        "grande"
+      ]
+    },
+    {
+      "id": "laser_tape_measure_digital",
+      "label_key": "obj_laser_tape_measure_digital",
+      "icon": "objects/obj_laser_tape_measure_digital.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "misura",
+        "tecnologia",
+        "plastica",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "smart_ring_sleek",
+      "label_key": "obj_smart_ring_sleek",
+      "icon": "objects/obj_smart_ring_sleek.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "accessorio",
+        "salute",
+        "metallo",
+        "piccolo"
+      ]
+    },
+    {
+      "id": "it_phone_bigrigio",
+      "label_key": "obj_it_phone_bigrigio",
+      "icon": "objects/it_phone_bigrigio.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 55,
+      "default_hint_delay": 35,
+      "tags": [
+        "comunicazione",
+        "vintage",
+        "italia",
+        "anni_60",
+        "metallo",
+        "città"
+      ]
+    },
+    {
+      "id": "it_typewriter_olivetti",
+      "label_key": "obj_it_typewriter_olivetti",
+      "icon": "objects/it_typewriter_olivetti.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 65,
+      "default_hint_delay": 40,
+      "tags": [
+        "scrittura",
+        "vintage",
+        "italia",
+        "anni_60",
+        "metallo",
+        "ufficio"
+      ]
+    },
+    {
+      "id": "it_bicycle_graziella",
+      "label_key": "obj_it_bicycle_graziella",
+      "icon": "objects/it_bicycle_graziella.png",
+      "default_detection": "rect",
+      "default_width": 90,
+      "default_height": 70,
+      "default_hint_delay": 45,
+      "tags": [
+        "veicolo",
+        "vintage",
+        "italia",
+        "anni_70",
+        "metallo",
+        "città"
+      ]
+    },
+    {
+      "id": "it_seltzer_siphon",
+      "label_key": "obj_it_seltzer_siphon",
+      "icon": "objects/it_seltzer_siphon.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "bevanda",
+        "vintage",
+        "italia",
+        "anni_60",
+        "vetro",
+        "cucina"
+      ]
+    },
+    {
+      "id": "it_marelli_fan",
+      "label_key": "obj_it_marelli_fan",
+      "icon": "objects/it_marelli_fan.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 35,
+      "tags": [
+        "elettronica",
+        "vintage",
+        "italia",
+        "anni_60",
+        "metallo",
+        "casa"
+      ]
+    },
+    {
+      "id": "it_penny_record_player",
+      "label_key": "obj_it_penny_record_player",
+      "icon": "objects/it_penny_record_player.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 50,
+      "default_hint_delay": 35,
+      "tags": [
+        "musica",
+        "vintage",
+        "italia",
+        "anni_70",
+        "plastica",
+        "intrattenimento"
+      ]
+    },
+    {
+      "id": "it_idrolitina_tin",
+      "label_key": "obj_it_idrolitina_tin",
+      "icon": "objects/it_idrolitina_tin.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "bevanda",
+        "vintage",
+        "italia",
+        "anni_60",
+        "metallo",
+        "cucina"
+      ]
+    },
+    {
+      "id": "it_berkel_slicer",
+      "label_key": "obj_it_berkel_slicer",
+      "icon": "objects/it_berkel_slicer.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 75,
+      "default_hint_delay": 45,
+      "tags": [
+        "cucina",
+        "vintage",
+        "italia",
+        "anni_60",
+        "metallo",
+        "rosso"
+      ]
+    },
+    {
+      "id": "it_subbuteo_player",
+      "label_key": "obj_it_subbuteo_player",
+      "icon": "objects/it_subbuteo_player.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "default_hint_delay": 20,
+      "tags": [
+        "gioco",
+        "vintage",
+        "italia",
+        "anni_70",
+        "plastica",
+        "sport"
       ]
     }
   ]

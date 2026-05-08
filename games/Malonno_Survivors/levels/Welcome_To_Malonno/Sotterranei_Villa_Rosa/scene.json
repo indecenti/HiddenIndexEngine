@@ -239,13 +239,31 @@
       "intensity": 0.16,
       "layer": "effects",
       "layer_z": 100
+    },
+    {
+      "effect_id": "chimney_smoke",
+      "type": "smoke",
+      "x": 2972,
+      "y": 1552,
+      "radius": 64.8,
+      "color": [
+        11,
+        11,
+        11
+      ],
+      "intensity": 0.79,
+      "pulse_period": 0.45,
+      "pulse_min": 0.64,
+      "phase": 0.66,
+      "layer": "effects",
+      "layer_z": 100
     }
   ],
   "music": [
     "Indecenti - Static Lullaby.mp3"
   ],
-  "flashlight": false,
-  "flashlight_radius": 150.0,
+  "flashlight": true,
+  "flashlight_radius": 179,
   "layer_locked": {
     "objects_low": false,
     "objects_mid": false,

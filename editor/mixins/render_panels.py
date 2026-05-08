@@ -130,7 +130,7 @@ class RenderPanelsMixin:
         "variante", "isometrico", "rotto", "nero", "rosso",
         # Geografie troppo granulari (le macro-aree geografiche restano)
         "nordico", "nordamerica", "sudamerica", "europa",
-        "italia", "francia", "germania", "spagna", "uk", "grecia",
+        "francia", "germania", "spagna", "uk", "grecia",
         "svezia", "svizzera", "orientale", "caraibi", "centroamerica",
         # Tag tecnici interni
         "carta_individuale", "seme", "volante", "mouse", "tablet",
@@ -138,7 +138,7 @@ class RenderPanelsMixin:
     })
 
     @staticmethod
-    def _get_catalog_tags(catalog: list, min_count: int = 2) -> list[str]:
+    def _get_catalog_tags(catalog: list, min_count: int = 1) -> list[str]:
         """Ritorna i tag presenti nel catalogo con almeno min_count oggetti."""
         hidden = RenderPanelsMixin.CHIP_TAG_HIDDEN
         counts: dict[str, int] = {}
@@ -173,10 +173,12 @@ class RenderPanelsMixin:
         pygame.draw.line(self.screen, TXT_DIM, (search_r.x + 21, ly + 5), (search_r.x + 26, ly + 10), 2)
 
         if has_search_text:
-            X_SIZE = 16
-            search_x_r = pygame.Rect(search_r.right - X_SIZE - 8, search_r.centery - X_SIZE//2, X_SIZE, X_SIZE)
+            X_SZ = 24
+            search_x_r = pygame.Rect(search_r.right - X_SZ - 6, search_r.centery - X_SZ // 2, X_SZ, X_SZ)
             hov_x = _in_rect((mx, my_raw), search_x_r)
-            _draw_text(self.screen, "×", "md", TXT_HI if hov_x else TXT_DIM, search_x_r.x + 2, search_x_r.y - 3)
+            if hov_x:
+                pygame.draw.circle(self.screen, (60, 65, 85), search_x_r.center, X_SZ // 2)
+            _draw_shape_icon(self.screen, search_x_r.inflate(-2, -2), "x", TXT_HI if hov_x else TXT_DIM)
             self._search_x_rect = search_x_r
         else:
             self._search_x_rect = None
@@ -203,9 +205,12 @@ class RenderPanelsMixin:
         _draw_text(self.screen, "#", "md", TXT_DIM, tag_search_r.x + 10, tag_search_r.centery - 10)
         
         if has_tag_text:
-            tag_x_r = pygame.Rect(tag_search_r.right - 20, tag_search_r.centery - 10, 20, 20)
+            X_SZ = 22
+            tag_x_r = pygame.Rect(tag_search_r.right - X_SZ - 5, tag_search_r.centery - X_SZ // 2, X_SZ, X_SZ)
             hov_tx = _in_rect((mx, my_raw), tag_x_r)
-            _draw_text(self.screen, "×", "sm", TXT_HI if hov_tx else TXT_DIM, tag_x_r.x + 6, tag_x_r.y + 2)
+            if hov_tx:
+                pygame.draw.circle(self.screen, (55, 58, 75), tag_x_r.center, X_SZ // 2)
+            _draw_shape_icon(self.screen, tag_x_r.inflate(-2, -2), "x", TXT_HI if hov_tx else TXT_DIM)
             self._tag_search_x_rect = tag_x_r
         else:
             self._tag_search_x_rect = None
@@ -327,14 +332,20 @@ class RenderPanelsMixin:
         clip = pygame.Rect(0, list_y_start, self.panel_l_w, available_h)
         self.screen.set_clip(clip)
 
-        q = self.catalog_search.lower()
+        import unicodedata
+        def normalize(s):
+            return "".join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn').lower()
+
+        q = self.catalog_search.lower().strip()
+        q_norm = normalize(q.lstrip("#"))
+        
         filtered = [
             c for c in all_catalog_list 
             if (not active_tags or all(t in c.get("tags", []) for t in active_tags))
             and (
                 not q or q in c["id"].lower() 
-                or any(q in t.lower() for t in c.get("tags", []))
-                or any(q in self._TR(f"tag_{t}", t).lower() for t in c.get("tags", [])) # Ricerca nei tag tradotti
+                or any(q_norm in normalize(t) for t in c.get("tags", []))
+                or any(q_norm in normalize(self._TR(f"tag_{t}", t)) for t in c.get("tags", [])) 
                 or any(q in str(self._lang_data.get(l,{}).get(c["label_key"],"")).lower() for l in self.LANGS)
             )
         ]

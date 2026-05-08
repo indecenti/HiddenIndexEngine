@@ -1,22 +1,92 @@
 {
-  "incrocio stradale.png": {
+  "background.png": {
     "tags": [
-      "auto",
-      "strada"
+      "interno",
+      "alimentari",
+      "rustico",
+      "horror",
+      "notte"
     ]
   },
-  "image (19).png": {
-    "tags": []
+  "background_1.png": {
+    "tags": [
+      "esterno",
+      "pizzeria",
+      "horror",
+      "notte",
+      "citt\u00e0"
+    ]
+  },
+  "background_2.png": {
+    "tags": [
+      "esterno",
+      "casa",
+      "horror",
+      "notte",
+      "montagna"
+    ]
+  },
+  "background_3.png": {
+    "tags": [
+      "esterno",
+      "villaggio",
+      "notte",
+      "horror",
+      "montagna",
+      "malonno"
+    ]
   },
   "forneria negozio.png": {
     "tags": [
       "forneria",
-      "negozio"
+      "negozio",
+      "interno",
+      "pane"
+    ]
+  },
+  "incrocio stradale.png": {
+    "tags": [
+      "auto",
+      "strada",
+      "esterno",
+      "citt\u00e0",
+      "notte"
     ]
   },
   "negozio forneria.png": {
     "tags": [
-      "negozio"
+      "negozio",
+      "forneria",
+      "esterno",
+      "piazza"
+    ]
+  },
+  "image (29).png": {
+    "tags": [
+      "interno",
+      "cantina",
+      "vino",
+      "valle camonica",
+      "horror"
+    ]
+  },
+  "image (32).png": {
+    "tags": [
+      "esterno",
+      "fiori",
+      "giardino",
+      "horror",
+      "notte"
+    ]
+  },
+  "image (34).png": {
+    "tags": [
+      "esterno",
+      "piazza",
+      "bar",
+      "horror",
+      "notte",
+      "citt\u00e0"
     ]
   }
 }

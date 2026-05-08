@@ -67,6 +67,8 @@ class InputHandlersMixin:
 
         if self._newobj_modal:
             self._newobj_key(ev); return
+        if self._tag_modal_active:
+            self._tag_modal_key(ev); return
         if self._lang_modal:
             self._lang_key(ev); return
         if getattr(self, "_music_modal", False):
@@ -85,7 +87,7 @@ class InputHandlersMixin:
         if self.catalog_searching:
             if ev.key in (pygame.K_ESCAPE, pygame.K_RETURN):
                 self.catalog_searching = False
-            elif ev.key == pygame.K_BACKSPACE:
+            elif ev.key in (pygame.K_BACKSPACE, pygame.K_DELETE):
                 self.catalog_search = self.catalog_search[:-1]
                 self.catalog_scroll = 0
             elif ev.unicode and ev.unicode.isprintable():
@@ -95,7 +97,7 @@ class InputHandlersMixin:
         if getattr(self, "catalog_tag_searching", False):
             if ev.key in (pygame.K_ESCAPE, pygame.K_RETURN):
                 self.catalog_tag_searching = False
-            elif ev.key == pygame.K_BACKSPACE:
+            elif ev.key in (pygame.K_BACKSPACE, pygame.K_DELETE):
                 ts = getattr(self, "catalog_tag_search", "")
                 self.catalog_tag_search = ts[:-1]
             elif ev.unicode and ev.unicode.isprintable():
@@ -150,28 +152,33 @@ class InputHandlersMixin:
                 return
             if ev.key == pygame.K_s:
                 self.mode = MODE_SELECT; self._cancel_rect()
-                self.sel_effect_idx = None; return
+                self.sel_effect_idx = None; self._editing_prop = None; return
             if ev.key == pygame.K_1:
                 self.mode = MODE_CIRCLE; self._cancel_rect()
                 self.selected_idx = None; self.selected_indices = []
-                self.sel_effect_idx = None; return
+                self.sel_effect_idx = None; self._editing_prop = None; return
             if ev.key == pygame.K_2:
                 self.mode = MODE_RECT; self._cancel_rect()
                 self.selected_idx = None; self.selected_indices = []
-                self.sel_effect_idx = None; return
+                self.sel_effect_idx = None; self._editing_prop = None; return
             if ev.key == pygame.K_4:
                 self.mode = MODE_SCATTER; self._cancel_rect()
                 self.selected_idx = None; self.selected_indices = []
-                self.sel_effect_idx = None
+                self.sel_effect_idx = None; self._editing_prop = None
                 self._status("Piazza Cluster (4 oggetti random)", ACCENT, 2)
                 return
             if ev.key == pygame.K_3:
-                # Passa a piazzamento effetto solo se tab EFFETTI attivo e un effetto selezionato
                 if self.effects_catalog_sel:
                     self.mode = MODE_EFFECT_PLACE; self._cancel_rect()
                     self.selected_idx = None; self.selected_indices = []
-                    self.sel_effect_idx = None
+                    self.sel_effect_idx = None; self._editing_prop = None
                     self._status(f"Piazza effetto: {self.effects_catalog_sel}", FX_C, 2)
+                else:
+                    # Se non c'è selezione, apri la tab effetti per facilitare l'utente
+                    from editor.constants import TAB_EFFECTS
+                    self.l_tab = TAB_EFFECTS
+                    self.panels_visible = True
+                    self._status("Seleziona un effetto dal catalogo", FX_C, 2)
                 return
             if ev.key == pygame.K_ESCAPE:  self._escape();                                return
             if ev.key in (pygame.K_DELETE, pygame.K_BACKSPACE):
@@ -295,7 +302,7 @@ class InputHandlersMixin:
             self._preset_commit()
         elif ev.key == pygame.K_ESCAPE:
             self._editing_preset_name = False
-        elif ev.key == pygame.K_BACKSPACE:
+        elif ev.key in (pygame.K_BACKSPACE, pygame.K_DELETE):
             self._preset_name_buf = self._preset_name_buf[:-1]
         elif ev.unicode.isprintable():
             self._preset_name_buf += ev.unicode
@@ -319,7 +326,7 @@ class InputHandlersMixin:
         elif ev.key == pygame.K_ESCAPE:
             self._editing_prop = None
             self._prop_buf = ""
-        elif ev.key == pygame.K_BACKSPACE:
+        elif ev.key in (pygame.K_BACKSPACE, pygame.K_DELETE):
             self._prop_buf = self._prop_buf[:-1]
         elif ev.unicode and (ev.unicode.isdigit() or ev.unicode in ('.', ',')):
             char = ev.unicode.replace(',', '.')
@@ -334,12 +341,16 @@ class InputHandlersMixin:
             val = float(self._prop_buf) if ('.' in self._prop_buf) else int(self._prop_buf)
             self._push_undo()
             if owner == 'effect':
-                self.scene_data["effects"][idx][key] = val
+                effects = self.scene_data.get("effects", [])
+                if 0 <= idx < len(effects):
+                    effects[idx][key] = val
             elif owner == 'object':
-                if key == 'grayscale_factor':
-                    # Converte da scala 0-100 (utente) a 0.0-1.0 (engine)
-                    val = _clamp(float(val) / 100.0, 0.0, 1.0)
-                self.scene_data["objects"][idx][key] = val
+                objs = self.scene_data.get("objects", [])
+                if 0 <= idx < len(objs):
+                    if key == 'grayscale_factor':
+                        # Converte da scala 0-100 (utente) a 0.0-1.0 (engine)
+                        val = _clamp(float(val) / 100.0, 0.0, 1.0)
+                    objs[idx][key] = val
             self.scene_dirty = True
             self._status(f"Impostato {key}: {val}", OK_C, 1)
 
@@ -358,6 +369,9 @@ class InputHandlersMixin:
             self.sel_effect_idx = None
         elif self.selected_idx is not None:
             self.selected_idx = None
+        
+        self._editing_prop = None
+        self._editing_preset_name = False
 
     def _cancel_rect(self):
         self._rect_placing   = False
@@ -406,6 +420,8 @@ class InputHandlersMixin:
 
             if self._newobj_modal:
                 self._newobj_click(mx, my_raw, w, h); return
+            if self._tag_modal_active:
+                self._tag_modal_click(mx, my_raw, w, h); return
             if self._lang_modal:
                 self._lang_click(mx, my_raw, w, h); return
             if getattr(self, "_music_modal", False):
@@ -580,8 +596,21 @@ class InputHandlersMixin:
         mods = pygame.key.get_mods()
 
         if self._lang_modal:
-            max_scroll = max(0, len(self._lang_keys) - 8)
+            is_fx = (getattr(self, "_lang_context", "global") == "fx")
+            if is_fx: return
+            
+            # Calcolo dinamico righe visibili in base al nuovo layout (HEADER_H=118, Footer=48)
+            dh = int(h * 0.88)
+            visible_h = dh - 118 - 48
+            visible_rows = max(1, visible_h // 28)
+            
+            keys_to_scroll = getattr(self, "_lang_filtered_keys", self._lang_keys)
+            max_scroll = max(0, len(keys_to_scroll) - visible_rows)
             self._lang_scroll = _clamp(self._lang_scroll - ev.y, 0, max_scroll)
+            return
+
+        if self._tag_modal_active:
+            self._tag_modal_scroll = _clamp(self._tag_modal_scroll - ev.y, 0, getattr(self, "_tag_modal_max_scroll", 0))
             return
 
         if getattr(self, "_music_modal", False):
@@ -686,8 +715,9 @@ class InputHandlersMixin:
         if self.mode == MODE_SELECT:
             # 0. Handle Effetti (Priorità massima se un effetto è selezionato)
             sel_fx_idx = getattr(self, "sel_effect_idx", None)
-            if sel_fx_idx is not None:
-                fx = self.scene_data["effects"][sel_fx_idx]
+            effects = self.scene_data.get("effects", [])
+            if sel_fx_idx is not None and 0 <= sel_fx_idx < len(effects):
+                fx = effects[sel_fx_idx]
                 from editor.constants import HANDLE_R
                 for hid, hx, hy in self._fx_handles(fx):
                     if math.hypot(mx - hx, my_raw - hy) <= HANDLE_R + 3:
@@ -782,6 +812,7 @@ class InputHandlersMixin:
             self.active_layer = obj.get("layer", "objects_mid")
             self.r_tab = TAB_PROPS # Passaggio automatico al pannello proprietà
             self.sel_effect_idx = None # Reset selezione effetti quando clicchi un PNG
+            self._editing_prop = None # Reset editing se stiamo selezionando un nuovo oggetto
             
             # Se premiamo Shift, aggiungiamo alla selezione esistente
             if mods & pygame.KMOD_SHIFT:
@@ -1396,10 +1427,16 @@ class InputHandlersMixin:
             if _in_rect((mx, my_raw), hr):
                 self.effects_catalog_sel = fx_id
                 self.mode = MODE_EFFECT_PLACE
+                # Forza visibilità layer effetti
+                if not self.layer_vis.get("effects", True):
+                    self.layer_vis["effects"] = True
+                    self._status(f"Piazza effetto: {fx_id} (Layer attivato)", FX_C, 2)
+                else:
+                    self._status(f"Piazza effetto: {fx_id}", FX_C, 2)
+                
                 self.selected_idx = None
                 self.selected_indices = []
                 self.sel_effect_idx = None
-                self._status(f"Piazza effetto: {fx_id}", FX_C, 2)
                 self._play_click(); return
 
     def _effects_props_click(self, rx, my):
@@ -1639,11 +1676,12 @@ class InputHandlersMixin:
         if idx is None: return
         dx = (mx - self._drag_start_mx) / self.zoom
         dy = (my - self._drag_start_my) / self.zoom
-        fx = self.scene_data["effects"][idx]
-        fx["x"] = self._snap(self._drag_start_x + dx)
-        fx["y"] = self._snap(self._drag_start_y + dy)
-        self.scene_dirty = True
-        self.scene_dirty = True
+        effects = self.scene_data.get("effects", [])
+        if 0 <= idx < len(effects):
+            fx = effects[idx]
+            fx["x"] = self._snap(self._drag_start_x + dx)
+            fx["y"] = self._snap(self._drag_start_y + dy)
+            self.scene_dirty = True
 
     def _do_drag_slider(self, mx, my):
         ds = getattr(self, "_dragging_slider", None)
@@ -1666,12 +1704,16 @@ class InputHandlersMixin:
             val = round(val, 2)
 
         if owner == 'effect':
-            fx = self.scene_data["effects"][idx]
-            if key == "radius" and fx.get("type") == "smoke":
-                val = round(val * 5) / 5.0
-            fx[key] = val
+            effects = self.scene_data.get("effects", [])
+            if 0 <= idx < len(effects):
+                fx = effects[idx]
+                if key == "radius" and fx.get("type") == "smoke":
+                    val = round(val * 5) / 5.0
+                fx[key] = val
         elif owner == 'object':
-            self.scene_data["objects"][idx][key] = val
+            objs = self.scene_data.get("objects", [])
+            if 0 <= idx < len(objs):
+                objs[idx][key] = val
         elif owner == 'scene':
             self.scene_data[key] = val
         
