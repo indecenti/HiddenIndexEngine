@@ -11,7 +11,7 @@ import pygame
 from editor.constants import (
     MODE_SELECT, MODE_CIRCLE, MODE_RECT, MODE_EFFECT_PLACE, MODE_SCATTER,
     ACCENT, BORDER, CANVAS, GRID_C, SEL_C, FX_C, ERR_C,
-    TXT, TXT_DIM, TXT_HI, OK_C, WARN_C, ALWAYS_C, BTN_AC, BTN_HO, STATUS,
+    TXT, TXT_DIM, TXT_HI, OK_C, WARN_C, ALWAYS_C, BTN_AC, BTN_HO, STATUS, PANEL,
     HANDLE_R, REF_W, REF_H,
     layer_color,
 )
@@ -202,7 +202,7 @@ class RenderCanvasMixin:
                     if flip_x or flip_y:
                         ic = pygame.transform.flip(ic, flip_x, flip_y)
                     if rot != 0:
-                        ic = pygame.transform.rotate(ic, rot)
+                        ic = pygame.transform.rotozoom(ic, rot, 1.0)
                     # 4. Filtro Bianco e Nero (Trasformazione Pixel)
                     if gs:
                         ic = apply_grayscale(ic, gs_f)
@@ -660,3 +660,54 @@ class RenderCanvasMixin:
             rx, ry = self._s2r(mx, my_raw)
             coord  = _txt(f"({int(rx)}, {int(ry)})", "mono", TXT_DIM)
             self.screen.blit(coord, (cr.right - coord.get_width() - 8, cr.top + 40))
+
+    def _r_confirm_leave_modal(self, w: int, h: int):
+        """Disegna un modale di conferma per modifiche non salvate."""
+        # Overlay scuro
+        overlay = pygame.Surface((w, h), pygame.SRCALPHA)
+        overlay.fill((10, 10, 15, 180))
+        self.screen.blit(overlay, (0, 0))
+        
+        # Box centrale
+        bw, bh = 500, 220
+        bx, by = (w - bw) // 2, (h - bh) // 2
+        
+        # Ombra e Background
+        _rect(self.screen, (0, 0, 0, 120), (bx + 5, by + 5, bw, bh), radius=12)
+        _rect(self.screen, PANEL, (bx, by, bw, bh), radius=12)
+        _rect(self.screen, BORDER, (bx, by, bw, bh), 1, radius=12)
+        
+        # Titolo
+        _draw_text(self.screen, self._TR("modal_leave_title"), "lg", TXT_HI, bx + 30, by + 25)
+        pygame.draw.line(self.screen, BORDER, (bx + 20, by + 65), (bx + bw - 20, by + 65), 1)
+        
+        # Messaggio (con wrapping)
+        _draw_text(self.screen, self._TR("modal_leave_msg"), "sm", TXT, bx + 30, by + 85, bw - 60)
+        
+        # Bottoni
+        mx, my = pygame.mouse.get_pos()
+        btn_w = 210
+        btn_h = 36
+        
+        # 1. SALVA E PROCEDI (Primary)
+        r_save = pygame.Rect(bx + 30, by + 150, btn_w, btn_h)
+        hov_save = _in_rect((mx, my), r_save)
+        _button(self.screen, r_save, self._TR("modal_leave_save"), hov_save, icon="save", custom_bg=OK_C)
+        
+        # 2. IGNORA MODIFICHE (Secondary)
+        r_discard = pygame.Rect(bx + bw - btn_w - 30, by + 150, btn_w, btn_h)
+        hov_discard = _in_rect((mx, my), r_discard)
+        _button(self.screen, r_discard, self._TR("modal_leave_discard"), hov_discard, icon="delete", custom_bg=ERR_C)
+        
+        # 3. ANNULLA (Small/Text only or simple button)
+        r_cancel = pygame.Rect(bx + (bw - 120) // 2, by + bh - 30, 120, 20)
+        hov_cancel = _in_rect((mx, my), r_cancel)
+        c_col = TXT_HI if hov_cancel else TXT_DIM
+        _draw_text(self.screen, self._TR("modal_leave_cancel"), "xs", c_col, r_cancel.x + (r_cancel.w - _text_wh(self._TR("modal_leave_cancel"), "xs")[0])//2, r_cancel.y)
+        
+        # Esponiamo le hitbox per InputHandlers
+        self._leave_modal_hitboxes = {
+            "save": r_save,
+            "discard": r_discard,
+            "cancel": r_cancel
+        }

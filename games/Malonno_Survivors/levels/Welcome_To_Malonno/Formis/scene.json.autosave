@@ -1604,60 +1604,6 @@
         241,
         241
       ]
-    },
-    {
-      "effect_id": "golden_glint",
-      "type": "glint",
-      "x": 443,
-      "y": 247,
-      "radius": 5,
-      "color": [
-        255,
-        215,
-        60
-      ],
-      "intensity": 0.85,
-      "pulse_period": 2.0,
-      "pulse_min": 0.1,
-      "phase": 0.0,
-      "layer": "effects",
-      "layer_z": 100
-    },
-    {
-      "effect_id": "chimney_smoke",
-      "type": "smoke",
-      "x": 323,
-      "y": 190,
-      "radius": 5.0,
-      "color": [
-        100,
-        100,
-        105
-      ],
-      "intensity": 0.6,
-      "pulse_period": 0.1,
-      "pulse_min": 0.3,
-      "phase": 0.0,
-      "layer": "effects",
-      "layer_z": 100
-    },
-    {
-      "effect_id": "golden_glint",
-      "type": "glint",
-      "x": 493,
-      "y": 126,
-      "radius": 55,
-      "color": [
-        255,
-        215,
-        60
-      ],
-      "intensity": 0.85,
-      "pulse_period": 2.0,
-      "pulse_min": 0.1,
-      "phase": 0.0,
-      "layer": "effects",
-      "layer_z": 100
     }
   ],
   "objects_to_show": 17,

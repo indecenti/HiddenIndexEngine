@@ -1306,7 +1306,7 @@ if __name__ == "__main__":
                             idx_g = parts.index("games")
                             if idx_g + 1 < len(parts): gname = parts[idx_g + 1]
                     if gname: self._load_game(gname)
-                    self._load_scene(path)
+                    self._request_nav(lambda: self._load_scene(path))
                     self.state = STATE_MAIN; return
                 else:
                     self.status_msg = "ERRORE: Scena non trovata!"; return
@@ -1395,7 +1395,7 @@ if __name__ == "__main__":
                     
                     if _in_rect((mx, my_raw), (bx_open, item_y + 5, btn_w, 24)):
                         self._gs_select_scene(idx)
-                        self._gs_open(); return
+                        self._request_nav(self._gs_open); return
                     
                     if idx > 0 and _in_rect((mx, my_raw), (bx_up, item_y + 5, btn_w, 24)):
                         self._gs_move_scene(idx, -1); return
@@ -1420,9 +1420,9 @@ if __name__ == "__main__":
                 break
         
         if col_idx != -1 and now - self._gs_last_click < 0.4 and self._gs_last_col == col_idx:
-            if col_idx == 0 and self.gs_sel_game  is not None: self._gs_open()
-            if col_idx == 1 and self.gs_sel_level is not None: self._gs_open()
-            if col_idx == 2 and self.gs_sel_scene is not None: self._gs_open()
+            if col_idx == 0 and self.gs_sel_game  is not None: self._request_nav(self._gs_open)
+            if col_idx == 1 and self.gs_sel_level is not None: self._request_nav(self._gs_open)
+            if col_idx == 2 and self.gs_sel_scene is not None: self._request_nav(self._gs_open)
             
         self._gs_last_click = now
         self._gs_last_col   = col_idx
@@ -1505,7 +1505,7 @@ if __name__ == "__main__":
 
         if not self._gs_new_mode:
             if ev.key == pygame.K_RETURN and self.gs_sel_game is not None:
-                self._gs_open()
+                self._request_nav(self._gs_open)
             return
         if ev.key == pygame.K_RETURN:
             self._gs_confirm_new()

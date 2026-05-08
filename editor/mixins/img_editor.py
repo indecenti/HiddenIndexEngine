@@ -52,8 +52,8 @@ class ImgEditorMixin:
         logging.info(f"[IMG_EDITOR] Checking path: {self._img_editor_path}")
         
         if not self._img_editor_path.exists():
-            # Fallback a engine/assets/objects
-            master_p = self.base_path / "engine" / "assets" / "objects" / Path(img_rel).name
+            # Fallback agli asset globali dell'engine (mantenendo la sottocartella del catalogo)
+            master_p = self.base_path / "engine" / "assets" / img_rel
             logging.info(f"[IMG_EDITOR] Game-specific not found, checking master: {master_p}")
             if master_p.exists():
                 self._img_editor_path = master_p

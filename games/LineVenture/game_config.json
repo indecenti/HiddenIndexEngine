@@ -1,0 +1,10 @@
+{
+  "id": "LineVenture",
+  "game_id": "LineVenture",
+  "title_key": "game_title",
+  "version": "1.0",
+  "menu": {
+    "background": "assets/menu_bg.png",
+    "music": []
+  }
+}

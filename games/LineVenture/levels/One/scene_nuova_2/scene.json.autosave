@@ -1,0 +1,10 @@
+{
+  "id": "scene_nuova_2",
+  "background": "image (40).png",
+  "background_scale": 1.0,
+  "objects": [],
+  "effects": [],
+  "music": [],
+  "flashlight": false,
+  "flashlight_radius": 150.0
+}

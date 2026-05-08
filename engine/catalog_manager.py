@@ -195,8 +195,12 @@ def _load_global_catalog() -> dict:
     merged_objects = []
     
     # Cerchiamo tutti i file che seguono il pattern global_*_catalog.json
-    # Usiamo Path.glob per la scoperta dei file
-    catalog_files = list(Path(data_dir).glob("global_*_catalog.json"))
+    # Usiamo Path.glob per la scoperta dei file, ESCLUDENDO i backup
+    all_files = list(Path(data_dir).glob("global_*_catalog.json"))
+    catalog_files = [
+        f for f in all_files 
+        if "backup" not in f.name.lower() and not f.name.endswith(".bak")
+    ]
     
     # Se non ne troviamo nessuno con quel pattern, proviamo il file standard per compatibilità
     if not catalog_files:

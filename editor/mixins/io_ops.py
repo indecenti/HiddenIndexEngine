@@ -60,23 +60,26 @@ class IoOpsMixin:
 
         harvested = False
 
-        # ── 1. Copia PNG: engine → game/objects/ ─────────────────────────────
+        # ── 1. Copia PNG: engine → game/{subfolder}/ ────────────────────────
         icon_rel = cat_entry.get("icon", "")
         if icon_rel:
-            icon_name = Path(icon_rel).name
+            icon_path = Path(icon_rel)
+            icon_name = icon_path.name
+            subfolder = icon_path.parent.name or "objects" # Default a objects se manca parent
+            
             master_p = self.base_path / "engine" / "assets" / icon_rel
-            game_objects_p = self.game_path / "objects"
-            game_objects_p.mkdir(parents=True, exist_ok=True)
-            dst_p = game_objects_p / icon_name
+            game_dest_dir = self.game_path / subfolder
+            game_dest_dir.mkdir(parents=True, exist_ok=True)
+            dst_p = game_dest_dir / icon_name
 
             if not dst_p.exists():
                 if master_p.exists():
                     try:
                         shutil.copy2(master_p, dst_p)
                         harvested = True
-                        logging.info(f"[ASSET] Harvested PNG: {icon_name}")
+                        logging.info(f"[ASSET] Harvested PNG: {subfolder}/{icon_name}")
                     except Exception as e:
-                        logging.error(f"[ASSET] Harvest PNG failed for '{icon_name}': {e}")
+                        logging.error(f"[ASSET] Harvest PNG failed for '{icon_rel}': {e}")
                 else:
                     logging.warning(f"[ASSET] Master PNG not found in engine: {master_p}")
 
@@ -165,7 +168,7 @@ class IoOpsMixin:
     # ─────────────────────────────────────────────────────────────────────────
 
     def _load_game(self, game_name: str):
-        print(f"[EDITOR] Loading game: {game_name}")
+        logging.info(f"[EDITOR] Loading game: {game_name}")
         self.game_name = game_name
         
         # Path standard
@@ -184,11 +187,11 @@ class IoOpsMixin:
         self.effects_catalog  = _load_effects_catalog()
         self._load_strings()
         self.levels           = _discover_levels(self.game_path)
-        print(f"[EDITOR] Catalog items: {len(self.catalog)}, Levels: {len(self.levels)}")
+        logging.info(f"[EDITOR] Catalog items: {len(self.catalog)}, Levels: {len(self.levels)}")
         if self.levels:
             self.tree_expanded[self.levels[0]["id"]] = True
         self.state = STATE_MAIN
-        print(f"[EDITOR] Game loaded successfully: {game_name}")
+        logging.info(f"[EDITOR] Game loaded successfully: {game_name}")
         self._status(f"Gioco: {game_name}", OK_C, 4)
 
         # Auto-carica l'ultima scena aperta se appartiene a questo gioco
@@ -198,7 +201,7 @@ class IoOpsMixin:
                 self._load_scene(recent_path)
 
     def _load_scene(self, scene_path: Path):
-        print(f"[EDITOR] Loading scene: {scene_path}")
+        logging.info(f"[EDITOR] Loading scene: {scene_path}")
         self.scene_path  = scene_path
         self.scene_data  = _load_scene_data(scene_path)
         self._sanitize_effects()
@@ -236,20 +239,20 @@ class IoOpsMixin:
                 # Carica immagine e la converte per prestazioni
                 self.bg_surf = pygame.image.load(str(bg_file)).convert()
                 bw, bh = self.bg_surf.get_size()
-                print(f"[EDITOR] Background loaded: {bg_file.name} ({bw}x{bh})")
+                logging.info(f"[EDITOR] Background loaded: {bg_file.name} ({bw}x{bh})")
             except Exception as e:
-                print(f"[EDITOR] Failed to load background: {e}")
+                logging.error(f"[EDITOR] Failed to load background: {e}")
                 self.bg_surf = None
         else:
             if bg_name:
-                print(f"[EDITOR] Background file MISSING: {bg_name}")
+                logging.warning(f"[EDITOR] Background file MISSING: {bg_name}")
             else:
-                print(f"[EDITOR] No background set for this scene.")
+                logging.info(f"[EDITOR] No background set for this scene.")
             self.bg_surf = None
 
         self._fit_canvas()
         n = len(self.scene_data.get("objects", []))
-        print(f"[EDITOR] Scene loaded: {n} objects")
+        logging.info(f"[EDITOR] Scene loaded: {n} objects")
         self._status(f"Scena: {scene_path.name}  ({n} oggetti)", OK_C, 3)
 
     def _load_background(self):
@@ -324,7 +327,7 @@ class IoOpsMixin:
             if fx.get("font_size") == 22:      fx.pop("font_size",    None)
             if fx.get("font_color") == [40, 40, 40]: fx.pop("font_color", None)
 
-        print(f"[EDITOR] Step 3: Cleanup processed {processed} objects and {len(copy_fx)} effects")
+        logging.info(f"[EDITOR] Step 3: Cleanup processed {processed} objects and {len(copy_fx)} effects")
         
         # 4. Asset Harvesting — copia PNG + sincronizza catalog JSON per ogni oggetto usato.
         #    _harvest_asset() è idempotente: non sovrascrive file già presenti.
@@ -338,7 +341,7 @@ class IoOpsMixin:
                     harvested_count += 1
 
         if harvested_count > 0:
-            print(f"[EDITOR] Harvested {harvested_count} nuovi asset nella cartella di gioco.")
+            logging.info(f"[EDITOR] Harvested {harvested_count} nuovi asset nella cartella di gioco.")
 
         # 5. Asset Cleanup — rimozione PNG orfani dal gioco (MAI dall'engine).
         #    Scansiona TUTTE le scene (inclusa quella corrente in memoria) per determinare
@@ -383,7 +386,7 @@ class IoOpsMixin:
                 logging.warning(f"[ASSET] Cleanup catalog JSON fallito: {e}")
 
         if removed_count > 0:
-            print(f"[EDITOR] Cleanup: rimossi {removed_count} PNG orfani (ripristinabili dall'engine).")
+            logging.info(f"[EDITOR] Cleanup: rimossi {removed_count} PNG orfani (ripristinabili dall'engine).")
 
         # 5.5 Translation Audit (Audita e sincronizza TUTTI i file lingua del gioco)
         self._audit_translations(data)
@@ -419,7 +422,7 @@ class IoOpsMixin:
                     except Exception as e:
                         logging.warning(f"[ASSET] Music harvest fallito per '{mname}': {e}")
             if harvested_music > 0:
-                print(f"[EDITOR] Harvested {harvested_music} musiche nella cartella di gioco.")
+                logging.info(f"[EDITOR] Harvested {harvested_music} musiche nella cartella di gioco.")
 
         # Cleanup musiche orfane dal game folder (MAI dall'engine)
         if game_music_p.exists():
@@ -440,7 +443,7 @@ class IoOpsMixin:
                         logging.warning(f"[ASSET] Music cleanup fallito per '{f.name}': {e}")
 
             if audio_removed > 0:
-                print(f"[EDITOR] Music Cleanup: rimossi {audio_removed} brani non più usati nel gioco.")
+                logging.info(f"[EDITOR] Music Cleanup: rimossi {audio_removed} brani non più usati nel gioco.")
 
         # 6. Write
         save_path = self.scene_path / "scene.json"
@@ -448,18 +451,18 @@ class IoOpsMixin:
         # Diagnostica B&W pre-scrittura
         gs_found = [o.get("catalog_id") for o in data.get("objects", []) if o.get("grayscale")]
         if gs_found:
-            print(f"[EDITOR-IO] CRITICAL: Writing to JSON with Grayscale objects: {gs_found}")
+            logging.info(f"[EDITOR-IO] CRITICAL: Writing to JSON with Grayscale objects: {gs_found}")
         else:
-            print(f"[EDITOR-IO] WARNING: No Grayscale objects found in data about to be saved!")
+            logging.warning(f"[EDITOR-IO] WARNING: No Grayscale objects found in data about to be saved!")
 
         final_count = len(data.get("objects", []))
         if _save_json(save_path, data):
 
             self.scene_dirty = False
-            print(f"[EDITOR] ----- SAVE SUCCESS: {save_path} -----")
+            logging.info(f"[EDITOR] ----- SAVE SUCCESS: {save_path} -----")
             self._status(f"Salvataggio completato: {final_count} oggetti", OK_C, 3)
         else:
-            print(f"[EDITOR] !!! SAVE FAILED (Disk error?) !!!")
+            logging.error(f"[EDITOR] !!! SAVE FAILED (Disk error?) !!!")
             self._status("ERRORE DISCO!", ERR_C, 5)
 
     def _audit_translations(self, data: dict):
@@ -574,11 +577,13 @@ class IoOpsMixin:
                         stats["added"] += 1
                         changed = True
 
-            # B. Generazione automatica nomi per oggetti in INGLESE se la chiave è vuota
+            # B. Generazione automatica nomi per oggetti se la chiave è vuota
             for key in list(g_data.keys()):
-                if not g_data[key]: # Se è "" o None
-                    if lang == 'en' and key.startswith("obj_"):
+                if not g_data.get(key) or g_data[key].isspace():
+                    if key.startswith("obj_"):
+                        # Generazione fallback da ID (standard per EN o come base)
                         g_data[key] = key.replace("obj_", "").replace("_", " ").title()
+                        stats["filled"] += 1
                         changed = True
 
             # C. Rimuove chiavi inutilizzate (pulizia orfani CHIRURGICA)
@@ -635,15 +640,15 @@ class IoOpsMixin:
 
         if parts:
             summary = " | ".join(parts)
-            print(f"[EDITOR] Audit traduzioni ({len(langs)} lingue): {summary}")
+            logging.info(f"[EDITOR] Audit traduzioni ({len(langs)} lingue): {summary}")
             self._status(f"Audit ✓  {summary}", OK_C, 4)
         else:
-            print("[EDITOR] Audit traduzioni: OK — nessuna modifica necessaria")
+            logging.debug("[EDITOR] Audit traduzioni: OK — nessuna modifica necessaria")
 
     def _autosave(self):
         if not self.scene_path or not self.scene_dirty:
             return
-        print(f"[EDITOR] Autosaving scene...")
+        logging.info(f"[EDITOR] Autosaving scene...")
         # Deep copy per evitare di sporcare self.scene_data durante il cleanup
         data = copy.deepcopy(self.scene_data)
         for obj in data.get("objects", []):
@@ -654,7 +659,7 @@ class IoOpsMixin:
                 if k.startswith("_"): fx.pop(k)
 
         _save_json(self.scene_path / "scene.json.autosave", data)
-        print(f"[EDITOR] Autosave complete")
+        logging.info(f"[EDITOR] Autosave complete")
         self.last_autosave = time.time()
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -774,14 +779,45 @@ class IoOpsMixin:
         """
         Elimina permanentemente un oggetto dal database globale dell'engine.
         Operazione CHIRURGICA e SICURA:
-        1. Verifica che l'asset non sia in uso in nessun gioco registrato.
-        2. Crea un backup preventivo del catalogo globale.
-        3. Rimuove il record JSON e riordina alfabeticamente.
-        4. Elimina la PNG fisica solo se non condivisa e valida.
+        1. Identifica il file catalogo corretto (real, lineart, etc.).
+        2. Verifica che l'asset non sia in uso in nessun gioco registrato.
+        3. Crea un backup preventivo del catalogo globale specifico.
+        4. Rimuove il record JSON e riordina alfabeticamente.
+        5. Elimina la PNG fisica solo se non condivisa e valida.
         """
         logging.info(f"[EDITOR] Avvio eliminazione asset globale: {cat_id}")
-        global_cat_path = self.base_path / "engine" / "data" / "global_objects_catalog.json"
         
+        # --- 0. IDENTIFICAZIONE CATALOGO ---
+        data_dir = self.base_path / "engine" / "data"
+        all_files = list(data_dir.glob("global_*_catalog.json"))
+        catalog_files = [
+            f for f in all_files 
+            if "backup" not in f.name.lower() and not f.name.endswith(".bak")
+        ]
+        
+        global_cat_path = None
+        target_entry = None
+        
+        for cf in catalog_files:
+            try:
+                with open(cf, "r", encoding="utf-8") as f:
+                    cdata = json.load(f)
+                objs = cdata.get("objects", [])
+                entry = next((o for o in objs if o["id"] == cat_id), None)
+                if entry:
+                    global_cat_path = cf
+                    target_entry = entry
+                    break
+            except Exception as e:
+                logging.warning(f"[EDITOR] Errore lettura catalogo {cf.name}: {e}")
+                continue
+                
+        if not global_cat_path:
+            self._status(f"Asset {cat_id} non trovato in nessun catalogo globale", ERR_C, 4)
+            return
+
+        logging.info(f"[EDITOR] Asset trovato in: {global_cat_path.name}")
+
         # --- 1. CHECK DI SICUREZZA: L'asset è in uso in qualche gioco? ---
         used_locations = []
         games_dir = self.base_path / "games"
@@ -822,10 +858,6 @@ class IoOpsMixin:
 
         try:
             # --- 2. BACKUP E CARICAMENTO ---
-            if not global_cat_path.exists():
-                self._status("Errore: Catalogo globale non trovato!", ERR_C, 3)
-                return
-
             bak_path = global_cat_path.with_suffix(".json.bak")
             shutil.copy2(global_cat_path, bak_path)
             logging.debug(f"[EDITOR] Backup creato: {bak_path.name}")
@@ -834,26 +866,33 @@ class IoOpsMixin:
                 data = json.load(f)
             
             objs = data.get("objects", [])
-            entry = next((o for o in objs if o["id"] == cat_id), None)
-            if not entry:
-                self._status(f"Asset {cat_id} non trovato nel globale", ERR_C, 3)
-                return
 
             # --- 3. PULIZIA JSON CHIRURGICA ---
             new_objs = [o for o in objs if o["id"] != cat_id]
+            
+            # Blindaggio: se abbiamo rimosso più di un oggetto o nessuno, qualcosa non va
+            if len(new_objs) != len(objs) - 1:
+                logging.error(f"[EDITOR] Errore critico: rimozione non unitaria ({len(objs)} -> {len(new_objs)})")
+                return
+
             # Manteniamo il catalogo sempre ordinato per ID
             data["objects"] = sorted(new_objs, key=lambda x: x.get("id", ""))
             
             # Scrittura atomica (su file temp poi rinomina) per evitare corruzioni
             tmp_path = global_cat_path.with_suffix(".json.tmp")
-            with open(tmp_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            
-            os.replace(tmp_path, global_cat_path)
-            logging.info(f"[EDITOR] Asset {cat_id} rimosso dal JSON globale.")
+            try:
+                with open(tmp_path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                
+                os.replace(tmp_path, global_cat_path)
+                logging.info(f"[EDITOR] Asset {cat_id} rimosso con successo da {global_cat_path.name}.")
+            except Exception as e:
+                logging.error(f"[EDITOR] Fallimento scrittura atomica: {e}")
+                if tmp_path.exists(): tmp_path.unlink()
+                return
 
             # --- 4. RIMOZIONE PNG FISICA ---
-            icon_rel = entry.get("icon")
+            icon_rel = target_entry.get("icon")
             if icon_rel and isinstance(icon_rel, str):
                 # Protezione: assicuriamoci che non stia tentando di uscire dalla cartella assets
                 if ".." in icon_rel or icon_rel.startswith("/") or ":" in icon_rel:
@@ -862,7 +901,17 @@ class IoOpsMixin:
                     icon_path = self.base_path / "engine" / "assets" / icon_rel
                     
                     # Check condivisione: un altro oggetto usa la stessa icona?
-                    is_shared = any(o.get("icon") == icon_rel for o in new_objs)
+                    # Dobbiamo controllare TUTTI i cataloghi globali per la condivisione
+                    is_shared = False
+                    for cf in catalog_files:
+                        try:
+                            with open(cf, "r", encoding="utf-8") as f:
+                                other_data = json.load(f)
+                            if any(o.get("icon") == icon_rel and o.get("id") != cat_id 
+                                   for o in other_data.get("objects", [])):
+                                is_shared = True
+                                break
+                        except: continue
                     
                     if icon_path.exists() and not is_shared:
                         try:

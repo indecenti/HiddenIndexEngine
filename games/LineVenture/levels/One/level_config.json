@@ -1,0 +1,26 @@
+{
+  "id": "One",
+  "name_key": "One_name",
+  "difficulty": "normal",
+  "timer_behavior": "complete",
+  "scenes": [
+    {
+      "id": "scene_nuova",
+      "order": 1,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "scene_nuova_2",
+      "order": 2,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "scene_nuova_3",
+      "order": 3,
+      "time_limit": 120,
+      "transition_out": "fade"
+    }
+  ]
+}

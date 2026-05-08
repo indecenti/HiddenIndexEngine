@@ -333,12 +333,36 @@ class ObjectOpsMixin:
             self._status("Nessun oggetto nel catalogo", ERR_C, 2)
             return
 
+        # --- 1. Analisi Stile Dominante (Intelligenza Contestuale) ---
+        scene_objs = self.scene_data.get("objects", [])
+        chosen_pool = self.catalog
+        if scene_objs:
+            # Mappa rapida ID -> Stile
+            style_map = {c["id"]: c.get("style", "real") for c in self.catalog}
+            scene_styles = [style_map.get(o.get("catalog_id"), "real") for o in scene_objs]
+            total = len(scene_styles)
+            
+            # Se uno stile domina al 90%, restringiamo il pool a quello stile
+            real_p = scene_styles.count("real") / total
+            la_p = scene_styles.count("line art") / total
+            
+            if real_p >= 0.9:
+                chosen_pool = [c for c in self.catalog if c.get("style") == "real"]
+            elif la_p >= 0.9:
+                chosen_pool = [c for c in self.catalog if c.get("style") == "line art"]
+            
+            # Fallback se il pool filtrato è vuoto per errore di catalogazione
+            if not chosen_pool: chosen_pool = self.catalog
+
         rx, ry = self._s2r(mx, my_raw)
         self._push_undo()
 
-        # Scegliamo 4 oggetti random (possono essere duplicati se il catalogo è piccolo)
+        # Scegliamo 4 oggetti random dal pool (filtrato o globale)
         count = 4
-        chosen_cats = random.choices(self.catalog, k=count) if len(self.catalog) < count else random.sample(self.catalog, count)
+        if len(chosen_pool) < count:
+            chosen_cats = random.choices(chosen_pool, k=count)
+        else:
+            chosen_cats = random.sample(chosen_pool, count)
 
         new_indices = []
 
@@ -376,19 +400,37 @@ class ObjectOpsMixin:
                 self._status(f"Scatter interrotto: layer '{lyr}' bloccato!", ERR_C, 2)
                 return
 
-            # Determina tipo rilevamento in base ai default del catalogo (scalati)
+            # Determina tipo rilevamento e dimensioni base
             dt = cat.get("default_detection_type", "circle")
             hd = cat.get("default_hint_delay", 30)
+
+            # --- Calcolo scala intelligente (Tag + Jitter casuale) ---
+            tags = cat.get("tags", [])
+            tag_scale = 1.0
+            if "piccolo" in tags:
+                tag_scale = 0.7
+            elif "grande" in tags:
+                tag_scale = 1.5
+            
+            # Jitter per naturalezza (variazione del 10%)
+            jitter = random.uniform(0.9, 1.1)
+            f_scale = scale * tag_scale * jitter
+
+            # Jitter posizione per evitare effetto griglia (±15px scalati)
+            pjx = random.uniform(-15, 15) * scale
+            pjy = random.uniform(-15, 15) * scale
+            tx, ty = self._snap(rx + ox_off + pjx), self._snap(ry + oy_off + pjy)
+
             if dt == "circle":
                 r_def = cat.get("default_radius", 30)
                 obj = _default_obj(cat["id"], tx, ty, "circle", 
-                                   radius=round(r_def * scale),
+                                   radius=round(r_def * f_scale),
                                    hint_delay=hd,
                                    layer=lyr)
             else:
                 w_def = cat.get("default_width", 60)
                 h_def = cat.get("default_height", 60)
-                nw, nh = round(w_def * scale), round(h_def * scale)
+                nw, nh = round(w_def * f_scale), round(h_def * f_scale)
                 obj = _default_obj(cat["id"], tx - nw/2, ty - nh/2, "rect", 
                                    width=nw, height=nh,
                                    hint_delay=hd,
@@ -483,7 +525,7 @@ class ObjectOpsMixin:
             return  # tutti gli oggetti eliminati sono ancora usati altrove
 
         catalog_map = {c["id"]: c for c in getattr(self, 'catalog', [])}
-        master_objects_p = self.base_path / "engine" / "assets" / "objects"
+        master_assets_p = self.base_path / "engine" / "assets"
 
         # ── 2. Calcola icon_names e label_keys ancora in uso da catalog_id
         #       RIMASTI in uso (non eliminati). Serve per proteggere PNG e chiavi
@@ -526,23 +568,26 @@ class ObjectOpsMixin:
             # ── B. Rimuove PNG dalla cartella di gioco (MAI dall'engine) ─────
             icon_rel = cat.get("icon", "")
             if icon_rel:
-                icon_name = Path(icon_rel).name
+                icon_path = Path(icon_rel)
+                icon_name = icon_path.name
+                subfolder = icon_path.parent.name or "objects"
+                
                 # Protezione: non eliminare se lo stesso file è usato da
                 # un altro catalog_id ancora attivo
                 if icon_name not in still_used_icon_names:
-                    game_png = self.game_path / "objects" / icon_name
+                    game_png = self.game_path / subfolder / icon_name
                     if game_png.exists():
                         # Ulteriore protezione: elimina solo se esiste nel master
                         # engine (recuperabile). PNG custom rimangono sempre.
-                        if (master_objects_p / icon_name).exists():
+                        if (master_assets_p / icon_rel).exists():
                             try:
                                 game_png.unlink()
-                                removed_pngs.append(icon_name)
+                                removed_pngs.append(f"{subfolder}/{icon_name}")
                             except Exception as e:
-                                logging.warning(f"[ASSET] Cleanup PNG fallito '{icon_name}': {e}")
+                                logging.warning(f"[ASSET] Cleanup PNG fallito '{subfolder}/{icon_name}': {e}")
                         else:
                             logging.info(
-                                f"[ASSET] PNG custom '{icon_name}' mantenuto "
+                                f"[ASSET] PNG custom '{subfolder}/{icon_name}' mantenuto "
                                 f"(non nell'engine master, non eliminabile)."
                             )
 

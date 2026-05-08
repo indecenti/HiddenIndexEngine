@@ -1,0 +1,234 @@
+{
+  "id": "scene_nuova_3",
+  "background": "image (42).png",
+  "background_scale": 1.0,
+  "objects": [
+    {
+      "catalog_id": "la_teddy_bear",
+      "x": 4268,
+      "y": 759,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 271,
+      "height": 353
+    },
+    {
+      "catalog_id": "la_robot_giocattolo",
+      "x": 1259,
+      "y": 1913,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 229,
+      "height": 332,
+      "rotation": 357.1,
+      "corners": [
+        [
+          -11,
+          10
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "catalog_id": "la_macchinina",
+      "x": 714,
+      "y": 2132,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 25,
+      "width": 494,
+      "height": 297,
+      "rotation": 353.8
+    },
+    {
+      "catalog_id": "la_papera_gomma",
+      "x": 4235,
+      "y": 1986,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 25,
+      "width": 134,
+      "height": 134,
+      "rotation": 347.1
+    },
+    {
+      "catalog_id": "la_piuma",
+      "x": 878,
+      "y": 1285,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 25,
+      "width": 271,
+      "height": 407,
+      "rotation": 30.2
+    },
+    {
+      "catalog_id": "la_ferro_cavallo",
+      "x": 679,
+      "y": 595,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 249,
+      "height": 259
+    },
+    {
+      "catalog_id": "la_ancora",
+      "x": 3113,
+      "y": 1881,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 137,
+      "height": 152
+    },
+    {
+      "catalog_id": "la_zaino",
+      "x": 2855,
+      "y": 1997,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 147,
+      "height": 178
+    },
+    {
+      "catalog_id": "la_teddy_bear",
+      "x": 3362,
+      "y": 1669,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 107,
+      "height": 133
+    },
+    {
+      "catalog_id": "la_razzo_giocattolo",
+      "x": 3138,
+      "y": 1708,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "width": 55,
+      "height": 99
+    },
+    {
+      "catalog_id": "la_mappamondo",
+      "x": 2039,
+      "y": 1890,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "radius": 126.0,
+      "width": 202,
+      "height": 302
+    },
+    {
+      "catalog_id": "la_forchetta",
+      "x": 1845,
+      "y": 809,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 20,
+      "width": 57,
+      "height": 300
+    },
+    {
+      "catalog_id": "la_palla",
+      "x": 3408,
+      "y": 1359,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 20,
+      "radius": 97,
+      "width": 194,
+      "height": 194
+    },
+    {
+      "catalog_id": "la_metronomo",
+      "x": 833,
+      "y": 2601,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 221,
+      "height": 323
+    },
+    {
+      "catalog_id": "la_tamburo",
+      "x": 4381,
+      "y": 2697,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "radius": 232.5,
+      "width": 374,
+      "height": 556
+    },
+    {
+      "catalog_id": "la_lente_ingrandimento",
+      "x": 522,
+      "y": 412,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 25,
+      "radius": 134.25,
+      "width": 278,
+      "height": 259,
+      "rotation": 13.0,
+      "alpha": 227
+    },
+    {
+      "catalog_id": "la_pennino",
+      "x": 2949,
+      "y": 592,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 20,
+      "width": 249,
+      "height": 262,
+      "rotation": 43.3
+    }
+  ],
+  "effects": [],
+  "music": [],
+  "flashlight": false,
+  "flashlight_radius": 150.0,
+  "layer_locked": {
+    "objects_low": false,
+    "objects_mid": false,
+    "objects_high": false,
+    "overlay": false,
+    "effects": false
+  }
+}

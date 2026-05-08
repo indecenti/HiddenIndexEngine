@@ -1,16 +1,163 @@
 {
   "objects": [
     {
-      "id": "la_martello",
-      "label_key": "obj_la_martello",
-      "icon": "objects_lineart/la_martello.png",
+      "id": "la_aeroplanino",
+      "label_key": "obj_la_aeroplanino",
+      "icon": "objects_lineart/la_aeroplanino.png",
       "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 85,
+      "default_width": 75,
+      "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
+        "giocattolo",
+        "plastica",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ancora",
+      "label_key": "obj_la_ancora",
+      "icon": "objects_lineart/la_ancora.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 80,
+      "default_hint_delay": 40,
+      "tags": [
+        "mare",
+        "metallo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_aquilone",
+      "label_key": "obj_la_aquilone",
+      "icon": "objects_lineart/la_aquilone.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "giocattolo",
+        "carta",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_arpa",
+      "label_key": "obj_la_arpa",
+      "icon": "objects_lineart/la_arpa.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 95,
+      "default_hint_delay": 50,
+      "tags": [
+        "musica",
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ascia",
+      "label_key": "obj_la_ascia",
+      "icon": "objects_lineart/la_ascia.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 75,
+      "default_hint_delay": 40,
+      "tags": [
         "attrezzo",
-        "officina"
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bambola",
+      "label_key": "obj_la_bambola",
+      "icon": "objects_lineart/la_bambola.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "giocattolo",
+        "stoffa",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_barchetta",
+      "label_key": "obj_la_barchetta",
+      "icon": "objects_lineart/la_barchetta.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 30,
+      "default_hint_delay": 20,
+      "tags": [
+        "giocattolo",
+        "carta",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_biglie",
+      "label_key": "obj_la_biglie",
+      "icon": "objects_lineart/la_biglie.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "giocattolo",
+        "vetro",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_binocolo",
+      "label_key": "obj_la_binocolo",
+      "icon": "objects_lineart/la_binocolo.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 50,
+      "default_hint_delay": 40,
+      "tags": [
+        "ottica",
+        "esplorazione"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_birilli",
+      "label_key": "obj_la_birilli",
+      "icon": "objects_lineart/la_birilli.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "giocattolo",
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bussola",
+      "label_key": "obj_la_bussola",
+      "icon": "objects_lineart/la_bussola.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "esplorazione",
+        "metallo"
       ],
       "style": "line art"
     },
@@ -29,6 +176,135 @@
       "style": "line art"
     },
     {
+      "id": "la_calamaio",
+      "label_key": "obj_la_calamaio",
+      "icon": "objects_lineart/la_calamaio.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 40,
+      "default_hint_delay": 25,
+      "tags": [
+        "scrittura",
+        "ufficio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_calcolatrice",
+      "label_key": "obj_la_calcolatrice",
+      "icon": "objects_lineart/la_calcolatrice.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 45,
+      "default_hint_delay": 35,
+      "tags": [
+        "meccanico",
+        "ufficio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_caleidoscopio",
+      "label_key": "obj_la_caleidoscopio",
+      "icon": "objects_lineart/la_caleidoscopio.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "giocattolo",
+        "vetro",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_candela",
+      "label_key": "obj_la_candela",
+      "icon": "objects_lineart/la_candela.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 60,
+      "default_hint_delay": 20,
+      "tags": [
+        "luce",
+        "cera"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_candeliere",
+      "label_key": "obj_la_candeliere",
+      "icon": "objects_lineart/la_candeliere.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "antico",
+        "luce"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cavallo_dondolo",
+      "label_key": "obj_la_cavallo_dondolo",
+      "icon": "objects_lineart/la_cavallo_dondolo.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 65,
+      "default_hint_delay": 40,
+      "tags": [
+        "giocattolo",
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cavatappi",
+      "label_key": "obj_la_cavatappi",
+      "icon": "objects_lineart/la_cavatappi.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "metallo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cazzuola",
+      "label_key": "obj_la_cazzuola",
+      "icon": "objects_lineart/la_cazzuola.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "officina",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_chiave",
+      "label_key": "obj_la_chiave",
+      "icon": "objects_lineart/la_chiave.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 50,
+      "default_hint_delay": 15,
+      "tags": [
+        "metallo",
+        "sicurezza"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_chiave_inglese",
       "label_key": "obj_la_chiave_inglese",
       "icon": "objects_lineart/la_chiave_inglese.png",
@@ -43,28 +319,204 @@
       "style": "line art"
     },
     {
-      "id": "la_lampadina",
-      "label_key": "obj_la_lampadina",
-      "icon": "objects_lineart/la_lampadina.png",
-      "default_detection": "circle",
-      "default_radius": 25,
-      "default_hint_delay": 25,
+      "id": "la_chitarra",
+      "label_key": "obj_la_chitarra",
+      "icon": "objects_lineart/la_chitarra.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 95,
+      "default_hint_delay": 45,
       "tags": [
-        "luce",
-        "elettronica"
+        "musica",
+        "legno",
+        "grande"
       ],
       "style": "line art"
     },
     {
-      "id": "la_sveglia",
-      "label_key": "obj_la_sveglia",
-      "icon": "objects_lineart/la_sveglia.png",
+      "id": "la_clessidra",
+      "label_key": "obj_la_clessidra",
+      "icon": "objects_lineart/la_clessidra.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "tempo",
+        "vetro"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_coltello",
+      "label_key": "obj_la_coltello",
+      "icon": "objects_lineart/la_coltello.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 90,
+      "default_hint_delay": 20,
+      "tags": [
+        "cucina",
+        "acciaio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_conchiglia",
+      "label_key": "obj_la_conchiglia",
+      "icon": "objects_lineart/la_conchiglia.png",
       "default_detection": "circle",
-      "default_radius": 35,
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "mare",
+        "natura"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_coniglietto",
+      "label_key": "obj_la_coniglietto",
+      "icon": "objects_lineart/la_coniglietto.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 70,
       "default_hint_delay": 35,
       "tags": [
-        "orologio",
-        "elettronica"
+        "giocattolo",
+        "stoffa",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cubetti",
+      "label_key": "obj_la_cubetti",
+      "icon": "objects_lineart/la_cubetti.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "legno",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cubo_magico",
+      "label_key": "obj_la_cubo_magico",
+      "icon": "objects_lineart/la_cubo_magico.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "default_hint_delay": 35,
+      "tags": [
+        "giocattolo",
+        "plastica",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cucchiaio",
+      "label_key": "obj_la_cucchiaio",
+      "icon": "objects_lineart/la_cucchiaio.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 85,
+      "default_hint_delay": 20,
+      "tags": [
+        "cucina",
+        "posata"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_dadi",
+      "label_key": "obj_la_dadi",
+      "icon": "objects_lineart/la_dadi.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "giocattolo",
+        "plastica",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_farfalla",
+      "label_key": "obj_la_farfalla",
+      "icon": "objects_lineart/la_farfalla.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "insetto",
+        "natura"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ferro_cavallo",
+      "label_key": "obj_la_ferro_cavallo",
+      "icon": "objects_lineart/la_ferro_cavallo.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "vintage"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fionda",
+      "label_key": "obj_la_fionda",
+      "icon": "objects_lineart/la_fionda.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "legno",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fisarmonica",
+      "label_key": "obj_la_fisarmonica",
+      "icon": "objects_lineart/la_fisarmonica.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 65,
+      "default_hint_delay": 45,
+      "tags": [
+        "musica",
+        "plastica",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_foglia_acero",
+      "label_key": "obj_la_foglia_acero",
+      "icon": "objects_lineart/la_foglia_acero.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 20,
+      "tags": [
+        "bosco",
+        "natura"
       ],
       "style": "line art"
     },
@@ -83,16 +535,253 @@
       "style": "line art"
     },
     {
-      "id": "la_pinza",
-      "label_key": "obj_la_pinza",
-      "icon": "objects_lineart/la_pinza.png",
+      "id": "la_forchetta",
+      "label_key": "obj_la_forchetta",
+      "icon": "objects_lineart/la_forchetta.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 85,
+      "default_hint_delay": 20,
+      "tags": [
+        "cucina",
+        "posata"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_frusta",
+      "label_key": "obj_la_frusta",
+      "icon": "objects_lineart/la_frusta.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 90,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "acciaio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fungo",
+      "label_key": "obj_la_fungo",
+      "icon": "objects_lineart/la_fungo.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "bosco",
+        "natura"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_grammofono",
+      "label_key": "obj_la_grammofono",
+      "icon": "objects_lineart/la_grammofono.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 80,
+      "default_hint_delay": 50,
+      "tags": [
+        "musica",
+        "vintage"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_grattugia",
+      "label_key": "obj_la_grattugia",
+      "icon": "objects_lineart/la_grattugia.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "cucina",
+        "metallo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lampada_olio",
+      "label_key": "obj_la_lampada_olio",
+      "icon": "objects_lineart/la_lampada_olio.png",
       "default_detection": "rect",
       "default_width": 35,
       "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "luce",
+        "antico"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lampadina",
+      "label_key": "obj_la_lampadina",
+      "icon": "objects_lineart/la_lampadina.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "luce",
+        "elettronica"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lente_ingrandimento",
+      "label_key": "obj_la_lente_ingrandimento",
+      "icon": "objects_lineart/la_lente_ingrandimento.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "esplorazione",
+        "vetro"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_libro",
+      "label_key": "obj_la_libro",
+      "icon": "objects_lineart/la_libro.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "studio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_livella",
+      "label_key": "obj_la_livella",
+      "icon": "objects_lineart/la_livella.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 20,
       "default_hint_delay": 35,
       "tags": [
         "attrezzo",
+        "misura",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lucchetto",
+      "label_key": "obj_la_lucchetto",
+      "icon": "objects_lineart/la_lucchetto.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "sicurezza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_macchina_fotografica",
+      "label_key": "obj_la_macchina_fotografica",
+      "icon": "objects_lineart/la_macchina_fotografica.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 50,
+      "default_hint_delay": 35,
+      "tags": [
+        "elettronica",
+        "foto"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_macchina_scrivere",
+      "label_key": "obj_la_macchina_scrivere",
+      "icon": "objects_lineart/la_macchina_scrivere.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 55,
+      "default_hint_delay": 45,
+      "tags": [
+        "scrittura",
+        "vintage"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_macchinina",
+      "label_key": "obj_la_macchinina",
+      "icon": "objects_lineart/la_macchinina.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 35,
+      "default_hint_delay": 25,
+      "tags": [
+        "giocattolo",
+        "plastica",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mappamondo",
+      "label_key": "obj_la_mappamondo",
+      "icon": "objects_lineart/la_mappamondo.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 35,
+      "tags": [
+        "studio",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_martello",
+      "label_key": "obj_la_martello",
+      "icon": "objects_lineart/la_martello.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
         "officina"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mattarello",
+      "label_key": "obj_la_mattarello",
+      "icon": "objects_lineart/la_mattarello.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 15,
+      "default_hint_delay": 25,
+      "tags": [
+        "cucina",
+        "legno"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mestolo",
+      "label_key": "obj_la_mestolo",
+      "icon": "objects_lineart/la_mestolo.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 95,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "acciaio"
       ],
       "style": "line art"
     },
@@ -111,6 +800,266 @@
       "style": "line art"
     },
     {
+      "id": "la_metronomo",
+      "label_key": "obj_la_metronomo",
+      "icon": "objects_lineart/la_metronomo.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "musica",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_microscopio",
+      "label_key": "obj_la_microscopio",
+      "icon": "objects_lineart/la_microscopio.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 90,
+      "default_hint_delay": 45,
+      "tags": [
+        "scienza",
+        "ottica"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_moka",
+      "label_key": "obj_la_moka",
+      "icon": "objects_lineart/la_moka.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 80,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "casa"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_occhiali",
+      "label_key": "obj_la_occhiali",
+      "icon": "objects_lineart/la_occhiali.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 25,
+      "default_hint_delay": 20,
+      "tags": [
+        "accessorio",
+        "ottica"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ombrello",
+      "label_key": "obj_la_ombrello",
+      "icon": "objects_lineart/la_ombrello.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 90,
+      "default_hint_delay": 25,
+      "tags": [
+        "accessorio",
+        "pioggia"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_orologio_cucu",
+      "label_key": "obj_la_orologio_cucu",
+      "icon": "objects_lineart/la_orologio_cucu.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 80,
+      "default_hint_delay": 40,
+      "tags": [
+        "orologio",
+        "legno",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_orologio_digitale",
+      "label_key": "obj_la_orologio_digitale",
+      "icon": "objects_lineart/la_orologio_digitale.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 35,
+      "default_hint_delay": 35,
+      "tags": [
+        "orologio",
+        "elettronica",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_orologio_ingranaggi",
+      "label_key": "obj_la_orologio_ingranaggi",
+      "icon": "objects_lineart/la_orologio_ingranaggi.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 45,
+      "tags": [
+        "orologio",
+        "metallo",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_orologio_minimal",
+      "label_key": "obj_la_orologio_minimal",
+      "icon": "objects_lineart/la_orologio_minimal.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "orologio",
+        "vetro",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_orologio_quadrato",
+      "label_key": "obj_la_orologio_quadrato",
+      "icon": "objects_lineart/la_orologio_quadrato.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "orologio",
+        "plastica",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_orologio_raggiera",
+      "label_key": "obj_la_orologio_raggiera",
+      "icon": "objects_lineart/la_orologio_raggiera.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 75,
+      "default_hint_delay": 40,
+      "tags": [
+        "orologio",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_orologio_stazione",
+      "label_key": "obj_la_orologio_stazione",
+      "icon": "objects_lineart/la_orologio_stazione.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 70,
+      "default_hint_delay": 40,
+      "tags": [
+        "orologio",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_orologio_taschino",
+      "label_key": "obj_la_orologio_taschino",
+      "icon": "objects_lineart/la_orologio_taschino.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 35,
+      "tags": [
+        "tempo",
+        "antico"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_orologio_tondo",
+      "label_key": "obj_la_orologio_tondo",
+      "icon": "objects_lineart/la_orologio_tondo.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "orologio",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pala",
+      "label_key": "obj_la_pala",
+      "icon": "objects_lineart/la_pala.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 95,
+      "default_hint_delay": 40,
+      "tags": [
+        "attrezzo",
+        "giardino",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_palla",
+      "label_key": "obj_la_palla",
+      "icon": "objects_lineart/la_palla.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 20,
+      "tags": [
+        "giocattolo",
+        "gomma",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_papera_gomma",
+      "label_key": "obj_la_papera_gomma",
+      "icon": "objects_lineart/la_papera_gomma.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "default_hint_delay": 25,
+      "tags": [
+        "giocattolo",
+        "gomma",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pendola",
+      "label_key": "obj_la_pendola",
+      "icon": "objects_lineart/la_pendola.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 95,
+      "default_hint_delay": 50,
+      "tags": [
+        "orologio",
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_pennello",
       "label_key": "obj_la_pennello",
       "icon": "objects_lineart/la_pennello.png",
@@ -125,125 +1074,6 @@
       "style": "line art"
     },
     {
-      "id": "la_moka",
-      "label_key": "obj_la_moka",
-      "icon": "objects_lineart/la_moka.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 80,
-      "default_hint_delay": 30,
-      "tags": ["cucina", "casa"],
-      "style": "line art"
-    },
-    {
-      "id": "la_ombrello",
-      "label_key": "obj_la_ombrello",
-      "icon": "objects_lineart/la_ombrello.png",
-      "default_detection": "rect",
-      "default_width": 20,
-      "default_height": 90,
-      "default_hint_delay": 25,
-      "tags": ["accessorio", "pioggia"],
-      "style": "line art"
-    },
-    {
-      "id": "la_occhiali",
-      "label_key": "obj_la_occhiali",
-      "icon": "objects_lineart/la_occhiali.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 25,
-      "default_hint_delay": 20,
-      "tags": ["accessorio", "vista"],
-      "style": "line art"
-    },
-    {
-      "id": "la_macchina_fotografica",
-      "label_key": "obj_la_macchina_fotografica",
-      "icon": "objects_lineart/la_macchina_fotografica.png",
-      "default_detection": "rect",
-      "default_width": 70,
-      "default_height": 50,
-      "default_hint_delay": 35,
-      "tags": ["elettronica", "hobby"],
-      "style": "line art"
-    },
-    {
-      "id": "la_chiave",
-      "label_key": "obj_la_chiave",
-      "icon": "objects_lineart/la_chiave.png",
-      "default_detection": "rect",
-      "default_width": 20,
-      "default_height": 50,
-      "default_hint_delay": 15,
-      "tags": ["metallo", "sicurezza"],
-      "style": "line art"
-    },
-    {
-      "id": "la_lucchetto",
-      "label_key": "obj_la_lucchetto",
-      "icon": "objects_lineart/la_lucchetto.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 60,
-      "default_hint_delay": 25,
-      "tags": ["metallo", "sicurezza"],
-      "style": "line art"
-    },
-    {
-      "id": "la_tazza",
-      "label_key": "obj_la_tazza",
-      "icon": "objects_lineart/la_tazza.png",
-      "default_detection": "circle",
-      "default_radius": 30,
-      "default_hint_delay": 20,
-      "tags": ["cucina", "ceramica"],
-      "style": "line art"
-    },
-    {
-      "id": "la_libro",
-      "label_key": "obj_la_libro",
-      "icon": "objects_lineart/la_libro.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 70,
-      "default_hint_delay": 30,
-      "tags": ["carta", "studio"],
-      "style": "line art"
-    },
-    {
-      "id": "la_radio",
-      "label_key": "obj_la_radio",
-      "icon": "objects_lineart/la_radio.png",
-      "default_detection": "rect",
-      "default_width": 80,
-      "default_height": 55,
-      "default_hint_delay": 40,
-      "tags": ["elettronica", "vintage"],
-      "style": "line art"
-    },
-    {
-      "id": "la_candeliere",
-      "label_key": "obj_la_candeliere",
-      "icon": "objects_lineart/la_candeliere.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 90,
-      "default_hint_delay": 35,
-      "tags": ["antico", "luce"],
-      "style": "line art"
-    },
-    {
-      "id": "la_bussola",
-      "label_key": "obj_la_bussola",
-      "icon": "objects_lineart/la_bussola.png",
-      "default_detection": "circle",
-      "default_radius": 35,
-      "default_hint_delay": 30,
-      "tags": ["navigazione", "ottone"],
-      "style": "line art"
-    },
-    {
       "id": "la_pennino",
       "label_key": "obj_la_pennino",
       "icon": "objects_lineart/la_pennino.png",
@@ -251,311 +1081,10 @@
       "default_width": 10,
       "default_height": 80,
       "default_hint_delay": 20,
-      "tags": ["scrittura", "ufficio"],
-      "style": "line art"
-    },
-    {
-      "id": "la_calamaio",
-      "label_key": "obj_la_calamaio",
-      "icon": "objects_lineart/la_calamaio.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 40,
-      "default_hint_delay": 25,
-      "tags": ["scrittura", "ufficio"],
-      "style": "line art"
-    },
-    {
-      "id": "la_lente_ingrandimento",
-      "label_key": "obj_la_lente_ingrandimento",
-      "icon": "objects_lineart/la_lente_ingrandimento.png",
-      "default_detection": "circle",
-      "default_radius": 30,
-      "default_hint_delay": 25,
-      "tags": ["esplorazione", "vetro"],
-      "style": "line art"
-    },
-    {
-      "id": "la_candela",
-      "label_key": "obj_la_candela",
-      "icon": "objects_lineart/la_candela.png",
-      "default_detection": "rect",
-      "default_width": 20,
-      "default_height": 60,
-      "default_hint_delay": 20,
-      "tags": ["luce", "cera"],
-      "style": "line art"
-    },
-    {
-      "id": "la_pipa",
-      "label_key": "obj_la_pipa",
-      "icon": "objects_lineart/la_pipa.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 30,
-      "default_hint_delay": 30,
-      "tags": ["accessorio", "tabacco"],
-      "style": "line art"
-    },
-    {
-      "id": "la_binocolo",
-      "label_key": "obj_la_binocolo",
-      "icon": "objects_lineart/la_binocolo.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 50,
-      "default_hint_delay": 40,
-      "tags": ["ottica", "esplorazione"],
-      "style": "line art"
-    },
-    {
-      "id": "la_orologio_taschino",
-      "label_key": "obj_la_orologio_taschino",
-      "icon": "objects_lineart/la_orologio_taschino.png",
-      "default_detection": "circle",
-      "default_radius": 30,
-      "default_hint_delay": 35,
-      "tags": ["tempo", "antico"],
-      "style": "line art"
-    },
-    {
-      "id": "la_ventilatore",
-      "label_key": "obj_la_ventilatore",
-      "icon": "objects_lineart/la_ventilatore.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 70,
-      "default_hint_delay": 35,
-      "tags": ["meccanico", "vintage"],
-      "style": "line art"
-    },
-    {
-      "id": "la_macchina_scrivere",
-      "label_key": "obj_la_macchina_scrivere",
-      "icon": "objects_lineart/la_macchina_scrivere.png",
-      "default_detection": "rect",
-      "default_width": 85,
-      "default_height": 55,
-      "default_hint_delay": 45,
-      "tags": ["scrittura", "vintage"],
-      "style": "line art"
-    },
-    {
-      "id": "la_telefono_fisso",
-      "label_key": "obj_la_telefono_fisso",
-      "icon": "objects_lineart/la_telefono_fisso.png",
-      "default_detection": "rect",
-      "default_width": 65,
-      "default_height": 50,
-      "default_hint_delay": 40,
-      "tags": ["elettronica", "vintage"],
-      "style": "line art"
-    },
-    {
-      "id": "la_clessidra",
-      "label_key": "obj_la_clessidra",
-      "icon": "objects_lineart/la_clessidra.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 70,
-      "default_hint_delay": 30,
-      "tags": ["tempo", "vetro"],
-      "style": "line art"
-    },
-    {
-      "id": "la_mappamondo",
-      "label_key": "obj_la_mappamondo",
-      "icon": "objects_lineart/la_mappamondo.png",
-      "default_detection": "circle",
-      "default_radius": 40,
-      "default_hint_delay": 35,
-      "tags": ["scuola", "mappa"],
-      "style": "line art"
-    },
-    {
-      "id": "la_calcolatrice",
-      "label_key": "obj_la_calcolatrice",
-      "icon": "objects_lineart/la_calcolatrice.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 45,
-      "default_hint_delay": 35,
-      "tags": ["meccanico", "ufficio"],
-      "style": "line art"
-    },
-    {
-      "id": "la_grammofono",
-      "label_key": "obj_la_grammofono",
-      "icon": "objects_lineart/la_grammofono.png",
-      "default_detection": "rect",
-      "default_width": 80,
-      "default_height": 80,
-      "default_hint_delay": 50,
-      "tags": ["musica", "vintage"],
-      "style": "line art"
-    },
-    {
-      "id": "la_lampada_olio",
-      "label_key": "obj_la_lampada_olio",
-      "icon": "objects_lineart/la_lampada_olio.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 85,
-      "default_hint_delay": 30,
-      "tags": ["luce", "antico"],
-      "style": "line art"
-    },
-    {
-      "id": "la_microscopio",
-      "label_key": "obj_la_microscopio",
-      "icon": "objects_lineart/la_microscopio.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 90,
-      "default_hint_delay": 45,
-      "tags": ["scienza", "ottica"],
-      "style": "line art"
-    },
-    {
-      "id": "la_coltello",
-      "label_key": "obj_la_coltello",
-      "icon": "objects_lineart/la_coltello.png",
-      "default_detection": "rect",
-      "default_width": 20,
-      "default_height": 90,
-      "default_hint_delay": 20,
-      "tags": ["cucina", "acciaio"],
-      "style": "line art"
-    },
-    {
-      "id": "la_forchetta",
-      "label_key": "obj_la_forchetta",
-      "icon": "objects_lineart/la_forchetta.png",
-      "default_detection": "rect",
-      "default_width": 15,
-      "default_height": 85,
-      "default_hint_delay": 20,
-      "tags": ["cucina", "posata"],
-      "style": "line art"
-    },
-    {
-      "id": "la_cucchiaio",
-      "label_key": "obj_la_cucchiaio",
-      "icon": "objects_lineart/la_cucchiaio.png",
-      "default_detection": "rect",
-      "default_width": 20,
-      "default_height": 85,
-      "default_hint_delay": 20,
-      "tags": ["cucina", "posata"],
-      "style": "line art"
-    },
-    {
-      "id": "la_mestolo",
-      "label_key": "obj_la_mestolo",
-      "icon": "objects_lineart/la_mestolo.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 95,
-      "default_hint_delay": 30,
-      "tags": ["cucina", "acciaio"],
-      "style": "line art"
-    },
-    {
-      "id": "la_frusta",
-      "label_key": "obj_la_frusta",
-      "icon": "objects_lineart/la_frusta.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 90,
-      "default_hint_delay": 30,
-      "tags": ["cucina", "acciaio"],
-      "style": "line art"
-    },
-    {
-      "id": "la_mattarello",
-      "label_key": "obj_la_mattarello",
-      "icon": "objects_lineart/la_mattarello.png",
-      "default_detection": "rect",
-      "default_width": 85,
-      "default_height": 15,
-      "default_hint_delay": 25,
-      "tags": ["cucina", "legno"],
-      "style": "line art"
-    },
-    {
-      "id": "la_tagliere",
-      "label_key": "obj_la_tagliere",
-      "icon": "objects_lineart/la_tagliere.png",
-      "default_detection": "rect",
-      "default_width": 70,
-      "default_height": 50,
-      "default_hint_delay": 35,
-      "tags": ["cucina", "legno"],
-      "style": "line art"
-    },
-    {
-      "id": "la_grattugia",
-      "label_key": "obj_la_grattugia",
-      "icon": "objects_lineart/la_grattugia.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 80,
-      "default_hint_delay": 35,
-      "tags": ["cucina", "metallo"],
-      "style": "line art"
-    },
-    {
-      "id": "la_cavatappi",
-      "label_key": "obj_la_cavatappi",
-      "icon": "objects_lineart/la_cavatappi.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 60,
-      "default_hint_delay": 30,
-      "tags": ["cucina", "metallo"],
-      "style": "line art"
-    },
-    {
-      "id": "la_conchiglia",
-      "label_key": "obj_la_conchiglia",
-      "icon": "objects_lineart/la_conchiglia.png",
-      "default_detection": "circle",
-      "default_radius": 30,
-      "default_hint_delay": 25,
-      "tags": ["mare", "natura"],
-      "style": "line art"
-    },
-    {
-      "id": "la_foglia_acero",
-      "label_key": "obj_la_foglia_acero",
-      "icon": "objects_lineart/la_foglia_acero.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 60,
-      "default_hint_delay": 20,
-      "tags": ["albero", "natura"],
-      "style": "line art"
-    },
-    {
-      "id": "la_farfalla",
-      "label_key": "obj_la_farfalla",
-      "icon": "objects_lineart/la_farfalla.png",
-      "default_detection": "rect",
-      "default_width": 65,
-      "default_height": 50,
-      "default_hint_delay": 30,
-      "tags": ["insetto", "natura"],
-      "style": "line art"
-    },
-    {
-      "id": "la_fungo",
-      "label_key": "obj_la_fungo",
-      "icon": "objects_lineart/la_fungo.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 55,
-      "default_hint_delay": 25,
-      "tags": ["bosco", "natura"],
+      "tags": [
+        "scrittura",
+        "ufficio"
+      ],
       "style": "line art"
     },
     {
@@ -566,29 +1095,38 @@
       "default_width": 40,
       "default_height": 60,
       "default_hint_delay": 35,
-      "tags": ["bosco", "natura"],
+      "tags": [
+        "bosco",
+        "natura"
+      ],
       "style": "line art"
     },
     {
-      "id": "la_ancora",
-      "label_key": "obj_la_ancora",
-      "icon": "objects_lineart/la_ancora.png",
+      "id": "la_pinza",
+      "label_key": "obj_la_pinza",
+      "icon": "objects_lineart/la_pinza.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "attrezzo",
+        "officina"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pipa",
+      "label_key": "obj_la_pipa",
+      "icon": "objects_lineart/la_pipa.png",
       "default_detection": "rect",
       "default_width": 60,
-      "default_height": 80,
-      "default_hint_delay": 40,
-      "tags": ["mare", "metallo"],
-      "style": "line art"
-    },
-    {
-      "id": "la_ferro_cavallo",
-      "label_key": "obj_la_ferro_cavallo",
-      "icon": "objects_lineart/la_ferro_cavallo.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 55,
+      "default_height": 30,
       "default_hint_delay": 30,
-      "tags": ["metallo", "fortuna"],
+      "tags": [
+        "accessorio",
+        "fumo"
+      ],
       "style": "line art"
     },
     {
@@ -599,7 +1137,372 @@
       "default_width": 25,
       "default_height": 90,
       "default_hint_delay": 25,
-      "tags": ["uccello", "natura"],
+      "tags": [
+        "natura"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_radio",
+      "label_key": "obj_la_radio",
+      "icon": "objects_lineart/la_radio.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 55,
+      "default_hint_delay": 40,
+      "tags": [
+        "elettronica",
+        "vintage"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_rastrello",
+      "label_key": "obj_la_rastrello",
+      "icon": "objects_lineart/la_rastrello.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "attrezzo",
+        "giardino",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_razzo_giocattolo",
+      "label_key": "obj_la_razzo_giocattolo",
+      "icon": "objects_lineart/la_razzo_giocattolo.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 90,
+      "default_hint_delay": 45,
+      "tags": [
+        "giocattolo",
+        "plastica",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_robot_giocattolo",
+      "label_key": "obj_la_robot_giocattolo",
+      "icon": "objects_lineart/la_robot_giocattolo.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 85,
+      "default_hint_delay": 40,
+      "tags": [
+        "giocattolo",
+        "plastica",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sassofono",
+      "label_key": "obj_la_sassofono",
+      "icon": "objects_lineart/la_sassofono.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 85,
+      "default_hint_delay": 40,
+      "tags": [
+        "musica",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_scatola_sorpresa",
+      "label_key": "obj_la_scatola_sorpresa",
+      "icon": "objects_lineart/la_scatola_sorpresa.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 85,
+      "default_hint_delay": 45,
+      "tags": [
+        "giocattolo",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_schiaccianoci",
+      "label_key": "obj_la_schiaccianoci",
+      "icon": "objects_lineart/la_schiaccianoci.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 90,
+      "default_hint_delay": 45,
+      "tags": [
+        "giocattolo",
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sega",
+      "label_key": "obj_la_sega",
+      "icon": "objects_lineart/la_sega.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 30,
+      "default_hint_delay": 35,
+      "tags": [
+        "attrezzo",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_soldatino",
+      "label_key": "obj_la_soldatino",
+      "icon": "objects_lineart/la_soldatino.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "giocattolo",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sveglia",
+      "label_key": "obj_la_sveglia",
+      "icon": "objects_lineart/la_sveglia.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 35,
+      "tags": [
+        "orologio",
+        "elettronica"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tagliere",
+      "label_key": "obj_la_tagliere",
+      "icon": "objects_lineart/la_tagliere.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 50,
+      "default_hint_delay": 35,
+      "tags": [
+        "cucina",
+        "legno"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tamburello",
+      "label_key": "obj_la_tamburello",
+      "icon": "objects_lineart/la_tamburello.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "musica",
+        "legno",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tamburo",
+      "label_key": "obj_la_tamburo",
+      "icon": "objects_lineart/la_tamburo.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 35,
+      "tags": [
+        "musica",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tazza",
+      "label_key": "obj_la_tazza",
+      "icon": "objects_lineart/la_tazza.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 20,
+      "tags": [
+        "cucina",
+        "ceramica"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_teddy_bear",
+      "label_key": "obj_la_teddy_bear",
+      "icon": "objects_lineart/la_teddy_bear.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "giocattolo",
+        "stoffa",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_telefono_fisso",
+      "label_key": "obj_la_telefono_fisso",
+      "icon": "objects_lineart/la_telefono_fisso.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 50,
+      "default_hint_delay": 40,
+      "tags": [
+        "elettronica",
+        "vintage"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_topo_molla",
+      "label_key": "obj_la_topo_molla",
+      "icon": "objects_lineart/la_topo_molla.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "giocattolo",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_trenino",
+      "label_key": "obj_la_trenino",
+      "icon": "objects_lineart/la_trenino.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 50,
+      "default_hint_delay": 40,
+      "tags": [
+        "giocattolo",
+        "plastica",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tromba",
+      "label_key": "obj_la_tromba",
+      "icon": "objects_lineart/la_tromba.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 30,
+      "default_hint_delay": 35,
+      "tags": [
+        "musica",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_trottola",
+      "label_key": "obj_la_trottola",
+      "icon": "objects_lineart/la_trottola.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_vanga",
+      "label_key": "obj_la_vanga",
+      "icon": "objects_lineart/la_vanga.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 95,
+      "default_hint_delay": 35,
+      "tags": [
+        "attrezzo",
+        "giardino",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ventilatore",
+      "label_key": "obj_la_ventilatore",
+      "icon": "objects_lineart/la_ventilatore.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "meccanico",
+        "vintage"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_violino",
+      "label_key": "obj_la_violino",
+      "icon": "objects_lineart/la_violino.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 90,
+      "default_hint_delay": 40,
+      "tags": [
+        "musica",
+        "legno",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_xilofono",
+      "label_key": "obj_la_xilofono",
+      "icon": "objects_lineart/la_xilofono.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 45,
+      "default_hint_delay": 40,
+      "tags": [
+        "giocattolo",
+        "legno",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_yoyo",
+      "label_key": "obj_la_yoyo",
+      "icon": "objects_lineart/la_yoyo.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 20,
+      "tags": [
+        "giocattolo",
+        "plastica",
+        "piccolo"
+      ],
       "style": "line art"
     },
     {
@@ -610,13 +1513,11 @@
       "default_width": 60,
       "default_height": 75,
       "default_hint_delay": 40,
-      "tags": ["viaggio", "tessuto"],
+      "tags": [
+        "viaggio",
+        "stoffa"
+      ],
       "style": "line art"
     }
   ]
 }
-
-
-
-
-

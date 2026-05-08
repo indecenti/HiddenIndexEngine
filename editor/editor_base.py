@@ -213,8 +213,11 @@ class LevelEditor(
         # ── Catalog search ───────────────────────────────────────────────────
         self.catalog_search    = ""
         self.catalog_searching = False
+        self.catalog_tag_search = ""
+        self.catalog_tag_searching = False
+        self.catalog_tag_filters = set()
         self.catalog_tags_scroll = 0
-        self.catalog_style_filter = "tutti"
+        self.catalog_style_filter = "real"
 
         # ── Numeric Editing ──────────────────────────────────────────────────
         self._editing_prop = None  # (owner_type, id, key) -> owner_type: 'object' or 'effect'
@@ -321,6 +324,8 @@ class LevelEditor(
         self._init_extra_data(initial_game)
         self._load_bubble_presets()
         self._tag_modal_active = False
+        self._confirm_leave_modal = False
+        self._pending_action = None  # Comando o funzione da eseguire dopo la conferma
 
     def _TR(self, key: str, *args) -> str:
         """Helper rapido per la localizzazione (engine strings)."""
@@ -475,6 +480,9 @@ class LevelEditor(
             self._r_img_editor_modal(w, h)
         if self._tag_modal_active:
             self._r_tag_modal(w, h)
+        if self._confirm_leave_modal:
+            self._r_confirm_leave_modal(w, h)
+        # Modali globali (funzionano sia in dashboard che in editor)
         # Modali globali (funzionano sia in dashboard che in editor)
         if getattr(self, "_music_modal", False):
             self._music_modal_modal_active = True # Segnaposto se serve

@@ -231,24 +231,53 @@ class RenderPanelsMixin:
         style_r = pygame.Rect(MARGIN, STYLE_Y, INNER_W, STYLE_H)
         _rect(self.screen, (20, 21, 28), style_r, radius=4)
         
+        # Conteggi per ogni stile
+        st_counts = {"tutti": len(self.catalog), "real": 0, "line art": 0}
+        for c_item in self.catalog:
+            st = c_item.get("style", "real")
+            if st in st_counts: st_counts[st] += 1
+
         styles = ["tutti", "real", "line art"]
-        btn_w = INNER_W // 3
+        btn_w = (INNER_W // 3)
         self._catalog_style_rects = []
         for j, s in enumerate(styles):
-            sr = pygame.Rect(MARGIN + j * btn_w, STYLE_Y, btn_w, STYLE_H)
-            is_active = getattr(self, "catalog_style_filter", "tutti") == s
+            # Hitbox precisa: l'ultimo bottone prende il resto dei pixel per coprire INNER_W perfettamente
+            cur_w = btn_w if j < 2 else (INNER_W - btn_w * 2)
+            sr = pygame.Rect(MARGIN + j * btn_w, STYLE_Y, cur_w, STYLE_H)
+            
+            is_active = getattr(self, "catalog_style_filter", "real") == s
             hov = _in_rect((mx, my_raw), sr)
+            
             if is_active:
                 _rect(self.screen, ACCENT, sr, radius=4)
-                c = (15, 15, 25)
+                txt_c = (15, 15, 25)
+                cnt_c = (40, 40, 60)
             else:
-                if hov:
-                    _rect(self.screen, (40, 44, 58), sr, radius=4)
-                c = TXT_HI if hov else TXT_DIM
-            
+                bg = (45, 48, 65) if hov else (28, 30, 42)
+                _rect(self.screen, bg, sr, radius=4)
+                if not hov: _rect(self.screen, BORDER, sr, 1, radius=4)
+                txt_c = TXT_HI if hov else TXT_DIM
+                cnt_c = ACCENT if hov else (100, 105, 130)
+
+            # Label + Count
             lbl = self._TR(f"style_{s.replace(' ', '_')}", s.capitalize())
-            ts = _txt(lbl, "sm", c)
-            self.screen.blit(ts, (sr.centerx - ts.get_width() // 2, sr.centery - ts.get_height() // 2))
+            count_str = f"{st_counts[s]}"
+            
+            ts_lbl = _txt(lbl, "sm", txt_c)
+            ts_cnt = _txt(count_str, "xs", cnt_c)
+            
+            spacing = 5
+            total_content_w = ts_lbl.get_width() + ts_cnt.get_width() + spacing
+            
+            # Se il contenuto eccede la larghezza del bottone, compattiamo
+            if total_content_w > cur_w - 4:
+                ts_lbl = _txt(lbl, "xs", txt_c)
+                total_content_w = ts_lbl.get_width() + ts_cnt.get_width() + spacing
+
+            start_x = sr.centerx - total_content_w // 2
+            self.screen.blit(ts_lbl, (start_x, sr.centery - ts_lbl.get_height() // 2))
+            self.screen.blit(ts_cnt, (start_x + ts_lbl.get_width() + spacing, sr.centery - ts_cnt.get_height() // 2 + 1))
+            
             self._catalog_style_rects.append((s, sr))
 
         # 3. Chip Tag: box a dimensione fissa (scrollabile)
@@ -259,8 +288,18 @@ class RenderPanelsMixin:
         CHIP_H      = 26
         CHIP_COLS   = 2
 
-        all_catalog_list = self.catalog
-        top_tags = self._get_catalog_tags(all_catalog_list, min_count=2)
+        active_style = getattr(self, "catalog_style_filter", "real")
+        
+        # FIX: Filtriamo il catalogo per stile PRIMA di estrarre i tag suggeriti.
+        # Se siamo in "tutti", mostriamo i tag più frequenti (min_count=2).
+        # Se siamo in uno stile specifico, mostriamo TUTTI i tag pertinenti (min_count=1).
+        style_filtered_pool = [
+            c for c in self.catalog 
+            if (active_style == "tutti" or c.get("style", "real") == active_style)
+        ]
+        
+        m_count = 2 if active_style == "tutti" else 1
+        top_tags = self._get_catalog_tags(style_filtered_pool, min_count=m_count)
         
         # Filtro categorie: cerca sia nel tag ID che nel tag tradotto (label)
         tag_items = []
@@ -269,7 +308,7 @@ class RenderPanelsMixin:
             if not tag_q or tag_q in label.lower() or tag_q in t.lower():
                 tag_items.append((t, label))
         
-        # Riordina: i tag attivi saltano in cima (stabile: mantiene ordine per frequenza)
+        # Riordina: i tag attivi saltano in cima
         tag_items.sort(key=lambda x: x[0] not in active_tags)
         
         tag_clip = pygame.Rect(MARGIN, CHIPS_TOP, INNER_W, TAG_BOX_H)
@@ -282,7 +321,7 @@ class RenderPanelsMixin:
         # Voce "Tutti" (Pulsante speciale in cima)
         tutti_active = not active_tags
         tutti_r = pygame.Rect(tag_clip.x + 6, tag_clip.y + 6 - self.catalog_tags_scroll * (CHIP_H + CHIP_GAP_Y), 
-                              tag_clip.w - 12, CHIP_H)
+                               tag_clip.w - 12, CHIP_H)
         
         if tutti_active:
             _rect(self.screen, ACCENT, tutti_r, radius=5)
@@ -291,7 +330,7 @@ class RenderPanelsMixin:
             _rect(self.screen, (40, 44, 58), tutti_r, radius=5)
             tcol = TXT_DIM
 
-        ts = _txt(self._TR("cat_tag_all").format(len(all_catalog_list)), "sm", tcol)
+        ts = _txt(self._TR("cat_tag_all"), "sm", tcol)
         self.screen.blit(ts, (tutti_r.centerx - ts.get_width() // 2, tutti_r.centery - ts.get_height() // 2))
         
         # Registra "Tutti" solo se visibile nel clip
@@ -308,7 +347,7 @@ class RenderPanelsMixin:
             
             chip_r = pygame.Rect(cx, cy, col_w, CHIP_H)
             if cy + CHIP_H < tag_clip.y or cy > tag_clip.bottom:
-                continue # FIX: Non registrare la hitbox se l'elemento è fuori dall'area visibile
+                continue 
                 
             is_active = tag_id in active_tags
             hov = _in_rect((mx, my_raw), chip_r) and tag_clip.collidepoint(mx, my_raw)
@@ -353,7 +392,7 @@ class RenderPanelsMixin:
         add_btn_h    = 36
         list_y_start = sep_y + 8
         available_h  = h - STATUS_H - list_y_start - add_btn_h
-        item_h       = 74 # Altezza ottimizzata
+        item_h       = 74 
 
         clip = pygame.Rect(0, list_y_start, self.panel_l_w, available_h)
         self.screen.set_clip(clip)
@@ -364,12 +403,10 @@ class RenderPanelsMixin:
 
         q = self.catalog_search.lower().strip()
         q_norm = normalize(q.lstrip("#"))
-        active_style = getattr(self, "catalog_style_filter", "tutti")
         
         filtered = [
-            c for c in all_catalog_list 
-            if (active_style == "tutti" or c.get("style", "real") == active_style)
-            and (not active_tags or all(t in c.get("tags", []) for t in active_tags))
+            c for c in style_filtered_pool 
+            if (not active_tags or all(t in c.get("tags", []) for t in active_tags))
             and (
                 not q or q in c["id"].lower() 
                 or any(q_norm in normalize(t) for t in c.get("tags", []))
@@ -377,7 +414,6 @@ class RenderPanelsMixin:
                 or any(q in str(self._lang_data.get(l,{}).get(c["label_key"],"")).lower() for l in self.LANGS)
             )
         ]
-
         if not filtered:
             txt = self._TR("cat_no_results") if (self.catalog_search or active_tags) else self._TR("cat_empty")
             _draw_text(self.screen, txt, "sm", (100, 105, 130), MARGIN + 4, list_y_start + 12)

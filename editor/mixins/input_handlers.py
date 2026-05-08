@@ -33,7 +33,7 @@ class InputHandlersMixin:
             if self._img_editor_active:
                 self._img_editor_handle_event(ev); continue
             if ev.type == pygame.QUIT:
-                self.running = False
+                self._request_nav("file_quit")
             elif ev.type == pygame.KEYDOWN:
                 self._on_key(ev)
             elif ev.type == pygame.MOUSEBUTTONDOWN:
@@ -63,8 +63,10 @@ class InputHandlersMixin:
 
     def _on_key(self, ev):
         mods = pygame.key.get_mods()
-        ctrl = bool(mods & pygame.KMOD_CTRL)
+        # Rilevamento Ctrl esteso per miglior compatibilità Windows/Linux/Mac
+        ctrl = bool(mods & pygame.KMOD_CTRL) or bool(mods & pygame.KMOD_META)
 
+        # ── 1. MODALI (Priorità assoluta: catturano tutto l'input) ────────────────
         if self._newobj_modal:
             self._newobj_key(ev); return
         if self._tag_modal_active:
@@ -79,44 +81,17 @@ class InputHandlersMixin:
             self._vid_modal_key(ev); return
         if getattr(self, "_editing_preset_name", False):
             self._preset_key(ev); return
-        if self._editing_prop:
-            self._prop_key(ev); return
         if self._img_editor_active:
-            # L'evento è già gestito in _handle_events, ma per sicurezza:
-            return
-        if self.catalog_searching:
-            if ev.key in (pygame.K_ESCAPE, pygame.K_RETURN):
-                self.catalog_searching = False
-            elif ev.key in (pygame.K_BACKSPACE, pygame.K_DELETE):
-                self.catalog_search = self.catalog_search[:-1]
-                self.catalog_scroll = 0
-            elif ev.unicode and ev.unicode.isprintable():
-                self.catalog_search += ev.unicode.lower()
-                self.catalog_scroll = 0
-            return
-        if getattr(self, "catalog_tag_searching", False):
-            if ev.key in (pygame.K_ESCAPE, pygame.K_RETURN):
-                self.catalog_tag_searching = False
-            elif ev.key in (pygame.K_BACKSPACE, pygame.K_DELETE):
-                ts = getattr(self, "catalog_tag_search", "")
-                self.catalog_tag_search = ts[:-1]
-            elif ev.unicode and ev.unicode.isprintable():
-                self.catalog_tag_search = getattr(self, "catalog_tag_search", "") + ev.unicode.lower()
-                # Deseleziona tag attivo se non più visibile dopo filtro
-                self.catalog_tag_filters = set()
             return
 
-        if self.state == STATE_GAME_SELECT:
-            self._gs_key(ev); return
-
-        # Rilevamento Ctrl esteso per miglior compatibilità Windows/Linux/Mac
-        ctrl = bool(mods & pygame.KMOD_CTRL) or bool(mods & pygame.KMOD_META)
-        
-        # Shortcut con CTRL
+        # ── 2. SHORTCUT GLOBALI (Ctrl+S, Ctrl+Z, ...) ─────────────────────────────
+        # Funzionano anche se siamo in modalità ricerca o editing proprietà,
+        # a meno che non siamo in un modale (gestito sopra).
         if ctrl:
             # S = Salva
             if ev.key == pygame.K_s or ev.unicode.lower() == 's':
-                self._save(); return
+                if self.state == STATE_MAIN:
+                    self._save(); return
             # Z = Undo
             if ev.key == pygame.K_z or ev.unicode.lower() == 'z':
                 self._undo(); return
@@ -145,10 +120,43 @@ class InputHandlersMixin:
             if ev.key == pygame.K_3: self._set_layer("objects_high"); return
             if ev.key == pygame.K_4: self._set_layer("overlay");      return
 
+        # ── 3. MODALITÀ EDITING TESTO (Search bars, Numeric props) ────────────────
+        # Se siamo in queste modalità e NON è premuto Ctrl, catturiamo l'input.
+        if self._editing_prop:
+            self._prop_key(ev); return
+
+        if self.catalog_searching:
+            if ev.key in (pygame.K_ESCAPE, pygame.K_RETURN):
+                self.catalog_searching = False
+            elif ev.key in (pygame.K_BACKSPACE, pygame.K_DELETE):
+                self.catalog_search = self.catalog_search[:-1]
+                self.catalog_scroll = 0
+            elif ev.unicode and ev.unicode.isprintable():
+                self.catalog_search += ev.unicode.lower()
+                self.catalog_scroll = 0
+            return
+
+        if getattr(self, "catalog_tag_searching", False):
+            if ev.key in (pygame.K_ESCAPE, pygame.K_RETURN):
+                self.catalog_tag_searching = False
+            elif ev.key in (pygame.K_BACKSPACE, pygame.K_DELETE):
+                ts = getattr(self, "catalog_tag_search", "")
+                self.catalog_tag_search = ts[:-1]
+            elif ev.unicode and ev.unicode.isprintable():
+                self.catalog_tag_search = getattr(self, "catalog_tag_search", "") + ev.unicode.lower()
+                self.catalog_tag_filters = set()
+            return
+
+        # ── 4. DASHBOARD (GS) ───────────────────────────────────────────────────
+        if self.state == STATE_GAME_SELECT:
+            self._gs_key(ev); return
+
         if not ctrl:
             if ev.key == pygame.K_HOME:
-                self.state    = STATE_GAME_SELECT
-                self.gs_games = _discover_games(self.base_path)
+                def go_home():
+                    self.state = STATE_GAME_SELECT
+                    self.gs_games = _discover_games(self.base_path)
+                self._request_nav(go_home)
                 return
             if ev.key == pygame.K_s:
                 self.mode = MODE_SELECT; self._cancel_rect()
@@ -392,8 +400,10 @@ class InputHandlersMixin:
         # 1. STATUS BAR (In fondo, ma sopra tutto tranne tooltip)
         status_btn_r = (10, h - STATUS_H, 150, STATUS_H)
         if btn == 1 and _in_rect((mx, my_raw), status_btn_r):
-            self.state    = STATE_GAME_SELECT
-            self.gs_games = _discover_games(self.base_path)
+            def back_to_gs():
+                self.state    = STATE_GAME_SELECT
+                self.gs_games = _discover_games(self.base_path)
+            self._request_nav(back_to_gs)
             return
 
         if hasattr(self, "scene_path") and self.scene_path:
@@ -430,8 +440,10 @@ class InputHandlersMixin:
                 self._bg_modal_click(mx, my_raw, w, h); return
             if getattr(self, "_vid_modal", False):
                 self._vid_modal_click(mx, my_raw, w, h); return
-            if getattr(self, "_minigame_modal", False):
+            if self._minigame_modal:
                 self._minigame_click(mx, my_raw); return
+            if self._confirm_leave_modal:
+                self._confirm_leave_click(mx, my_raw); return
             if self._img_editor_active:
                 return 
 
@@ -482,6 +494,10 @@ class InputHandlersMixin:
         # 8. CANVAS CONTENT
         cr = self._canvas_rect()
         if _in_rect((mx, my_raw), cr):
+            # Reset stati di ricerca/editing al click sul canvas
+            self.catalog_searching = False
+            self.catalog_tag_searching = False
+            
             if btn == 1:
                 if self._toolbar_click(mx, my_raw):
                     return
@@ -1085,7 +1101,7 @@ class InputHandlersMixin:
                 for sdir in level["scenes"]:
                     r2 = (24, y, self.panel_l_w - 40, 22)
                     if _in_rect((mx, my), r2):
-                        self._load_scene(sdir); return
+                        self._request_nav(lambda: self._load_scene(sdir)); return
                     y += 24
 
     def _catalog_click(self, mx, my_raw):
@@ -1121,7 +1137,10 @@ class InputHandlersMixin:
             if _in_rect((mx, my_raw), sr):
                 logging.info(f"  [CATALOG] HIT: Style Filter '{s_id}'")
                 self.catalog_style_filter = s_id
+                self.catalog_tag_filters = set()
+                self.catalog_tag_search = ""
                 self.catalog_scroll = 0
+                self.catalog_tags_scroll = 0
                 self._play_click()
                 return
 
@@ -1781,7 +1800,11 @@ class InputHandlersMixin:
                 if 0 <= idx < len(items) and items[idx] is not None:
                     # items[idx] è una tupla (label, cmd)
                     label, cmd = items[idx]
-                    self._exec_menu_cmd(cmd)
+                    # Comandi che richiedono conferma se dirty
+                    if cmd in ("file_new_game", "file_open_game", "file_exit_to_gs", "file_quit"):
+                        self._request_nav(cmd)
+                    else:
+                        self._exec_menu_cmd(cmd)
                 self._active_menu = None
                 return
 
@@ -1824,3 +1847,34 @@ class InputHandlersMixin:
                 self._gs_refresh_cache()
                 
             self._status(f"Lingua impostata: {new_lang.upper()}", OK_C, 2)
+
+    def _request_nav(self, action):
+        """Intercetta azioni di navigazione per controllare se ci sono modifiche non salvate."""
+        if not getattr(self, "scene_dirty", False):
+            if callable(action): action()
+            else: self._exec_menu_cmd(action)
+            return
+
+        self._confirm_leave_modal = True
+        self._pending_action = action
+
+    def _confirm_leave_click(self, mx, my):
+        """Gestisce i click sul modale di conferma salvataggio."""
+        hboxes = getattr(self, "_leave_modal_hitboxes", {})
+        if not hboxes: return
+
+        if _in_rect((mx, my), hboxes.get("save")):
+            self._save()
+            self._confirm_leave_modal = False
+            if callable(self._pending_action): self._pending_action()
+            else: self._exec_menu_cmd(self._pending_action)
+            self._pending_action = None
+        elif _in_rect((mx, my), hboxes.get("discard")):
+            self.scene_dirty = False # Forza pulizia per evitare loop
+            self._confirm_leave_modal = False
+            if callable(self._pending_action): self._pending_action()
+            else: self._exec_menu_cmd(self._pending_action)
+            self._pending_action = None
+        elif _in_rect((mx, my), hboxes.get("cancel")):
+            self._confirm_leave_modal = False
+            self._pending_action = None

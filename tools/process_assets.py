@@ -19,26 +19,26 @@ def process_assets(image_path, output_dir, object_names, style="real"):
     a = data[:,:,3].astype(float)
 
     if style == "lineart":
-        print("Modalità Line Art: Applicazione binarizzazione su sfondo grigio #808080...")
-        # Identifica il grigio medio (#808080) con una tolleranza
-        # L'AI potrebbe non essere perfetta, usiamo un range
-        is_gray_bg = (abs(r - 128) < 50) & (abs(g - 128) < 50) & (abs(b - 128) < 50)
+        print("Modalità Line Art: Applicazione Chrominance Offset su sfondo #788088...")
+        # Identifica lo sfondo sfruttando il fatto che il Blu (136) è maggiore del Rosso (120)
+        # In un oggetto B/N puro o grigio antialiasing, R, G e B sono quasi identici.
+        is_bg = (b > r + 5) & (abs(g - 128) < 50)
         
         # Le linee sono scure (media canali bassa)
         is_dark_line = (r + g + b) / 3 < 128
         
-        # Applica trasparenza allo sfondo grigio
-        data[:,:,3][is_gray_bg] = 0
+        # Applica trasparenza allo sfondo rilevato
+        data[:,:,3][is_bg] = 0
         
         # Forza il nero puro sulle linee (dove non è sfondo)
-        mask_line = ~is_gray_bg & is_dark_line
+        mask_line = ~is_bg & is_dark_line
         data[mask_line, 0] = 0
         data[mask_line, 1] = 0
-        data[mask_line, 2] = 255 if False else 0 # Nero puro
+        data[mask_line, 2] = 0
         data[mask_line, 3] = 255
 
         # Forza il bianco puro sui riempimenti (dove non è sfondo e non è linea)
-        mask_fill = ~is_gray_bg & ~is_dark_line
+        mask_fill = ~is_bg & ~is_dark_line
         data[mask_fill, 0] = 255
         data[mask_fill, 1] = 255
         data[mask_fill, 2] = 255

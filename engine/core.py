@@ -1414,7 +1414,7 @@ class EngineCore:
                     if obj.flip_x or obj.flip_y:
                         render_surf = pygame.transform.flip(render_surf, obj.flip_x, obj.flip_y)
                     if obj.rotation != 0:
-                        render_surf = pygame.transform.rotate(render_surf, obj.rotation)
+                        render_surf = pygame.transform.rotozoom(render_surf, obj.rotation, 1.0)
                     
                     # --- FILTRO BIANCO E NERO (Grayscale) ---
                     if getattr(obj, "grayscale", False):
@@ -1504,25 +1504,15 @@ class EngineCore:
                 self.screen.blit(lock_surf, (0, 0))
             
         elif self.state == EngineState.PAUSE:
-            # Pausa: background scuro overlay sopra l'ultima scena senza update
-            self.screen.fill((0, 0, 0)) # Sfondo nero (letterbox)
+            # Pausa: oscuramento TOTALE per evitare "cheating" (vedere la scena a tempo fermo)
+            self.screen.fill((10, 10, 15)) # Sfondo molto scuro (quasi nero)
             
-            if self.minigame_manager.is_running():
-                # Se siamo in un minigioco, disegnalo come background della pausa
-                self.minigame_manager.draw()
-            elif hasattr(self, '_current_bg_surface') and self._current_bg_surface:
-                sm = self.scaling_manager
-                scaled_bg = pygame.transform.smoothscale(
-                    self._current_bg_surface,
-                    (int(sm._bg_screen_w), int(sm._bg_screen_h))
-                )
-                self.screen.blit(scaled_bg, (int(sm._bg_screen_x), int(sm._bg_screen_y)))
+            # Overlay vignetting per profondità e premium feel
+            overlay = pygame.Surface((self.res_w, self.res_h), pygame.SRCALPHA)
+            pygame.draw.rect(overlay, (0, 0, 0, 120), (0, 0, self.res_w, self.res_h))
+            self.screen.blit(overlay, (0, 0))
             
-            # Draw semi-transparent dark overlay
-            dark = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-            dark.fill((0, 0, 0, 180))
-            self.screen.blit(dark, (0, 0))
-            
+            # Il menu system disegna i bottoni (Riprendi, Impostazioni, Esci) sopra l'oscuramento
             self.menu_system.draw(self.screen)
             
         elif self.state == EngineState.RESULTS:
