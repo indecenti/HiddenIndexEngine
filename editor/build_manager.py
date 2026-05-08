@@ -17,13 +17,15 @@ import atexit
 from pathlib import Path
 from typing import Optional
 
-# Assicura che la root del progetto sia nel PYTHONPATH
-_project_root = Path(__file__).resolve().parent.parent
-if str(_project_root) not in sys.path:
-    sys.path.insert(0, str(_project_root))
+# Assicura che la root del progetto sia nel PYTHONPATH se eseguito da riga di comando
+_local_root = Path(__file__).resolve().parent.parent
+if str(_local_root) not in sys.path:
+    sys.path.insert(0, str(_local_root))
+
+from engine.utils import setup_logging, get_logger, get_base_path
+_project_root = get_base_path()
 
 from editor.build_system import build_game, PYINSTALLER_TIMEOUT
-from engine.utils import setup_logging, get_logger
 
 logger = get_logger("build_manager")
 

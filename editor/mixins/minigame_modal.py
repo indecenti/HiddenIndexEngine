@@ -213,7 +213,10 @@ class MinigameModalMixin:
         
         # Determiniamo il comando per avviare il gioco con il flag --minigame
         # Passiamo la lingua corrente dell'editor per coerenza
-        cmd = [sys.executable, "main.py", "--game", self.game_name, "--minigame", mg_id, "--lang", self.current_lang]
+        if getattr(sys, 'frozen', False):
+            cmd = [sys.executable, "--game", self.game_name, "--minigame", mg_id, "--lang", self.current_lang]
+        else:
+            cmd = [sys.executable, "main.py", "--game", self.game_name, "--minigame", mg_id, "--lang", self.current_lang]
         
         try:
             # Avviamo come processo asincrono per non bloccare l'editor

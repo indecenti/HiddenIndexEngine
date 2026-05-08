@@ -309,8 +309,9 @@ class BuildProgressWindow:
 
         try:
             # Lancia build_manager.py come subprocess
-            build_manager_script = Path(__file__).parent / "build_manager.py"
-            project_root = Path(__file__).parent.parent
+            from engine.utils import get_base_path
+            project_root = get_base_path()
+            build_manager_script = project_root / "editor" / "build_manager.py"
 
             # Imposta il PYTHONPATH per includere la cartella del progetto
             import os
@@ -318,14 +319,25 @@ class BuildProgressWindow:
             env["PYTHONPATH"] = str(project_root)
 
             # Argomenti base
-            cmd = [
-                sys.executable,
-                str(build_manager_script),
-                self.game_id,
-                self.version,
-                str(self.build_dir),
-                str(self.status_file),
-            ]
+            import sys
+            if getattr(sys, 'frozen', False):
+                cmd = [
+                    sys.executable,
+                    "--build-manager",
+                    self.game_id,
+                    self.version,
+                    str(self.build_dir),
+                    str(self.status_file),
+                ]
+            else:
+                cmd = [
+                    sys.executable,
+                    str(build_manager_script),
+                    self.game_id,
+                    self.version,
+                    str(self.build_dir),
+                    str(self.status_file),
+                ]
 
             # Aggiunge --no-zip se il checkbox non è selezionato
             if self.zip_var.get() == 0:

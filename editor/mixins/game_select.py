@@ -83,16 +83,28 @@ class GameSelectMixin:
             # Lancia SOLO la finestra progress UI (Tkinter).
             # È la UI stessa a lanciare build_manager con le opzioni scelte
             # (incluso il flag --no-zip), evitando build duplicati.
-            ui_script = self.base_path / "editor" / "build_ui.py"
-            p2 = subprocess.Popen(
-                [
+            if getattr(sys, 'frozen', False):
+                cmd = [
+                    sys.executable,
+                    "--build-ui",
+                    game_id,
+                    version,
+                    str(output_dir),
+                    str(status_file),
+                ]
+            else:
+                ui_script = self.base_path / "editor" / "build_ui.py"
+                cmd = [
                     sys.executable,
                     str(ui_script),
                     game_id,
                     version,
                     str(output_dir),
                     str(status_file),
-                ],
+                ]
+            
+            p2 = subprocess.Popen(
+                cmd,
                 cwd=str(self.base_path),
             )
             self._build_processes.append(p2)
@@ -114,8 +126,13 @@ class GameSelectMixin:
         try:
             # Avvia l'engine con il gioco selezionato tramite subprocess
             # Usiamo sys.executable per garantire che venga usato lo stesso interprete
+            if getattr(sys, 'frozen', False):
+                cmd = [sys.executable, "--play-game", game_id]
+            else:
+                cmd = [sys.executable, "main.py", "--game", game_id]
+                
             subprocess.Popen(
-                [sys.executable, "main.py", "--game", game_id],
+                cmd,
                 cwd=str(self.base_path)
             )
             self._status(f"Avvio standalone: {game_id}", OK_C, 2)

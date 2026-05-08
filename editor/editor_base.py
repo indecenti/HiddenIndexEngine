@@ -549,8 +549,47 @@ def main():
     setup_logging()
     parser = argparse.ArgumentParser(description="HiddenEngine Level Editor")
     parser.add_argument("--game", default=None, help="Nome del gioco da aprire subito")
+    parser.add_argument("--play-game", default=None, help="Esegue il gioco standalone (usato da subprocess EXE)")
+    parser.add_argument("--minigame", default=None, help="Esegue in test minigioco (usato da subprocess EXE)")
+    parser.add_argument("--lang", default="en", help="Lingua")
+    parser.add_argument("--fullscreen", action="store_true", help="Forza fullscreen per EngineCore")
+    parser.add_argument("--build-ui", nargs=4, metavar=('GAME', 'VER', 'DIR', 'STAT'), help="Avvia UI di build")
+    parser.add_argument("--build-manager", nargs=4, metavar=('GAME', 'VER', 'DIR', 'STAT'), help="Avvia il build manager vero e proprio")
+    parser.add_argument("--no-zip", action="store_true", help="Salta la creazione dello ZIP in build_manager")
     args = parser.parse_args()
-    base = Path(__file__).resolve().parents[1]
+
+    # Routing dei processi secondari (essenziale per l'EXE PyInstaller)
+    if args.minigame or args.play_game:
+        import configparser
+        from engine.core import EngineCore
+        config = configparser.ConfigParser()
+        config.add_section("engine")
+        
+        target_game = args.play_game if args.play_game else args.game
+        config.set("engine", "default_game", target_game or "")
+        
+        engine = EngineCore(game_id=target_game, config=config, cli_args=args)
+        engine.run()
+        return
+
+    if args.build_ui:
+        from editor.build_ui import show_build_progress
+        show_build_progress(*args.build_ui)
+        return
+
+    if args.build_manager:
+        import sys as _sys
+        from editor.build_manager import run_build
+        # Assicura PYTHONPATH per PyInstaller sub-proc
+        exit_code = run_build(
+            args.build_manager[0], args.build_manager[1], 
+            args.build_manager[2], args.build_manager[3], 
+            create_zip=not args.no_zip
+        )
+        _sys.exit(exit_code)
+        
+    from engine.utils import get_base_path
+    base = get_base_path()
     editor = LevelEditor(base_path=base, initial_game=args.game)
     editor.run()
 
