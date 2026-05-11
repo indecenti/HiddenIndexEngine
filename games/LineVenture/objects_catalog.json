@@ -1,19 +1,144 @@
 {
   "objects": [
     {
-      "id": "la_aeroplanino",
-      "label_key": "obj_la_aeroplanino",
-      "icon": "objects_lineart/la_aeroplanino.png",
+      "id": "ca_book_stack_adv",
+      "label_key": "obj_ca_book_stack_adv",
+      "icon": "objects_cartoon/ca_book_stack_adv.png",
       "default_detection": "rect",
-      "default_width": 75,
+      "default_width": 55,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "CARTA",
+        "CULTURA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_compass_brass",
+      "label_key": "obj_ca_compass_brass",
+      "icon": "objects_cartoon/ca_compass_brass.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "STRUMENTO",
+        "METALLO",
+        "VIAGGIO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_map_folded_small",
+      "label_key": "obj_ca_map_folded_small",
+      "icon": "objects_cartoon/ca_map_folded_small.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 22,
+      "default_hint_delay": 20,
+      "tags": [
+        "STRUMENTO",
+        "CARTA",
+        "VIAGGIO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_notebook_small",
+      "label_key": "obj_ca_notebook_small",
+      "icon": "objects_cartoon/ca_notebook_small.png",
+      "default_detection": "rect",
+      "default_width": 25,
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "giocattolo",
-        "plastica",
-        "medio"
+        "STRUMENTO",
+        "CARTA"
       ],
-      "style": "line art"
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_rope_coil_small",
+      "label_key": "obj_ca_rope_coil_small",
+      "icon": "objects_cartoon/ca_rope_coil_small.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "EQUIPAGGIAMENTO",
+        "SPORT"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_seashell",
+      "label_key": "obj_ca_seashell",
+      "icon": "objects_cartoon/ca_seashell.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "default_hint_delay": 35,
+      "tags": [
+        "NATURA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_sleeping_bag_rolled",
+      "label_key": "obj_ca_sleeping_bag_rolled",
+      "icon": "objects_cartoon/ca_sleeping_bag_rolled.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "EQUIPAGGIAMENTO",
+        "RIPOSO",
+        "STOFFA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_swiss_knife",
+      "label_key": "obj_ca_swiss_knife",
+      "icon": "objects_cartoon/ca_swiss_knife.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 12,
+      "default_hint_delay": 35,
+      "tags": [
+        "STRUMENTO",
+        "METALLO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_teddy_bear",
+      "label_key": "obj_ca_teddy_bear",
+      "icon": "objects_cartoon/ca_teddy_bear.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 40,
+      "tags": [
+        "GIOCO",
+        "PELUCHE"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_toothbrush",
+      "label_key": "obj_ca_toothbrush",
+      "icon": "objects_cartoon/ca_toothbrush.png",
+      "default_detection": "rect",
+      "default_width": 8,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "CURA",
+        "PLASTICA"
+      ],
+      "style": "cartoon"
     },
     {
       "id": "la_ancora",
@@ -55,36 +180,6 @@
         "natura",
         "cibo",
         "biologico",
-        "piccolo"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_ascia",
-      "label_key": "obj_la_ascia",
-      "icon": "objects_lineart/la_ascia.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 75,
-      "default_hint_delay": 40,
-      "tags": [
-        "attrezzo",
-        "legno",
-        "grande"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_barchetta",
-      "label_key": "obj_la_barchetta",
-      "icon": "objects_lineart/la_barchetta.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 30,
-      "default_hint_delay": 20,
-      "tags": [
-        "giocattolo",
-        "carta",
         "piccolo"
       ],
       "style": "line art"
@@ -147,20 +242,6 @@
       "style": "line art"
     },
     {
-      "id": "la_candeliere",
-      "label_key": "obj_la_candeliere",
-      "icon": "objects_lineart/la_candeliere.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 90,
-      "default_hint_delay": 35,
-      "tags": [
-        "antico",
-        "luce"
-      ],
-      "style": "line art"
-    },
-    {
       "id": "la_ciliegie",
       "label_key": "obj_la_ciliegie",
       "icon": "objects_lineart/la_ciliegie.png",
@@ -172,21 +253,6 @@
         "natura",
         "cibo",
         "biologico",
-        "piccolo"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_dadi",
-      "label_key": "obj_la_dadi",
-      "icon": "objects_lineart/la_dadi.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 45,
-      "default_hint_delay": 20,
-      "tags": [
-        "giocattolo",
-        "plastica",
         "piccolo"
       ],
       "style": "line art"
@@ -221,20 +287,6 @@
       "style": "line art"
     },
     {
-      "id": "la_forbici",
-      "label_key": "obj_la_forbici",
-      "icon": "objects_lineart/la_forbici.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 75,
-      "default_hint_delay": 30,
-      "tags": [
-        "attrezzo",
-        "casa"
-      ],
-      "style": "line art"
-    },
-    {
       "id": "la_forchetta",
       "label_key": "obj_la_forchetta",
       "icon": "objects_lineart/la_forchetta.png",
@@ -245,20 +297,6 @@
       "tags": [
         "cucina",
         "posata"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_grattugia",
-      "label_key": "obj_la_grattugia",
-      "icon": "objects_lineart/la_grattugia.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 80,
-      "default_hint_delay": 35,
-      "tags": [
-        "cucina",
-        "metallo"
       ],
       "style": "line art"
     },
@@ -304,20 +342,6 @@
       "style": "line art"
     },
     {
-      "id": "la_mestolo",
-      "label_key": "obj_la_mestolo",
-      "icon": "objects_lineart/la_mestolo.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 95,
-      "default_hint_delay": 30,
-      "tags": [
-        "cucina",
-        "acciaio"
-      ],
-      "style": "line art"
-    },
-    {
       "id": "la_metronomo",
       "label_key": "obj_la_metronomo",
       "icon": "objects_lineart/la_metronomo.png",
@@ -329,20 +353,6 @@
         "musica",
         "metallo",
         "piccolo"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_microscopio",
-      "label_key": "obj_la_microscopio",
-      "icon": "objects_lineart/la_microscopio.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 90,
-      "default_hint_delay": 45,
-      "tags": [
-        "scienza",
-        "ottica"
       ],
       "style": "line art"
     },
@@ -450,34 +460,6 @@
       "style": "line art"
     },
     {
-      "id": "la_pigna",
-      "label_key": "obj_la_pigna",
-      "icon": "objects_lineart/la_pigna.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 60,
-      "default_hint_delay": 35,
-      "tags": [
-        "bosco",
-        "natura"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_pinza",
-      "label_key": "obj_la_pinza",
-      "icon": "objects_lineart/la_pinza.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 85,
-      "default_hint_delay": 35,
-      "tags": [
-        "attrezzo",
-        "officina"
-      ],
-      "style": "line art"
-    },
-    {
       "id": "la_pipa",
       "label_key": "obj_la_pipa",
       "icon": "objects_lineart/la_pipa.png",
@@ -501,20 +483,6 @@
       "default_hint_delay": 25,
       "tags": [
         "natura"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_radio",
-      "label_key": "obj_la_radio",
-      "icon": "objects_lineart/la_radio.png",
-      "default_detection": "rect",
-      "default_width": 80,
-      "default_height": 55,
-      "default_hint_delay": 40,
-      "tags": [
-        "elettronica",
-        "vintage"
       ],
       "style": "line art"
     },
@@ -545,34 +513,6 @@
         "giocattolo",
         "plastica",
         "medio"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_soldatino",
-      "label_key": "obj_la_soldatino",
-      "icon": "objects_lineart/la_soldatino.png",
-      "default_detection": "rect",
-      "default_width": 25,
-      "default_height": 60,
-      "default_hint_delay": 25,
-      "tags": [
-        "giocattolo",
-        "metallo",
-        "piccolo"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_sveglia",
-      "label_key": "obj_la_sveglia",
-      "icon": "objects_lineart/la_sveglia.png",
-      "default_detection": "circle",
-      "default_radius": 35,
-      "default_hint_delay": 35,
-      "tags": [
-        "orologio",
-        "elettronica"
       ],
       "style": "line art"
     },

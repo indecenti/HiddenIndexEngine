@@ -43,6 +43,16 @@ def process_assets(image_path, output_dir, object_names, style="real"):
         data[mask_fill, 1] = 255
         data[mask_fill, 2] = 255
         data[mask_fill, 3] = 255
+    elif style == "cartoon":
+        print("Modalità Cartoon: Applicazione Chroma Key su sfondo verde...")
+        # Simile a real, ma ottimizzato per colori saturi
+        green_score = g - (r + b) / 2
+        new_alpha = np.clip(255 - (green_score * 1.5), 0, 255).astype(np.uint8)
+        
+        # Spill suppression più aggressiva per bordi cartoon
+        spill_condition = (g > r * 0.9) & (g > b * 0.9)
+        data[:,:,1][spill_condition] = np.maximum(r[spill_condition], b[spill_condition])
+        data[:,:,3] = new_alpha
     else:
         # Logica originale (Chroma Key o Bianco)
         # Rileva se lo sfondo è prevalentemente verde o bianco
@@ -68,16 +78,24 @@ def process_assets(image_path, output_dir, object_names, style="real"):
     final_full_img = Image.fromarray(data)
     
     w, h = final_full_img.size
-    cell_w, cell_h = w // 3, h // 3
+    
+    # Rileva griglia dinamica (3x3, 4x4, ecc) in base al numero di nomi
+    import math
+    n_items = len(object_names)
+    grid_size = int(math.sqrt(n_items))
+    if grid_size * grid_size < n_items:
+        grid_size += 1
+        
+    cell_w, cell_h = w // grid_size, h // grid_size
     
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         
-    print(f"Processando {image_path}...")
-    for i in range(3):
-        for j in range(3):
-            idx = i * 3 + j
-            if idx >= len(object_names):
+    print(f"Processando {image_path} (Griglia {grid_size}x{grid_size})...")
+    for i in range(grid_size):
+        for j in range(grid_size):
+            idx = i * grid_size + j
+            if idx >= n_items:
                 break
                 
             left = j * cell_w
@@ -102,7 +120,7 @@ if __name__ == "__main__":
     parser.add_argument("image", help="Path della master sheet")
     parser.add_argument("output", help="Directory di destinazione")
     parser.add_argument("names", help="Nomi degli oggetti separati da virgola")
-    parser.add_argument("--style", choices=["real", "lineart"], default="real", help="Stile degli oggetti")
+    parser.add_argument("--style", choices=["real", "lineart", "cartoon"], default="real", help="Stile degli oggetti")
     
     args = parser.parse_args()
     

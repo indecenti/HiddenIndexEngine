@@ -91,9 +91,15 @@ def _discover_levels(game_path: Path) -> list:
     ldir = game_path / "levels"
     if not ldir.exists():
         return []
-    result = []
-    # Ordiniamo i livelli alfabeticamente per ID cartella
-    for ld in sorted(ldir.iterdir()):
+        
+    game_cfg = _load_json(game_path / "game_config.json")
+    levels_cfg = game_cfg.get("levels", [])
+    order_map_lvl = {lvl_id: i for i, lvl_id in enumerate(levels_cfg)}
+    
+    registered_levels = []
+    orphan_levels = []
+    
+    for ld in ldir.iterdir():
         if not ld.is_dir():
             continue
         cfg_p = ld / "level_config.json"
@@ -121,8 +127,19 @@ def _discover_levels(game_path: Path) -> list:
         orphans.sort(key=lambda x: x.name)
         
         final_scenes = registered + orphans
-        result.append({"id": ld.name, "path": ld, "cfg": cfg, "scenes": final_scenes})
-    return result
+        
+        level_data = {"id": ld.name, "path": ld, "cfg": cfg, "scenes": final_scenes}
+        if ld.name in order_map_lvl:
+            registered_levels.append(level_data)
+        else:
+            orphan_levels.append(level_data)
+
+    # Ordiniamo i registrati in base all'ordine nel file config
+    registered_levels.sort(key=lambda x: order_map_lvl[x["id"]])
+    # Le orfane in fondo alfabeticamente
+    orphan_levels.sort(key=lambda x: x["id"])
+    
+    return registered_levels + orphan_levels
 
 
 # ─────────────────────────────────────────────────────────────────────────────

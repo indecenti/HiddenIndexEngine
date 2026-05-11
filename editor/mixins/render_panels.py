@@ -225,63 +225,33 @@ class RenderPanelsMixin:
             cx2 = tag_search_r.x + 28 + tw2
             pygame.draw.line(self.screen, TXT_HI, (cx2, tag_search_r.y + 6), (cx2, tag_search_r.y + TAG_SEARCH_H - 6))
 
-        # 2.5 Style Filter
+        # 2.5 Filtro Stile (Dropdown Intelligente)
         STYLE_Y = tag_search_r.bottom + 8
-        STYLE_H = 26
-        style_r = pygame.Rect(MARGIN, STYLE_Y, INNER_W, STYLE_H)
-        _rect(self.screen, (20, 21, 28), style_r, radius=4)
+        styles = ["tutti", "real", "line art", "cartoon"]
+        current_st = getattr(self, "catalog_style_filter", "tutti")
         
-        # Conteggi per ogni stile
-        st_counts = {"tutti": len(self.catalog), "real": 0, "line art": 0}
+        # Conteggio oggetti per stile
+        st_counts = {"tutti": len(self.catalog), "real": 0, "line art": 0, "cartoon": 0}
         for c_item in self.catalog:
             st = c_item.get("style", "real")
             if st in st_counts: st_counts[st] += 1
 
-        styles = ["tutti", "real", "line art"]
-        btn_w = (INNER_W // 3)
-        self._catalog_style_rects = []
-        for j, s in enumerate(styles):
-            # Hitbox precisa: l'ultimo bottone prende il resto dei pixel per coprire INNER_W perfettamente
-            cur_w = btn_w if j < 2 else (INNER_W - btn_w * 2)
-            sr = pygame.Rect(MARGIN + j * btn_w, STYLE_Y, cur_w, STYLE_H)
+        # Rettangolo del selettore
+        sel_rect = pygame.Rect(MARGIN, STYLE_Y, INNER_W, 28)
+        self._catalog_style_sel_rect = sel_rect # Esporta per input handler
+        is_open = getattr(self, "catalog_style_open", False)
+        
+        # Hitbox per hover visivo
+        h_sel = _in_rect((mx, my_raw), sel_rect)
             
-            is_active = getattr(self, "catalog_style_filter", "real") == s
-            hov = _in_rect((mx, my_raw), sr)
-            
-            if is_active:
-                _rect(self.screen, ACCENT, sr, radius=4)
-                txt_c = (15, 15, 25)
-                cnt_c = (40, 40, 60)
-            else:
-                bg = (45, 48, 65) if hov else (28, 30, 42)
-                _rect(self.screen, bg, sr, radius=4)
-                if not hov: _rect(self.screen, BORDER, sr, 1, radius=4)
-                txt_c = TXT_HI if hov else TXT_DIM
-                cnt_c = ACCENT if hov else (100, 105, 130)
+        _button(self.screen, sel_rect, f"STILE: {current_st.upper()}", hovered=h_sel, active=is_open, font="sm")
+        _draw_shape_icon(self.screen, (sel_rect.x + sel_rect.w - 25, sel_rect.y, 25, 28), "down" if not is_open else "up", TXT_HI)
 
-            # Label + Count
-            lbl = self._TR(f"style_{s.replace(' ', '_')}", s.capitalize())
-            count_str = f"{st_counts[s]}"
-            
-            ts_lbl = _txt(lbl, "sm", txt_c)
-            ts_cnt = _txt(count_str, "xs", cnt_c)
-            
-            spacing = 5
-            total_content_w = ts_lbl.get_width() + ts_cnt.get_width() + spacing
-            
-            # Se il contenuto eccede la larghezza del bottone, compattiamo
-            if total_content_w > cur_w - 4:
-                ts_lbl = _txt(lbl, "xs", txt_c)
-                total_content_w = ts_lbl.get_width() + ts_cnt.get_width() + spacing
-
-            start_x = sr.centerx - total_content_w // 2
-            self.screen.blit(ts_lbl, (start_x, sr.centery - ts_lbl.get_height() // 2))
-            self.screen.blit(ts_cnt, (start_x + ts_lbl.get_width() + spacing, sr.centery - ts_cnt.get_height() // 2 + 1))
-            
-            self._catalog_style_rects.append((s, sr))
+        # --- Fine Griglia ---
+        self.screen.set_clip(None)
 
         # 3. Chip Tag: box a dimensione fissa (scrollabile)
-        CHIPS_TOP   = style_r.bottom + 8
+        CHIPS_TOP = STYLE_Y + 36
         TAG_BOX_H   = 196 
         CHIP_GAP_X  = 6
         CHIP_GAP_Y  = 6
@@ -496,6 +466,25 @@ class RenderPanelsMixin:
         by = h - STATUS_H - add_btn_h + 3
         br = pygame.Rect(MARGIN, by, INNER_W, add_btn_h - 6)
         _button(self.screen, br, self._TR("cat_btn_add_asset"), _in_rect((mx, my_raw), br), font="md")
+
+        # 6. OVERLAY DROPDOWN (Z-Order massimo: disegnato dopo tutto)
+        if is_open:
+            self._catalog_style_opt_rects = [] # Reset e popolamento
+            for i, s in enumerate(styles):
+                opt_r = pygame.Rect(sel_rect.x, sel_rect.y + 28 + (i * 26), sel_rect.w, 26)
+                self._catalog_style_opt_rects.append((s, opt_r))
+                
+                h_opt = _in_rect((mx, my_raw), opt_r)
+                bg_opt = (60, 65, 85) if h_opt else (35, 38, 50)
+                if s == current_st: bg_opt = ACCENT
+                
+                _rect(self.screen, bg_opt, opt_r, radius=2)
+                _rect(self.screen, (80, 80, 100), opt_r, 1, radius=2)
+                
+                count = st_counts.get(s, 0)
+                label = f"{s.upper()} ({count})"
+                t_col = (15, 15, 25) if (s == current_st or h_opt) else TXT_HI
+                _draw_text(self.screen, label, "sm", t_col, opt_r.x + 12, opt_r.y + 6)
 
     # ── Effects Catalog ──────────────────────────────────────────────────────
 

@@ -345,11 +345,14 @@ class ObjectOpsMixin:
             # Se uno stile domina al 90%, restringiamo il pool a quello stile
             real_p = scene_styles.count("real") / total
             la_p = scene_styles.count("line art") / total
+            ca_p = scene_styles.count("cartoon") / total
             
             if real_p >= 0.9:
                 chosen_pool = [c for c in self.catalog if c.get("style") == "real"]
             elif la_p >= 0.9:
                 chosen_pool = [c for c in self.catalog if c.get("style") == "line art"]
+            elif ca_p >= 0.9:
+                chosen_pool = [c for c in self.catalog if c.get("style") == "cartoon"]
             
             # Fallback se il pool filtrato è vuoto per errore di catalogazione
             if not chosen_pool: chosen_pool = self.catalog

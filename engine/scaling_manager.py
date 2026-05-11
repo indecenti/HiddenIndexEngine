@@ -220,6 +220,22 @@ class ScalingManager:
         by = (sy - self._bg_screen_y) / self._bg_display_scale
         return bx, by
 
+    def screen_to_bg_scenic(self, sx: float, sy: float, factor: float) -> tuple[float, float]:
+        """
+        Coordinate schermo → coordinate background tenendo conto dello zoom scenico centrato.
+        Usato per Hitbox durante l'intro zoom.
+        """
+        if factor == 1.0:
+            return self.screen_to_bg(sx, sy)
+            
+        # 1. Inverti lo zoom centrato sullo schermo per tornare alle coordinate nominali
+        cx, cy = self._screen_w / 2, self._screen_h / 2
+        nsx = cx + (sx - cx) / factor
+        nsy = cy + (sy - cy) / factor
+        
+        # 2. Usa la normale conversione screen_to_bg
+        return self.screen_to_bg(nsx, nsy)
+
     def scale_bg_value(self, v: float) -> float:
         """Scala un valore scalare (raggio, dimensione) da bg-space a pixel schermo."""
         return v * self._bg_display_scale

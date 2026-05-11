@@ -1042,6 +1042,22 @@ if __name__ == "__main__":
                 self.recent_scenes = [r for r in self.recent_scenes if lp not in r.get("path", "")]
                 _save_json(Path(".editor_settings.json"), {"recent_scenes": self.recent_scenes})
 
+                # RIMOZIONE LOGICA DA game_config.json
+                if self.gs_sel_game is not None:
+                    gname = self.gs_games[self.gs_sel_game]
+                    g_cfg_p = self.base_path / "games" / gname / "game_config.json"
+                    if g_cfg_p.exists():
+                        try:
+                            g_cfg = _load_json(g_cfg_p)
+                            levels_list = g_cfg.get("levels", [])
+                            if self._gs_del_name in levels_list:
+                                levels_list.remove(self._gs_del_name)
+                                g_cfg["levels"] = levels_list
+                                _save_json(g_cfg_p, g_cfg)
+                                logger.info(f"Sincronizzazione game_config: Livello '{self._gs_del_name}' rimosso.")
+                        except Exception as e:
+                            logger.error(f"Errore sincronizzazione game_config: {e}")
+
                 self._gs_select_game(self.gs_sel_game)
                 self.gs_sel_level  = None
                 self.gs_cur_scenes = []
@@ -1108,6 +1124,27 @@ if __name__ == "__main__":
             self._gs_del_path = None
             self._gs_del_name = ""
             self._gs_del_stage = 0
+
+    def _gs_move_level(self, idx: int, delta: int):
+        """Sposta un livello su o giù nell'ordine del progetto, aggiornando game_config.json."""
+        if self.gs_sel_game is None: return
+        
+        gname = self.gs_games[self.gs_sel_game]
+        g_cfg_p = self.base_path / "games" / gname / "game_config.json"
+        g_cfg = _load_json(g_cfg_p)
+        
+        current_ids = [l["id"] for l in self.gs_cur_levels]
+        
+        if 0 <= idx + delta < len(current_ids):
+            current_ids[idx], current_ids[idx+delta] = current_ids[idx+delta], current_ids[idx]
+            
+            g_cfg["levels"] = current_ids
+            if _save_json(g_cfg_p, g_cfg):
+                logger.info(f"Ordine livelli aggiornato per {gname}: {current_ids}")
+            
+            self.gs_cur_levels = _discover_levels(self.game_path)
+            self._gs_select_level(idx + delta)
+            self._gs_refresh_cache(1)
 
     def _gs_move_scene(self, idx: int, delta: int):
         """Sposta una scena su o giù nell'ordine del livello, aggiornando level_config.json."""
@@ -1378,6 +1415,20 @@ if __name__ == "__main__":
                             return
                     self._gs_select_game(idx)
                 elif i == 1 and idx < len(self.gs_cur_levels): 
+                    item_y = iy + idx * ITEM_H - scroll_offset * ITEM_H
+                    if not (cy2 + 35 <= my_raw <= cy2 + col_h):
+                        return
+                    
+                    btn_w = 24
+                    bx_down = cx2 + col_w - 58
+                    bx_up   = cx2 + col_w - 86
+                    
+                    if idx > 0 and _in_rect((mx, my_raw), (bx_up, item_y + 5, btn_w, 24)):
+                        self._gs_move_level(idx, -1); return
+                        
+                    if idx < len(self.gs_cur_levels)-1 and _in_rect((mx, my_raw), (bx_down, item_y + 5, btn_w, 24)):
+                        self._gs_move_level(idx, 1); return
+
                     self._gs_select_level(idx)
                 elif i == 2 and idx < len(self.gs_cur_scenes):
                     # Click su bottoni specifici della riga
@@ -1708,9 +1759,13 @@ if __name__ == "__main__":
             except: label = f"item_{i}"
             
             col = TXT_HI if (is_sel or hov) else TXT
-            _draw_text(self.screen, label, "sm", col, cx+15, iy+8, cw - (110 if col_idx == 2 else 50))
+            pad_w = 50
+            if col_idx == 1: pad_w = 80
+            elif col_idx == 2: pad_w = 110
             
-            if col_idx in (0, 2):
+            _draw_text(self.screen, label, "sm", col, cx+15, iy+8, cw - pad_w)
+            
+            if col_idx in (0, 1, 2):
                 # Coordinate bottoni (allineati a destra)
                 btn_w = 24
                 bx_play = cx + cw - 38
@@ -1722,23 +1777,32 @@ if __name__ == "__main__":
                     if btn_play_hov:
                         self.active_tooltip = self.lang_manager.get("btn_play", "GIOCA")
                 
+                elif col_idx == 1:
+                    bx_down = cx + cw - 58
+                    bx_up   = cx + cw - 86
+                    
+                    if i > 0:
+                        btn_up_hov = _in_rect((mx, my_raw), (bx_up, iy+5, btn_w, 24))
+                        _button(self.screen, (bx_up, iy+5, btn_w, 24), "▲", btn_up_hov, font="sm")
+                    
+                    if i < count - 1:
+                        btn_down_hov = _in_rect((mx, my_raw), (bx_down, iy+5, btn_w, 24))
+                        _button(self.screen, (bx_down, iy+5, btn_w, 24), "▼", btn_down_hov, font="sm")
+                        
                 elif col_idx == 2:
                     bx_open = cx + cw - 30
                     bx_down = cx + cw - 58
                     bx_up   = cx + cw - 86
                     
-                    # Bottone Apri Scena in Editor
                     btn_open_hov = _in_rect((mx, my_raw), (bx_open, iy+5, btn_w, 24))
                     _button(self.screen, (bx_open, iy+5, btn_w, 24), "▶", btn_open_hov, font="sm")
                     if btn_open_hov:
                         self.active_tooltip = self.lang_manager.get("gs_btn_open_scene", "APRI SCENA")
                     
-                    # Bottone Su (solo se non è il primo)
                     if i > 0:
                         btn_up_hov = _in_rect((mx, my_raw), (bx_up, iy+5, btn_w, 24))
                         _button(self.screen, (bx_up, iy+5, btn_w, 24), "▲", btn_up_hov, font="sm")
                     
-                    # Bottone Giù (solo se non è l'ultimo)
                     if i < count - 1:
                         btn_down_hov = _in_rect((mx, my_raw), (bx_down, iy+5, btn_w, 24))
                         _button(self.screen, (bx_down, iy+5, btn_w, 24), "▼", btn_down_hov, font="sm")

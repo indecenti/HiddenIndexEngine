@@ -274,7 +274,18 @@ class LevelManager:
         if not root.exists():
             return []
         # Consideriamo validi solo i folder che contengono un level_config.json
-        return [d.name for d in root.iterdir() if d.is_dir() and (d / "level_config.json").exists()]
+        dirs = [d.name for d in root.iterdir() if d.is_dir() and (d / "level_config.json").exists()]
+        
+        levels_order = self._game_config.get("levels", [])
+        order_map = {lvl_id: i for i, lvl_id in enumerate(levels_order)}
+        
+        registered = [d for d in dirs if d in order_map]
+        orphans = [d for d in dirs if d not in order_map]
+        
+        registered.sort(key=lambda x: order_map[x])
+        orphans.sort()
+        
+        return registered + orphans
 
     # ------------------------------------------------------------------
     # Avvio livello

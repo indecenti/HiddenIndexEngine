@@ -35,7 +35,8 @@ class ClickDetector:
                screen_x: int,
                screen_y: int,
                objects: list[SceneObject],
-               background_scale: float = 1.0) -> Optional[SceneObject]:
+               background_scale: float = 1.0,
+               scenic_factor: float = 1.0) -> Optional[SceneObject]:
         """
         Dato un click in coordinate schermo, restituisce l'oggetto colpito
         con la priorità z-index più alta, oppure None.
@@ -44,10 +45,11 @@ class ClickDetector:
             screen_x, screen_y: coordinate pixel del click
             objects:            lista di SceneObject attivi (non trovati)
             background_scale:   scala dello sfondo della scena corrente
+            scenic_factor:      fattore di zoom scenico (intro zoom)
         """
         # Converti coordinate schermo → coordinate background (spazio del file immagine)
         # Le coordinate JSON sono in pixel del background originale (es. 1920x1080)
-        scene_x, scene_y = self._sm.screen_to_bg(screen_x, screen_y)
+        scene_x, scene_y = self._sm.screen_to_bg_scenic(screen_x, screen_y, scenic_factor)
 
         candidates: list[SceneObject] = []
 

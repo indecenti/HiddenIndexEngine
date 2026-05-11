@@ -1131,18 +1131,26 @@ class InputHandlersMixin:
                 self.catalog_tag_searching = True; self.catalog_searching = False
             return
 
-        # 2.5 Style Filters
-        style_rects = getattr(self, "_catalog_style_rects", [])
-        for s_id, sr in style_rects:
-            if _in_rect((mx, my_raw), sr):
-                logging.info(f"  [CATALOG] HIT: Style Filter '{s_id}'")
-                self.catalog_style_filter = s_id
-                self.catalog_tag_filters = set()
-                self.catalog_tag_search = ""
-                self.catalog_scroll = 0
-                self.catalog_tags_scroll = 0
-                self._play_click()
-                return
+        # 2.5 Style Filter (NUOVO Dropdown)
+        sel_r = getattr(self, "_catalog_style_sel_rect", None)
+        if sel_r and _in_rect((mx, my_raw), sel_r):
+            logging.info("  [CATALOG] HIT: Style Dropdown Toggle")
+            self.catalog_style_open = not getattr(self, "catalog_style_open", False)
+            self._play_click(); return
+            
+        if getattr(self, "catalog_style_open", False):
+            opt_rects = getattr(self, "_catalog_style_opt_rects", [])
+            for s_id, opt_r in opt_rects:
+                if _in_rect((mx, my_raw), opt_r):
+                    logging.info(f"  [CATALOG] HIT: Style Option '{s_id}'")
+                    self.catalog_style_filter = s_id
+                    self.catalog_style_open = False
+                    self.catalog_tag_filters = set()
+                    self.catalog_tag_search = ""
+                    self.catalog_scroll = 0
+                    self.catalog_tags_scroll = 0
+                    self._status(f"Filtro: {s_id.upper()}", ACCENT, 1)
+                    self._play_click(); return
 
         # 3. Chip Tags
         chip_rects = getattr(self, "_catalog_chip_rects", [])

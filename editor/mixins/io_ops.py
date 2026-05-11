@@ -253,7 +253,60 @@ class IoOpsMixin:
         self._fit_canvas()
         n = len(self.scene_data.get("objects", []))
         logging.info(f"[EDITOR] Scene loaded: {n} objects")
+        
+        # Auto-detect dello stile dominante (richiesto dall'utente)
+        self._auto_detect_style()
+        
         self._status(f"Scena: {scene_path.name}  ({n} oggetti)", OK_C, 3)
+
+    def _auto_detect_style(self):
+        """
+        Analizza gli oggetti presenti nella scena e imposta automaticamente
+        il filtro del catalogo se uno stile domina al 90%.
+        """
+        objs = self.scene_data.get("objects", [])
+        if not objs or not getattr(self, "catalog", []):
+            # Se la scena è vuota, resettiamo a 'real' (default) o 'tutti'
+            # Decidiamo per 'real' come da init, ma 'tutti' sarebbe più neutro.
+            # L'utente ha chiesto l'auto-selezione se c'è dominanza, altrimenti
+            # non ha specificato. Teniamo 'real' come da editor_base.py.
+            return
+
+        # Mappa rapida ID -> Stile (fallback su 'real' se non specificato nel catalogo)
+        style_map = {c["id"]: c.get("style", "real") for c in self.catalog}
+        scene_styles = [style_map.get(o.get("catalog_id"), "real") for o in objs]
+        total = len(scene_styles)
+        
+        if total == 0: return
+
+        # Calcolo percentuali
+        real_p = scene_styles.count("real") / total
+        la_p   = scene_styles.count("line art") / total
+        ca_p   = scene_styles.count("cartoon") / total
+
+        old_filter = getattr(self, "catalog_style_filter", "tutti")
+        new_filter = old_filter
+
+        if real_p >= 0.9:
+            new_filter = "real"
+        elif la_p >= 0.9:
+            new_filter = "line art"
+        elif ca_p >= 0.9:
+            new_filter = "cartoon"
+        # else: rimane quello che era o 'tutti' se vogliamo essere smart.
+        # Se carichiamo una scena mista, forse è meglio mostrare 'tutti'.
+        elif total > 5: # Solo se c'è un numero minimo di oggetti per decidere 'misto'
+            new_filter = "tutti"
+
+        if new_filter != old_filter:
+            self.catalog_style_filter = new_filter
+            # Reset dei filtri secondari per coerenza (come in input_handlers.py)
+            self.catalog_tag_filters = set()
+            self.catalog_tag_search = ""
+            self.catalog_scroll = 0
+            self.catalog_tags_scroll = 0
+            logging.info(f"[EDITOR] Style auto-switched to: {new_filter} (dominance detected)")
+
 
     def _load_background(self):
         """Apre la modale custom per scegliere l'immagine di sfondo."""
@@ -742,7 +795,7 @@ class IoOpsMixin:
             if "games" in str(path):
                 # Prova a ricostruire il path verso engine/assets/ (cerca in objects o objects_lineart)
                 master_p = None
-                for sub in ["objects", "objects_lineart"]:
+                for sub in ["objects", "objects_lineart", "objects_cartoon"]:
                     test_p = self.base_path / "engine" / "assets" / sub / path.name
                     if test_p.exists():
                         master_p = test_p
@@ -901,16 +954,20 @@ class IoOpsMixin:
                     icon_path = self.base_path / "engine" / "assets" / icon_rel
                     
                     # Check condivisione: un altro oggetto usa la stessa icona?
-                    # Dobbiamo controllare TUTTI i cataloghi globali per la condivisione
+                    # Normalizziamo i percorsi per evitare falsi positivi da slash/backslash
+                    norm_icon = icon_rel.replace("\\", "/")
                     is_shared = False
                     for cf in catalog_files:
                         try:
                             with open(cf, "r", encoding="utf-8") as f:
                                 other_data = json.load(f)
-                            if any(o.get("icon") == icon_rel and o.get("id") != cat_id 
-                                   for o in other_data.get("objects", [])):
-                                is_shared = True
-                                break
+                            for o in other_data.get("objects", []):
+                                o_icon = o.get("icon", "")
+                                if o_icon and o_icon.replace("\\", "/") == norm_icon and o.get("id") != cat_id:
+                                    is_shared = True
+                                    logging.info(f"[EDITOR] PNG '{icon_rel}' condivisa da: {o.get('id')}")
+                                    break
+                            if is_shared: break
                         except: continue
                     
                     if icon_path.exists() and not is_shared:

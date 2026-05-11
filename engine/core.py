@@ -383,7 +383,7 @@ class EngineCore:
                                 
                                 success, penalty = self.hint.use_manual_hint(
                                     self._current_scene_objects, 
-                                    suppress_fx=is_flashlight
+                                    suppress_fx=False
                                 )
                                 
                                 if success:
@@ -425,8 +425,17 @@ class EngineCore:
                             self._spam_lock_timer = 3.0
                             continue
 
-                        # 2. Rilevamento Hit
-                        hit = self.click_detector.detect(event.pos[0], event.pos[1], self._current_scene_objects)
+                        # 2. Rilevamento Hit (compensando lo zoom intro se presente)
+                        z_fact = 1.0
+                        if self._scene_intro_timer > 0:
+                            t = self._scene_intro_timer / self._scene_intro_dur
+                            z_fact = 1.0 + (t ** 3 * 0.25)
+
+                        hit = self.click_detector.detect(
+                            event.pos[0], event.pos[1], 
+                            self._current_scene_objects,
+                            scenic_factor=z_fact
+                        )
                         if hit:
                             trigger = getattr(hit, "minigame_trigger", None)
                             self.logger.debug(f"[CLICK] Hit: {hit.instance_id} (trigger: {trigger is not None})")
@@ -594,7 +603,7 @@ class EngineCore:
                         
                         success, penalty = self.hint.use_manual_hint(
                             self._current_scene_objects, 
-                            suppress_fx=is_flashlight
+                            suppress_fx=False
                         )
                         
                         if success:
@@ -786,12 +795,14 @@ class EngineCore:
         return has_checkpoint or has_real_unlocks or has_scores
 
     def _ensure_first_level_unlocked(self) -> None:
-        """Garantisce che il primo livello sia sempre sbloccato se non ci sono progressi."""
-        if not self.save_manager.get_progress("unlocked_levels"):
-            available = self.level_manager.get_available_levels()
-            if available:
-                self.save_manager.unlock_level(available[0])
-                self.logger.info(f"Sbloccato livello iniziale di default: {available[0]}")
+        """Garantisce che il primo livello sia sempre sbloccato se non ci sono progressi, oppure se il primo livello è cambiato/eliminato."""
+        available = self.level_manager.get_available_levels()
+        if available:
+            first_level = available[0]
+            unlocked = self.save_manager.get_progress("unlocked_levels", [])
+            if first_level not in unlocked:
+                self.save_manager.unlock_level(first_level)
+                self.logger.info(f"Sbloccato livello iniziale di default: {first_level}")
 
     def _resume_from_save(self) -> None:
         """Riprende il gioco dall'ultimo checkpoint salvato."""
@@ -799,12 +810,28 @@ class EngineCore:
         idx = self.save_manager.get_progress("current_scene_index", 0)
         
         if not lvl_id:
-            # Fallback al primo livello se non c'è checkpoint (non dovrebbe succedere se il tasto c'è)
-            self._start_test_scene()
-            return
-            
+            available = self.level_manager.get_available_levels()
+            if available:
+                lvl_id = available[0]
+                idx = 0
+            else:
+                return
+                
         self.logger.info(f"Resume richiesto: {lvl_id} alla scena index {idx}")
         self.scaling_manager.invalidate_cache()
+        
+        try:
+            scene_data = self.level_manager.start_level(lvl_id, start_scene_index=idx)
+        except Exception as e:
+            self.logger.error(f"Errore resume {lvl_id}: {e}")
+            available = self.level_manager.get_available_levels()
+            if available:
+                lvl_id = available[0]
+                idx = 0
+                scene_data = self.level_manager.start_level(lvl_id, start_scene_index=idx)
+            else:
+                return
+
         self._current_scene_data = scene_data
         self._current_scene_objects = scene_data.objects
         self._current_scene_effects = scene_data.effects
@@ -964,12 +991,18 @@ class EngineCore:
             self.logger.debug("Nessuna musica definita per questa scena.")
             self.audio.stop_music(fade_ms=1000)
 
-    def _draw_hint_glow_overlays(self) -> None:
-        """Disegna glow animati come overlay pulsanti per gli hint."""
-        if not self._current_scene_objects or self.state != EngineState.SCENE:
+    def _draw_hint_indicator(self) -> None:
+        """Disegna indicatore target animato (cerchio azzurro pulsante) sull'oggetto suggerito."""
+        if self.state != EngineState.SCENE or not self.level_manager:
             return
 
         sm = self.scaling_manager
+        
+        # Calcoliamo il fattore scenico attuale (se siamo in intro zoom)
+        scenic_factor = 1.0
+        if self._scene_intro_timer > 0:
+            t = self._scene_intro_timer / self._scene_intro_dur
+            scenic_factor = 1.0 + (t ** 3 * 0.25)
 
         for obj in self._current_scene_objects:
             if obj.found or not obj.is_goal:
@@ -991,10 +1024,11 @@ class EngineCore:
                 w_bg = obj.width if obj.width > 0 else obj.radius * 2
                 h_bg = obj.height if obj.height > 0 else obj.radius * 2
 
-            sx, sy = sm.bg_to_screen(cx_bg, cy_bg)
+            # IMPORTANTE: Usiamo bg_to_screen_scenic per allineare con lo zoom intro
+            sx, sy = sm.bg_to_screen_scenic(cx_bg, cy_bg, scenic_factor)
 
-            # Dimensione glow (leggermente più grande dell'oggetto)
-            glow_size = int(max(w_bg, h_bg) * sm._bg_display_scale * 1.2)
+            # Dimensione glow (leggermente più grande dell'oggetto, scalata)
+            glow_size = int(max(w_bg, h_bg) * sm._bg_display_scale * 1.2 * scenic_factor)
 
             # Disegna cerchio glow azzurro pulsante CENTRATO
             glow_alpha = int(hint_intensity * 200)
@@ -1474,12 +1508,19 @@ class EngineCore:
                 self.screen.blit(scaled_rt, (rx, ry))
 
             # --- EFFETTO TORCIA (FLASHLIGHT) ---
+            # Viene applicato dopo lo zoom ma PRIMA degli effetti/HUD affinché le particelle
+            # (come gli hint) siano visibili anche sopra l'oscurità.
             if self._current_scene_data and getattr(self._current_scene_data, 'flashlight', False):
                 # Se l'Hint Flash è attivo, saltiamo il disegno dell'oscurità
                 if self._hint_flash_timer > 0:
                     self._draw_hint_flash_timer()
                 else:
                     self._draw_flashlight_effect()
+
+            # --- EFFETTI E PARTICELLE (Sempre visibili sopra la torcia) ---
+            self.effects.draw(self.screen)
+            env_fx = [f for f in self._current_scene_effects if getattr(f, "type", "") != "bubble_tip"]
+            self.fx_renderer.draw(self.screen, env_fx, sm, self.lang, scenic_factor=zoom_factor if is_intro_zooming else 1.0)
 
             # --- UI E FUMETTI (Sempre in primo piano) ---
             ui_fx = [f for f in self._current_scene_effects if getattr(f, "type", "") == "bubble_tip"]

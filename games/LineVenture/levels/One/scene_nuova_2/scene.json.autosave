@@ -69,7 +69,10 @@
       "hint_delay": 30,
       "radius": 99.25,
       "width": 193,
-      "height": 204
+      "height": 204,
+      "minigame_trigger": {
+        "minigame_id": "tetran"
+      }
     },
     {
       "catalog_id": "la_telefono_fisso",
@@ -182,6 +185,19 @@
       "width": 286,
       "height": 311,
       "rotation": 43.1
+    },
+    {
+      "catalog_id": "la_ferro_cavallo",
+      "x": 3831,
+      "y": 1422,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "always_show": false,
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 125,
+      "height": 157,
+      "rotation": 179.8
     }
   ],
   "effects": [],

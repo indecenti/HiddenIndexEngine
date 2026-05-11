@@ -1,0 +1,882 @@
+{
+  "objects": [
+    {
+      "id": "ca_acorn",
+      "label_key": "obj_ca_acorn",
+      "icon": "objects_cartoon/ca_acorn.png",
+      "default_detection": "circle",
+      "default_radius": 10,
+      "default_hint_delay": 15,
+      "tags": [
+        "NATURA",
+        "BOSCO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_apple_red",
+      "label_key": "obj_ca_apple_red",
+      "icon": "objects_cartoon/ca_apple_red.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "default_hint_delay": 15,
+      "tags": [
+        "CIBO",
+        "FRUTTA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_battery_aa",
+      "label_key": "obj_ca_battery_aa",
+      "icon": "objects_cartoon/ca_battery_aa.png",
+      "default_detection": "rect",
+      "default_width": 8,
+      "default_height": 25,
+      "default_hint_delay": 40,
+      "tags": [
+        "TECNOLOGIA",
+        "ELETTRONICA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_binoculars_black",
+      "label_key": "obj_ca_binoculars_black",
+      "icon": "objects_cartoon/ca_binoculars_black.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 50,
+      "default_hint_delay": 40,
+      "tags": [
+        "OTTICA",
+        "STRUMENTO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_biscuit_pack",
+      "label_key": "obj_ca_biscuit_pack",
+      "icon": "objects_cartoon/ca_biscuit_pack.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 20,
+      "default_hint_delay": 15,
+      "tags": [
+        "CIBO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_blanket_folded",
+      "label_key": "obj_ca_blanket_folded",
+      "icon": "objects_cartoon/ca_blanket_folded.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 40,
+      "default_hint_delay": 25,
+      "tags": [
+        "RIPOSO",
+        "STOFFA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_book_stack_adv",
+      "label_key": "obj_ca_book_stack_adv",
+      "icon": "objects_cartoon/ca_book_stack_adv.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "CARTA",
+        "CULTURA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_boots_hiking",
+      "label_key": "obj_ca_boots_hiking",
+      "icon": "objects_cartoon/ca_boots_hiking.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "VESTIARIO",
+        "CUOIO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_camera_compact",
+      "label_key": "obj_ca_camera_compact",
+      "icon": "objects_cartoon/ca_camera_compact.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 25,
+      "default_hint_delay": 40,
+      "tags": [
+        "TECNOLOGIA",
+        "ELETTRONICA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_canteen_metal",
+      "label_key": "obj_ca_canteen_metal",
+      "icon": "objects_cartoon/ca_canteen_metal.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "STRUMENTO",
+        "METALLO",
+        "BEVANDA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_carabiner_red",
+      "label_key": "obj_ca_carabiner_red",
+      "icon": "objects_cartoon/ca_carabiner_red.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "default_hint_delay": 20,
+      "tags": [
+        "STRUMENTO",
+        "METALLO",
+        "SPORT"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_cheese_wedge",
+      "label_key": "obj_ca_cheese_wedge",
+      "icon": "objects_cartoon/ca_cheese_wedge.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 20,
+      "default_hint_delay": 15,
+      "tags": [
+        "CIBO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_coin_gold",
+      "label_key": "obj_ca_coin_gold",
+      "icon": "objects_cartoon/ca_coin_gold.png",
+      "default_detection": "circle",
+      "default_radius": 10,
+      "default_hint_delay": 40,
+      "tags": [
+        "OGGETTO",
+        "METALLO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_comb_blue",
+      "label_key": "obj_ca_comb_blue",
+      "icon": "objects_cartoon/ca_comb_blue.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 10,
+      "default_hint_delay": 15,
+      "tags": [
+        "CURA",
+        "PLASTICA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_compass_brass",
+      "label_key": "obj_ca_compass_brass",
+      "icon": "objects_cartoon/ca_compass_brass.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "STRUMENTO",
+        "METALLO",
+        "VIAGGIO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_compass_mini",
+      "label_key": "obj_ca_compass_mini",
+      "icon": "objects_cartoon/ca_compass_mini.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "default_hint_delay": 25,
+      "tags": [
+        "STRUMENTO",
+        "VIAGGIO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_compass_thumb",
+      "label_key": "obj_ca_compass_thumb",
+      "icon": "objects_cartoon/ca_compass_thumb.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "default_hint_delay": 30,
+      "tags": [
+        "STRUMENTO",
+        "VIAGGIO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_cooler_portable",
+      "label_key": "obj_ca_cooler_portable",
+      "icon": "objects_cartoon/ca_cooler_portable.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 55,
+      "default_hint_delay": 35,
+      "tags": [
+        "CONTENITORE",
+        "PLASTICA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_corn_cob",
+      "label_key": "obj_ca_corn_cob",
+      "icon": "objects_cartoon/ca_corn_cob.png",
+      "default_detection": "rect",
+      "default_width": 10,
+      "default_height": 30,
+      "default_hint_delay": 15,
+      "tags": [
+        "CIBO",
+        "NATURA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_duct_tape",
+      "label_key": "obj_ca_duct_tape",
+      "icon": "objects_cartoon/ca_duct_tape.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "default_hint_delay": 25,
+      "tags": [
+        "STRUMENTO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_egg_boiled",
+      "label_key": "obj_ca_egg_boiled",
+      "icon": "objects_cartoon/ca_egg_boiled.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "default_hint_delay": 10,
+      "tags": [
+        "CIBO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_enamel_mug",
+      "label_key": "obj_ca_enamel_mug",
+      "icon": "objects_cartoon/ca_enamel_mug.png",
+      "default_detection": "circle",
+      "default_radius": 22,
+      "default_hint_delay": 15,
+      "tags": [
+        "CONTENITORE",
+        "METALLO",
+        "BEVANDA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_eraser_pink",
+      "label_key": "obj_ca_eraser_pink",
+      "icon": "objects_cartoon/ca_eraser_pink.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 10,
+      "default_hint_delay": 15,
+      "tags": [
+        "STRUMENTO",
+        "CARTA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_feather_small",
+      "label_key": "obj_ca_feather_small",
+      "icon": "objects_cartoon/ca_feather_small.png",
+      "default_detection": "rect",
+      "default_width": 5,
+      "default_height": 25,
+      "default_hint_delay": 40,
+      "tags": [
+        "NATURA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_first_aid_mini",
+      "label_key": "obj_ca_first_aid_mini",
+      "icon": "objects_cartoon/ca_first_aid_mini.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 20,
+      "default_hint_delay": 35,
+      "tags": [
+        "CURA",
+        "STRUMENTO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_fishing_rod",
+      "label_key": "obj_ca_fishing_rod",
+      "icon": "objects_cartoon/ca_fishing_rod.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 95,
+      "default_hint_delay": 30,
+      "tags": [
+        "SPORT",
+        "STRUMENTO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_flashlight_mini",
+      "label_key": "obj_ca_flashlight_mini",
+      "icon": "objects_cartoon/ca_flashlight_mini.png",
+      "default_detection": "rect",
+      "default_width": 12,
+      "default_height": 35,
+      "default_hint_delay": 25,
+      "tags": [
+        "LUCE",
+        "ELETTRONICA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_flint_stone",
+      "label_key": "obj_ca_flint_stone",
+      "icon": "objects_cartoon/ca_flint_stone.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "default_hint_delay": 30,
+      "tags": [
+        "STRUMENTO",
+        "NATURA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_flower_bunch",
+      "label_key": "obj_ca_flower_bunch",
+      "icon": "objects_cartoon/ca_flower_bunch.png",
+      "default_detection": "circle",
+      "default_radius": 22,
+      "default_hint_delay": 20,
+      "tags": [
+        "NATURA",
+        "PIANTA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_food_can",
+      "label_key": "obj_ca_food_can",
+      "icon": "objects_cartoon/ca_food_can.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "CIBO",
+        "METALLO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_fork_metal",
+      "label_key": "obj_ca_fork_metal",
+      "icon": "objects_cartoon/ca_fork_metal.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 8,
+      "default_hint_delay": 20,
+      "tags": [
+        "STRUMENTO",
+        "METALLO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_glue_tube",
+      "label_key": "obj_ca_glue_tube",
+      "icon": "objects_cartoon/ca_glue_tube.png",
+      "default_detection": "rect",
+      "default_width": 8,
+      "default_height": 30,
+      "default_hint_delay": 20,
+      "tags": [
+        "STRUMENTO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_hat_explorer",
+      "label_key": "obj_ca_hat_explorer",
+      "icon": "objects_cartoon/ca_hat_explorer.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 25,
+      "tags": [
+        "VESTIARIO",
+        "STOFFA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_jam_jar",
+      "label_key": "obj_ca_jam_jar",
+      "icon": "objects_cartoon/ca_jam_jar.png",
+      "default_detection": "rect",
+      "default_width": 22,
+      "default_height": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "CIBO",
+        "VETRO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_key_ring",
+      "label_key": "obj_ca_key_ring",
+      "icon": "objects_cartoon/ca_key_ring.png",
+      "default_detection": "circle",
+      "default_radius": 18,
+      "default_hint_delay": 30,
+      "tags": [
+        "STRUMENTO",
+        "METALLO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_kitchen_knife",
+      "label_key": "obj_ca_kitchen_knife",
+      "icon": "objects_cartoon/ca_kitchen_knife.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 10,
+      "default_hint_delay": 20,
+      "tags": [
+        "STRUMENTO",
+        "METALLO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_lighter_yellow",
+      "label_key": "obj_ca_lighter_yellow",
+      "icon": "objects_cartoon/ca_lighter_yellow.png",
+      "default_detection": "rect",
+      "default_width": 12,
+      "default_height": 30,
+      "default_hint_delay": 20,
+      "tags": [
+        "STRUMENTO",
+        "FUOCO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_magnifying_glass",
+      "label_key": "obj_ca_magnifying_glass",
+      "icon": "objects_cartoon/ca_magnifying_glass.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "STRUMENTO",
+        "OTTICA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_map_compass_clear",
+      "label_key": "obj_ca_map_compass_clear",
+      "icon": "objects_cartoon/ca_map_compass_clear.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "STRUMENTO",
+        "VIAGGIO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_map_folded_small",
+      "label_key": "obj_ca_map_folded_small",
+      "icon": "objects_cartoon/ca_map_folded_small.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 22,
+      "default_hint_delay": 20,
+      "tags": [
+        "STRUMENTO",
+        "CARTA",
+        "VIAGGIO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_map_world",
+      "label_key": "obj_ca_map_world",
+      "icon": "objects_cartoon/ca_map_world.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "STRUMENTO",
+        "CARTA",
+        "VIAGGIO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_matchbox",
+      "label_key": "obj_ca_matchbox",
+      "icon": "objects_cartoon/ca_matchbox.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 15,
+      "default_hint_delay": 25,
+      "tags": [
+        "STRUMENTO",
+        "FUOCO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_matchstick_single",
+      "label_key": "obj_ca_matchstick_single",
+      "icon": "objects_cartoon/ca_matchstick_single.png",
+      "default_detection": "rect",
+      "default_width": 5,
+      "default_height": 25,
+      "default_hint_delay": 15,
+      "tags": [
+        "STRUMENTO",
+        "FUOCO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_notebook_small",
+      "label_key": "obj_ca_notebook_small",
+      "icon": "objects_cartoon/ca_notebook_small.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "STRUMENTO",
+        "CARTA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_pencil_short",
+      "label_key": "obj_ca_pencil_short",
+      "icon": "objects_cartoon/ca_pencil_short.png",
+      "default_detection": "rect",
+      "default_width": 5,
+      "default_height": 30,
+      "default_hint_delay": 15,
+      "tags": [
+        "STRUMENTO",
+        "CARTA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_radio_portable",
+      "label_key": "obj_ca_radio_portable",
+      "icon": "objects_cartoon/ca_radio_portable.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 45,
+      "default_hint_delay": 35,
+      "tags": [
+        "TECNOLOGIA",
+        "ELETTRONICA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_rope_coil_small",
+      "label_key": "obj_ca_rope_coil_small",
+      "icon": "objects_cartoon/ca_rope_coil_small.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "EQUIPAGGIAMENTO",
+        "SPORT"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_sausage",
+      "label_key": "obj_ca_sausage",
+      "icon": "objects_cartoon/ca_sausage.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 10,
+      "default_hint_delay": 15,
+      "tags": [
+        "CIBO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_seashell",
+      "label_key": "obj_ca_seashell",
+      "icon": "objects_cartoon/ca_seashell.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "default_hint_delay": 35,
+      "tags": [
+        "NATURA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_sleeping_bag_rolled",
+      "label_key": "obj_ca_sleeping_bag_rolled",
+      "icon": "objects_cartoon/ca_sleeping_bag_rolled.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "EQUIPAGGIAMENTO",
+        "RIPOSO",
+        "STOFFA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_spoon_metal",
+      "label_key": "obj_ca_spoon_metal",
+      "icon": "objects_cartoon/ca_spoon_metal.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 10,
+      "default_hint_delay": 20,
+      "tags": [
+        "STRUMENTO",
+        "METALLO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_spork_plastic",
+      "label_key": "obj_ca_spork_plastic",
+      "icon": "objects_cartoon/ca_spork_plastic.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 8,
+      "default_hint_delay": 20,
+      "tags": [
+        "STRUMENTO",
+        "PLASTICA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_sugar_cube",
+      "label_key": "obj_ca_sugar_cube",
+      "icon": "objects_cartoon/ca_sugar_cube.png",
+      "default_detection": "rect",
+      "default_width": 10,
+      "default_height": 10,
+      "default_hint_delay": 10,
+      "tags": [
+        "CIBO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_sunglasses",
+      "label_key": "obj_ca_sunglasses",
+      "icon": "objects_cartoon/ca_sunglasses.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 15,
+      "default_hint_delay": 20,
+      "tags": [
+        "ACCESSORIO",
+        "PLASTICA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_sunscreen_tube",
+      "label_key": "obj_ca_sunscreen_tube",
+      "icon": "objects_cartoon/ca_sunscreen_tube.png",
+      "default_detection": "rect",
+      "default_width": 18,
+      "default_height": 40,
+      "default_hint_delay": 25,
+      "tags": [
+        "CURA",
+        "PLASTICA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_swiss_knife",
+      "label_key": "obj_ca_swiss_knife",
+      "icon": "objects_cartoon/ca_swiss_knife.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 12,
+      "default_hint_delay": 35,
+      "tags": [
+        "STRUMENTO",
+        "METALLO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_tea_bag",
+      "label_key": "obj_ca_tea_bag",
+      "icon": "objects_cartoon/ca_tea_bag.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 20,
+      "default_hint_delay": 15,
+      "tags": [
+        "CIBO",
+        "BEVANDA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_teddy_bear",
+      "label_key": "obj_ca_teddy_bear",
+      "icon": "objects_cartoon/ca_teddy_bear.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 40,
+      "tags": [
+        "GIOCO",
+        "PELUCHE"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_tent_peg",
+      "label_key": "obj_ca_tent_peg",
+      "icon": "objects_cartoon/ca_tent_peg.png",
+      "default_detection": "rect",
+      "default_width": 8,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "STRUMENTO",
+        "METALLO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_toothbrush",
+      "label_key": "obj_ca_toothbrush",
+      "icon": "objects_cartoon/ca_toothbrush.png",
+      "default_detection": "rect",
+      "default_width": 8,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "CURA",
+        "PLASTICA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_toothpaste_tube",
+      "label_key": "obj_ca_toothpaste_tube",
+      "icon": "objects_cartoon/ca_toothpaste_tube.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 35,
+      "default_hint_delay": 25,
+      "tags": [
+        "CURA",
+        "PLASTICA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_water_tab",
+      "label_key": "obj_ca_water_tab",
+      "icon": "objects_cartoon/ca_water_tab.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 10,
+      "default_hint_delay": 15,
+      "tags": [
+        "CURA",
+        "VIAGGIO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_whistle_orange",
+      "label_key": "obj_ca_whistle_orange",
+      "icon": "objects_cartoon/ca_whistle_orange.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 15,
+      "default_hint_delay": 15,
+      "tags": [
+        "STRUMENTO",
+        "PLASTICA"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_wooden_crate",
+      "label_key": "obj_ca_wooden_crate",
+      "icon": "objects_cartoon/ca_wooden_crate.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 50,
+      "default_hint_delay": 35,
+      "tags": [
+        "CONTENITORE",
+        "LEGNO"
+      ],
+      "style": "cartoon"
+    }
+  ]
+}

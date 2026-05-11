@@ -8,5 +8,9 @@
     "music": [
       "audio/music/Indecenti - Backspace.mp3"
     ]
-  }
+  },
+  "levels": [
+    "Welcome_To_Malonno",
+    "level_nuo"
+  ]
 }
