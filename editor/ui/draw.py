@@ -35,7 +35,9 @@ def _get_icon(icon_id):
         "eye_visible": "eye_visible", "show": "eye_visible",
         "save": "save", "disk": "save",
         "delete": "delete", "trash": "delete", "remove": "delete",
-        "settings": "settings", "gear": "settings"
+        "settings": "settings", "gear": "settings",
+        "search": "search", "find": "search", "magnify": "search",
+        "tag": "tag", "label": "tag"
     }
     
     fname = mapping.get(icon_id)
@@ -280,24 +282,59 @@ def _slider(surf, r, value, min_v, max_v, color=(100, 100, 255), power=1.0):
     pygame.draw.circle(surf, (40, 40, 50), (hx, hy), 7, 1)
 
 
-def _input_box(surf, r, text, focused=False, hint=""):
-    """Disegna una casella di input testo/numerica pulsante se focalizzata."""
-    from editor.constants import BTN, BTN_AC, BORDER, TXT_HI, TXT_DIM
-    bg = (40, 42, 54) if focused else BTN
-    border_c = BTN_AC if focused else BORDER
+def _input_box(surf, r, text, focused=False, hint="", icon=None, font="md", all_selected=False):
+    """Disegna una casella di input premium con glow, placeholder e cursore smooth."""
+    from editor.constants import BTN, BORDER, TXT_HI, TXT_DIM, ACCENT
+    import math
+    import time
     
-    _rect(surf, bg, r, radius=3)
-    _rect(surf, border_c, r, 1 if not focused else 2, radius=3)
+    # 1. Background base
+    bg = (35, 38, 50) if focused else BTN
+    _rect(surf, bg, r, radius=6)
     
+    t = time.time()
+    if focused:
+        # 2. Glow Ring (Effetto pulsante premium)
+        glow_alpha = int(100 + math.sin(t * 12) * 100)
+        glow_surf = pygame.Surface((r[2], r[3]), pygame.SRCALPHA)
+        pygame.draw.rect(glow_surf, (*ACCENT[:3], glow_alpha), glow_surf.get_rect(), 3, border_radius=6)
+        surf.blit(glow_surf, (r[0], r[1]))
+    
+    # 3. Bordo
+    _rect(surf, ACCENT if focused else BORDER, r, 2 if focused else 1, radius=6)
+    
+    # 4. Icona opzionale
+    text_x = r[0] + 10
+    if icon:
+        icon_sz = 18
+        iy = r[1] + (r[3] - icon_sz) // 2
+        _draw_shape_icon(surf, (r[0] + 8, iy, icon_sz, icon_sz), icon, TXT_DIM)
+        text_x += 28
+
+    # 5. Testo o Placeholder
     if not text and not focused:
-        _, th = _text_wh(hint if hint else " ", "sm")
-        # +1 pixel per compensazione ottica degli ascendenti
-        _draw_text(surf, hint, "sm", TXT_DIM, r[0]+6, r[1]+(r[3]-th)//2 + 1)
+        _, th = _text_wh(hint if hint else " ", font)
+        _draw_text(surf, hint, font, TXT_DIM, text_x, r[1] + (r[3] - th) // 2)
     else:
-        cursor = "|" if (focused and (pygame.time.get_ticks() // 500 % 2 == 0)) else ""
-        txt_s = str(text) + cursor
-        _, th = _text_wh(txt_s if txt_s else " ", "mono")
-        _draw_text(surf, txt_s, "mono", TXT_HI, r[0]+6, r[1]+(r[3]-th)//2 + 1)
+        # 6. Selezione totale (Highlights)
+        txt_s = str(text)
+        tw, th = _text_wh(txt_s, font)
+        ty = r[1] + (r[3] - th) // 2
+        
+        if all_selected and txt_s:
+            sel_w = min(tw, r[2] - (text_x - r[0]) - 10)
+            _rect(surf, (70, 90, 160), (text_x, ty, sel_w, th), radius=2)
+
+        # 7. Rendering testo
+        _draw_text(surf, txt_s, font, TXT_HI, text_x, ty, max_w=r[2] - (text_x - r[0]) - 10)
+        
+        # 8. Cursore Smooth (Alpha Interpolated)
+        if focused and not all_selected:
+            cursor_alpha = int(127 + math.sin(t * 15) * 127)
+            c_h = th - 4
+            c_surf = pygame.Surface((2, c_h), pygame.SRCALPHA)
+            c_surf.fill((*TXT_HI[:3], cursor_alpha))
+            surf.blit(c_surf, (text_x + tw + 1, ty + 2))
 
 def _scrollbar(screen, x, y, w, h, scroll, total_items, visible_items):
     """Disegna una scrollbar verticale moderna e discreta."""

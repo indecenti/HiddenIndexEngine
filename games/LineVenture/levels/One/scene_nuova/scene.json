@@ -86,17 +86,6 @@
       "height": 127
     },
     {
-      "catalog_id": "ca_teddy_bear",
-      "x": 2546,
-      "y": 1056,
-      "detection_type": "rect",
-      "layer": "objects_mid",
-      "is_goal": true,
-      "hint_delay": 40,
-      "width": 116,
-      "height": 164
-    },
-    {
       "catalog_id": "ca_seashell",
       "x": 1297,
       "y": 1891,

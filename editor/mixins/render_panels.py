@@ -164,14 +164,9 @@ class RenderPanelsMixin:
         search_r = pygame.Rect(MARGIN, SEARCH_Y, INNER_W, SEARCH_H)
         
         # 1. Barra di ricerca oggetti
-        _rect(self.screen, (35, 38, 50) if is_searching else BTN, search_r, radius=6)
-        _rect(self.screen, ACCENT if is_searching else BORDER, search_r, 1 if not is_searching else 2, radius=6)
+        _input_box(self.screen, search_r, self.catalog_search, focused=is_searching, 
+                  hint=self._TR("cat_search_placeholder"), icon="search", font="md")
         
-        # Icona lente (più grande)
-        ly = search_r.centery
-        pygame.draw.circle(self.screen, TXT_DIM, (search_r.x + 16, ly), 6, 1)
-        pygame.draw.line(self.screen, TXT_DIM, (search_r.x + 21, ly + 5), (search_r.x + 26, ly + 10), 2)
-
         if has_search_text:
             X_SZ = 24
             search_x_r = pygame.Rect(search_r.right - X_SZ - 6, search_r.centery - X_SZ // 2, X_SZ, X_SZ)
@@ -183,15 +178,6 @@ class RenderPanelsMixin:
         else:
             self._search_x_rect = None
 
-        search_txt = self.catalog_search if has_search_text else self._TR("cat_search_placeholder")
-        search_col = TXT_HI if (has_search_text or is_searching) else (140, 145, 170)
-        _draw_text(self.screen, search_txt, "md", search_col, search_r.x + 36, search_r.centery - 10, search_r.w - 60)
-        
-        if is_searching and (time.time() % 1.0 > 0.5):
-            tw, _ = _text_wh(self.catalog_search, "md")
-            cx = search_r.x + 36 + tw
-            pygame.draw.line(self.screen, TXT_HI, (cx, search_r.y + 7), (cx, search_r.y + SEARCH_H - 7), 2)
-
         # 2. Mini searchbar per filtrare le categorie (Tag)
         TAG_SEARCH_H = 28
         tag_q = getattr(self, "catalog_tag_search", "").lower()
@@ -199,10 +185,8 @@ class RenderPanelsMixin:
         has_tag_text = bool(tag_q)
         tag_search_r = pygame.Rect(MARGIN, search_r.bottom + 8, INNER_W, TAG_SEARCH_H)
         
-        _rect(self.screen, (32, 34, 45) if is_tag_searching else (28, 30, 40), tag_search_r, radius=5)
-        _rect(self.screen, ACCENT if is_tag_searching else BORDER, tag_search_r, 1, radius=5)
-        
-        _draw_text(self.screen, "#", "md", TXT_DIM, tag_search_r.x + 10, tag_search_r.centery - 10)
+        _input_box(self.screen, tag_search_r, tag_q, focused=is_tag_searching, 
+                  hint=self._TR("cat_tag_placeholder"), icon="tag", font="sm")
         
         if has_tag_text:
             X_SZ = 22
@@ -215,15 +199,7 @@ class RenderPanelsMixin:
         else:
             self._tag_search_x_rect = None
             
-        tag_disp = tag_q if has_tag_text else self._TR("cat_tag_placeholder")
-        tag_col_t = TXT_HI if (has_tag_text or is_tag_searching) else (150, 155, 185)
-        _draw_text(self.screen, tag_disp, "sm", tag_col_t, tag_search_r.x + 28, tag_search_r.centery - 9, tag_search_r.w - 50)
         self._tag_search_rect = tag_search_r
-
-        if is_tag_searching and (time.time() % 1.0 > 0.5):
-            tw2, _ = _text_wh(tag_q, "sm")
-            cx2 = tag_search_r.x + 28 + tw2
-            pygame.draw.line(self.screen, TXT_HI, (cx2, tag_search_r.y + 6), (cx2, tag_search_r.y + TAG_SEARCH_H - 6))
 
         # 2.5 Filtro Stile (Dropdown Intelligente)
         STYLE_Y = tag_search_r.bottom + 8

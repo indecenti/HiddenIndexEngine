@@ -61,7 +61,7 @@ class MusicModalMixin:
         self._music_suggestions = []
         self._music_all_library_tags = []
         
-        pygame.key.set_repeat(500, 30)
+
         
         self._music_dir = self.base_path / "engine" / "assets" / "music"
         self._music_load_catalog()
@@ -117,7 +117,7 @@ class MusicModalMixin:
         try: pygame.mixer.music.unload()
         except: pass
         self._music_playing = None
-        pygame.key.set_repeat(0, 0)
+
 
     def _music_load_durations_task(self):
         self._music_loading_durations = True

@@ -12,7 +12,7 @@ from editor.constants import (
 )
 from editor.core.io import _load_json, _save_json
 from editor.ui.draw import (
-    _txt, _draw_text, _rect, _button, _in_rect, _text_wh,
+    _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _input_box
 )
 
 
@@ -77,7 +77,7 @@ class LangModalMixin:
         self._lang_search = ""
         self._lang_search_active = False
         self._lang_filtered_keys = self._lang_keys[:]
-        pygame.key.set_repeat(500, 30) # Consente ripetizione tasti (backspace ecc)
+
 
     def _lang_save(self):
         if not self.game_path: return
@@ -107,7 +107,7 @@ class LangModalMixin:
 
         self._lang_dirty = False
         self._lang_modal = False
-        pygame.key.set_repeat(0) # Disabilita ripetizione tasti
+
         self._status("Traduzioni salvate!", OK_C, 3)
 
     def _ensure_translation_key(self, key: str, default_value: str = "") -> list:
@@ -228,7 +228,7 @@ class LangModalMixin:
         if not self._lang_sel:
             if ev.key == pygame.K_ESCAPE: 
                 self._lang_modal = False
-                pygame.key.set_repeat(0)
+
             return
 
         ki, li = self._lang_sel
@@ -242,7 +242,7 @@ class LangModalMixin:
                 self._lang_all_sel = False
             else:
                 self._lang_modal = False
-                pygame.key.set_repeat(0)
+
         
         elif ev.key == pygame.K_RETURN:
             self._lang_commit()
@@ -255,7 +255,7 @@ class LangModalMixin:
                     self._lang_cursor = len(self._lang_buf)
                 else:
                     self._lang_modal = False
-                    pygame.key.set_repeat(0)
+
             else:
                 # Navigazione nella lista filtrata
                 next_ki = min(ki + 1, len(self._lang_filtered_keys) - 1)
@@ -355,7 +355,7 @@ class LangModalMixin:
         if _in_rect((mx, my_raw), close_r):
             if self._lang_sel: self._lang_commit()
             self._lang_modal = False
-            pygame.key.set_repeat(0)
+
             return
 
         if not is_fx:
@@ -466,27 +466,10 @@ class LangModalMixin:
                 _draw_text(self.screen, lang.upper(), "sm", ACCENT if is_c else TXT_DIM, cx, ry + 16, 40)
                 
                 # Input Field
-                field_r = (cx + 50, ry + 4, dw - 70, ROW_H - 10)
-                cell_bg = (60, 60, 75) if is_c else ((50, 50, 65) if hov_c else (46, 46, 58))
-                _rect(self.screen, cell_bg, field_r, radius=4)
-                _rect(self.screen, ACCENT if is_c else BORDER, field_r, 1, radius=4)
-                
+                field_r = pygame.Rect(cx + 50, ry + 4, dw - 70, ROW_H - 10)
                 val = self._lang_buf if is_c else self._lang_cell_value(self._lang_keys[0], lang)
-                
-                # Visualizzazione cursore ed evidenziazione pro
-                if is_c:
-                    if getattr(self, "_lang_all_sel", False):
-                        tw_v, _ = _text_wh(val, "sm")
-                        _rect(self.screen, (70, 90, 160), (cx + 56, ry + 8, tw_v + 4, ROW_H - 18))
-                    
-                    cur_timer = (int(time.time() * 2) % 2 == 0)
-                    pre = val[:self._lang_cursor]
-                    post = val[self._lang_cursor:]
-                    display = pre + ("|" if (cur_timer and not self._lang_all_sel) else " ") + post
-                else:
-                    display = val
-                
-                _draw_text(self.screen, display, "sm", TXT_HI if is_c else TXT, cx + 58, ry + 16, dw - 85)
+                all_s = getattr(self, "_lang_all_sel", False) if is_c else False
+                _input_box(self.screen, field_r, val, focused=is_c, font="sm", all_selected=all_s)
         else:
             # Traduzione Globale (Tabella)
             HEADER_H = 118
@@ -497,16 +480,9 @@ class LangModalMixin:
             cy       = dy + HEADER_H
 
             # 1. BARRA DI RICERCA
-            search_r = (cx, dy + 48, dw - 20, 32)
-            search_bg = (54, 54, 68) if self._lang_search_active else (44, 44, 56)
-            _rect(self.screen, search_bg, search_r, radius=4)
-            _rect(self.screen, ACCENT if self._lang_search_active else BORDER, search_r, 1, radius=4)
-            
-            s_text = self._lang_search if self._lang_search else "Cerca tra chiavi e traduzioni..."
-            s_color = TXT if self._lang_search else TXT_DIM
-            if self._lang_search_active and (int(time.time() * 2) % 2 == 0):
-                s_text += "|"
-            _draw_text(self.screen, s_text, "sm", s_color, cx + 10, dy + 55, dw - 40)
+            search_r = pygame.Rect(cx, dy + 48, dw - 20, 32)
+            _input_box(self.screen, search_r, self._lang_search, focused=self._lang_search_active, 
+                      hint="Cerca tra chiavi e traduzioni...", icon="search", font="sm")
 
             # 2. HEADERS TABELLA
             _rect(self.screen, (52, 52, 66), (cx, cy - 22, KEY_W, 20))
@@ -538,16 +514,9 @@ class LangModalMixin:
                     _rect(self.screen, ACCENT if is_c else BORDER, (lx, ry, lang_w - 4, ROW_H - 2), 1)
                     
                     val = self._lang_buf if is_c else self._lang_cell_value(key, lang)
-                    if is_c:
-                        if getattr(self, "_lang_all_sel", False):
-                            tw_v, _ = _text_wh(val, "sm")
-                            _rect(self.screen, (70, 90, 160), (lx + 2, ry + 4, min(tw_v + 4, lang_w - 12), ROW_H - 10))
-
-                        cur_timer = (int(time.time() * 2) % 2 == 0)
-                        display = val[:self._lang_cursor] + ("|" if (cur_timer and not self._lang_all_sel) else " ") + val[self._lang_cursor:]
-                    else:
-                        display = val
-                    _draw_text(self.screen, display, "sm", TXT_HI if is_c else TXT, lx + 4, ry + 6, lang_w - 12)
+                    all_s = getattr(self, "_lang_all_sel", False) if is_c else False
+                    _input_box(self.screen, pygame.Rect(lx, ry, lang_w - 4, ROW_H - 2), val, 
+                              focused=is_c, font="sm", all_selected=all_s)
             self.screen.set_clip(None)
 
         # Footer

@@ -100,6 +100,7 @@ class LevelEditor(
         self.base_path = base_path
 
         pygame.init()
+        pygame.key.set_repeat(300, 50)
         pygame.display.set_caption(f"HiddenEngine Level Editor  [{VERSION}]")
         self.fullscreen = False
         self.screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)

@@ -27,7 +27,7 @@ from editor.core.io import (
 )
 from editor.build_system import next_build_version
 from editor.ui.draw import (
-    _txt, _draw_text, _text_wh, _rect, _button, _in_rect, _draw_shape_icon, _scrollbar
+    _txt, _draw_text, _text_wh, _rect, _button, _in_rect, _draw_shape_icon, _scrollbar, _input_box
 )
 from engine.utils import get_base_path, get_logger
 
@@ -1836,8 +1836,8 @@ if __name__ == "__main__":
         # Punto 1
         _draw_text(self.screen, self.lang_manager.get("gs_label_title", "Punto 1: Titolo / ID"), "sm", TXT_DIM, dx+20, dy+55)
         inp_r = pygame.Rect(dx+20, dy+75, dw-40, 34)
-        _rect(self.screen, (25, 27, 36), inp_r, radius=4); _rect(self.screen, OK_C, inp_r, 1, radius=4)
-        _draw_text(self.screen, self._gs_new_buf + "|", "md", TXT_HI, inp_r.x+10, inp_r.y+8)
+        placeholder = self.lang_manager.get("gs_placeholder_new", "Inserisci ID o nome...")
+        _input_box(self.screen, inp_r, self._gs_new_buf, focused=True, hint=placeholder, font="md")
 
         mx2, my2 = pygame.mouse.get_pos()
         if self._gs_new_mode in ("game", "scene"):
@@ -1978,6 +1978,9 @@ if __name__ == "__main__":
 
         # Punto 1: Localizzazione
         _draw_text(self.screen, self.lang_manager.get("gs_label_edit_title_multi", "Punto 1: Traduzioni Nome"), "sm", TXT_DIM, dx+20, dy+52)
+        import math
+        t = pygame.time.get_ticks() / 1000.0
+        
         for i, l in enumerate(self.LANGS):
             fy = dy + 75 + i*32
             is_act = (self._gs_edit_active_field == l)
@@ -1985,11 +1988,9 @@ if __name__ == "__main__":
             _draw_text(self.screen, l.upper(), "sm", lbl_c, dx+30, fy+6)
             
             f_rect = pygame.Rect(dx+120, fy, dw-140, 28)
-            _rect(self.screen, (40, 42, 55) if is_act else (20, 20, 30), f_rect, radius=4)
-            _rect(self.screen, lbl_c if is_act else BORDER, f_rect, 1 if not is_act else 2, radius=4)
-            
-            cursor = "|" if (is_act and (pygame.time.get_ticks() // 500 % 2 == 0)) else ""
-            _draw_text(self.screen, self._gs_edit_lang_bufs.get(l, "") + cursor, "md", TXT_HI, f_rect.x+10, f_rect.y+4)
+            buf = self._gs_edit_lang_bufs.get(l, "")
+            placeholder = self.lang_manager.get("gs_placeholder_edit", f"Testo per {l.upper()}...")
+            _input_box(self.screen, f_rect, buf, focused=is_act, hint=placeholder, font="md")
 
         mx2, my2 = pygame.mouse.get_pos()
         if self._gs_edit_mode in ("game", "scene"):

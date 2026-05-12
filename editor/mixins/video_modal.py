@@ -60,7 +60,7 @@ class VideoModalMixin:
         self._vid_update_filter()
         
         # Abilita ripetizione tasti
-        pygame.key.set_repeat(500, 30)
+
 
         # Autoplay se richiesto (alla fine per evitare conflitti d'ordine)
         if autoplay_path:
@@ -158,7 +158,7 @@ class VideoModalMixin:
         self._vid_editing_tags = None
         self._vid_stop_preview()
         self._vid_playing = None
-        pygame.key.set_repeat(0, 0)
+
 
     def _vid_update_filter(self):
         query = self._vid_search.lower().strip()

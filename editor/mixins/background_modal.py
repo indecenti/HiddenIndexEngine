@@ -60,7 +60,7 @@ class BackgroundModalMixin:
         self._bg_loading_thumbs = getattr(self, "_bg_loading_thumbs", False)
         
         # Abilita ripetizione tasti
-        pygame.key.set_repeat(500, 30)
+
         
         self._bg_dir = self.base_path / "engine" / "assets" / "backgrounds"
         self._bg_load_catalog()
@@ -107,7 +107,7 @@ class BackgroundModalMixin:
         self._bg_search_active = False
         self._bg_editing_name = None
         self._bg_editing_tags = None
-        pygame.key.set_repeat(0, 0) # Disabilita
+
 
     def _bg_load_thumbnails_task(self):
         """Carica le miniature con Disk Caching (PNG) per massima compatibilità."""
