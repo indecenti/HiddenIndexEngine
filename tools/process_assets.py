@@ -44,31 +44,49 @@ def process_assets(image_path, output_dir, object_names, style="real"):
         data[mask_fill, 2] = 255
         data[mask_fill, 3] = 255
     elif style == "cartoon":
-        print("Modalità Cartoon: Applicazione Chroma Key su sfondo verde...")
-        # Simile a real, ma ottimizzato per colori saturi
-        green_score = g - (r + b) / 2
-        new_alpha = np.clip(255 - (green_score * 1.5), 0, 255).astype(np.uint8)
+        print("Modalità Cartoon: Applicazione Chroma Destroyer su sfondo verde...")
+        # Alpha removal ultra-aggressiva con erosione
+        green_score = g - (r * 0.55 + b * 0.45)
         
-        # Spill suppression più aggressiva per bordi cartoon
-        spill_condition = (g > r * 0.9) & (g > b * 0.9)
-        data[:,:,1][spill_condition] = np.maximum(r[spill_condition], b[spill_condition])
-        data[:,:,3] = new_alpha
+        # 1. Rimozione Alpha Massiccia
+        new_alpha = np.clip(255 - (green_score * 5.0), 0, 255)
+        
+        # 2. Erosione Bordi (Shift-based dilation)
+        strong_green = green_score > 5
+        dilated = strong_green.copy()
+        dilated[1:, :] |= strong_green[:-1, :]
+        dilated[:-1, :] |= strong_green[1:, :]
+        dilated[:, 1:] |= strong_green[:, :-1]
+        dilated[:, :-1] |= strong_green[:, 1:]
+        new_alpha[dilated] = np.clip(new_alpha[dilated] - 50, 0, 255)
+        
+        # 3. Spill Suppression Totale
+        spill_mask = green_score > 2
+        data[spill_mask, 1] = np.minimum(data[spill_mask, 1], (np.minimum(r[spill_mask], b[spill_mask]) + 4)).astype(np.uint8)
+        data[:,:,3] = new_alpha.astype(np.uint8)
     else:
-        # Logica originale (Chroma Key o Bianco)
-        # Rileva se lo sfondo è prevalentemente verde o bianco
+        # Logica originale (Chroma Key o Bianco) migliorata
         corners = [data[0,0], data[0,-1], data[-1,0], data[-1,-1]]
         avg_corner = np.mean(corners, axis=0)
-        
         is_green = avg_corner[1] > (avg_corner[0] + avg_corner[2]) / 1.5
         
         if is_green:
-            print("Sfondo verde rilevato. Applicazione Chroma Key...")
-            green_score = g - (r + b) / 2
-            new_alpha = np.clip(255 - (green_score * 1.5), 0, 255).astype(np.uint8)
+            print("Sfondo verde rilevato. Applicazione Chroma Destroyer...")
+            green_score = g - (r * 0.5 + b * 0.5)
+            # Rimozione Alpha e Erosione semplificata
+            new_alpha = np.clip(255 - (green_score * 4.5), 0, 255)
             
-            spill_condition = (g > r) & (g > b)
-            data[:,:,1][spill_condition] = np.maximum(r[spill_condition], b[spill_condition])
-            data[:,:,3] = new_alpha
+            # Erosione
+            strong_green = green_score > 10
+            dilated = strong_green.copy()
+            dilated[1:, :] |= strong_green[:-1, :]
+            dilated[:-1, :] |= strong_green[1:, :]
+            new_alpha[dilated] = np.clip(new_alpha[dilated] - 40, 0, 255)
+            
+            # Neutralizzazione alone verde
+            spill_mask = green_score > 5
+            data[spill_mask, 1] = np.minimum(data[spill_mask, 1], (np.minimum(r[spill_mask], b[spill_mask]) + 8)).astype(np.uint8)
+            data[:,:,3] = new_alpha.astype(np.uint8)
         else:
             print("Sfondo chiaro rilevato. Applicazione rimozione bianco...")
             white_threshold = 240

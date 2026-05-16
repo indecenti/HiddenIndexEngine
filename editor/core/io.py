@@ -6,7 +6,10 @@ Nessuna dipendenza da pygame o stato dell'editor.
 """
 
 import json
+import logging
+import hashlib
 from pathlib import Path
+from typing import Optional
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -25,6 +28,26 @@ def _save_json(path: Path, data: dict) -> bool:
     try:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+        
+        # Invalida cache se salviamo una scena
+        if path.name == "scene.json":
+            p_res = path.parent.resolve()
+            p_str = str(p_res)
+            
+            # Invalida RAM
+            if str(path.parent) in _SCENE_DATA_CACHE:
+                _SCENE_DATA_CACHE.pop(str(path.parent))
+            
+            # Invalida RAM e DISCO delle miniature
+            thumb_dir = _CACHE_DIR / "thumbs"
+            for size in [(86, 48), (64, 36)]:
+                t_hash = hashlib.md5(f"{p_str}_{size[0]}x{size[1]}".encode()).hexdigest()
+                _THUMB_CACHE.pop(t_hash, None)
+                c_p = thumb_dir / f"{t_hash}.png"
+                if c_p.exists():
+                    try: c_p.unlink()
+                    except: pass
+                
         return True
     except Exception as e:
         print(f"[ERROR] _save_json failed for {path}: {e}")
@@ -60,8 +83,15 @@ def _load_effects_catalog() -> list:
     return []
 
 
+_SCENE_DATA_CACHE: dict[str, dict] = {}
+
 def _load_scene_data(scene_path: Path) -> dict:
-    """Legge scene.json dalla directory della scena. Non modifica stato editor."""
+    """Legge scene.json dalla directory della scena con caching interno."""
+    # Usiamo str(path) come chiave per evitare il costo di resolve() ad ogni chiamata
+    path_key = str(scene_path)
+    if path_key in _SCENE_DATA_CACHE:
+        return _SCENE_DATA_CACHE[path_key]
+        
     d = _load_json(scene_path / "scene.json")
     if not d:
         d = {"id": scene_path.name, "background": "background.jpg",
@@ -72,7 +102,69 @@ def _load_scene_data(scene_path: Path) -> dict:
     d.setdefault("music", [])
     d.setdefault("flashlight", False)
     d.setdefault("flashlight_radius", 150.0)
+    
+    _SCENE_DATA_CACHE[path_key] = d
     return d
+
+
+_THUMB_CACHE: dict[str, any] = {}
+_CACHE_DIR = Path(".editor_cache")
+
+def _get_scene_thumbnail(scene_path: Path, size: tuple[int, int]) -> Optional[any]:
+    """
+    Recupera una Surface di anteprima per la scena con persistenza su disco.
+    """
+    import pygame
+    path_str = str(scene_path.resolve())
+    t_hash = hashlib.md5(f"{path_str}_{size[0]}x{size[1]}".encode()).hexdigest()
+    
+    # 1. Cache in RAM (Velocissima)
+    if t_hash in _THUMB_CACHE:
+        return _THUMB_CACHE[t_hash]
+        
+    # 2. Cache su DISCO (Persistente)
+    thumb_dir = _CACHE_DIR / "thumbs"
+    thumb_dir.mkdir(parents=True, exist_ok=True)
+    cache_path = thumb_dir / f"{t_hash}.png"
+    
+    if cache_path.exists():
+        try:
+            surf = pygame.image.load(str(cache_path)).convert_alpha()
+            _THUMB_CACHE[t_hash] = surf
+            return surf
+        except: pass
+
+    # 3. Generazione (Lenta, solo la prima volta)
+    try:
+        sd = _load_scene_data(scene_path)
+        bg_file = sd.get("background", "")
+        if not bg_file: return None
+        
+        full_path = scene_path / bg_file
+        if not full_path.exists(): return None
+        
+        raw = pygame.image.load(str(full_path)).convert()
+        tw, th = size
+        iw, ih = raw.get_size()
+        scale = max(tw/iw, th/ih)
+        nw, nh = int(iw * scale), int(ih * scale)
+        
+        if iw > 2000 or ih > 2000:
+            scaled = pygame.transform.scale(raw, (nw, nh))
+        else:
+            scaled = pygame.transform.smoothscale(raw, (nw, nh))
+            
+        final = pygame.Surface(size, pygame.SRCALPHA)
+        final.blit(scaled, ((tw-nw)//2, (th-nh)//2))
+        
+        # Salva su disco per la prossima sessione
+        pygame.image.save(final, str(cache_path))
+        
+        _THUMB_CACHE[t_hash] = final
+        return final
+    except Exception as e:
+        logging.debug(f"[IO] Thumbnail generation failed for {scene_path}: {e}")
+        return None
 
 
 # ─────────────────────────────────────────────────────────────────────────────

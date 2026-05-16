@@ -1,0 +1,17 @@
+{
+  "mg_title": "LUCKY REELS",
+  "mg_description": "Spin the reels and win! Match identical symbols on the center payline to collect your prize.",
+  "credits": "CREDITS",
+  "bet": "BET",
+  "win": "WIN",
+  "spin": "SPIN!",
+  "max_bet": "MAX BET",
+  "bet_up": "+",
+  "bet_down": "-",
+  "free_spins": "FREE SPINS: {n}",
+  "jackpot": "JACKPOT!!!",
+  "game_over": "GAME OVER",
+  "press_spin": "Press SPACE or click SPIN!",
+  "win_msg": "YOU WIN {amount}!",
+  "fever_prefix": "FEVER WIN x2! "
+}

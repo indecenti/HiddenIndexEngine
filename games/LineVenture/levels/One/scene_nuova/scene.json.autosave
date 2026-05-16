@@ -28,15 +28,15 @@
     },
     {
       "catalog_id": "ca_map_folded_small",
-      "x": 988,
-      "y": 1421,
+      "x": 837,
+      "y": 1499,
       "detection_type": "circle",
       "layer": "objects_mid",
       "is_goal": true,
       "hint_delay": 20,
-      "radius": 90,
-      "width": 180,
-      "height": 180
+      "radius": 102.0,
+      "width": 247,
+      "height": 161
     },
     {
       "catalog_id": "ca_compass_brass",
@@ -53,7 +53,7 @@
     {
       "catalog_id": "ca_notebook_small",
       "x": 1666,
-      "y": 2198,
+      "y": 2196,
       "detection_type": "circle",
       "layer": "objects_mid",
       "is_goal": true,
@@ -68,7 +68,6 @@
       "y": 1964,
       "detection_type": "rect",
       "layer": "objects_mid",
-      "always_show": false,
       "is_goal": true,
       "hint_delay": 35,
       "width": 109,
@@ -81,23 +80,33 @@
       "y": 1944,
       "detection_type": "rect",
       "layer": "objects_mid",
-      "always_show": false,
       "is_goal": true,
       "hint_delay": 20,
       "width": 36,
       "height": 127
     },
     {
-      "catalog_id": "ca_teddy_bear",
-      "x": 2546,
-      "y": 1056,
+      "catalog_id": "ca_seashell",
+      "x": 1297,
+      "y": 1891,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "radius": 54.25,
+      "width": 124,
+      "height": 93
+    },
+    {
+      "catalog_id": "ca_sleeping_bag_rolled",
+      "x": 3784,
+      "y": 1787,
       "detection_type": "rect",
       "layer": "objects_mid",
-      "always_show": false,
       "is_goal": true,
-      "hint_delay": 40,
-      "width": 116,
-      "height": 164
+      "hint_delay": 30,
+      "width": 240,
+      "height": 184
     }
   ],
   "effects": [

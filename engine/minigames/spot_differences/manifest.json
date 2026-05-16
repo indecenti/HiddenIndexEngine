@@ -1,0 +1,7 @@
+{
+  "id": "spot_differences",
+  "name": "Trova le Differenze",
+  "main_class": "SpotDifferencesGame",
+  "version": "1.0.0",
+  "icon": "../../assets/objects/magnifying_glass.png"
+}

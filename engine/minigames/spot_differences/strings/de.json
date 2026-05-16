@@ -1,0 +1,8 @@
+{
+  "mg_title": "FINDE DIE UNTERSCHIEDE",
+  "mg_description": "Vergleichen Sie die beiden Bilder und finden Sie die 5 fehlenden Objekte im rechten Feld.",
+  "found": "Gefunden!",
+  "missing": "Verbleibende Unterschiede: {0}",
+  "win": "DU HAST GEWONNEN!",
+  "btn_exit": "BEENDEN"
+}

@@ -24,6 +24,8 @@ class HistoryMixin:
             self.undo_stack.pop(0)
         self.redo_stack.clear()
         self.scene_dirty = True
+        if hasattr(self, "_mark_dirty"):
+            self._mark_dirty()
 
     def _undo(self):
         if not self.undo_stack:
@@ -44,6 +46,9 @@ class HistoryMixin:
         if hasattr(self, "sel_effect_idx"):
             self.sel_effect_idx = None
             
+        if hasattr(self, "_mark_dirty"):
+            self._mark_dirty()
+            
         self._status("Undo eseguito", TXT_DIM, 1.5)
 
     def _redo(self):
@@ -63,6 +68,9 @@ class HistoryMixin:
         self.selected_indices = []
         if hasattr(self, "sel_effect_idx"):
             self.sel_effect_idx = None
+            
+        if hasattr(self, "_mark_dirty"):
+            self._mark_dirty()
             
         self._status("Redo eseguito", TXT_DIM, 1.5)
 

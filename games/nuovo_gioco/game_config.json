@@ -1,0 +1,15 @@
+{
+  "id": "nuovo_gioco",
+  "game_id": "nuovo_gioco",
+  "title_key": "game_title",
+  "version": "1.0",
+  "ui_theme": "horror",
+  "category": "desktop",
+  "levels": [],
+  "menu": {
+    "background": "assets/menu_bg.png",
+    "music": [
+      "audio/music/Indecenti - Fonte.mp3"
+    ]
+  }
+}

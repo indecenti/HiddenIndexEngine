@@ -48,6 +48,9 @@ Dopo il processamento, gli oggetti devono essere registrati in `engine/data/glob
 }
 ```
 
-## 5. Regole di Stile e Tag
-- **Coerenza**: Non mescolare oggetti con contorni colorati; i contorni devono essere sempre scuri/neri.
 - **Tassonomia**: Utilizzare rigorosamente i tag definiti in `tools/tag_taxonomy.json`. Non creare tag descrittivi dello stile (es. "disegnato"), poiché lo stile è già definito dalla proprietà `style`.
+
+## 6. Regole Tassative di Qualità
+- **Divieto Nuovi TAG**: È severamente proibito introdurre nuovi tag non presenti nella tassonomia ufficiale (`tools/tag_taxonomy.json`). Se un oggetto non ha un tag specifico, utilizzare il dominio più vicino (es. `tecnologia` per gadget futuristici).
+- **Localizzazione Obbligatoria**: Ogni asset registrato nel catalogo cartoon DEVE essere accompagnato dalle traduzioni per il suo `label_key` in tutte le 5 lingue ufficiali del motore: Italiano (IT), Inglese (EN), Francese (FR), Spagnolo (ES) e Tedesco (DE).
+- **Green Screen**: Gli asset devono essere consegnati su sfondo Pure Green (#00FF00) per garantire un'estrazione perfetta e uniforme tramite il tool di processing.

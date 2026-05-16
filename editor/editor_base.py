@@ -34,8 +34,9 @@ import math
 
 # ── Costanti e UI primitives ─────────────────────────────────────────────────
 from editor.constants import (
-    VERSION,
+    VERSION, LANGS,
     STATE_GAME_SELECT, STATE_MAIN,
+    MIN_EDITOR_WIDTH, MIN_EDITOR_HEIGHT, WIN_W, WIN_H,
     TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_LAYERS, TAB_PROPS,
     MODE_SELECT, MODE_CIRCLE, MODE_RECT, MODE_EFFECT_PLACE,
     DEFAULT_LAYERS,
@@ -46,6 +47,7 @@ from editor.ui.draw import _init_fonts, _draw_tooltip, _rect, _draw_text, _draw_
 from editor.core.io import _discover_games
 from engine.utils import setup_logging
 from engine.language_manager import LanguageManager
+from editor.core.tags import TagManager
 
 # ── Mixin ────────────────────────────────────────────────────────────────────
 from editor.mixins.viewport       import ViewportMixin
@@ -65,6 +67,8 @@ from editor.mixins.minigame_modal import MinigameModalMixin
 from editor.mixins.background_modal import BackgroundModalMixin
 from editor.mixins.video_modal import VideoModalMixin
 from editor.mixins.tag_modal import TagModalMixin
+from editor.mixins.icon_modal import IconModalMixin
+from editor.mixins.auditor    import AuditorMixin
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -89,6 +93,8 @@ class LevelEditor(
     BackgroundModalMixin,
     VideoModalMixin,
     TagModalMixin,
+    IconModalMixin,
+    AuditorMixin,
 ):
     """
     Editor di livelli HiddenEngine.
@@ -103,7 +109,12 @@ class LevelEditor(
         pygame.key.set_repeat(300, 50)
         pygame.display.set_caption(f"HiddenEngine Level Editor  [{VERSION}]")
         self.fullscreen = False
-        self.screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+        
+        # Inizializzazione con dimensioni di default, rispettando i minimi
+        start_w = max(WIN_W, MIN_EDITOR_WIDTH)
+        start_h = max(WIN_H, MIN_EDITOR_HEIGHT)
+        self.screen = pygame.display.set_mode((start_w, start_h), pygame.RESIZABLE)
+        
         try:
             import ctypes
             hwnd = pygame.display.get_wm_info().get('window')
@@ -134,9 +145,15 @@ class LevelEditor(
         self.levels:    list = []
         self.effects_catalog: list = []   # catalogo effetti visivi
 
-        # ── Localizzazione ───────────────────────────────────────────────────
+        # ── Localizzazione e Tag ─────────────────────────────────────────────
         self.lang_manager = LanguageManager()
-        self.LANGS = ["it", "en", "es", "fr", "de"]
+        self.tag_manager = TagManager(self.base_path)
+        self.tag_manager.harvest_from_all_catalogs()
+        
+        from engine.menu_theme import ThemeManager
+        self.theme_manager = ThemeManager()
+        
+        self.LANGS = list(LANGS)   # da constants.LANGS — unica fonte di verità
         
         # Carica lingua dalle impostazioni o usa default 'it'
         settings = self._load_editor_settings()
@@ -289,11 +306,16 @@ class LevelEditor(
         self._gs_del_path           = None   # Path da eliminare
         self._gs_del_name:  str     = ""     # nome da mostrare nel dialog
 
+        # Migrazione categorie (Desktop/Android)
+        self._gs_migrate_categories()
+
         # ── Image cache ──────────────────────────────────────────────────────
+        from collections import OrderedDict
         self._img_cache: dict = {}
         self._bg_cache_surf: Optional[pygame.Surface] = None
         self._bg_cache_zoom: float = 0.0
-        self._obj_draw_cache: dict = {}  # Cache per icone trasformate
+        self._obj_draw_cache = OrderedDict()  # Cache per icone trasformate (LRU)
+        self._filter_cache   = OrderedDict()  # Cache per icone filtrate (BN/Colore)
         self.active_tooltip: Optional[str] = None
 
         # ── Hitbox Registry (Editor Interaction) ─────────────────────────────
@@ -303,9 +325,14 @@ class LevelEditor(
         self._catalog_item_hitboxes = []
         self._effects_item_hitboxes = []
         self._catalog_chip_rects    = []
+        
+        # ── Dirty Canvas Cache ────────────────────────────────────────────────
+        self._canvas_cache_surf: Optional[pygame.Surface] = None
+        self._canvas_cache_dirty: bool = True
+        self._last_canvas_rect = pygame.Rect(0,0,0,0)
 
         # ── Language editor ──────────────────────────────────────────────────
-        self.LANGS          = ["it", "en", "es", "fr", "de"]
+        self.LANGS          = list(LANGS)   # da constants.LANGS
         # ── Menu State ───────────────────────────────────────────────────────
         self._active_menu: Optional[str] = None  # Nome del menu aperto (es. "File")
         self._menu_bounds: dict = {}             # pos dei pulsanti menu per hit-test
@@ -323,29 +350,44 @@ class LevelEditor(
         self._build_processes: list[subprocess.Popen] = []
         self._img_editor_init_state()
         self._init_extra_data(initial_game)
+        self._icon_modal_init()
         self._load_bubble_presets()
         self._tag_modal_active = False
         self._confirm_leave_modal = False
+        self._auditor_init()
+        self._confirm_clear = False
         self._pending_action = None  # Comando o funzione da eseguire dopo la conferma
 
     def _TR(self, key: str, *args) -> str:
         """Helper rapido per la localizzazione (engine strings)."""
         return self.lang_manager.get(key, *args)
 
+    def _mark_dirty(self):
+        """Invalida la cache del canvas per forzare un ridisegno completo."""
+        self._canvas_cache_dirty = True
+
     def _get_asset_ratio(self, cat_id: str) -> float:
+        """Restituisce l'aspect ratio (w/h) di un asset, usando la cache di sessione."""
         if cat_id in self._asset_ratios_cache:
             return self._asset_ratios_cache[cat_id]
         
-        # Cerca nel catalogo
-        cat_item = next((c for c in self.catalog if c["id"] == cat_id), None)
-        if not cat_item: return 1.0
+        # 1. Cerca nel catalogo caricato
+        cat_item = next((c for c in getattr(self, "catalog", []) if c["id"] == cat_id), None)
+        if not cat_item: 
+            return 1.0
         
+        # 2. Verifica se il ratio è già presente nei metadati (ottimizzazione futura)
+        if "aspect_ratio" in cat_item:
+            self._asset_ratios_cache[cat_id] = cat_item["aspect_ratio"]
+            return cat_item["aspect_ratio"]
+
+        # 3. Caricamento fisico (solo se necessario)
         img_rel = cat_item.get("icon", cat_item.get("image", ""))
         if not img_rel: return 1.0
         
-        ip = self.game_path / img_rel
+        # Risoluzione path (gioco -> motore)
+        ip = self.game_path / img_rel if getattr(self, "game_path", None) else Path()
         if not ip.exists():
-            # Fallback master engine (usa il path relativo completo dal catalogo)
             master_p = self.base_path / "engine" / "assets" / img_rel
             if master_p.exists():
                 ip = master_p
@@ -353,14 +395,25 @@ class LevelEditor(
                 return 1.0
         
         try:
-            # Carica info immagine (pygame.image.load è OK per il dump del ratio)
-            surf = pygame.image.load(str(ip))
-            w, h = surf.get_size()
-            ratio = w / h if h != 0 else 1.0
-            self._asset_ratios_cache[cat_id] = ratio
-            return ratio
-        except Exception:
-            return 1.0
+            # Carica solo l'header dell'immagine se possibile, o usa la cache immagini
+            # Se l'immagine è già nella cache di io_ops, la usiamo
+            from editor.constants import REF_W
+            # Usiamo una dimensione fittizia piccola per _load_img per minimizzare l'impatto
+            cached_img = self._load_img(ip, (100, 100))
+            if cached_img:
+                # Nota: _load_img restituisce una superficie scalata, 
+                # ma l'immagine ORIGINALE ha lo stesso ratio.
+                # Tuttavia, per sicurezza carichiamo l'originale una volta.
+                surf = pygame.image.load(str(ip))
+                w, h = surf.get_size()
+                ratio = w / h if h != 0 else 1.0
+                self._asset_ratios_cache[cat_id] = ratio
+                return ratio
+        except Exception as e:
+            import logging
+            logging.warning(f"[EDITOR] Errore calcolo ratio per {cat_id}: {e}")
+        
+        return 1.0
 
     def _init_extra_data(self, initial_game=None):
         # Chiamata alla fine di __init__ per pulizia
@@ -427,6 +480,35 @@ class LevelEditor(
             self._update()
             self._render()
             pygame.display.flip()
+
+    def _with_loading(self, action, *args, **kwargs):
+        """
+        Esegue un'azione (funzione o callable) mostrando l'overlay di caricamento.
+        Gestisce automaticamente il rendering preventivo e il reset del flag.
+        """
+        if not callable(action):
+            return
+            
+        self._loading = True
+        # Forza il rendering dell'overlay prima di iniziare l'operazione bloccante
+        self._render()
+        pygame.display.flip()
+        pygame.event.pump()
+        # Piccolo delay per permettere all'OS di aggiornare la finestra su Windows
+        pygame.time.delay(20)
+        
+        try:
+            return action(*args, **kwargs)
+        except Exception as e:
+            import logging
+            logging.error(f"Errore durante operazione con caricamento: {e}")
+            self._status(f"Errore: {e}", (200, 50, 50), 5)
+        finally:
+            self._loading = False
+            # Render finale per pulire l'overlay
+            self._render()
+            pygame.display.flip()
+            pygame.event.pump()
         
         # Cleanup processi pendenti
         self._cleanup_processes()
@@ -494,15 +576,20 @@ class LevelEditor(
             self._r_background_modal(w, h)
         if getattr(self, "_vid_modal", False):
             self._r_video_modal(w, h)
-        
-        # Overlay di caricamento (massima priorità)
+        if getattr(self, "_icon_modal", False):
+            self._r_icon_modal(w, h)
+        # Auditor modale (funziona sia in dashboard che in editor)
+        if getattr(self, "_auditor_active", False):
+            self._r_auditor_modal(w, h)
+
+        # Status Bar (Globale, disegnata sopra tutto)
+        self._r_status(w, h)
+
+        # Overlay di caricamento (MASSIMA priorità, disegnato SOPRA lo status)
         if self._loading:
             self._r_loading_overlay(w, h)
 
-        # Status Bar (Globale, disegnata sopra tutto tranne tooltip)
-        self._r_status(w, h)
-
-        # Tooltip finale
+        # Tooltip finale (Sopra ogni cosa, incluso l'overlay se attivo, per feedback mouse)
         if self.active_tooltip:
             _draw_tooltip(self.screen, self.active_tooltip, pygame.mouse.get_pos())
 
@@ -520,17 +607,19 @@ class LevelEditor(
 
     def _r_loading_overlay(self, w: int, h: int):
         """Disegna un overlay premium per il caricamento."""
-        # Overlay semi-trasparente scuro
-        overlay = pygame.Surface((w, h), pygame.SRCALPHA)
-        overlay.fill((15, 15, 20, 200)) # Leggermente più opaco per immediatezza
-        self.screen.blit(overlay, (0, 0))
+        # Utilizzo di una Surface di cache per l'overlay per evitare re-allocazioni costose
+        if not hasattr(self, "_loading_surf") or self._loading_surf.get_size() != (w, h):
+            self._loading_surf = pygame.Surface((w, h), pygame.SRCALPHA)
+            self._loading_surf.fill((15, 15, 20, 200))
+        
+        self.screen.blit(self._loading_surf, (0, 0))
         
         # Box centrale
-        bw, bh = 340, 120
+        bw, bh = 360, 140
         bx, by = (w - bw) // 2, (h - bh) // 2
         
-        # Ombra box
-        _rect(self.screen, (10, 10, 15, 100), (bx + 4, by + 4, bw, bh), radius=12)
+        # Ombra box (usando colore solido scuro per compatibilità draw.rect su display surface)
+        _rect(self.screen, (10, 10, 15), (bx + 4, by + 4, bw, bh), radius=12)
         # Background box
         _rect(self.screen, (40, 42, 54), (bx, by, bw, bh), radius=12)
         # Bordo accentato
@@ -538,17 +627,18 @@ class LevelEditor(
         
         # Icona animata (pulsazione semplice basata sul tempo)
         import math
-        pulse = (math.sin(time.time() * 10) + 1) / 2 # 0 to 1
-        icon_size = 40 + int(pulse * 10)
-        ix, iy = bx + 30, by + (bh - icon_size) // 2
+        t = time.time()
+        pulse = (math.sin(t * 10) + 1) / 2 # 0 to 1
+        icon_size = 44 + int(pulse * 12)
+        ix, iy = bx + 35, by + (bh - icon_size) // 2
         
         # Disegna icona FX (scintilla) come caricamento
         _draw_shape_icon(self.screen, (ix, iy, icon_size, icon_size), "fx", ACCENT)
         
         # Testo tradotto
         msg = self._TR("msg_loading")
-        _draw_text(self.screen, msg, "lg", TXT_HI, bx + 95, by + bh // 2 - 12)
-        _draw_text(self.screen, "Please wait...", "xs", (120, 120, 140), bx + 95, by + bh // 2 + 14)
+        _draw_text(self.screen, msg, "lg", TXT_HI, bx + 105, by + bh // 2 - 15)
+        _draw_text(self.screen, "Please wait...", "xs", (120, 120, 140), bx + 105, by + bh // 2 + 16)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

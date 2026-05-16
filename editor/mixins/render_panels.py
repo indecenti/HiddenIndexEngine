@@ -9,7 +9,7 @@ import time
 import pygame
 
 from editor.constants import (
-    TOP_BAR_H, STATUS_H,
+    TOP_BAR_H, STATUS_H, REF_W, REF_H,
     ACCENT, BORDER, BTN, BTN_AC, BTN_HO, PANEL,
     TXT, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C, ALWAYS_C, FX_C,
     DEFAULT_LAYERS, UI_TIPS,
@@ -92,7 +92,17 @@ class RenderPanelsMixin:
             lvl_name = self._TR(l_key) if l_key else lvl_id
             
             _draw_text(self.screen, f"{arrow} {lvl_name}", "sm", ACCENT,
-                       14, y+5, self.panel_l_w-32)
+                       14, y+5, self.panel_l_w-60)
+            
+            # Badge numero scene (Badge chirurgico sulla destra)
+            n_scenes = len(level.get("scenes", []))
+            badge_txt = str(n_scenes)
+            from editor.ui.draw import _text_wh
+            tw, th = _text_wh(badge_txt, "xs")
+            bx = row.right - tw - 10
+            br = pygame.Rect(bx, row.y + 4, tw + 6, 18)
+            _rect(self.screen, (22, 22, 28), br, radius=4)
+            _draw_text(self.screen, badge_txt, "xs", TXT_DIM, br.x + 3, br.y + 3)
             y += 28
 
             if exp:
@@ -102,22 +112,47 @@ class RenderPanelsMixin:
                     has_obj = len(sd.get("objects", [])) > 0
                     icon_c  = OK_C if (has_bg and has_obj) else (WARN_C if (has_bg or has_obj) else ERR_C)
                     is_cur  = (self.scene_path == sdir)
-                    srow    = pygame.Rect(24, y, self.panel_l_w-40, 22)
+                    # Scene row height increased to 50
+                    srow = pygame.Rect(24, y, self.panel_l_w-40, 46)
                     if is_cur:
                         _rect(self.screen, BTN_AC, srow, radius=3)
                     elif _in_rect((mx, my_raw), srow):
                         _rect(self.screen, BTN_HO, srow, radius=3)
-                    pygame.draw.circle(self.screen, icon_c, (30, y+11), 3)
+                    
+                    # --- Preview Thumbnail per l'Editor Sidebar (Chirurgica) ---
+                    from editor.core.io import _get_scene_thumbnail
+                    bg_surf = _get_scene_thumbnail(sdir, (64, 36))
+
+                    thumb_r = pygame.Rect(srow.x + 4, srow.y + (srow.h - 36)//2, 64, 36)
+                    _rect(self.screen, (20, 20, 25), thumb_r, radius=2)
+                    if bg_surf:
+                        self.screen.blit(bg_surf, thumb_r.topleft)
+                    _rect(self.screen, (100, 100, 120) if is_cur else (60, 60, 80), thumb_r, 1, radius=2)
+                    
+                    # Indicatore stato (cerchio colorato) spostato dopo la thumb
+                    pygame.draw.circle(self.screen, icon_c, (thumb_r.right + 10, y+23), 3)
                     
                     # Recupero nome reale per la scena
                     s_key = sd.get("name_key")
                     scn_name = self._TR(s_key) if s_key else sdir.name
                     
                     _draw_text(self.screen, scn_name, "sm",
-                               TXT_HI if is_cur else TXT, 44, y+3, self.panel_l_w-60)
-                    y += 24
+                               TXT_HI if is_cur else TXT, thumb_r.right + 20, y+14, self.panel_l_w-110)
+                    y += 50
 
         self.screen.set_clip(None)
+        
+        # Disegno Scrollbar (Premium)
+        total_rows = 0
+        for level in self.levels:
+            total_rows += 1 # Intestazione livello
+            if self.tree_expanded.get(level["id"], False):
+                total_rows += len(level["scenes"])
+        
+        visible_rows = (h - STATUS_H - TOP_BAR_H - 32) // 28
+        if total_rows > visible_rows:
+            _scrollbar(self.screen, self.panel_l_w - 8, TOP_BAR_H + 34, 3, h - STATUS_H - TOP_BAR_H - 40,
+                       self.tree_scroll, total_rows, visible_rows)
 
     # ── Catalog ──────────────────────────────────────────────────────────────
 
@@ -554,6 +589,13 @@ class RenderPanelsMixin:
                     _draw_text(self.screen, f"x{count}", "sm", WARN_C, r.right - 35, iy + 8)
 
         self.screen.set_clip(None)
+        
+        # Disegno Scrollbar (Premium)
+        total_items = len(effects)
+        visible_items = (h - STATUS_H - list_y_start - add_btn_h) // (item_h + 2)
+        if total_items > visible_items:
+            _scrollbar(self.screen, self.panel_l_w - 12, list_y_start, 4, h - STATUS_H - list_y_start - add_btn_h,
+                       self.effects_catalog_scroll, total_items, visible_items)
 
         # Info placeholder (no "Nuovo Effetto" button - il catalogo è fisso)
         by  = h - STATUS_H - add_btn_h + 2
@@ -695,10 +737,9 @@ class RenderPanelsMixin:
             _button(self.screen, back_r, self._TR("prop_back_to_scene"), hov_back, font="sm")
             self._set_hbox_fx("back_btn", 4, y, self.panel_r_w-8, 26)
             y += 36
-            self._r_effect_props(rx0, h, self.sel_effect_idx, y)
-            return
+            y = self._r_effect_props(rx0, h, self.sel_effect_idx, y)
 
-        if not has_fx_sel and not has_obj_sel:
+        elif not has_obj_sel:
             # ── Proprietà Scena ───────────────────────────────────────────────
             self._scene_props_hitboxes = {}
             hdr = _txt(self._TR("prop_scene_hdr"), "sm", TXT_DIM)
@@ -863,177 +904,272 @@ class RenderPanelsMixin:
             _button(self.screen, clear_scene_r, btn_label, 
                     _in_rect((mx, my_raw), clear_scene_r), danger=True, active=confirming)
             self._set_hbox_scene("clear_scene_btn", 4, y, self.panel_r_w-8, 28)
-            
-            # Fine clipping e disegno scrollbar props
-            self.screen.set_clip(None)
-            total_h = 1000 # Stima o calcola dinamicamente se possibile
-            visible_h = h - STATUS_H - list_y_start
-            _scrollbar(self.screen, rx0 + self.panel_r_w - 6, list_y_start, 4, visible_h,
-                       self.prop_scroll, total_h, visible_h)
-            return
-
-        # ── Proprietà Oggetto ─────────────────────────────────────────────────
-        self._obj_props_hitboxes = {}
-        obj    = self.scene_data["objects"][self.selected_idx]
-        cat_id = obj.get("catalog_id", "?")
-        cat_e  = next((c for c in self.catalog if c["id"] == cat_id), None)
-        mx, my_raw = pygame.mouse.get_pos()
-
-        # Pulsante "Torna alla Scena"
-        back_r = pygame.Rect(rx0+4, y, self.panel_r_w-8, 26)
-        hov_back = _in_rect((mx, my_raw), back_r)
-        _button(self.screen, back_r, self._TR("prop_back_to_scene"), hov_back, font="sm")
-        self._set_hbox_obj("back_btn", 4, y, self.panel_r_w-8, 26)
-        y += 40
-
-        # Intestazione e Icona
-        icon_drawn = False
-        if cat_e and self.game_path:
-            ic = self._load_img(self.game_path / cat_e.get("icon", ""), (38, 38))
-            if ic:
-                self.screen.blit(ic, (rx0+12, y))
-                icon_drawn = True
-        
-        _draw_text(self.screen, cat_id.upper(), "md", TXT_HI, rx0+(55 if icon_drawn else 12), y+10, self.panel_r_w-70)
-        y += 54
-        pygame.draw.line(self.screen, BORDER, (rx0+8, y), (rx0+self.panel_r_w-8, y))
-        y += 16
-
-        # Layer di appartenenza
-        lyr_id = obj.get("layer", "objects_mid")
-        lyr_lbl = next((l["label"] for l in DEFAULT_LAYERS if l["id"] == lyr_id), lyr_id)
-        _draw_text(self.screen, self._TR("prop_layer_label"), "sm", TXT_DIM, rx0+12, y)
-        lsv = _txt(lyr_lbl, "sm", layer_color(lyr_id))
-        self.screen.blit(lsv, (rx0 + self.panel_r_w - lsv.get_width() - 16, y))
-        y += 24
-        
-        # Coordinate e Dimensioni
-        dt = obj.get("detection_type", "circle")
-        fields = [(self._TR("prop_coord_x"), round(obj.get("x", 0))), (self._TR("prop_coord_y"), round(obj.get("y", 0)))]
-        if dt == "circle":
-            fields.append((self._TR("prop_radius"), round(obj.get("radius", 30))))
+            y += 34
         else:
-            fields.append((self._TR("prop_width"), round(obj.get("width", 60))))
-            fields.append((self._TR("prop_height"), round(obj.get("height", 60))))
-        
-        for lbl, val in fields:
-            _draw_text(self.screen, lbl, "sm", TXT_DIM, rx0+12, y)
-            sv = _txt(str(val), "mono", TXT_HI)
-            self.screen.blit(sv, (rx0 + self.panel_r_w - sv.get_width() - 16, y))
-            y += 24
-        
-        y += 12
-        pygame.draw.line(self.screen, BORDER, (rx0+12, y), (rx0+self.panel_r_w-12, y))
-        y += 16
-
-        # Sezione Filtri (Grayscale)
-        gs_active = obj.get("grayscale", False)
-        if gs_active:
-            gs_f = obj.get("grayscale_factor", 1.0)
-            _draw_text(self.screen, self._TR("prop_bw_intensity"), "sm", TXT_DIM, rx0+12, y)
-            y += 28
+            # ── Proprietà Oggetto ─────────────────────────────────────────────────
+            self._obj_props_hitboxes = {}
             
-            box_w = 60
-            box_r = pygame.Rect(rx0+12, y, box_w, 22)
-            is_f = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, 'grayscale_factor'))
-            _input_box(self.screen, box_r, self._prop_buf if is_f else str(int(gs_f*100)), is_f)
-            self._set_hbox_obj("gs_box", 12, y, box_w, 22)
+            # Gestione selezione multipla
+            sel_idxs = self.selected_indices if len(self.selected_indices) > 1 else [self.selected_idx]
+            objs_sel = [self.scene_data["objects"][i] for i in sel_idxs if i < len(self.scene_data["objects"])]
+            if not objs_sel: return
             
-            sl_x, sl_w = rx0 + 12 + box_w + 10, self.panel_r_w - (box_w + 36)
-            sl_rect = (sl_x, y+1, sl_w, 20)
-            _slider(self.screen, sl_rect, gs_f, 0, 1, color=ACCENT)
-            self._set_hbox_obj("gs_slider", 12 + box_w + 10, y+1, sl_w, 20)
-            y += 42
+            is_multi = len(objs_sel) > 1
+            main_obj = objs_sel[0]
+            obj = main_obj # Compatibilità con codice esistente
+            mx, my_raw = pygame.mouse.get_pos()
 
-        # Logica Oggetto (Fisso/Goal/Hint)
-        is_auto = self.scene_data.get("auto_random_finds", False)
-        
-        # 1. Sempre Visibile (Fisso) - Solo se auto_random è ON
-        if is_auto:
-            is_fix = obj.get("always_show", False)
-            btn_r = pygame.Rect(rx0+8, y, self.panel_r_w-16, 28)
-            hov = _in_rect((mx, my_raw), btn_r)
-            bg_c = (70, 55, 30) if is_fix else (40, 42, 50)
-            _rect(self.screen, bg_c, btn_r, radius=5)
-            _rect(self.screen, (ALWAYS_C if is_fix else BORDER), btn_r, 2 if hov else 1, radius=5)
-            _draw_text(self.screen, self._TR("prop_fixed_goal"), "sm", ALWAYS_C if is_fix else TXT_HI, rx0+20, y+6)
-            self._set_hbox_obj("always_btn", 8, y, self.panel_r_w-16, 28)
+            # Pulsante "Torna alla Scena"
+            back_r = pygame.Rect(rx0+4, y, self.panel_r_w-8, 26)
+            hov_back = _in_rect((mx, my_raw), back_r)
+            _button(self.screen, back_r, self._TR("prop_back_to_scene"), hov_back, font="sm")
+            self._set_hbox_obj("back_btn", 4, y, self.panel_r_w-8, 26)
+            y += 40
+
+            # Intestazione e Icona
+            icon_drawn = False
+            if not is_multi:
+                cat_id = main_obj.get("catalog_id", "?")
+                cat_e  = next((c for c in self.catalog if c["id"] == cat_id), None)
+                if cat_e and self.game_path:
+                    ic = self._load_img(self.game_path / cat_e.get("icon", ""), (38, 38))
+                    if ic:
+                        self.screen.blit(ic, (rx0+12, y))
+                        icon_drawn = True
+                _draw_text(self.screen, cat_id.upper(), "md", TXT_HI, rx0+(55 if icon_drawn else 12), y+10, self.panel_r_w-70)
+            else:
+                _draw_text(self.screen, self._TR("prop_multi_selection").format(len(objs_sel)), "md", ACCENT, rx0+12, y+10)
+            
+            y += 54
+            pygame.draw.line(self.screen, BORDER, (rx0+8, y), (rx0+self.panel_r_w-8, y))
+            y += 12
+
+            # Posizione e Scala
+            _draw_text(self.screen, self._TR("prop_transform_hdr"), "sm", ACCENT, rx0+12, y); y += 26
+            
+            def _prop_row_obj(label, key, min_val, max_val, fmt="{:.0f}"):
+                nonlocal y
+                _draw_text(self.screen, label, "sm", TXT_DIM, rx0+12, y)
+                
+                # Valore Misto?
+                raw_vals = [o.get(key, 0) for o in objs_sel]
+                is_mixed = any(v != raw_vals[0] for v in raw_vals)
+                val = raw_vals[0]
+                
+                box_w = 60
+                # In editing usiamo sempre l'indice primario (quello mostrato)
+                is_f = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, key))
+                box_r = pygame.Rect(rx0 + 12, y + 20, box_w, 22)
+                
+                display_txt = self._prop_buf if is_f else ("---" if is_mixed else fmt.format(val))
+                _input_box(self.screen, box_r, display_txt, is_f)
+                self._set_hbox_obj(f"box_{key}", 12, y + 20, box_w, 22)
+                
+                slider_x = rx0 + 12 + box_w + 10
+                slider_w = self.panel_r_w - (box_w + 24 + 12)
+                slider_rect = (slider_x, y + 21, slider_w, 20)
+                # Slider disabilitato visivamente se mixed? No, permettiamo di trascinare per unificare
+                _slider(self.screen, slider_rect, 0 if is_mixed else val, min_val, max_val)
+                self._set_hbox_obj(f"slider_{key}", 12 + box_w + 10, y + 21, slider_w, 20)
+                y += 46
+
+            _prop_row_obj(self._TR("prop_pos_x"), "x", -REF_W, REF_W*2)
+            _prop_row_obj(self._TR("prop_pos_y"), "y", -REF_H, REF_H*2)
+            _prop_row_obj(self._TR("prop_scale"), "scale", 0.05, 5.0, "{:.2f}")
+            _prop_row_obj(self._TR("prop_rotation"), "rotation", 0, 360)
+            _prop_row_obj(self._TR("prop_alpha"), "alpha", 0, 255)
+
+            # Opzioni Visive
+            pygame.draw.line(self.screen, BORDER, (rx0 + 12, y), (rx0+self.panel_r_w - 12, y))
+            y += 16
+            _draw_text(self.screen, self._TR("prop_visual_hdr"), "sm", ACCENT, rx0+12, y); y += 26
+            
+            # Flip H/V
+            def _get_mixed_bool(key):
+                vals = [o.get(key, False) for o in objs_sel]
+                if all(v == vals[0] for v in vals): return vals[0], False
+                return False, True # Misto (mostriamo OFF ma con feedback visivo)
+
+            fh, fh_mixed = _get_mixed_bool("flip_x")
+            fv, fv_mixed = _get_mixed_bool("flip_y")
+            
+            btn_fh = pygame.Rect(rx0+12, y, (self.panel_r_w-30)//2, 26)
+            btn_fv = pygame.Rect(rx0+12+(self.panel_r_w-30)//2+6, y, (self.panel_r_w-30)//2, 26)
+            
+            lbl_fh = "FLIP H" if not fh_mixed else "H (MIX)"
+            lbl_fv = "FLIP V" if not fv_mixed else "V (MIX)"
+            
+            _button(self.screen, btn_fh, lbl_fh, _in_rect((mx, my_raw), btn_fh), active=fh)
+            _button(self.screen, btn_fv, lbl_fv, _in_rect((mx, my_raw), btn_fv), active=fv)
+            self._set_hbox_obj("flip_h", 12, y, btn_fh.w, 26)
+            self._set_hbox_obj("flip_v", 12+btn_fh.w+6, y, btn_fv.w, 26)
             y += 36
 
-        # 3. Goal Toggle
-        if not is_auto:
-            is_goal = obj.get("is_goal", True)
-            btn_g = pygame.Rect(rx0+8, y, self.panel_r_w-16, 28)
-            hov_g = _in_rect((mx, my_raw), btn_g)
-            bg_g = (30, 55, 40) if is_goal else (55, 35, 35)
-            _rect(self.screen, bg_g, btn_g, radius=5)
-            _rect(self.screen, (OK_C if is_goal else ERR_C), btn_g, 2 if hov_g else 1, radius=5)
-            g_lbl = self._TR("prop_goal_find") if is_goal else self._TR("prop_goal_decor")
-            _draw_text(self.screen, g_lbl, "sm", TXT_HI, rx0+20, y+6)
-            self._set_hbox_obj("goal_btn", 8, y, self.panel_r_w-16, 28)
-            y += 46
+            # Filtri (BN, Tint)
+            gs_vals = [o.get("grayscale", False) for o in objs_sel]
+            gs_mixed = any(v != gs_vals[0] for v in gs_vals)
+            gs = gs_vals[0]
+            
+            btn_gs = pygame.Rect(rx0+12, y, self.panel_r_w-24, 26)
+            lbl_gs = self._TR("prop_grayscale") if not gs_mixed else f"{self._TR('prop_grayscale')} (MIX)"
+            _button(self.screen, btn_gs, lbl_gs, _in_rect((mx, my_raw), btn_gs), active=gs)
+            self._set_hbox_obj("grayscale", 12, y, self.panel_r_w-24, 26)
+            y += 34
 
-        # --- MINIGAME TRIGGER ---
-        pygame.draw.line(self.screen, BORDER, (rx0 + 12, y), (rx0+self.panel_r_w - 12, y))
-        y += 16
-        _draw_text(self.screen, self._TR("prop_minigame_hdr"), "sm", ACCENT, rx0+12, y); y += 22
-        
-        m_trigger = obj.get("minigame_trigger")
-        btn_m = pygame.Rect(rx0+8, y, self.panel_r_w-16, 28)
-        hov_m = _in_rect((mx, my_raw), btn_m)
-        
-        bg_m = (30, 45, 60) if m_trigger else BTN
-        _rect(self.screen, bg_m, btn_m, radius=5)
-        _rect(self.screen, (ACCENT if m_trigger else BORDER), btn_m, 2 if hov_m else 1, radius=5)
-        
-        m_lbl = self._TR("prop_minigame_label").format(m_trigger['minigame_id'].upper()) if m_trigger else self._TR("prop_no_minigame")
-        _draw_text(self.screen, m_lbl, "sm", TXT_HI if m_trigger else TXT_DIM, rx0+20, y+6)
-        self._set_hbox_obj("minigame_btn", 8, y, self.panel_r_w-16, 28)
-        y += 34
-        
-        if m_trigger:
-            clr_m_r = pygame.Rect(rx0+8, y, self.panel_r_w-16, 26)
-            if _button(self.screen, clr_m_r, self._TR("prop_btn_remove_trigger"), _in_rect((mx, my_raw), clr_m_r), danger=True):
-                pass
-            self._set_hbox_obj("minigame_clear_btn", 8, y, self.panel_r_w-16, 26)
-            y += 32
+            _draw_text(self.screen, self._TR("prop_tint_color"), "sm", TXT_DIM, rx0+12, y)
+            tint_vals = [tuple(o.get("color_filter", (255, 255, 255))) for o in objs_sel]
+            tint_mixed = any(v != tint_vals[0] for v in tint_vals)
+            tint = tint_vals[0]
+            
+            pick_r = pygame.Rect(rx0 + self.panel_r_w - 76, y-1, 60, 20)
+            if tint_mixed:
+                _rect(self.screen, (60, 60, 65), pick_r, radius=4)
+                _draw_text(self.screen, "MIX", "xs", TXT_DIM, pick_r.x+18, pick_r.y+4)
+            elif tint != (255, 255, 255):
+                pygame.draw.rect(self.screen, tint, pick_r, border_radius=4)
+            else:
+                _rect(self.screen, BTN, pick_r, radius=4)
+                _draw_text(self.screen, "NONE", "xs", TXT_DIM, pick_r.x+14, pick_r.y+4)
+            
+            pygame.draw.rect(self.screen, BORDER, pick_r, 1, border_radius=4)
+            self._set_hbox_obj("tint_color", self.panel_r_w - 76, y-1, 60, 20)
+            y += 36
 
-        y += 10
-        pygame.draw.line(self.screen, BORDER, (rx0 + 12, y), (rx0+self.panel_r_w - 12, y))
-        y += 16
+            # Gameplay / Layer
+            pygame.draw.line(self.screen, BORDER, (rx0 + 12, y), (rx0+self.panel_r_w - 12, y))
+            y += 16
+            _draw_text(self.screen, self._TR("prop_gameplay_hdr"), "sm", ACCENT, rx0+12, y); y += 26
+            
+            # Layer Dropdown
+            _draw_text(self.screen, self._TR("prop_layer"), "sm", TXT_DIM, rx0+12, y)
+            lyr_vals = [o.get("layer", "objects_mid") for o in objs_sel]
+            lyr_mixed = any(v != lyr_vals[0] for v in lyr_vals)
+            lyr = lyr_vals[0]
+            
+            l_rect = pygame.Rect(rx0 + 80, y-3, self.panel_r_w - 92, 22)
+            lbl_lyr = lyr.replace("objects_","").upper() if not lyr_mixed else "---"
+            _button(self.screen, l_rect, lbl_lyr, False, font="sm")
+            self._set_hbox_obj("layer_sel", 80, y-3, l_rect.w, 22)
+            y += 34
 
-        # Azioni Finali (Duplica / Elimina)
-        half = (self.panel_r_w - 24) // 2
-        dup_r = pygame.Rect(rx0 + 12, y, half, 30)
-        del_r = pygame.Rect(rx0 + 12 + half + 6, y, half, 30)
-        
-        hov_dup = _in_rect((mx, my_raw), dup_r)
-        hov_del = _in_rect((mx, my_raw), del_r)
-        
-        _button(self.screen, dup_r, self._TR("prop_btn_duplicate"), hov_dup)
-        _button(self.screen, del_r, self._TR("prop_btn_delete"), hov_del, danger=True)
-        
-        self._set_hbox_obj("dup_btn", 12, y, half, 30)
-        self._set_hbox_obj("del_btn", 12 + half + 6, y, half, 30)
-        y += 44
+            # Logica Gameplay (Fisso / Goal)
+            is_auto = self.scene_data.get("auto_random_finds", False)
+            if is_auto:
+                is_fix_vals = [o.get("always_show", False) for o in objs_sel]
+                is_fix_mixed = any(v != is_fix_vals[0] for v in is_fix_vals)
+                is_fix = is_fix_vals[0]
+                
+                btn_r = pygame.Rect(rx0+8, y, self.panel_r_w-16, 28)
+                hov = _in_rect((mx, my_raw), btn_r)
+                bg_c = (70, 55, 30) if is_fix else (40, 42, 50)
+                _rect(self.screen, bg_c, btn_r, radius=5)
+                _rect(self.screen, (ALWAYS_C if is_fix else BORDER), btn_r, 2 if hov else 1, radius=5)
+                
+                lbl_fix = self._TR("prop_fixed_goal") if not is_fix_mixed else f"{self._TR('prop_fixed_goal')} (MIX)"
+                _draw_text(self.screen, lbl_fix, "sm", ALWAYS_C if is_fix else TXT_HI, rx0+20, y+6)
+                self._set_hbox_obj("always_btn", 8, y, self.panel_r_w-16, 28)
+                y += 36
+            else:
+                is_goal_vals = [o.get("is_goal", True) for o in objs_sel]
+                is_goal_mixed = any(v != is_goal_vals[0] for v in is_goal_vals)
+                is_goal = is_goal_vals[0]
+                
+                btn_g = pygame.Rect(rx0+8, y, self.panel_r_w-16, 28)
+                hov_g = _in_rect((mx, my_raw), btn_g)
+                bg_g = (30, 55, 40) if is_goal else (55, 35, 35)
+                _rect(self.screen, bg_g, btn_g, radius=5)
+                _rect(self.screen, (OK_C if is_goal else ERR_C), btn_g, 2 if hov_g else 1, radius=5)
+                
+                g_lbl = self._TR("prop_goal_find") if is_goal else self._TR("prop_goal_decor")
+                if is_goal_mixed: g_lbl += " (MIX)"
+                _draw_text(self.screen, g_lbl, "sm", TXT_HI, rx0+20, y+6)
+                self._set_hbox_obj("goal_btn", 8, y, self.panel_r_w-16, 28)
+                y += 46
 
-        # Scorciatoie veloci
-        y += 8
-        s_keys = [
-            ("R", self._TR("shortcut_rotate")), ("Shift+R", self._TR("shortcut_rotate_ccw")),
-            ("H / V", self._TR("shortcut_flip")), ("Ctrl+1-4", self._TR("shortcut_move_layer"))
-        ]
-        for k, a in s_keys:
-            _draw_text(self.screen, f"{k}:", "xs", (120, 125, 140), rx0+12, y)
-            _draw_text(self.screen, a, "xs", TXT_DIM, rx0+80, y)
+            # Trigger Minigioco (Solo se non multi o se tutti uguali)
+            m_trigger_vals = [o.get("minigame_trigger") for o in objs_sel]
+            m_mixed = any(v != m_trigger_vals[0] for v in m_trigger_vals)
+            m_trigger = m_trigger_vals[0]
+            
+            btn_m = pygame.Rect(rx0+8, y, self.panel_r_w-16, 28)
+            hov_m = _in_rect((mx, my_raw), btn_m)
+            
+            bg_m = (30, 45, 60) if m_trigger else BTN
+            _rect(self.screen, bg_m, btn_m, radius=5)
+            _rect(self.screen, (ACCENT if m_trigger else BORDER), btn_m, 2 if hov_m else 1, radius=5)
+            
+            if m_mixed:
+                m_lbl = f"{self._TR('prop_no_minigame')} (MIX)"
+            else:
+                m_lbl = self._TR("prop_minigame_label").format(m_trigger['minigame_id'].upper()) if m_trigger else self._TR("prop_no_minigame")
+            
+            _draw_text(self.screen, m_lbl, "sm", TXT_HI if (m_trigger and not m_mixed) else TXT_DIM, rx0+20, y+6)
+            self._set_hbox_obj("minigame_btn", 8, y, self.panel_r_w-16, 28)
+            y += 34
+            
+            # Selettore Livelli specifico per Spot the Differences
+            if m_trigger and m_trigger.get("minigame_id") == "spot_differences" and not m_mixed:
+                y += 2
+                _draw_text(self.screen, "NUMERO LIVELLI (1-15):", "xs", ACCENT, rx0+12, y)
+                y += 18
+                max_l = int(m_trigger.get("max_levels", 5))
+                
+                # Input box
+                box_l_r = pygame.Rect(rx0+12, y, 50, 22)
+                is_f_l = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, 'mg_max_levels'))
+                _input_box(self.screen, box_l_r, self._prop_buf if is_f_l else str(max_l), is_f_l)
+                self._set_hbox_obj("mg_levels_box", 12, y, 50, 22)
+                
+                # Slider
+                slider_l_r = pygame.Rect(rx0+70, y+1, self.panel_r_w-82, 20)
+                _slider(self.screen, slider_l_r, max_l, 1, 15)
+                self._set_hbox_obj("mg_levels_slider", 70, y+1, self.panel_r_w-82, 20)
+                y += 32
+            
+            if m_trigger:
+                clr_m_r = pygame.Rect(rx0+8, y, self.panel_r_w-16, 26)
+                if _button(self.screen, clr_m_r, self._TR("prop_btn_remove_trigger"), _in_rect((mx, my_raw), clr_m_r), danger=True):
+                    pass
+                self._set_hbox_obj("minigame_clear_btn", 8, y, self.panel_r_w-16, 26)
+                y += 32
+
+            y += 10
+            pygame.draw.line(self.screen, BORDER, (rx0 + 12, y), (rx0+self.panel_r_w - 12, y))
             y += 16
 
-        # Fine clipping e disegno scrollbar props
+            # Azioni Finali (Duplica / Elimina)
+            half = (self.panel_r_w - 24) // 2
+            dup_r = pygame.Rect(rx0 + 12, y, half, 30)
+            del_r = pygame.Rect(rx0 + 12 + half + 6, y, half, 30)
+            
+            hov_dup = _in_rect((mx, my_raw), dup_r)
+            hov_del = _in_rect((mx, my_raw), del_r)
+            
+            _button(self.screen, dup_r, self._TR("prop_btn_duplicate"), hov_dup)
+            _button(self.screen, del_r, self._TR("prop_btn_delete"), hov_del, danger=True)
+            
+            self._set_hbox_obj("dup_btn", 12, y, half, 30)
+            self._set_hbox_obj("del_btn", 12 + half + 6, y, half, 30)
+            y += 44
+
+            # Scorciatoie veloci
+            y += 8
+            s_keys = [
+                ("R", self._TR("shortcut_rotate")), ("Shift+R", self._TR("shortcut_rotate_ccw")),
+                ("H / V", self._TR("shortcut_flip")), ("Ctrl+1-4", self._TR("shortcut_move_layer"))
+            ]
+            for k, a in s_keys:
+                _draw_text(self.screen, f"{k}:", "xs", (120, 125, 140), rx0+12, y)
+                _draw_text(self.screen, a, "xs", TXT_DIM, rx0+80, y)
+                y += 16
+
+        # Fine clipping e disegno scrollbar props (Centralizzato)
         self.screen.set_clip(None)
         total_h = y + self.prop_scroll - list_y_start + 40
         visible_h = h - STATUS_H - list_y_start
-        _scrollbar(self.screen, rx0 + self.panel_r_w - 6, list_y_start, 4, visible_h,
-                   self.prop_scroll, total_h, visible_h)
+        if total_h > visible_h:
+            _scrollbar(self.screen, rx0 + self.panel_r_w - 6, list_y_start, 4, visible_h,
+                       self.prop_scroll, total_h, visible_h)
         return
 
     # ── Effect Props ──────────────────────────────────────────────────────────
@@ -1260,10 +1396,4 @@ class RenderPanelsMixin:
         self._set_hbox_fx("dup_btn", 12, y, half, 30)
         self._set_hbox_fx("del_btn", 12 + half + 6, y, half, 30)
         y += 44
-        
-        # Fine clipping e disegno scrollbar props
-        self.screen.set_clip(None)
-        total_h = y + self.prop_scroll - list_y_start + 40
-        visible_h = h - STATUS_H - list_y_start
-        _scrollbar(self.screen, rx0 + self.panel_r_w - 6, list_y_start, 4, visible_h,
-                   self.prop_scroll, total_h, visible_h)
+        return y

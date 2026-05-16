@@ -88,6 +88,8 @@ class RenderTopbarMixin:
                 (l.get("menu_save_scene", "Salva Scena"), "file_save_scene"),
                 (l.get("menu_save_as", "Salva con nome..."), "file_save_as"),
                 None,
+                (l.get("menu_auditor", "Auditor Progetto..."), "file_auditor"),
+                None,
                 (l.get("menu_exit_to_gs", "Torna al Selettore"), "file_exit_to_gs"),
                 (l.get("menu_quit", "Esci"), "file_quit"),
             ]

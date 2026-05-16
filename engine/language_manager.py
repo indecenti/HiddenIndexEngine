@@ -116,16 +116,14 @@ class LanguageManager:
                              # Trovata traduzione reale nell'engine (es: Cristallo Abissale)
                              return self._engine_strings[key]
                 return val
-            else:
-                log.debug("[i18n] Chiave '%s' trovata nel GIOCO ma è VUOTA o solo spazi.", key)
+            # else: skip silent
             
         # 2. Ricerca nel pool dell'engine (default)
         if key in self._engine_strings:
             val = self._engine_strings[key]
             if val and val.strip():
                 return val
-            else:
-                log.debug("[i18n] Chiave '%s' trovata nell'ENGINE ma è VUOTA o solo spazi.", key)
+            # else: skip silent
             
         # 2. Esclusione nomi propri o chiavi invalide
         if not key:

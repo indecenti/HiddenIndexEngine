@@ -1,0 +1,8 @@
+{
+  "mg_title": "ENCUENTRA LE DIFERENCIAS",
+  "mg_description": "Compara le due immagini e trova i 5 oggetti mancanti nel pannello di destra.",
+  "found": "¡Encontrado!",
+  "missing": "Diferencias restantes: {0}",
+  "win": "¡HAS GANADO!",
+  "btn_exit": "SALIR"
+}

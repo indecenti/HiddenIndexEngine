@@ -11,6 +11,7 @@ Gestisce:
 - Flag DEBUG per Developer Mode
 """
 
+import os
 import sys
 import math
 import logging
@@ -26,11 +27,23 @@ DEBUG: bool = not getattr(sys, "frozen", False)
 
 
 # ---------------------------------------------------------------------------
+# Runtime detection
+# ---------------------------------------------------------------------------
+
+def is_android_runtime() -> bool:
+    # python-for-android imposta queste env vars all'avvio dell'app
+    return 'ANDROID_ARGUMENT' in os.environ or 'P4A_BOOTSTRAP' in os.environ
+
+
+# ---------------------------------------------------------------------------
 # Path management
 # ---------------------------------------------------------------------------
 
 def get_base_path() -> Path:
-    """Path base corretto per sviluppo ed EXE PyInstaller."""
+    """Path base corretto per sviluppo, EXE PyInstaller e APK Android."""
+    if is_android_runtime():
+        # p4a unpacka i file dell'app dentro ANDROID_PRIVATE/app
+        return Path(os.environ.get('ANDROID_PRIVATE', '/data/data')) / 'app'
     if getattr(sys, 'frozen', False):
         return Path(sys.executable).parent
     # Risale alla root partendo da questo file (modifica parents[N] in base alla profondità)
@@ -60,16 +73,20 @@ def get_resource_path(*parts: str) -> Path:
 def get_writable_path(*parts: str) -> Path:
     """
     Restituisce il path per file che devono essere scritti (salvataggi, config utente, log).
-    I salvataggi vanno in get_base_path() / "saves".
+    Desktop: get_base_path() / "saves".
+    Android: ANDROID_PRIVATE / "saves" (internal storage privato app, no permessi runtime).
     La cartella viene creata automaticamente se non esiste.
     """
-    base = get_base_path() / "saves"
+    if is_android_runtime():
+        base = Path(os.environ['ANDROID_PRIVATE']) / "saves"
+    else:
+        base = get_base_path() / "saves"
     base.mkdir(parents=True, exist_ok=True)
-    
+
     path = base
     for p in parts:
         path = path / p
-        
+
     if path.parent != base:
         path.parent.mkdir(parents=True, exist_ok=True)
     return path
@@ -109,6 +126,22 @@ def get_logger(name: str) -> logging.Logger:
 # Costante: dimensione minima del side del dest per attivare il warp
 _WARP_MIN_SIZE: int = 4
 
+# Detection di numpy/scipy una volta sola a livello modulo.
+# Su Android (p4a) scipy non è cross-compilato, quindi `warp_surface` fa
+# fallback (ritorna la surface originale senza warp prospettico) invece di
+# crashare. Su desktop l'import normale ha successo.
+# Senza questa cache, `warp_surface` faceva try/except ad ogni chiamata —
+# overhead nullo su desktop, ma su Android (dove il caso "manca" si verifica
+# ogni frame durante il rendering scene) era un costo evitabile.
+try:
+    import numpy as _np_module  # noqa: F401
+    from scipy.ndimage import map_coordinates as _scipy_map_coordinates  # noqa: F401
+    _HAS_WARP_DEPS = True
+except ImportError:
+    _np_module = None  # type: ignore
+    _scipy_map_coordinates = None  # type: ignore
+    _HAS_WARP_DEPS = False
+
 
 def warp_surface(surface: pygame.Surface, target_quad: list[tuple[float, float]]) -> pygame.Surface:
     """
@@ -128,8 +161,14 @@ def warp_surface(surface: pygame.Surface, target_quad: list[tuple[float, float]]
       - Newton senza clamp aggressivo a [0,1]: permette di identificare i pixel
         fuori dal quad e azzera il loro alpha invece di campionare il bordo sorgente.
     """
-    import numpy as np
-    from scipy.ndimage import map_coordinates
+    # Fast-path Android (o ambiente senza scipy): nessun warp possibile.
+    # Decisione fatta una volta sola a livello modulo (vedi _HAS_WARP_DEPS).
+    if not _HAS_WARP_DEPS:
+        return surface
+
+    # Alias locali per leggibilità (codice originale usa np / map_coordinates).
+    np = _np_module
+    map_coordinates = _scipy_map_coordinates
 
     try:
         src_w, src_h = surface.get_size()
@@ -273,7 +312,13 @@ def apply_grayscale(surface: pygame.Surface, factor: float = 1.0) -> pygame.Surf
     Applica un filtro bianco e nero preservando Alpha e Colorkey in modo robusto.
     """
     if factor <= 0.001: return surface.copy()
-    import numpy as np
+    # numpy è sempre presente (in requirements buildozer.spec e in desktop)
+    # ma usiamo l'alias module-level già importato per evitare overhead di
+    # import re-binding ad ogni chiamata (chiamata in hot path di rendering).
+    np = _np_module
+    if np is None:
+        # Edge case: ambiente strano senza numpy. Ritorna copia senza filtro.
+        return surface.copy()
     factor = max(0.0, min(1.0, factor))
     
     # 1. Prepariamo la superficie di destinazione come copia dell'originale

@@ -51,11 +51,19 @@ class MinigameManager:
         # Ricalcola la posizione del tasto pausa per la nuova risoluzione/scala
         self._calculate_pause_rect()
 
-    def start_minigame(self, minigame_id: str, on_complete=None) -> bool:
-        """Carica e avvia un minigioco per ID."""
+    def start_minigame(self, minigame_id: str, on_complete=None,
+                       params: dict = None) -> bool:
+        """Carica e avvia un minigioco per ID.
+
+        Args:
+            minigame_id: ID del minigioco da avviare.
+            on_complete: Callback invocato al termine con il dict risultato.
+            params: Parametri custom dal minigame_trigger (es. max_levels).
+        """
         log.info(f"Avvio minigioco: {minigame_id}")
         self._on_complete_callback = on_complete
         self._current_mg_id = minigame_id
+        self._current_params = params or {}
         
         # 1. Trova il manifest utilizzando get_resource_path per compatibilità EXE
         mg_path = get_resource_path("engine", "minigames", minigame_id)

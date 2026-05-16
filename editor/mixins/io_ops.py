@@ -142,6 +142,7 @@ class IoOpsMixin:
         if getattr(self, 'game_path', None):
             current_scene_json = (self.scene_path / "scene.json").resolve() if self.scene_path else None
             for s_json in self.game_path.rglob("scene.json"):
+                pygame.event.pump() # Mantiene reattiva l'UI durante la scansione globale
                 if current_scene_json and s_json.resolve() == current_scene_json:
                     continue  # Già considerata sopra (versione in memoria)
                 try:
@@ -272,8 +273,11 @@ class IoOpsMixin:
             # non ha specificato. Teniamo 'real' come da editor_base.py.
             return
 
-        # Mappa rapida ID -> Stile (fallback su 'real' se non specificato nel catalogo)
-        style_map = {c["id"]: c.get("style", "real") for c in self.catalog}
+        # Caching della mappa stili per evitare ricalcoli inutili ad ogni cambio scena
+        if not hasattr(self, "_catalog_style_map") or not getattr(self, "_catalog_style_map", None):
+            self._catalog_style_map = {c["id"]: c.get("style", "real") for c in self.catalog}
+        
+        style_map = self._catalog_style_map
         scene_styles = [style_map.get(o.get("catalog_id"), "real") for o in objs]
         total = len(scene_styles)
         
@@ -311,6 +315,20 @@ class IoOpsMixin:
     def _load_background(self):
         """Apre la modale custom per scegliere l'immagine di sfondo."""
         self._bg_modal_open(context="scene")
+
+    def _clear_scene(self):
+        """Svuota completamente la scena (oggetti ed effetti)."""
+        if not self.scene_path:
+            return
+            
+        self._push_undo()
+        self.scene_data["objects"] = []
+        self.scene_data["effects"] = []
+        self.selected_idx = None
+        self.selected_indices = []
+        self.sel_effect_idx = None
+        self.scene_dirty = True
+        self._status("Scena svuotata con successo", WARN_C, 3)
 
     # ─────────────────────────────────────────────────────────────────────────
     # SAVE / AUTOSAVE
@@ -553,6 +571,7 @@ class IoOpsMixin:
 
         # Scansiona tutte le scene del gioco per determinare quali oggetti sono DAVVERO in uso
         for scene_file in self.game_path.rglob("scene.json"):
+            pygame.event.pump() # Reattività durante l'audit massivo
             try:
                 if current_scene_json and scene_file.resolve() == current_scene_json:
                     scene = data
@@ -904,10 +923,10 @@ class IoOpsMixin:
             if len(used_locations) > 3:
                 loc_summary += f" e altri {len(used_locations)-3}..."
             
-            msg = f"In uso in: {loc_summary}"
-            logging.error(f"[EDITOR] Deletion blocked (In-Use): {cat_id} in {used_locations}")
-            self._status(msg, ERR_C, 6)
-            return
+            msg = f"In uso in: {loc_summary} (Forzato)"
+            logging.warning(f"[EDITOR] Forcing deletion of In-Use asset: {cat_id} in {used_locations}")
+            self._status(msg, WARN_C, 6)
+            # Nessun return: l'utente ha richiesto di poter sempre eliminare gli asset
 
         try:
             # --- 2. BACKUP E CARICAMENTO ---
@@ -925,7 +944,10 @@ class IoOpsMixin:
             
             # Blindaggio: se abbiamo rimosso più di un oggetto o nessuno, qualcosa non va
             if len(new_objs) != len(objs) - 1:
-                logging.error(f"[EDITOR] Errore critico: rimozione non unitaria ({len(objs)} -> {len(new_objs)})")
+                diff = len(objs) - len(new_objs)
+                err_msg = f"Errore critico: rimozione non unitaria ({diff} oggetti invece di 1)"
+                logging.error(f"[EDITOR] {err_msg}")
+                self._status(f"ERRORE CATALOGO: {err_msg}", ERR_C, 5)
                 return
 
             # Manteniamo il catalogo sempre ordinato per ID

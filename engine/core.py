@@ -13,7 +13,7 @@ import logging
 import os
 from pathlib import Path
 
-from engine.utils import get_logger, warp_surface, apply_grayscale
+from engine.utils import get_logger, warp_surface, apply_grayscale, is_android_runtime, get_resource_path
 from engine.scaling_manager import ScalingManager
 from engine.save_manager import SaveManager
 from engine.transition_manager import TransitionManager, TransitionType
@@ -24,6 +24,19 @@ try:
     ctypes.windll.user32.SetProcessDPIAware()
 except Exception:
     pass
+
+# Optional dependency: cv2 (OpenCV) per i background MP4 (menu + scene).
+# Su desktop (Windows/macOS/Linux) è quasi sempre disponibile.
+# Su Android non è praticabile cross-compilare opencv-python con p4a,
+# quindi qui facciamo import safe: se manca, i blocchi video si auto-skippano
+# (guard `HAS_CV2`) e il menu/scena rendono lo sfondo base (nero/letterbox)
+# senza crash. Su Windows EXE il comportamento è invariato.
+try:
+    import cv2  # type: ignore
+    HAS_CV2 = True
+except ImportError:
+    cv2 = None  # type: ignore
+    HAS_CV2 = False
 
 class EngineState:
     """Stati principali della state machine di sistema."""
@@ -59,15 +72,87 @@ class EngineCore:
         # Forza centratura finestra su Windows/Linux/Mac
         os.environ['SDL_VIDEO_CENTERED'] = '1'
         
+        # Hint SDL renderer ottimizzati per Android (devono essere settati PRIMA di
+        # pygame.init / set_mode). Su Windows queste variabili sono ignorate.
+        if is_android_runtime():
+            # '0' = nearest neighbor (max FPS, lieve pixelosità — accettabile su
+            # mobile DPI alti). '1' = linear, '2' = anisotropic (lenti su Android).
+            os.environ.setdefault('SDL_HINT_RENDER_SCALE_QUALITY', '0')
+            # Forza l'uso del renderer hardware-accelerated (OpenGL ES)
+            os.environ.setdefault('SDL_HINT_RENDER_DRIVER', 'opengles2')
+            # Batching dei draw calls per ridurre overhead per chiamata
+            os.environ.setdefault('SDL_HINT_RENDER_BATCHING', '1')
+            # Non comprimere texture su upload → meno CPU, più memoria GPU (OK)
+            os.environ.setdefault('SDL_HINT_RENDER_TEXTURE_FILTERING', 'nearest')
+            # Evita inizializzazione moduli pygame non usati
+            os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
+
         pygame.init()
         pygame.display.set_caption("Hidden Engine")
-        
+
         flags = pygame.DOUBLEBUF
-        if self.is_fullscreen:
+
+        # Su Android: pygame.SCALED + risoluzione interna ADATTIVA all'aspect
+        # del device. Calcola width interno proporzionale a height=540 in base
+        # al ratio del dispositivo, evitando letterbox laterali (i Pixel 9+/10
+        # sono ultra-wide 2.24:1, non 16:9). Pixel count interno ~0.6 MP (vs
+        # 2.6 MP del device) → 4.3x meno lavoro per frame. SDL fa upscale GPU.
+        if is_android_runtime():
+            try:
+                info = pygame.display.Info()
+                if info.current_w > 0 and info.current_h > 0:
+                    device_aspect = info.current_w / info.current_h
+                else:
+                    device_aspect = 16.0 / 9.0
+            except Exception:
+                device_aspect = 16.0 / 9.0
+            INTERNAL_H = 540
+            internal_w = int(round(INTERNAL_H * device_aspect))
+            # Allinea a multiplo di 4 per ottimizzazioni SIMD/SDL_blit
+            internal_w = (internal_w + 3) & ~3
+            self.res_w, self.res_h = internal_w, INTERNAL_H
+            flags |= pygame.SCALED | pygame.FULLSCREEN
+            self.logger.info(
+                f"Android: pygame.SCALED rendering interno {self.res_w}x{self.res_h} "
+                f"(aspect {device_aspect:.3f}) → GPU upscale al device"
+            )
+        elif self.is_fullscreen:
             flags |= pygame.FULLSCREEN
-            
-        # VSync attivo per fluidità professionale (Pygame 2+)
-        self.screen = pygame.display.set_mode((self.res_w, self.res_h), flags, vsync=1)
+
+        # vsync=0 su Android: la pipeline SDL hardware-accelerata gestisce
+        # il presentation senza bloccare il rendering. Vsync=1 capava a refresh
+        # display (60Hz) penalizzando frame con drop a 30Hz half-rate.
+        # Su Windows EXE manteniamo vsync=1 per anti-tearing professionale.
+        _vsync = 0 if is_android_runtime() else 1
+        self.screen = pygame.display.set_mode((self.res_w, self.res_h), flags, vsync=_vsync)
+
+        # Android: blocca eventi pygame mai usati dal motore per ridurre overhead
+        # di event polling. MOUSEMOTION/FINGERMOTION restano abilitati perché
+        # potrebbero servire per drag/hover in alcune scene/minigiochi.
+        if is_android_runtime():
+            pygame.event.set_blocked([
+                pygame.MULTIGESTURE,    # pinch-zoom multi-touch (non usato)
+                pygame.JOYAXISMOTION,
+                pygame.JOYHATMOTION,
+                pygame.JOYBALLMOTION,
+                pygame.JOYBUTTONDOWN,
+                pygame.JOYBUTTONUP,
+                pygame.JOYDEVICEADDED,
+                pygame.JOYDEVICEREMOVED,
+                pygame.TEXTINPUT,       # niente input testuale
+                pygame.TEXTEDITING,
+                pygame.AUDIODEVICEADDED,
+                pygame.AUDIODEVICEREMOVED,
+                pygame.DROPFILE,
+                pygame.DROPBEGIN,
+                pygame.DROPCOMPLETE,
+                pygame.DROPTEXT,
+            ])
+            # Previene lo screensaver Android durante gameplay (auto wake-lock UI)
+            try:
+                pygame.display.set_allow_screensaver(False)
+            except Exception:
+                pass
         self.clock = pygame.time.Clock()
         
         # Inizializzo Sistemi
@@ -134,6 +219,31 @@ class EngineCore:
         # Cache layer_hint_intensity per evitare .get() ogni frame
         self._cached_layer_intensity = self.game_config.get("layer_hint_intensity", {})
         self.click_detector = ClickDetector(self.scaling_manager)
+
+        # ── Performance overlay (Android only) ────────────────────────────
+        # Su Windows EXE _is_android = False → tutto disabilitato, niente
+        # rendering extra, niente overhead. Su Android renderizziamo FPS
+        # in top-left e logghiamo medie events/update/draw ogni ~60 frame.
+        self._is_android = is_android_runtime()
+        if self._is_android:
+            try:
+                self._perf_font = pygame.font.Font(None, 28)
+            except Exception:
+                self._perf_font = None
+            self._perf_frame_count = 0
+            self._perf_acc_events_ms = 0.0
+            self._perf_acc_update_ms = 0.0
+            self._perf_acc_draw_ms = 0.0
+            self._perf_acc_flip_ms = 0.0
+            self._perf_acc_fill_ms = 0.0
+
+        # ── Android lifecycle: pause/resume su entrata in background ──────
+        # Quando l'utente toglie il focus all'app (Home button, recents,
+        # incoming call, ecc.), pygame riceve eventi APP_*BACKGROUND. Mettiamo
+        # il game loop in pausa per non consumare CPU/batteria mentre l'app
+        # è invisibile. Su Windows questi eventi non arrivano mai → resta
+        # sempre False, nessun cambio di comportamento.
+        self._app_paused = False
         
         hud_cfg = self.game_config.get("hud", {})
         self.hud = HudManager(self.scaling_manager, self.lang, hud_cfg, self.res_w, self.res_h)
@@ -236,13 +346,62 @@ class EngineCore:
         """Loop principale del gioco."""
         self.running = True
         self.logger.info("Main loop avviato.")
-        
-        while self.running:
-            dt = self.clock.tick(60) / 1000.0  # limit framerate to 60 FPS
-            self._handle_events()
-            self._update(dt)
-            self._draw()
-            
+
+        if self._is_android:
+            # Versione Android con profiling — overhead trascurabile (3 perf_counter
+            # + 3 sottrazioni per frame). Su Windows si usa il path nudo sotto.
+            # Cap a 60 FPS con vsync: SDL fa frame-skip automatico (60Hz quando
+            # il frame si chiude in <16.67ms, half-rate 30Hz quando no).
+            # tick_busy_loop = busy-wait più preciso di tick (OS sleep jittery
+            # su Android).
+            import time as _time
+            ANDROID_FPS_CAP = 60
+            while self.running:
+                dt = self.clock.tick_busy_loop(ANDROID_FPS_CAP) / 1000.0
+                t0 = _time.perf_counter()
+                self._handle_events()
+                t1 = _time.perf_counter()
+                # Lifecycle: se in background, dormi e salta update/draw
+                # (continua a processare eventi per rispondere a foreground).
+                if self._app_paused:
+                    _time.sleep(0.1)
+                    continue
+                self._update(dt)
+                t2 = _time.perf_counter()
+                self._draw()
+                t3 = _time.perf_counter()
+
+                self._perf_acc_events_ms += (t1 - t0) * 1000.0
+                self._perf_acc_update_ms += (t2 - t1) * 1000.0
+                self._perf_acc_draw_ms += (t3 - t2) * 1000.0
+                self._perf_frame_count += 1
+                if self._perf_frame_count >= 60:
+                    fps = self.clock.get_fps()
+                    n = float(self._perf_frame_count)
+                    draw_ms = self._perf_acc_draw_ms / n
+                    flip_ms = self._perf_acc_flip_ms / n
+                    self.logger.info(
+                        "[PERF] FPS=%.1f events=%.1fms update=%.1fms draw=%.1fms (interno=%.1fms flip=%.1fms) state=%s",
+                        fps,
+                        self._perf_acc_events_ms / n,
+                        self._perf_acc_update_ms / n,
+                        draw_ms,
+                        max(0.0, draw_ms - flip_ms),
+                        flip_ms,
+                        self.state,
+                    )
+                    self._perf_frame_count = 0
+                    self._perf_acc_events_ms = 0.0
+                    self._perf_acc_update_ms = 0.0
+                    self._perf_acc_draw_ms = 0.0
+                    self._perf_acc_flip_ms = 0.0
+        else:
+            while self.running:
+                dt = self.clock.tick(60) / 1000.0  # limit framerate to 60 FPS
+                self._handle_events()
+                self._update(dt)
+                self._draw()
+
         self._quit()
         
     def _handle_events(self) -> None:
@@ -250,11 +409,37 @@ class EngineCore:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-                
+
+            # ── Android lifecycle (no-op su Windows: questi event non arrivano)
+            elif event.type == pygame.APP_WILLENTERBACKGROUND or \
+                 event.type == pygame.APP_DIDENTERBACKGROUND:
+                self._app_paused = True
+                self.logger.info("[Lifecycle] App in background — pausing render loop")
+                try:
+                    pygame.mixer.pause()
+                    pygame.mixer.music.pause()
+                except Exception:
+                    pass
+                continue
+            elif event.type == pygame.APP_WILLENTERFOREGROUND or \
+                 event.type == pygame.APP_DIDENTERFOREGROUND:
+                self._app_paused = False
+                self.logger.info("[Lifecycle] App in foreground — resuming")
+                try:
+                    pygame.mixer.unpause()
+                    pygame.mixer.music.unpause()
+                except Exception:
+                    pass
+                continue
+
             elif event.type == pygame.VIDEORESIZE:
-                # In modalità SCALED non serve ricalcolare tutto, 
+                # In modalità SCALED non serve ricalcolare tutto,
                 # ma aggiorniamo i buffer interni se necessario.
                 self.logger.debug(f"Video Resize rilevato: {event.w}x{event.h}")
+
+            elif event.type == pygame.MOUSEWHEEL:
+                if self.state in [EngineState.MENU, EngineState.PAUSE]:
+                    self.menu_system.handle_scroll(event.y)
 
             if self.state == EngineState.MINIGAME:
                 # Se il minigioco intercetta un click sul tasto Pausa, attiva la pausa globale
@@ -1254,13 +1439,13 @@ class EngineCore:
             bg_path = menu_cfg.get("background")
             
             if bg_path:
-                from engine.utils import get_resource_path
-                import os
                 abs_bg = str(get_resource_path("games", self.game_id, bg_path))
                 
                 # --- Gestione VIDEO MP4/MOV/MKV ---
-                if abs_bg.lower().endswith((".mp4", ".mov", ".mkv")):
-                    import cv2
+                # HAS_CV2 guard: su Android cv2 non è disponibile e il video
+                # viene silenziosamente skippato (rimane solo lo sfondo scuro
+                # già renderizzato da self.screen.fill all'inizio del branch).
+                if abs_bg.lower().endswith((".mp4", ".mov", ".mkv")) and HAS_CV2:
                     # Inizializzazione Lazy del Capture
                     if self._menu_video_path != abs_bg:
                         if self._menu_video_cap: self._menu_video_cap.release()
@@ -1288,7 +1473,10 @@ class EngineCore:
                             self.screen.blit(scaled_v, (self.scaling_manager.offset_x, self.scaling_manager.offset_y))
                 
                 # --- Gestione IMMAGINE STATICA ---
-                else:
+                # Skippiamo anche i file MP4/MOV/MKV se siamo arrivati qui:
+                # senza cv2 (Android) `pygame.image.load("background.mp4")`
+                # crasherebbe. In quel caso resta solo lo sfondo scuro base.
+                elif not abs_bg.lower().endswith((".mp4", ".mov", ".mkv")):
                     if not hasattr(self, '_menu_bg_surface') or self._menu_video_path:
                         self._menu_video_path = None # Reset se passiamo da video a immagine
                         if os.path.exists(abs_bg):
@@ -1333,8 +1521,7 @@ class EngineCore:
             bg_v_path = getattr(self._current_scene_data, "background_path", "")
             is_scene_vid = bg_v_path.lower().endswith((".mp4", ".mov", ".mkv"))
             
-            if is_scene_vid and os.path.exists(bg_v_path):
-                import cv2
+            if is_scene_vid and os.path.exists(bg_v_path) and HAS_CV2:
                 # Inizializzazione Lazy del Capture per la scena
                 # Riutilizziamo _menu_video_cap se possibile o ne creiamo uno separato per consistenza
                 if getattr(self, "_scene_video_path", None) != bg_v_path:
@@ -1401,9 +1588,10 @@ class EngineCore:
                 # Centro → screen (Versione Scenica)
                 sx, sy = sm.bg_to_screen_scenic(cx_bg, cy_bg, scenic_factor)
 
-                # Dimensione icona a schermo: hit-area in bg-space → pixel
-                icon_w = max(1, int(hit_w_bg * sm._bg_display_scale * scenic_factor))
-                icon_h = max(1, int(hit_h_bg * sm._bg_display_scale * scenic_factor))
+                # Dimensione icona a schermo: hit-area in bg-space → pixel, applicando obj.scale
+                obj_scale = getattr(obj, "scale", 1.0)
+                icon_w = max(1, int(hit_w_bg * sm._bg_display_scale * scenic_factor * obj_scale))
+                icon_h = max(1, int(hit_h_bg * sm._bg_display_scale * scenic_factor * obj_scale))
 
                 # Clamp dimensioni per evitare artefatti da over-scaling
                 # Non superare 3000px per evitare memory overhead e artefatti visivi
@@ -1422,7 +1610,8 @@ class EngineCore:
                 obj_params = (
                     draw_w, draw_h, obj.rotation, obj.flip_x, obj.flip_y, 
                     obj.alpha, tuple(obj.color_filter), str(obj.corners),
-                    getattr(obj, "grayscale", False), getattr(obj, "grayscale_factor", 1.0)
+                    getattr(obj, "grayscale", False), getattr(obj, "grayscale_factor", 1.0),
+                    obj_scale
                 )
                 if obj._cached_surface is None or obj._cached_params != obj_params:
                     # Ricalcola la surface scalata e trasformata
@@ -1434,7 +1623,6 @@ class EngineCore:
                         sx_scale = draw_w / hit_w_bg if hit_w_bg > 0 else sm._bg_display_scale
                         sy_scale = draw_h / hit_h_bg if hit_h_bg > 0 else sm._bg_display_scale
                         # Nota: warp_surface deve essere importata o disponibile (è in utils)
-                        from engine.utils import warp_surface
                         q_scaled = [
                             (obj.corners[0][0] * sx_scale, obj.corners[0][1] * sy_scale),
                             (draw_w + obj.corners[1][0] * sx_scale, obj.corners[1][1] * sy_scale),
@@ -1565,8 +1753,29 @@ class EngineCore:
                 
         # Overlay grafico transizioni renderizzato SOPRA il resto
         self.transition_manager.draw(self.screen)
-        
-        pygame.display.flip()
+
+        # Overlay diagnostico FPS — solo Android (Windows EXE niente render extra).
+        if self._is_android and self._perf_font is not None:
+            try:
+                fps = self.clock.get_fps()
+                txt = self._perf_font.render(f"{fps:.0f} FPS", True, (255, 255, 0))
+                bg = pygame.Surface((txt.get_width() + 12, txt.get_height() + 6), pygame.SRCALPHA)
+                bg.fill((0, 0, 0, 170))
+                self.screen.blit(bg, (10, 10))
+                self.screen.blit(txt, (16, 13))
+            except Exception:
+                pass
+
+        # Misuro flip separato dal rendering interno (solo Android profiling).
+        # Se flip domina → bottleneck nella pipeline SDL/GPU upload.
+        # Se rendering interno domina → bottleneck nei pygame ops (fill/blit/draw).
+        if self._is_android:
+            import time as _time
+            _t_flip = _time.perf_counter()
+            pygame.display.flip()
+            self._perf_acc_flip_ms += (_time.perf_counter() - _t_flip) * 1000.0
+        else:
+            pygame.display.flip()
 
     def _draw_flashlight_effect(self) -> None:
         """Disegna una maschera d'oscuramento con un buco luminoso sfumato attorno al mouse."""

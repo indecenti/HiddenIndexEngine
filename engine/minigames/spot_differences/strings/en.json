@@ -1,0 +1,8 @@
+{
+  "mg_title": "SPOT THE DIFFERENCES",
+  "mg_description": "Compare the two images and find the 5 missing objects in the right panel.",
+  "found": "Found!",
+  "missing": "Differences left: {0}",
+  "win": "YOU WIN!",
+  "btn_exit": "EXIT"
+}

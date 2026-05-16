@@ -16,7 +16,7 @@ from editor.core.io import (
     _load_json, _save_json, _load_catalog,
 )
 from editor.ui.draw import (
-    _txt, _draw_text, _rect, _button, _in_rect, _scrollbar,
+    _txt, _draw_text, _rect, _button, _in_rect, _scrollbar, _draw_tag_chip
 )
 
 
@@ -33,18 +33,13 @@ class TagModalMixin:
 
         self._tag_modal_current_tags = set(cat_entry.get("tags", []))
         
-        # Raccoglie TUTTI i tag esistenti nel catalogo per permettere la scelta
-        all_tags = set()
-        for obj in self.catalog:
-            for t in obj.get("tags", []):
-                all_tags.add(t)
-        
-        self._tag_modal_all_tags = sorted(list(all_tags))
+        # Sincronizzazione con il TagManager globale
         self._tag_modal_search = ""
         self._tag_modal_scroll = 0
         self._tag_modal_active = True
-        self._tag_modal_searching = False
+        self._tag_modal_searching = True # Focus immediato sulla ricerca
         self._tag_modal_dirty = False
+        self._tag_modal_suggestions = self.tag_manager.get_suggestions("")
 
     def _tag_modal_key(self, ev):
         if ev.key == pygame.K_ESCAPE:
@@ -61,9 +56,20 @@ class TagModalMixin:
             if ev.key == pygame.K_BACKSPACE:
                 self._tag_modal_search = self._tag_modal_search[:-1]
                 self._tag_modal_scroll = 0
-            elif ev.unicode and ev.unicode.isprintable():
+                self._tag_modal_suggestions = self.tag_manager.get_suggestions(self._tag_modal_search)
+            elif ev.unicode and ev.unicode.isprintable() and ev.unicode not in ",;":
                 self._tag_modal_search += ev.unicode.lower()
                 self._tag_modal_scroll = 0
+                self._tag_modal_suggestions = self.tag_manager.get_suggestions(self._tag_modal_search)
+            
+            if ev.key == pygame.K_RETURN and self._tag_modal_search:
+                # CREAZIONE DINAMICA: se premi invio, aggiungiamo il tag (creandolo se serve)
+                new_tag = self.tag_manager.ensure_tag(self._tag_modal_search)
+                if new_tag and new_tag not in self._tag_modal_current_tags:
+                    self._tag_modal_current_tags.add(new_tag)
+                    self._tag_modal_dirty = True
+                    self._tag_modal_search = ""
+                    self._tag_modal_suggestions = self.tag_manager.get_suggestions("")
         else:
             if ev.key == pygame.K_SLASH:
                 self._tag_modal_searching = True
@@ -190,14 +196,13 @@ class TagModalMixin:
         
         self.screen.set_clip(clip_r)
         
-        filtered_tags = [t for t in self._tag_modal_all_tags if not self._tag_modal_search or self._tag_modal_search in t.lower()]
-        
+        # Mostriamo i tag suggeriti (quelli che matchano la ricerca)
         CHIP_W = (clip_r.w - 30) // 3
-        CHIP_H = 30
+        CHIP_H = 32
         GAP = 8
         
         self._tag_modal_chip_rects = []
-        for i, tag in enumerate(filtered_tags):
+        for i, tag in enumerate(self._tag_modal_suggestions):
             col = i % 3
             row = i // 3
             tx = clip_r.x + 10 + col * (CHIP_W + GAP)
@@ -210,26 +215,16 @@ class TagModalMixin:
             is_active = tag in self._tag_modal_current_tags
             hov = _in_rect((mx, my), r) and clip_r.collidepoint(mx, my)
             
-            # Rendering chip
-            bg = ACCENT if is_active else ((55, 60, 80) if hov else (45, 48, 60))
-            tcol = (15, 15, 25) if is_active else (TXT_HI if hov else TXT_DIM)
+            # Rendering chip tramite la nuova funzione centralizzata
+            label = self.tag_manager.get_label(tag)
+            _draw_tag_chip(self.screen, r, label, active=is_active, hovered=hov)
             
-            _rect(self.screen, bg, r, radius=6)
-            if is_active:
-                _rect(self.screen, (255, 255, 255), r, 1, radius=6)
-            
-            # Label (con traduzione se disponibile, altrimenti ID)
-            # label = self._TR(f"tag_{tag}", tag)
-            label = tag # In questa modale usiamo gli ID tecnici per precisione, o facciamo un mix?
-            # Meglio mostrare l'ID tecnico per i tag visto che l'utente è un designer.
-            ts = _txt(label, "sm", tcol)
-            self.screen.blit(ts, (r.centerx - ts.get_width()//2, r.centery - ts.get_height()//2))
             self._tag_modal_chip_rects.append((tag, r))
 
         self.screen.set_clip(None)
         
         # Scrollbar
-        total_rows = (len(filtered_tags) + 2) // 3
+        total_rows = (len(self._tag_modal_suggestions) + 2) // 3
         visible_rows = clip_r.h // (CHIP_H + GAP)
         if total_rows > visible_rows:
             max_scroll = total_rows - visible_rows

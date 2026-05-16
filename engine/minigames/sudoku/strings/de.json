@@ -1,0 +1,16 @@
+{
+  "mg_title": "Sudoku Arcade",
+  "mg_description": "Schließe 3 Sudoku-Level ab (Einfach, Mittel, Schwer). Spielbar mit der Maus.",
+  "sudoku_level": "Level",
+  "sudoku_score": "Ergebnis:",
+  "sudoku_clear": "LÖSCHEN",
+  "sudoku_submit": "PRÜFEN",
+  "sudoku_game_over": "ABGESCHLOSSEN!",
+  "sudoku_time_up": "ZEIT ABGELAUFEN!",
+  "tut_step_0": "Hallo! Fülle das Gitter: Jede Zahl muss pro Zeile, Spalte und Quadrat einzigartig sein.\nKlicke zum Starten auf ein leeres Feld!",
+  "tut_step_1": "Klicke zum Starten\nauf ein leeres Feld.",
+  "tut_step_2": "Super!\nWähle nun rechts eine Zahl aus.",
+  "tut_step_3": "Achte auf die Zeit!\nWenn sie abläuft, endet die Arcade-Herausforderung.",
+  "tut_step_4": "Mache es so schnell wie möglich.\nViel Glück!",
+  "sudoku_pts": "pt"
+}

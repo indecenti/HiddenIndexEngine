@@ -6,5 +6,8 @@
   "menu": {
     "background": "assets/Cinematic_animation_based_on.mp4",
     "music": []
-  }
+  },
+  "ui_theme": "cyber_neon",
+  "category": "desktop",
+  "icon": "assets/icon.png"
 }

@@ -1,6 +1,92 @@
 {
   "objects": [
     {
+      "id": "ca_amulet_eye_golden_v1",
+      "label_key": "obj_ca_amulet_eye_golden",
+      "icon": "objects_cartoon/ca_amulet_eye_golden_v1.png",
+      "default_detection": "circle",
+      "default_radius": 22,
+      "default_hint_delay": 45,
+      "tags": [
+        "MAGIA",
+        "PREZIOSO",
+        "MISTERO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_amulet_eye_golden_v1_v1",
+      "label_key": "obj_ca_amulet_eye_golden",
+      "icon": "objects_cartoon/ca_amulet_eye_golden_v1_v1.png",
+      "default_detection": "circle",
+      "default_radius": 22,
+      "default_hint_delay": 45,
+      "tags": [
+        "MAGIA",
+        "PREZIOSO",
+        "MISTERO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_amulet_eye_golden_v2",
+      "label_key": "obj_ca_amulet_eye_golden",
+      "icon": "objects_cartoon/ca_amulet_eye_golden_v2.png",
+      "default_detection": "circle",
+      "default_radius": 22,
+      "default_hint_delay": 45,
+      "tags": [
+        "MAGIA",
+        "PREZIOSO",
+        "MISTERO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_amulet_eye_golden_v3",
+      "label_key": "obj_ca_amulet_eye_golden",
+      "icon": "objects_cartoon/ca_amulet_eye_golden_v3.png",
+      "default_detection": "circle",
+      "default_radius": 22,
+      "default_hint_delay": 45,
+      "tags": [
+        "MAGIA",
+        "PREZIOSO",
+        "MISTERO"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_anvil_heavy_workshop",
+      "label_key": "obj_ca_anvil_heavy_workshop",
+      "icon": "objects_cartoon/ca_anvil_heavy_workshop.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 60,
+      "default_hint_delay": 35,
+      "tags": [
+        "grande",
+        "metallo",
+        "officina"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_beach_ball",
+      "label_key": "obj_ca_beach_ball",
+      "icon": "objects_cartoon/ca_beach_ball.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "ESTATE",
+        "PLASTICA",
+        "GIOCO"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_book_stack_adv",
       "label_key": "obj_ca_book_stack_adv",
       "icon": "objects_cartoon/ca_book_stack_adv.png",
@@ -165,6 +251,21 @@
         "NATURA",
         "CIBO",
         "FRUTTA"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_arpa",
+      "label_key": "obj_la_arpa",
+      "icon": "objects_lineart/la_arpa.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 95,
+      "default_hint_delay": 50,
+      "tags": [
+        "musica",
+        "legno",
+        "grande"
       ],
       "style": "line art"
     },

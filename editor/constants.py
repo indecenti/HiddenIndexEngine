@@ -6,12 +6,19 @@ Importato da tutti i moduli dell'editor.
 """
 
 # ─────────────────────────────────────────────────────────────────────────────
+# LOCALIZZAZIONE — unica fonte di verità per le lingue supportate
+# ─────────────────────────────────────────────────────────────────────────────
+
+LANGS: tuple[str, ...] = ("it", "en", "es", "fr", "de")
+
+# ─────────────────────────────────────────────────────────────────────────────
 # VERSIONE / DIMENSIONI
 # ─────────────────────────────────────────────────────────────────────────────
 
 VERSION        = "1.0-base"
 REF_W, REF_H   = 1280, 720
 WIN_W, WIN_H   = 1280, 720
+MIN_EDITOR_WIDTH, MIN_EDITOR_HEIGHT = 1280, 720
 TOP_BAR_H      = 30
 MENU_W         = 180      # Larghezza standard dropdown menu
 PANEL_MIN_W    = 150
@@ -22,6 +29,9 @@ UNDO_MAX       = 50
 HANDLE_R       = 4
 
 SND_CLICK      = "engine/assets/sounds/click_Low.wav"
+CACHE_OBJ_MAX  = 400
+CACHE_FILTER_MAX = 100
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # MODALITÀ TOOL
@@ -114,7 +124,7 @@ UI_TIPS = {
     "mode_circle": "Strumento Cerchio (1): Clicca e trascina per creare un'area di hit circolare.",
     "mode_rect": "Strumento Rettangolo (2): Clicca e trascina per creare un'area di hit rettangolare.",
     "mode_effect_place": "Strumento Effetti (3): Posiziona effetti visivi come bagliori o fumetti (Bubble Tips).",
-    "mode_scatter": "Strumento Cluster (4): Piazza 4 oggetti casuali dal catalogo vicino al cursore.",
+    "mode_scatter": "Strumento Cluster (4): Piazza un gruppo di oggetti casuali. Usa Shift+Click per densità massima.",
     "toggle_overlay": "Mostra/Nascondi Overlay (O): Visualizza le aree di hit colorate sopra il background.",
     "toggle_grid": "Griglia (G): Attiva la griglia e lo snap per un posizionamento preciso.",
     "toggle_icons": "Icone (I): Mostra o nasconde le icone PNG degli oggetti nel canvas.",

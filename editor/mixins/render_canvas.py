@@ -13,6 +13,7 @@ from editor.constants import (
     ACCENT, BORDER, CANVAS, GRID_C, SEL_C, FX_C, ERR_C,
     TXT, TXT_DIM, TXT_HI, OK_C, WARN_C, ALWAYS_C, BTN_AC, BTN_HO, STATUS, PANEL,
     HANDLE_R, REF_W, REF_H,
+    CACHE_OBJ_MAX, CACHE_FILTER_MAX,
     layer_color,
 )
 from editor.ui.draw import _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _draw_shape_icon
@@ -35,12 +36,33 @@ class RenderCanvasMixin:
         _rect(self.screen, CANVAS, cr)
         self.screen.set_clip(cr)
 
-        if self.show_grid:
-            self._r_grid(cr)
+        # --- DIRTY CANVAS SYSTEM ---
+        # Se la cache è sporca o non esiste, la rigeneriamo
+        if (self._canvas_cache_dirty or self._canvas_cache_surf is None or 
+            self._canvas_cache_surf.get_size() != cr.size):
+            
+            if self._canvas_cache_surf is None or self._canvas_cache_surf.get_size() != cr.size:
+                self._canvas_cache_surf = pygame.Surface(cr.size, pygame.SRCALPHA)
+            
+            # Renderizziamo la parte statica sulla cache
+            # Usiamo fill trasparente invece di CANVAS per supportare sovrapposizioni pulite
+            self._canvas_cache_surf.fill((0, 0, 0, 0))
+            
+            # Rendering dei componenti statici (Grid -> BG -> Oggetti)
+            # Passiamo cr.topleft per compensare le coordinate assolute
+            if self.show_grid:
+                self._r_grid(cr, surf=self._canvas_cache_surf, offset=cr.topleft)
+            
+            self._r_background(cr, surf=self._canvas_cache_surf, offset=cr.topleft)
+            self._r_overlays_static(surf=self._canvas_cache_surf, offset=cr.topleft)
+            
+            self._canvas_cache_dirty = False
 
-        self._r_background(cr)
-        self._r_overlays()
+        # Blit della cache (Velocissimo: 1 operazione invece di N oggetti)
+        self.screen.blit(self._canvas_cache_surf, cr.topleft)
 
+        # --- LIVE OVERLAYS (Sempre dinamici) ---
+        self._r_overlays_dynamic()
         self._r_effect_overlays()
 
         if self._rect_placing and self.mode == MODE_RECT:
@@ -85,28 +107,32 @@ class RenderCanvasMixin:
     # GRID
     # ─────────────────────────────────────────────────────────────────────────
 
-    def _r_grid(self, cr):
+    def _r_grid(self, cr, surf=None, offset=(0,0)):
+        target = surf if surf is not None else self.screen
+        ox, oy = offset
         rx0, ry0 = self._s2r(cr.left,  cr.top)
         rx1, ry1 = self._s2r(cr.right, cr.bottom)
         gs = self.grid_size
         xi = int(rx0 // gs) * gs
         while xi <= rx1:
             sx, _ = self._r2s(xi, 0)
-            pygame.draw.line(self.screen, GRID_C,
-                             (int(sx), cr.top), (int(sx), cr.bottom))
+            pygame.draw.line(target, GRID_C,
+                             (int(sx) - ox, cr.top - oy), (int(sx) - ox, cr.bottom - oy))
             xi += gs
         yi = int(ry0 // gs) * gs
         while yi <= ry1:
             _, sy = self._r2s(0, yi)
-            pygame.draw.line(self.screen, GRID_C,
-                             (cr.left, int(sy)), (cr.right, int(sy)))
+            pygame.draw.line(target, GRID_C,
+                             (cr.left - ox, int(sy) - oy), (cr.right - ox, int(sy) - oy))
             yi += gs
 
     # ─────────────────────────────────────────────────────────────────────────
     # BACKGROUND
     # ─────────────────────────────────────────────────────────────────────────
 
-    def _r_background(self, cr):
+    def _r_background(self, cr, surf=None, offset=(0,0)):
+        target = surf if surf is not None else self.screen
+        ox_off, oy_off = offset
         if self.bg_surf:
             bw, bh = self.bg_surf.get_size()
             zoom = self.zoom
@@ -115,127 +141,156 @@ class RenderCanvasMixin:
                 self._bg_cache_surf = pygame.transform.scale(self.bg_surf, (dw, dh))
                 self._bg_cache_zoom = zoom
             
-            ox, oy = self._r2s(0, 0)
-            self.screen.blit(self._bg_cache_surf, (int(ox), int(oy)))
+            sx, sy = self._r2s(0, 0)
+            target.blit(self._bg_cache_surf, (int(sx) - ox_off, int(sy) - oy_off))
         else:
             x1, y1 = self._r2s(0,     0)
             x2, y2 = self._r2s(REF_W, REF_H)
-            _rect(self.screen, BORDER,
-                  (int(x1), int(y1), int(x2-x1), int(y2-y1)), 1)
+            _rect(target, BORDER,
+                  (int(x1) - ox_off, int(y1) - oy_off, int(x2-x1), int(y2-y1)), 1)
             s = _txt(self._TR("canvas_no_bg"), "sm", TXT_DIM)
-            self.screen.blit(s, (int((x1+x2)/2 - s.get_width()//2),
-                                 int((y1+y2)//2)))
+            target.blit(s, (int((x1+x2)/2 - s.get_width()//2) - ox_off,
+                                 int((y1+y2)//2) - oy_off))
 
     # ─────────────────────────────────────────────────────────────────────────
     # OVERLAYS OGGETTI
     # ─────────────────────────────────────────────────────────────────────────
 
-    def _r_overlays(self):
+    def _r_overlays_static(self, surf=None, offset=(0,0)):
+        """Rendering delle icone PNG (Cacheable)."""
+        target = surf if surf is not None else self.screen
+        ox_off, oy_off = offset
         from editor.constants import layer_z
-        alpha = 180 if self.show_overlay else 50
         objs  = self.scene_data.get("objects", [])
 
-        # Ordinamento indici per Z-index crescente per gestire correttamente la sovrapposizione in editor
+        # Ordinamento indici per Z-index crescente
         sorted_indices = sorted(range(len(objs)), key=lambda idx: layer_z(objs[idx].get("layer", "objects_mid")))
 
-        # ── Primo passaggio: icone PNG ────────────────────────────────────────
         if self.show_icons:
             for i in sorted_indices:
+                # Gli oggetti selezionati vengono saltati qui e disegnati nel pass dinamico
+                # per permettere il movimento fluido durante il drag senza invalidare l'intera cache.
+                if i in self.selected_indices or i == self.selected_idx:
+                    continue
+                
                 obj = objs[i]
                 lid = obj.get("layer", "objects_mid")
                 if not self.layer_vis.get(lid, True): continue
-                cat_id = obj.get("catalog_id", "")
-                cat_e  = next((c for c in self.catalog if c["id"] == cat_id), None)
-                if not cat_e or not self.game_path: continue
-                ip = self.game_path / cat_e.get("icon", "")
-                dt = obj.get("detection_type", "circle")
-                ox, oy = obj.get("x", 0), obj.get("y", 0)
-                if dt == "circle":
-                    rw = obj.get("width", obj.get("radius", 30) * 2)
-                    rh = obj.get("height", obj.get("radius", 30) * 2)
-                    cx_, cy_ = ox, oy
-                else:
-                    rw = obj.get("width", 60)
-                    rh = obj.get("height", 60)
-                    cx_, cy_ = ox + rw/2, oy + rh/2
+                self._draw_obj_icon(obj, target, ox_off, oy_off)
 
-                MAX_SCREEN_DIM = 2000
-                scr_w = max(8, min(MAX_SCREEN_DIM, int(rw * self.zoom)))
-                scr_h = max(8, min(MAX_SCREEN_DIM, int(rh * self.zoom)))
-                rot = obj.get("rotation", 0)
-                flip_x = obj.get("flip_x", False)
-                flip_y = obj.get("flip_y", False)
-                alpha_val = obj.get("alpha", 255)
-                color = tuple(obj.get("color_filter", (255, 255, 255)))
-                coff = obj.get("corners", [[0,0], [0,0], [0,0], [0,0]])
-                has_warp = any(c[0] != 0 or c[1] != 0 for c in coff)
+    def _draw_obj_icon(self, obj, target, ox_off, oy_off):
+        """Metodo helper per disegnare l'icona PNG di un oggetto con filtri e cache."""
+        cat_id = obj.get("catalog_id", "")
+        cat_e  = next((c for c in self.catalog if c["id"] == cat_id), None)
+        if not cat_e or not self.game_path: return
+        
+        ip = self.game_path / cat_e.get("icon", "")
+        dt = obj.get("detection_type", "circle")
+        ox, oy = obj.get("x", 0), obj.get("y", 0)
+        if dt == "circle":
+            rw = obj.get("width", obj.get("radius", 30) * 2)
+            rh = obj.get("height", obj.get("radius", 30) * 2)
+            cx_, cy_ = ox, oy
+        else:
+            rw = obj.get("width", 60)
+            rh = obj.get("height", 60)
+            cx_, cy_ = ox + rw/2, oy + rh/2
 
-                ck_coff = tuple(tuple(c) for c in coff)
-                gs = obj.get("grayscale", False)
-                gs_f = obj.get("grayscale_factor", 1.0)
-                
-                # Filtro Bianco e Nero applicato via apply_grayscale
+        MAX_SCREEN_DIM = 2000
+        obj_scale = obj.get("scale", 1.0)
+        scr_w = max(8, min(MAX_SCREEN_DIM, int(rw * self.zoom * obj_scale)))
+        scr_h = max(8, min(MAX_SCREEN_DIM, int(rh * self.zoom * obj_scale)))
+        rot = obj.get("rotation", 0)
+        flip_x = obj.get("flip_x", False)
+        flip_y = obj.get("flip_y", False)
+        alpha_val = obj.get("alpha", 255)
+        color = tuple(obj.get("color_filter", (255, 255, 255)))
+        coff = obj.get("corners", [[0,0], [0,0], [0,0], [0,0]])
+        has_warp = any(c[0] != 0 or c[1] != 0 for c in coff)
 
-                cache_key = (cat_id, scr_w, scr_h, rot, flip_x, flip_y, alpha_val, color, ck_coff, gs, gs_f)
-                if cache_key in self._obj_draw_cache:
-                    ic_data = self._obj_draw_cache[cache_key]
-                    ic, ic_meta = (ic_data if isinstance(ic_data, tuple) else (ic_data, None))
-                else:
-                    ic = self._load_img(ip, (scr_w, scr_h))
-                    if not ic: continue
+        ck_coff = tuple(tuple(c) for c in coff)
+        gs = obj.get("grayscale", False)
+        gs_f = obj.get("grayscale_factor", 1.0)
+        
+        from editor.constants import CACHE_FILTER_MAX, CACHE_OBJ_MAX
+        from engine.utils import apply_grayscale, warp_surface
 
-                    ic_meta = None
-                    if has_warp:
-                        sx_scale = scr_w / rw if rw > 0 else 1.0
-                        sy_scale = scr_h / rh if rh > 0 else 1.0
-                        q = [
-                            (coff[0][0]*sx_scale, coff[0][1]*sy_scale),                           # NW
-                            (scr_w + coff[1][0]*sx_scale, coff[1][1]*sy_scale),                  # NE
-                            (scr_w + coff[2][0]*sx_scale, scr_h + coff[2][1]*sy_scale),          # SE
-                            (coff[3][0]*sx_scale, scr_h + coff[3][1]*sy_scale)                   # SW
-                        ]
-                        min_xq = min(p[0] for p in q)
-                        min_yq = min(p[1] for p in q)
-                        ic = warp_surface(ic, q)
-                        ic_meta = (min_xq, min_yq)
+        # 1. LIVELLO 1: Filtri (BN, Colore)
+        f_key = (cat_id, scr_w, scr_h, gs, gs_f, color)
+        if f_key in self._filter_cache:
+            filtered_surf = self._filter_cache[f_key]
+            self._filter_cache.move_to_end(f_key)
+        else:
+            base_img = self._load_img(ip, (scr_w, scr_h))
+            if not base_img: return
+            filtered_surf = base_img.copy()
+            if gs:
+                filtered_surf = apply_grayscale(filtered_surf, gs_f)
+            if color != (255, 255, 255):
+                tint = pygame.Surface(filtered_surf.get_size(), pygame.SRCALPHA)
+                tint.fill((*color, 255))
+                filtered_surf.blit(tint, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+            self._filter_cache[f_key] = filtered_surf
+            if len(self._filter_cache) > CACHE_FILTER_MAX:
+                self._filter_cache.popitem(last=False)
 
-                    if flip_x or flip_y:
-                        ic = pygame.transform.flip(ic, flip_x, flip_y)
-                    if rot != 0:
-                        ic = pygame.transform.rotozoom(ic, rot, 1.0)
-                    # 4. Filtro Bianco e Nero (Trasformazione Pixel)
-                    if gs:
-                        ic = apply_grayscale(ic, gs_f)
+        # 2. LIVELLO 2: Trasformazioni Geometriche
+        t_key = (id(filtered_surf), scr_w, scr_h, rot, flip_x, flip_y, ck_coff, obj_scale)
+        if t_key in self._obj_draw_cache:
+            ic, ic_meta = self._obj_draw_cache[t_key]
+            self._obj_draw_cache.move_to_end(t_key)
+        else:
+            ic = filtered_surf.copy()
+            ic_meta = None
+            if has_warp:
+                sx_scale = scr_w / rw if rw > 0 else 1.0
+                sy_scale = scr_h / rh if rh > 0 else 1.0
+                q = [
+                    (coff[0][0]*sx_scale, coff[0][1]*sy_scale),
+                    (scr_w + coff[1][0]*sx_scale, coff[1][1]*sy_scale),
+                    (scr_w + coff[2][0]*sx_scale, scr_h + coff[2][1]*sy_scale),
+                    (coff[3][0]*sx_scale, scr_h + coff[3][1]*sy_scale)
+                ]
+                ic = warp_surface(ic, q)
+                ic_meta = (min(p[0] for p in q), min(p[1] for p in q))
+            if flip_x or flip_y:
+                ic = pygame.transform.flip(ic, flip_x, flip_y)
+            if rot != 0:
+                ic = pygame.transform.rotozoom(ic, rot, 1.0)
+            self._obj_draw_cache[t_key] = (ic, ic_meta)
+            if len(self._obj_draw_cache) > CACHE_OBJ_MAX:
+                for _ in range(max(1, CACHE_OBJ_MAX // 10)):
+                    if self._obj_draw_cache: self._obj_draw_cache.popitem(last=False)
 
-                    # 5. Filtro Colore (Pixel-level)
-                    if color != (255, 255, 255):
-                        ic = ic.copy()
-                        tint = pygame.Surface(ic.get_size(), pygame.SRCALPHA)
-                        tint.fill((*color, 255))
-                        ic.blit(tint, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+        # 3. Alpha e Blit
+        if alpha_val < 255:
+            ic = ic.copy()
+            ic.set_alpha(alpha_val)
 
-                    # 6. Opacità (Surface-level) - SEMPRE PER ULTIMA
-                    if alpha_val < 255:
-                        ic = ic.copy()
-                        ic.set_alpha(alpha_val)
-                    
-                    if len(self._obj_draw_cache) > 200:
-                        self._obj_draw_cache.clear()
-                    self._obj_draw_cache[cache_key] = (ic, ic_meta)
+        sx, sy = self._r2s(cx_, cy_)
+        if ic_meta and rot == 0:
+            mxq, myq = ic_meta
+            target.blit(ic, (int(sx - scr_w/2 + mxq) - ox_off, int(sy - scr_h/2 + myq) - oy_off))
+        else:
+            target.blit(ic, ic.get_rect(center=(int(sx) - ox_off, int(sy) - oy_off)))
 
-                if not ic: continue
-                sx, sy = self._r2s(cx_, cy_)
-                
-                if ic_meta and rot == 0:
-                    mxq, myq = ic_meta
-                    final_x = sx - scr_w / 2 + mxq
-                    final_y = sy - scr_h / 2 + myq
-                    self.screen.blit(ic, (int(final_x), int(final_y)))
-                else:
-                    rect = ic.get_rect(center=(int(sx), int(sy)))
-                    self.screen.blit(ic, rect)
+    def _r_overlays_dynamic(self):
+        """Rendering di poligoni, handles, labels (Ogni frame)."""
+        from editor.constants import layer_z
+        objs  = self.scene_data.get("objects", [])
+        sorted_indices = sorted(range(len(objs)), key=lambda idx: layer_z(objs[idx].get("layer", "objects_mid")))
 
-        # ── Secondo passaggio: hit-area shapes ───────────────────────────────
+        # --- PRIMO PASSAGGIO DINAMICO: Icone PNG per oggetti selezionati ---
+        if self.show_icons:
+            for i in sorted_indices:
+                if i in self.selected_indices or i == self.selected_idx:
+                    obj = objs[i]
+                    lid = obj.get("layer", "objects_mid")
+                    if not self.layer_vis.get(lid, True): continue
+                    # Disegna direttamente sullo schermo senza offset (per il drag)
+                    self._draw_obj_icon(obj, self.screen, 0, 0)
+
+        # --- SECONDO PASSAGGIO DINAMICO: Hit-area, Handles, Labels ---
         for i in sorted_indices:
             obj = objs[i]
             lid = obj.get("layer", "objects_mid")
@@ -260,8 +315,9 @@ class RenderCanvasMixin:
             else:               border = TXT_DIM
 
             ox, oy = obj.get("x", 0), obj.get("y", 0)
-            rw = obj.get("width", obj.get("radius", 30) * 2)
-            rh = obj.get("height", obj.get("radius", 30) * 2)
+            obj_scale = obj.get("scale", 1.0)
+            rw = obj.get("width", obj.get("radius", 30) * 2) * obj_scale
+            rh = obj.get("height", obj.get("radius", 30) * 2) * obj_scale
             rot = obj.get("rotation", 0)
             coff = obj.get("corners", [[0,0], [0,0], [0,0], [0,0]])
             
@@ -616,8 +672,12 @@ class RenderCanvasMixin:
                     self.mode = item['id']
                     self._cancel_rect()
                 elif item['id'] == 'overlay': self.show_overlay = not self.show_overlay
-                elif item['id'] == 'grid':    self.show_grid = not self.show_grid
-                elif item['id'] == 'icons':   self.show_icons = not self.show_icons
+                elif item['id'] == 'grid':
+                    self.show_grid = not self.show_grid
+                    self._mark_dirty()
+                elif item['id'] == 'icons':
+                    self.show_icons = not self.show_icons
+                    self._mark_dirty()
                 return True
         return False
 

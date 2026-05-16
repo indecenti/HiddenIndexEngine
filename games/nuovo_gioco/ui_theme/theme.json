@@ -1,0 +1,72 @@
+{
+  "id": "horror",
+  "display_name": "Nightmare",
+
+  "colors": {
+    "background_overlay":   [  5,   2,   2, 255],
+    "btn_normal":           [  0,   0,   0,   0],
+    "btn_hover":            [  0,   0,   0,   0],
+    "btn_locked":           [  0,   0,   0,   0],
+    "btn_border_normal":    [  0,   0,   0,   0],
+    "btn_border_hover":     [  0,   0,   0,   0],
+    "btn_border_locked":    [  0,   0,   0,   0],
+    "text_normal":          [140,  25,  25],
+    "text_hover":           [255,  20,  20],
+    "text_locked":          [ 45,  45,  45],
+    "text_label":           [110,  35,  35],
+    "divider_color":        [ 50,  10,  10],
+    "slider_track_bg":      [ 20,   5,   5],
+    "slider_track_border":  [ 70,  12,  12],
+    "slider_fill":          [135,   0,   0],
+    "slider_handle":        [210,  30,  30],
+    "scene_border_normal":  [ 70,  15,  15],
+    "scene_border_hover":   [255,  30,  30],
+    "scene_overlay_hover":  [  0,   0,   0, 150],
+    "scene_overlay_normal": [  0,   0,   0, 200],
+    "lock_text":            [150,   5,   5]
+  },
+
+  "layout": {
+    "btn_layout":           "centered",
+    "btn_indent_step":      0,
+    "btn_border_radius":    0,
+    "btn_width":            150,
+    "btn_height":           150,
+    "btn_center_x":         640,
+    "btn_y_start":          300,
+    "btn_y_step":           170,
+    "btn_border_width":     0,
+    "icons_only":           true,
+    "icon_btn_size":        150,
+    "no_btn_bg":            true,
+    "text_align":           "center",
+    "slider_height":        24,
+    "scene_grid_cols":      3,
+    "scene_thumb_w":        320,
+    "scene_thumb_h":        180
+  },
+
+  "font": {
+    "family":               null,
+    "size_btn":             36,
+    "size_label":           18,
+    "size_scene":           22,
+    "size_lock":            38,
+    "bold":                 true
+  },
+
+  "effects": {
+    "btn_shadow":           false,
+    "btn_glow":             false,
+    "text_shadow":          true,
+    "text_shadow_offset":   [2, 2],
+    "text_shadow_color":    [0, 0, 0, 240],
+    "pulse_hover":          true,
+    "pulse_scale":          1.05,
+    "flicker":              true,
+    "flicker_intensity":    0.15,
+    "flicker_speed":        22.0,
+    "flashlight_fx":        true,
+    "flashlight_radius":    300
+  }
+}

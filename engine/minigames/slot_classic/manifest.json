@@ -1,0 +1,7 @@
+{
+  "id": "slot_classic",
+  "name": "Lucky Reels",
+  "main_class": "SlotClassicGame",
+  "version": "1.0.0",
+  "icon": "../../assets/objects/slot_machine.png"
+}

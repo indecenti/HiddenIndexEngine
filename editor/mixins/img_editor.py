@@ -1,39 +1,96 @@
 """
 editor/mixins/img_editor.py
 
-ImgEditorMixin — Semplice editor di immagini per gli oggetti del catalogo.
-Include: gomma tonda ridimensionabile, crop manuale sui lati, salvataggio.
+ImgEditorMixin — Editor di immagini professionale per gli oggetti del catalogo.
+Include: gomma, magic wand, chroma destroyer, zoom/pan e trim evoluto.
 """
 
 import pygame
 import logging
 import math
+import copy
+import json
 from pathlib import Path
 from editor.constants import (
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC, PANEL,
     TXT, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C,
 )
 from editor.ui.draw import _txt, _draw_text, _rect, _button, _in_rect, _slider
+from editor.mixins.img_editor_logic import evolved_trim
 
 
 class ImgEditorMixin:
-    """Editor semplice per PNG del catalogo."""
+    """Editor professionale per PNG del catalogo."""
 
     def _img_editor_init_state(self):
         self._img_editor_active = False
         self._img_editor_id = ""
         self._img_editor_path = None
+        self._img_editor_zoom = 1.0
+        self._img_editor_pan = [0, 0]
         self._img_editor_surf = None
         self._img_editor_view_surf = None # Superficie di lavoro
         self._img_editor_last_m = None    # Per interpolazione gomma
-        self._img_editor_eraser_r = 20
-        self._img_editor_tool = "eraser"  # "eraser", "soft"
+        self._img_editor_eraser_r = 4
+        self._img_editor_eraser_hardness = 1.0
+        self._img_editor_eraser_opacity = 1.0
+        self._img_editor_wand_tol = 32
+        self._img_editor_wand_feather = 4
+        self._img_editor_wand_global = False
+        self._img_editor_chroma_intensity = 1.0
+        self._img_editor_tool = "eraser"  # "eraser", "soft", "wand"
         self._img_editor_shape = "round"  # "round", "square"
         self._img_editor_crop = {"l": 0, "r": 0, "t": 0, "b": 0}
         self._img_editor_dragging = None # "eraser" | "crop_l" | "crop_r" ...
         self._img_editor_dirty = False
         self._img_editor_undo_stack = []
-        self._img_editor_save_confirm = False # Nuova conferma salvataggio
+        self._img_editor_save_confirm = False 
+        self._img_editor_copy_confirm = False
+        self._img_editor_exit_confirm = False
+        self._img_editor_bg_mode = "check" 
+        self._img_editor_icons = {}
+        self._img_editor_load_assets()
+
+    def _img_editor_load_assets(self):
+        """Carica le icone professionali dalla cartella engine con logging robusto."""
+        # Proviamo diversi percorsi comuni per robustezza
+        search_paths = [
+            self.base_path / "engine" / "assets" / "icons" / "img_editor",
+            Path("engine/assets/icons/img_editor"),
+            Path("assets/icons/img_editor")
+        ]
+        
+        icon_dir = None
+        for sp in search_paths:
+            if sp.exists():
+                icon_dir = sp; break
+        
+        if not icon_dir:
+            logging.error(f"[IMG_EDITOR] Nessuna cartella icone trovata! Base: {self.base_path}")
+            return
+            
+        logging.info(f"[IMG_EDITOR] Caricamento icone da: {icon_dir.absolute()}")
+        
+        # Carichiamo sia dalla sottocartella che dalla cartella padre (per circle/square)
+        parent_dir = icon_dir.parent
+        
+        load_count = 0
+        for folder in [icon_dir, parent_dir]:
+            for p in folder.glob("*.png"):
+                try:
+                    img = pygame.image.load(str(p)).convert_alpha()
+                    img_32 = pygame.transform.smoothscale(img, (32, 32))
+                    stem = p.stem
+                    # Mappatura nomi per coerenza interna
+                    if stem == "circle": stem = "circle_p"
+                    if stem == "square": stem = "square_p"
+                    
+                    self._img_editor_icons[stem] = img_32
+                    load_count += 1
+                except Exception as e:
+                    logging.error(f"[IMG_EDITOR] Errore caricamento {p.name}: {e}")
+        
+        logging.info(f"[IMG_EDITOR] Caricate {load_count} icone PNG.")
 
     def _img_editor_open(self, cat_id: str):
         logging.info(f"[IMG_EDITOR] Opening for cat_id: {cat_id}")
@@ -49,31 +106,30 @@ class ImgEditorMixin:
             return
 
         self._img_editor_path = self.game_path / img_rel
-        logging.info(f"[IMG_EDITOR] Checking path: {self._img_editor_path}")
-        
         if not self._img_editor_path.exists():
-            # Fallback agli asset globali dell'engine (mantenendo la sottocartella del catalogo)
             master_p = self.base_path / "engine" / "assets" / img_rel
-            logging.info(f"[IMG_EDITOR] Game-specific not found, checking master: {master_p}")
             if master_p.exists():
                 self._img_editor_path = master_p
             else:
-                logging.error(f"[IMG_EDITOR] Resource NOT FOUND: {img_rel}")
                 self._status(f"File non trovato: {img_rel}", ERR_C, 3)
                 return
 
-        logging.info(f"[IMG_EDITOR] Final path to use: {self._img_editor_path}")
         try:
-            # Carica l'immagine originale
             orig = pygame.image.load(str(self._img_editor_path)).convert_alpha()
             self._img_editor_surf = orig
-            # Crea una copia per l'editing
             self._img_editor_view_surf = orig.copy()
             self._img_editor_id = cat_id
             self._img_editor_active = True
+            self._img_editor_asset_shape = cat_item.get("shape", "rect")
             self._img_editor_crop = {"l": 0, "r": 0, "t": 0, "b": 0}
             self._img_editor_dirty = False
             self._img_editor_undo_stack = []
+            self._img_editor_save_confirm = False
+            self._img_editor_copy_confirm = False
+            self._img_editor_exit_confirm = False
+            # Forza Auto-Fit al primo frame
+            self._img_editor_zoom = 0.0 
+            self._img_editor_pan = [0, 0]
             self._status(f"Editor Immagine: {cat_id}", ACCENT, 2)
         except Exception as e:
             self._status(f"Errore caricamento: {e}", ERR_C, 3)
@@ -94,20 +150,18 @@ class ImgEditorMixin:
             final_surf.blit(self._img_editor_view_surf, (0, 0), (cl, ct, new_w, new_h))
             
             target_name = self._img_editor_path.name
-            logging.info(f"[IMG_EDITOR] Saving. Target name for global sync: {target_name}")
             
+            # 0. Aggiorna metadati nel catalogo in memoria
+            cat_item = next((c for c in self.catalog if c["id"] == self._img_editor_id), None)
+            if cat_item:
+                cat_item["shape"] = self._img_editor_asset_shape
+
             # 1. Salva il file principale
             pygame.image.save(final_surf, str(self._img_editor_path))
             
-            # 2. Cerca e sovrascrivi tutti i duplicati nel progetto
-            # Scansioniamo engine/assets e la cartella games per sicurezza
+            # 2. Sincronizzazione globale (duplicati)
             overwritten_paths = [self._img_editor_path]
-            
-            search_roots = [
-                self.base_path / "engine" / "assets" / "objects",
-                self.base_path / "games"
-            ]
-            
+            search_roots = [self.base_path / "engine" / "assets", self.base_path / "games"]
             for root in search_roots:
                 if not root.exists(): continue
                 for p in root.rglob(target_name):
@@ -115,569 +169,754 @@ class ImgEditorMixin:
                         try:
                             pygame.image.save(final_surf, str(p))
                             overwritten_paths.append(p)
-                            # Invalida cache per questo specifico path
-                            if p in self._img_cache: del self._img_cache[p]
-                        except Exception as e:
-                            logging.error(f"[IMG_EDITOR] Failed to overwrite duplicate at {p}: {e}")
+                        except: pass
 
-            logging.info(f"[IMG_EDITOR] Save complete. Overwritten {len(overwritten_paths)} instances: {overwritten_paths}")
-
-            # Invalida cache immagini nell'editor per il path principale
-            if self._img_editor_path in self._img_cache:
-                del self._img_cache[self._img_editor_path]
+            # 2b. Sincronizza Metadati nel Catalogo Globale Engine
+            style = cat_item.get("style", "cartoon").replace(" ", "")
+            catalog_file = f"global_{style}_catalog.json"
+            global_path = self.base_path / "engine" / "data" / catalog_file
             
-            # Invalida cache ratio (molto importante per il catalogo)
-            if self._img_editor_id in self._asset_ratios_cache:
-                del self._asset_ratios_cache[self._img_editor_id]
-                
+            if global_path.exists():
+                try:
+                    with open(global_path, "r", encoding="utf-8") as f:
+                        g_cat = json.load(f)
+                    for g_obj in g_cat["objects"]:
+                        if g_obj["id"] == self._img_editor_id:
+                            g_obj["shape"] = self._img_editor_asset_shape
+                            break
+                    with open(global_path, "w", encoding="utf-8") as f:
+                        json.dump(g_cat, f, indent=2, ensure_ascii=False)
+                except: pass
+
+            # 3. Pulizia Cache
+            self._img_cache.clear()
             self._obj_draw_cache.clear()
+            self._asset_ratios_cache.clear()
+            if hasattr(self, "_filter_cache"): self._filter_cache.clear()
+            self._canvas_cache_dirty = True
             
+            self._img_editor_dirty = False
+            self._img_editor_save_confirm = False
+            self._img_editor_copy_confirm = False
+            self._img_editor_exit_confirm = False
             self._img_editor_active = False
-            self._status(f"Immagine salvata ({len(overwritten_paths)} file aggiornati)", OK_C, 3)
+            self._status(f"Asset '{self._img_editor_id}' aggiornato globalmente", OK_C, 3)
             self.scene_dirty = True
         except Exception as e:
-            logging.error(f"[IMG_EDITOR] Save error: {e}")
             self._status(f"Errore salvataggio: {e}", ERR_C, 3)
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # INPUT
-    # ─────────────────────────────────────────────────────────────────────────
+    def _img_editor_save_copy(self):
+        """Salva l'immagine come nuovo asset nel catalogo (Copia)."""
+        if not self._img_editor_active or not self._img_editor_path: return
+        try:
+            orig_id = self._img_editor_id
+            orig_idx = -1
+            orig_item = None
+            for i, item in enumerate(self.catalog):
+                if item["id"] == orig_id:
+                    orig_idx = i; orig_item = item; break
+            
+            if not orig_item: return
+            
+            import re
+            match = re.match(r"(.+)_v(\d+)$", orig_id)
+            if match:
+                base_name = match.group(1); counter = int(match.group(2)) + 1
+            else:
+                base_name = orig_id; counter = 1
+            
+            new_id = f"{base_name}_v{counter}"
+            while any(c["id"] == new_id for c in self.catalog):
+                counter += 1; new_id = f"{base_name}_v{counter}"
+            
+            # Prepara Superficie Finale
+            w, h = self._img_editor_view_surf.get_size()
+            cl, cr = self._img_editor_crop["l"], self._img_editor_crop["r"]
+            ct, cb = self._img_editor_crop["t"], self._img_editor_crop["b"]
+            new_w, new_h = max(1, w - cl - cr), max(1, h - ct - cb)
+            final_surf = pygame.Surface((new_w, new_h), pygame.SRCALPHA)
+            final_surf.blit(self._img_editor_view_surf, (0, 0), (cl, ct, new_w, new_h))
+            
+            orig_rel_path = orig_item.get("image") or orig_item.get("icon")
+            p = Path(orig_rel_path)
+            clean_stem = re.sub(r"_v\d+$", "", p.stem)
+            new_rel_path = str(p.parent / f"{clean_stem}_v{counter}{p.suffix}").replace("\\", "/")
+            new_abs_path = self._img_editor_path.parent / f"{clean_stem}_v{counter}{p.suffix}"
+            
+            new_item = copy.deepcopy(orig_item)
+            new_item["id"] = new_id
+            if "image" in new_item: new_item["image"] = new_rel_path
+            if "icon" in new_item: new_item["icon"] = new_rel_path
+            new_item["shape"] = self._img_editor_asset_shape
+            
+            pygame.image.save(final_surf, str(new_abs_path))
+            
+            if orig_idx != -1: self.catalog.insert(orig_idx + 1, new_item)
+            else: self.catalog.append(new_item)
+            
+            if hasattr(self, "_sync_game_catalog_entry"): self._sync_game_catalog_entry(new_item)
+            
+            self._img_cache.clear()
+            self._obj_draw_cache.clear()
+            self._img_editor_save_confirm = False
+            self._img_editor_copy_confirm = False
+            self._img_editor_exit_confirm = False
+            self._img_editor_active = False
+            self._status(f"Copia creata: {new_id}", OK_C, 3)
+            self.scene_dirty = True
+        except Exception as e:
+            self._status(f"Errore copia: {e}", ERR_C, 3)
 
     def _img_editor_handle_event(self, ev):
         if not self._img_editor_active: return
         
         if ev.type == pygame.KEYDOWN:
-            if ev.key == pygame.K_ESCAPE:
-                self._img_editor_active = False
-            elif ev.key == pygame.K_s and (pygame.key.get_mods() & pygame.KMOD_CTRL):
-                self._img_editor_save()
-            elif ev.key == pygame.K_z and (pygame.key.get_mods() & pygame.KMOD_CTRL):
-                self._img_editor_undo()
+            if ev.key == pygame.K_ESCAPE: self._img_editor_active = False
+            elif ev.key == pygame.K_s and (pygame.key.get_mods() & pygame.KMOD_CTRL): self._img_editor_save()
+            elif ev.key == pygame.K_z and (pygame.key.get_mods() & pygame.KMOD_CTRL): self._img_editor_undo()
+            elif ev.key == pygame.K_r and (pygame.key.get_mods() & pygame.KMOD_CTRL):
+                self._img_editor_zoom = 1.0; self._img_editor_pan = [0, 0]
         
+        elif ev.type == pygame.MOUSEWHEEL:
+            mx, my = pygame.mouse.get_pos()
+            w, h = self.screen.get_size()
+            ew, eh = 1350, 850
+            ex, ey = (w - ew) // 2, (h - eh) // 2
+            
+            # Layout corrente prima dello zoom
+            ix, iy, sw, sh, old_scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
+            
+            # Calcolo posizione immagine-space sotto il mouse
+            px = (mx - ix) / old_scale
+            py = (my - iy) / old_scale
+            
+            # Applicazione zoom
+            zoom_speed = 0.15 if pygame.key.get_mods() & pygame.KMOD_LSHIFT else 0.08
+            old_zoom = self._img_editor_zoom
+            if ev.y > 0: self._img_editor_zoom *= (1.0 + zoom_speed)
+            else: self._img_editor_zoom /= (1.0 + zoom_speed)
+            self._img_editor_zoom = max(0.1, min(40.0, self._img_editor_zoom))
+            
+            # Calcolo nuovo layout e aggiustamento pan per mantenere il punto fisso
+            # Il nuovo pan deve compensare lo spostamento del pixel sotto il mouse
+            new_scale = old_scale * (self._img_editor_zoom / old_zoom)
+            
+            # iw/2 è il centro dell'immagine. px è la distanza dal bordo sinistro.
+            # (px - iw/2) è l'offset dal centro in image-pixels.
+            iw, ih = self._img_editor_view_surf.get_size()
+            cx, cy = iw / 2.0, ih / 2.0
+            
+            # Formula Photoshop: new_pan = (cx - px) + (old_scale / new_scale) * (old_pan + px - cx)
+            self._img_editor_pan[0] = (cx - px) + (old_scale / new_scale) * (self._img_editor_pan[0] + px - cx)
+            self._img_editor_pan[1] = (cy - py) + (old_scale / new_scale) * (self._img_editor_pan[1] + py - cy)
+            
         elif ev.type == pygame.MOUSEBUTTONDOWN:
             mx, my = ev.pos
-            self._img_editor_click(mx, my, ev.button)
+            if ev.button == 2 or (ev.button == 1 and pygame.key.get_pressed()[pygame.K_SPACE]):
+                self._img_editor_dragging = "pan"; self._img_editor_last_m = ev.pos
+            else:
+                self._img_editor_click(mx, my, ev.button)
             
         elif ev.type == pygame.MOUSEBUTTONUP:
-            self._img_editor_dragging = None
-            self._img_editor_last_m = None
+            self._img_editor_dragging = None; self._img_editor_last_m = None
             
         elif ev.type == pygame.MOUSEMOTION:
-            if ev.buttons[0]: # Sinistro premuto
-                mx, my = ev.pos
-                self._img_editor_drag(mx, my)
+            mx, my = ev.pos
+            if self._img_editor_dragging == "pan":
+                if self._img_editor_last_m:
+                    lx, ly = self._img_editor_last_m
+                    dx, dy = mx - lx, my - ly
+                    w, h = self.screen.get_size()
+                    _, _, _, _, scale = self._img_editor_get_img_layout(1350, 850, (w-1350)//2, (h-850)//2)
+                    self._img_editor_pan[0] += dx / scale
+                    self._img_editor_pan[1] += dy / scale
+                    self._img_editor_last_m = (mx, my)
+            elif ev.buttons[0]:
+                if not pygame.key.get_pressed()[pygame.K_SPACE]:
+                    self._img_editor_drag(mx, my)
 
     def _img_editor_get_img_layout(self, ew, eh, ex, ey):
         iw, ih = self._img_editor_view_surf.get_size()
-        # Lasciamo 140px in basso per la bottom bar (Salva/Esci)
-        work_w, work_h = ew - 220, eh - 140
-        scale = min(work_w / iw, work_h / ih)
-        scaled_w, scaled_h = int(iw * scale), int(ih * scale)
-        ix = ex + 20 + (work_w - scaled_w) // 2
-        iy = ey + 60 + (work_h - scaled_h) // 2
-        return ix, iy, scaled_w, scaled_h, scale
+        # Responsive: Sidebar compatta (320), resto alla tela
+        sb_w = 320
+        work_w = ew - sb_w - 60
+        work_h = eh - 150
+        
+        base_scale = min(work_w / iw, work_h / ih)
+        total_scale = base_scale * self._img_editor_zoom
+        scaled_w, scaled_h = int(iw * total_scale), int(ih * total_scale)
+        
+        work_area_x = ex + 25
+        work_area_y = ey + 70
+        work_cx = work_area_x + work_w // 2
+        work_cy = work_area_y + work_h // 2
+        
+        ix = work_cx - (scaled_w // 2) + int(self._img_editor_pan[0] * total_scale)
+        iy = work_cy - (scaled_h // 2) + int(self._img_editor_pan[1] * total_scale)
+        return ix, iy, scaled_w, scaled_h, total_scale
 
     def _img_editor_click(self, mx, my, btn):
+        if not self._img_editor_active: return
         w, h = self.screen.get_size()
-        ew, eh = 850, 650
+        ew = int(min(w * 0.94, 1280))
+        eh = int(min(h * 0.90, 820))
         ex, ey = (w - ew) // 2, (h - eh) // 2
         ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
         
         reset_confirm = True
-        bx = ex + ew - 190
-
-        # --- 1. BARRA INFERIORE (Priorità assoluta) ---
-        by_bot = ey + eh - 60
-        bx_bot = ex + (ew - 260) // 2
-        bw_act = 125
-        if _in_rect((mx, my), (bx_bot, by_bot, bw_act, 40)): # SALVA
-            if not self._img_editor_save_confirm:
-                self._img_editor_save_confirm = True
-                reset_confirm = False
-            else:
-                self._img_editor_save()
-                return
-            return
-        if _in_rect((mx, my), (bx_bot + bw_act + 10, by_bot, bw_act, 40)): # ANNULLA
-            self._img_editor_active = False
-            return
-
-        # --- 2. AREA DI LAVORO (DISEGNO) ---
-        # Si ferma prima della barra inferiore
-        work_rect = pygame.Rect(ex + 10, ey + 40, ew - 210, eh - 100)
-        if _in_rect((mx, my), work_rect):
-            self._img_editor_dragging = "eraser"
-            self._img_editor_erase(mx, my, ix, iy, scale)
-            return
-
-        # --- 3. BARRA LATERALE ---
-        # Strumenti
-        ty, bw_t = ey + 75, 40
-        if _in_rect((mx, my), (bx, ty, bw_t, bw_t)):
-            self._img_editor_tool = "eraser"
-        elif _in_rect((mx, my), (bx + bw_t + 10, ty, bw_t, bw_t)):
-            self._img_editor_tool = "soft"
+        sb_w = 320
+        sb_x = ex + ew - sb_w - 15
+        col1_x, col2_x = sb_x + 20, sb_x + 175
         
-        # Forme
-        elif _in_rect((mx, my), (bx, fy := ty + 55, bw_f := 40, bw_f)):
-            self._img_editor_shape = "round"
-        elif _in_rect((mx, my), (bx + bw_f + 10, fy, bw_f, bw_f)):
-            self._img_editor_shape = "square"
+        # Area Lavoro & Workspace (Photoshop Style: attivo ovunque se non colpisci UI)
+        is_ui = False
+        fy = ey + eh - 65; bw, bh = 150, 42; total_footer_w = bw * 3 + 40
+        fb_start_x = ex + (ew - sb_w) // 2 - total_footer_w // 2
+        for i in range(3):
+            if _in_rect((mx, my), (fb_start_x + i*(bw + 20), fy, bw, bh)): is_ui = True
+        if mx > sb_x: is_ui = True
+        if my < ey + 60: is_ui = True # Header area
+        
+        if not is_ui:
+            if self._img_editor_tool == "wand": self._img_editor_apply_wand(mx, my, ix, iy, scale)
+            else: self._img_editor_dragging = "eraser"; self._img_editor_erase(mx, my, ix, iy, scale)
+            return
 
-        # Raggio
-        elif _in_rect((mx, my), (slider_r := pygame.Rect(bx, fy + 78, 170, 20))):
-            rel = max(0, min(1, (mx - slider_r.x) / slider_r.w))
-            self._img_editor_eraser_r = int(5 + rel * 95)
-            self._img_editor_dragging = "eraser_size"
+        # Footer Azioni
+        fy = ey + eh - 65
+        bw, bh = 150, 42
+        total_footer_w = bw * 3 + 40
+        fb_start_x = ex + (ew - sb_w) // 2 - total_footer_w // 2
+        
+        fb_rects = [pygame.Rect(fb_start_x + i*(bw + 20), fy, bw, bh) for i in range(3)]
+        
+        if _in_rect((mx, my), fb_rects[0]):
+            if self._img_editor_dirty or any(self._img_editor_crop.values()):
+                if not self._img_editor_save_confirm: self._img_editor_save_confirm = True; reset_confirm = False
+                else: self._img_editor_save()
+            return
+        if _in_rect((mx, my), fb_rects[1]):
+            if not self._img_editor_copy_confirm: self._img_editor_copy_confirm = True; reset_confirm = False
+            else: self._img_editor_save_copy()
+            return
+        if _in_rect((mx, my), fb_rects[2]): # ESCI
+            if self._img_editor_dirty and not self._img_editor_exit_confirm:
+                self._img_editor_exit_confirm = True; reset_confirm = False
+            else: self._img_editor_active = False
+            return
 
-        # Crop & Rotazione
+        # Sidebar Strumenti (Y: 85)
+        sy = ey + 85
+        for i in range(2):
+            if _in_rect((mx, my), (col1_x + i*60, sy, 52, 52)):
+                self._img_editor_tool = ["eraser", "wand"][i]; return
+            if _in_rect((mx, my), (col1_x + i*60, sy + 65, 52, 52)):
+                self._img_editor_shape = ["round", "square"][i]; return
+        
+        # Sliders (Y: 245)
+        sy_sl = ey + 245
+        sl_w = 145
+        if self._img_editor_tool == "eraser":
+            if _in_rect((mx, my), (col1_x, sy_sl, sl_w, 20)):
+                self._img_editor_dragging = "sl_radius"
+                self._img_editor_eraser_r = int(1 + ((mx - col1_x) / sl_w) * 63); return
+            if _in_rect((mx, my), (col1_x, sy_sl + 60, sl_w, 20)):
+                self._img_editor_dragging = "sl_hardness"
+                self._img_editor_eraser_hardness = (mx - col1_x) / sl_w; return
+            if _in_rect((mx, my), (col1_x, sy_sl + 120, sl_w, 20)):
+                self._img_editor_dragging = "sl_opacity"
+                self._img_editor_eraser_opacity = (mx - col1_x) / sl_w; return
+            sy_ch = sy_sl + 185
         else:
-            y_c = fy + 118
-            y_c += 24
-            for side in ["l", "r", "t", "b"]:
-                y_c += 18
-                sr = pygame.Rect(bx, y_c, 170, 16)
-                if _in_rect((mx, my), sr):
-                    self._img_editor_dragging = f"crop_{side}"
-                    self._img_editor_update_crop(mx, sr.x, sr.w, side)
-                    return
-                y_c += 32
+            if _in_rect((mx, my), (col1_x, sy_sl, sl_w, 20)):
+                self._img_editor_dragging = "sl_tol"
+                self._img_editor_wand_tol = int(((mx - col1_x) / sl_w) * 128); return
+            if _in_rect((mx, my), (col1_x, sy_sl + 60, sl_w, 20)):
+                self._img_editor_dragging = "sl_feather"
+                self._img_editor_wand_feather = int(((mx - col1_x) / sl_w) * 32); return
+            if _in_rect((mx, my), (col1_x, sy_sl + 105, sl_w, 35)):
+                self._img_editor_wand_global = not self._img_editor_wand_global; return
+            sy_ch = sy_sl + 185
             
-            y_rot = y_c + 15
-            bw_rot = 170 // 2 - 5
-            if _in_rect((mx, my), (bx, y_rot, bw_rot, 40)):
-                self._img_editor_apply_rotation(90)
-            elif _in_rect((mx, my), (bx + bw_rot + 10, y_rot, bw_rot, 40)):
-                self._img_editor_apply_rotation(-90)
-            elif _in_rect((mx, my), (bx, y_rot + 50, 170, 36)):
-                self._img_editor_auto_crop()
+        for i, mode in enumerate(["green", "white", "black"]):
+            if _in_rect((mx, my), (col1_x + i*50, sy_ch, 45, 40)):
+                self._img_editor_apply_smart_chroma(mode); return
+        if _in_rect((mx, my), (col1_x, sy_ch + 85, sl_w, 20)):
+            self._img_editor_dragging = "sl_chroma"
+            self._img_editor_chroma_intensity = 0.5 + ((mx - col1_x) / sl_w) * 3.5; return
+
+        # Colonna 2 (Zoom / Trans)
+        sy2 = ey + 85
+        bw2 = (sl_w // 2) - 3
+        if _in_rect((mx, my), (col2_x, sy2, bw2, 40)):
+            self._img_editor_zoom = 1.0; self._img_editor_pan = [0, 0]; return
+        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 40)):
+            self._img_editor_zoom = 2.0; return
+        
+        sy2 += 90
+        if _in_rect((mx, my), (col2_x, sy2, bw2, 42)): self._img_editor_apply_rotation(90); return
+        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 42)): self._img_editor_apply_rotation(-90); return
+        
+        sy2 += 75
+        if _in_rect((mx, my), (col2_x, sy2, 145, 40)): self._img_editor_auto_crop(); return
+        sy2 += 65
+        if _in_rect((mx, my), (col2_x, sy2, bw2, 38)): self._img_editor_apply_flip(True, False); return
+        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 38)): self._img_editor_apply_flip(False, True); return
+        sy2 += 60
+        if _in_rect((mx, my), (col2_x, sy2, 145, 38)): self._img_editor_apply_smooth_edges(); return
+        
+        sy2 += 75
+        if _in_rect((mx, my), (col2_x, sy2, bw2, 38)): self._img_editor_asset_shape = "rect"; return
+        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 38)): self._img_editor_asset_shape = "circle"; return
+
+        if _in_rect((mx, my), (ix + sw - 110, iy - 40, 110, 32)):
+            modes = ["check", "black", "white"]
+            self._img_editor_bg_mode = modes[(modes.index(self._img_editor_bg_mode) + 1) % 3]; return
+
+        if _in_rect((mx, my), (ix, iy, sw, sh)):
+            if self._img_editor_tool == "wand": self._img_editor_apply_wand(mx, my, ix, iy, scale)
+            else: self._img_editor_dragging = "eraser"; self._img_editor_erase(mx, my, ix, iy, scale)
+            return
 
         if reset_confirm:
-            self._img_editor_save_confirm = False
+            self._img_editor_save_confirm = False; self._img_editor_copy_confirm = False
 
     def _img_editor_auto_crop(self):
-        """Algoritmo di Trim Ultra-Robust: Scansione densità bordi su tutti i 4 lati."""
-        logging.info("[IMG_EDITOR] ================= ROBUST EDGE SCANNER =================")
+        """Algoritmo di Trim Evoluto: Conservativo, ignora solo pixel isolati."""
         try:
-            surf = self._img_editor_view_surf
-            w, h = surf.get_size()
-            logging.info(f"[IMG_EDITOR] Screening immagine {w}x{h}...")
-            
-            # Parametri di tolleranza
-            # Usiamo soglia 80 per ignorare il rumore (visto prima a 58)
-            # Richiediamo almeno 2 pixel solidi o l'1% della riga per considerare "contenuto"
-            THR = 80
-            MIN_D = max(2, int(min(w, h) * 0.01))
-            
-            new_t, new_b = 0, h
-            new_l, new_r = 0, w
-            
-            # 1. Scan TOP
-            for y in range(h):
-                row_solid = sum(1 for x in range(w) if surf.get_at((x, y))[3] >= THR)
-                if row_solid >= MIN_D:
-                    new_t = y
-                    logging.info(f"[IMG_EDITOR] Top Edge trovato a y={y} (densità={row_solid})")
-                    break
-            
-            # 2. Scan BOTTOM
-            for y in range(h - 1, new_t, -1):
-                row_solid = sum(1 for x in range(w) if surf.get_at((x, y))[3] >= THR)
-                if row_solid >= MIN_D:
-                    new_b = y + 1
-                    logging.info(f"[IMG_EDITOR] Bottom Edge trovato a y={y} (densità={row_solid})")
-                    break
-                    
-            # 3. Scan LEFT
-            for x in range(w):
-                col_solid = sum(1 for y in range(new_t, new_b) if surf.get_at((x, y))[3] >= THR)
-                if col_solid >= MIN_D:
-                    new_l = x
-                    logging.info(f"[IMG_EDITOR] Left Edge trovato a x={x} (densità={col_solid})")
-                    break
-            
-            # 4. Scan RIGHT
-            for x in range(w - 1, new_l, -1):
-                col_solid = sum(1 for y in range(new_t, new_b) if surf.get_at((x, y))[3] >= THR)
-                if col_solid >= MIN_D:
-                    new_r = x + 1
-                    logging.info(f"[IMG_EDITOR] Right Edge trovato a x={x} (densità={col_solid})")
-                    break
-
-            # Verifica se c'è stato un vero cambiamento
-            if new_l == 0 and new_r == w and new_t == 0 and new_b == h:
-                logging.info("[IMG_EDITOR] Nessun bordo trimmabile trovato con i parametri attuali.")
-                self._status("L'asset è già ottimizzato", TXT_DIM, 2)
-                return
-
-            # Calcolo Bbox finale
-            final_w = new_r - new_l
-            final_h = new_b - new_t
-            
-            if final_w <= 0 or final_h <= 0:
-                logging.warning("[IMG_EDITOR] Errore logico nel calcolo del ritaglio.")
-                return
-
-            # ESECUZIONE
             self._img_editor_push_undo()
-            new_surf = pygame.Surface((final_w, final_h), pygame.SRCALPHA)
-            new_surf.blit(self._img_editor_view_surf, (0, 0), (new_l, new_t, final_w, final_h))
-            
-            self._img_editor_view_surf = new_surf
+            # Soglia molto bassa (2) come richiesto per essere meno aggressivo
+            self._img_editor_view_surf = evolved_trim(self._img_editor_view_surf, noise_threshold=2)
             self._img_editor_crop = {"l": 0, "r": 0, "t": 0, "b": 0}
             self._img_editor_dirty = True
-            
-            logging.info(f"[IMG_EDITOR] Trim completato: {w}x{h} -> {final_w}x{final_h}")
+            final_w, final_h = self._img_editor_view_surf.get_size()
             self._status(f"Trim: {final_w}x{final_h}", OK_C, 2)
-                
         except Exception as e:
-            logging.error(f"[IMG_EDITOR] Errore nel Robust Scanner: {e}", exc_info=True)
-            self._status("Errore algoritmo Trim", ERR_C, 2)
+            logging.error(f"[IMG_EDITOR] Trim failed: {e}"); self._status("Errore Trim", ERR_C, 2)
+
+    def _img_editor_apply_smart_chroma(self, mode="green"):
+        """Chroma Destroyer Pro v2."""
+        self._img_editor_push_undo()
+        surf = self._img_editor_view_surf
+        w, h = surf.get_size()
+        intensity = self._img_editor_chroma_intensity
+        import pygame.surfarray as surfarray
+        import numpy as np
+        
+        arr = surfarray.array3d(surf).astype(float)
+        alpha = surfarray.array_alpha(surf).astype(float)
+        r, g, b = arr[:,:,0], arr[:,:,1], arr[:,:,2]
+        
+        if mode == "green":
+            score = g - (r * 0.6 + b * 0.4)
+            threshold = 12 - (intensity * 10)
+        elif mode == "white":
+            score = (r + g + b) / 3.0
+            threshold = 255 - (intensity * 40)
+        elif mode == "black":
+            score = 255 - ((r + g + b) / 3.0)
+            threshold = 255 - (intensity * 40)
+        else: score = np.zeros_like(r); threshold = 0
+
+        mask_remove = score > threshold
+        reduction = (score[mask_remove] - threshold) * (15.0 * intensity)
+        alpha[mask_remove] -= reduction
+        
+        if mode == "green":
+            spill_mask = (score > -5) & (alpha > 5)
+            arr[spill_mask, 1] = np.minimum(arr[spill_mask, 1], np.maximum(r[spill_mask], b[spill_mask]))
+        
+        alpha = np.clip(alpha, 0, 255); arr = np.clip(arr, 0, 255)
+        new_surf = pygame.Surface((w, h), pygame.SRCALPHA)
+        surfarray.blit_array(new_surf, arr.astype(np.uint8))
+        surfarray.pixels_alpha(new_surf)[:] = alpha.astype(np.uint8)
+        self._img_editor_view_surf = new_surf; self._img_editor_dirty = True
+        self._status(f"Rimosso {mode.upper()}", OK_C, 2)
+
+    def _img_editor_apply_wand(self, mx, my, ix, iy, scale):
+        rx = int((mx - ix) / scale); ry = int((my - iy) / scale)
+        surf = self._img_editor_view_surf; w, h = surf.get_size()
+        if not (0 <= rx < w and 0 <= ry < h): return
+        target_color = surf.get_at((rx, ry))
+        if target_color[3] < 5: return
+
+        self._img_editor_push_undo()
+        tol, feather = self._img_editor_wand_tol, self._img_editor_wand_feather
+        to_process = []
+        if self._img_editor_wand_global:
+            for y in range(h):
+                for x in range(w):
+                    nc = surf.get_at((x, y))
+                    diff = max(abs(nc[0]-target_color[0]), abs(nc[1]-target_color[1]), abs(nc[2]-target_color[2]))
+                    if diff <= tol + feather: to_process.append((x, y, diff))
+        else:
+            from collections import deque
+            queue = deque([(rx, ry)]); visited = [False] * (w * h); visited[ry * w + rx] = True
+            while queue:
+                cx, cy = queue.popleft(); nc = surf.get_at((cx, cy))
+                diff = max(abs(nc[0]-target_color[0]), abs(nc[1]-target_color[1]), abs(nc[2]-target_color[2]))
+                to_process.append((cx, cy, diff))
+                for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]:
+                    nx, ny = cx + dx, cy + dy
+                    if 0 <= nx < w and 0 <= ny < h:
+                        v_idx = ny * w + nx
+                        if not visited[v_idx]:
+                            nc_n = surf.get_at((nx, ny))
+                            diff_n = max(abs(nc_n[0]-target_color[0]), abs(nc_n[1]-target_color[1]), abs(nc_n[2]-target_color[2]))
+                            if diff_n <= tol + feather: visited[v_idx] = True; queue.append((nx, ny))
+
+        for px, py, d in to_process:
+            if d <= tol: surf.set_at((px, py), (0,0,0,0))
+            else:
+                f_ratio = (d - tol) / max(1, feather)
+                orig_a = surf.get_at((px, py))[3]
+                surf.set_at((px, py), (*surf.get_at((px, py))[:3], int(orig_a * f_ratio)))
+        self._img_editor_dirty = True; self._status("Wand applicata", OK_C, 2)
 
     def _img_editor_apply_rotation(self, angle):
-        """Ruota la superficie di lavoro e resetta i crop (per semplicità)."""
+        self._img_editor_push_undo()
+        self._img_editor_view_surf = pygame.transform.rotate(self._img_editor_view_surf, angle)
+        self._img_editor_crop = {"l": 0, "r": 0, "t": 0, "b": 0}; self._img_editor_dirty = True
+
+    def _img_editor_apply_flip(self, flip_h, flip_v):
+        self._img_editor_push_undo()
+        self._img_editor_view_surf = pygame.transform.flip(self._img_editor_view_surf, flip_h, flip_v)
+        self._img_editor_dirty = True
+
+    def _img_editor_apply_smooth_edges(self):
         try:
             self._img_editor_push_undo()
-            self._img_editor_view_surf = pygame.transform.rotate(self._img_editor_view_surf, angle)
-            # Reset crop perché le dimensioni sono cambiate
-            self._img_editor_crop = {"l": 0, "r": 0, "t": 0, "b": 0}
-            self._img_editor_dirty = True
-            logging.info(f"[IMG_EDITOR] Rotated by {angle}deg. New size: {self._img_editor_view_surf.get_size()}")
-        except Exception as e:
-            logging.error(f"[IMG_EDITOR] Rotation failed: {e}")
+            import pygame.surfarray as surfarray; import numpy as np; from scipy.ndimage import gaussian_filter
+            alpha = surfarray.array_alpha(self._img_editor_view_surf).astype(float)
+            alpha_smooth = gaussian_filter(alpha, sigma=0.6)
+            surfarray.pixels_alpha(self._img_editor_view_surf)[:] = alpha_smooth.astype(np.uint8)
+            self._img_editor_dirty = True; self._status("Bordi Ammorbiditi", OK_C, 2)
+        except: self._status("Smooth non disponibile", WARN_C, 2)
 
     def _img_editor_drag(self, mx, my):
         w, h = self.screen.get_size()
-        ew, eh = 850, 650
+        ew = int(min(w * 0.94, 1280))
+        eh = int(min(h * 0.90, 820))
         ex, ey = (w - ew) // 2, (h - eh) // 2
-        bx = ex + ew - 190
+        sb_w = 320
+        sb_x = ex + ew - sb_w - 15
+        col1_x = sb_x + 10
+        sl_w = 145
         
-        if self._img_editor_dragging and self._img_editor_dragging.startswith("eraser"):
+        if self._img_editor_dragging == "eraser_active" or self._img_editor_dragging == "eraser":
             ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
             self._img_editor_erase(mx, my, ix, iy, scale)
-            
-        elif self._img_editor_dragging == "eraser_size":
-            fy_sl = ey + 75 + 55 # ty + 55
-            sr = pygame.Rect(bx, fy_sl + 78, 170, 20) # Sinc con click
-            rel = max(0, min(1, (mx - sr.x) / sr.w))
-            self._img_editor_eraser_r = int(5 + max(0.01, rel) * 95)
-            
-        elif self._img_editor_dragging and self._img_editor_dragging.startswith("crop_"):
-            side = self._img_editor_dragging.split("_")[1]
-            y_map = {"l": 0, "r": 1, "t": 2, "b": 3}
-            # Ricalcola y come in click (fy + 142)
-            fy_sl = ey + 75 + 55
-            y_c = fy_sl + 118 + 24
-            for _ in range(y_map[side]):
-                y_c += (18 + 32) # Passo crop completo (Label + Slider)
-            y_c += 18 # Per arrivare esattamente allo slider
-            sr = pygame.Rect(bx, y_c, 170, 16)
-            self._img_editor_update_crop(mx, sr.x, sr.w, side)
-
-    def _img_editor_update_crop(self, mx, sx, sw, side):
-        rel = max(0, min(1, (mx - sx) / sw))
-        iw, ih = self._img_editor_view_surf.get_size()
-        max_base = iw if side in ("l", "r") else ih
-        self._img_editor_crop[side] = int(rel * max_base)
+        elif self._img_editor_dragging == "sl_radius":
+            self._img_editor_eraser_r = int(1 + max(0, min(1, (mx - col1_x) / sl_w)) * 63)
+        elif self._img_editor_dragging == "sl_hardness":
+            self._img_editor_eraser_hardness = max(0, min(1, (mx - col1_x) / sl_w))
+        elif self._img_editor_dragging == "sl_opacity":
+            self._img_editor_eraser_opacity = max(0, min(1, (mx - col1_x) / sl_w))
+        elif self._img_editor_dragging == "sl_tol":
+            self._img_editor_wand_tol = int(max(0, min(1, (mx - col1_x) / sl_w)) * 128)
+        elif self._img_editor_dragging == "sl_feather":
+            self._img_editor_wand_feather = int(max(0, min(1, (mx - col1_x) / sl_w)) * 32)
+        elif self._img_editor_dragging == "sl_chroma":
+            self._img_editor_chroma_intensity = 0.5 + max(0, min(1, (mx - col1_x) / sl_w)) * 3.5
 
     def _img_editor_erase(self, mx, my, ix, iy, scale):
-        # Transforma mouse in coordinate immagine
-        rx = (mx - ix) / scale
-        ry = (my - iy) / scale
-        r = self._img_editor_eraser_r / scale
+        rx = (mx - ix) / scale; ry = (my - iy) / scale
+        r = float(self._img_editor_eraser_r)
+        if not (self._img_editor_dragging == "eraser_active"):
+            self._img_editor_push_undo(); self._img_editor_dragging = "eraser_active"
         
-        # Gestione Undo e Stato
-        if not (self._img_editor_dragging and self._img_editor_dragging == "eraser_active"):
-            self._img_editor_push_undo()
-            self._img_editor_dragging = "eraser_active"
-
-        # Interpolazione tra l'ultimo punto e quello attuale per un tratto fluido
         points = [(rx, ry)]
         if self._img_editor_last_m:
-            lx, ly = self._img_editor_last_m
-            dist = math.hypot(rx - lx, ry - ly)
-            if dist > r / 3: # Più denso per sfumatura
-                steps = int(dist / (r / 3))
-                for i in range(1, steps):
-                    f = i / steps
-                    points.append((lx + (rx - lx) * f, ly + (ry - ly) * f))
-        
+            lx, ly = self._img_editor_last_m; dist = math.hypot(rx - lx, ry - ly)
+            # Densità estrema per raggio piccolo (0.2px step)
+            step_dist = max(0.2, r / 8.0)
+            if dist > step_dist:
+                steps = int(dist / step_dist)
+                for i in range(1, steps + 1):
+                    f = i / steps; points.append((lx + (rx - lx) * f, ly + (ry - ly) * f))
         self._img_editor_last_m = (rx, ry)
 
         iw, ih = self._img_editor_view_surf.get_size()
-        tool, shape = self._img_editor_tool, self._img_editor_shape
-
-        # Pre-calcolo o recupero pennello dalla cache (per fluidità)
-        brush_key = (tool, shape, int(r))
+        hardness, opacity = self._img_editor_eraser_hardness, self._img_editor_eraser_opacity
+        brush_key = (self._img_editor_tool, self._img_editor_shape, int(r), int(hardness * 100), int(opacity * 100))
         if not hasattr(self, "_img_editor_brush_cache"): self._img_editor_brush_cache = {}
         
         if brush_key not in self._img_editor_brush_cache:
-            size = int(r * 2) + 2
-            bs = pygame.Surface((size, size), pygame.SRCALPHA)
-            center = size // 2
-            
-            # Disegno a livello di pixel per gradiente perfetto
-            for y in range(size):
-                for x in range(size):
-                    dx, dy = x - center, y - center
-                    dist = math.hypot(dx, dy)
-                    
-                    if shape == "round":
-                        if dist > r: alpha = 255
-                        elif tool == "soft":
-                            # Decadimento professionale (stile Photoshop)
-                            # Usiamo una curva di potenza per un bordo molto morbido
-                            alpha = int(255 * math.pow(dist / r, 1.2))
-                        else: # Hard Eraser
-                            alpha = 0 if dist < r - 1 else 255
-                    else: # Square
-                        dist_sq = max(abs(dx), abs(dy))
-                        if dist_sq > r: alpha = 255
-                        elif tool == "soft":
-                            alpha = int(255 * math.pow(dist_sq / r, 1.2))
-                        else:
-                            alpha = 0 if dist_sq < r - 1 else 255
-                    
-                    bs.set_at((x, y), (255, 255, 255, max(0, min(255, alpha))))
-            
+            import numpy as np
+            diameter = int(r * 2); size = diameter + (1 if diameter % 2 == 0 else 0)
+            center = size / 2.0 - 0.5; bs = pygame.Surface((size, size), pygame.SRCALPHA)
+            y, x = np.ogrid[0:size, 0:size]
+            dist_array = np.sqrt((x - center)**2 + (y - center)**2) if self._img_editor_shape == "round" else np.maximum(np.abs(x - center), np.abs(y - center))
+            h_boundary = r * hardness; erase_power = np.zeros((size, size), dtype=float)
+            erase_power[dist_array <= h_boundary] = 1.0
+            gradient_mask = (dist_array > h_boundary) & (dist_array <= r)
+            if r > h_boundary: erase_power[gradient_mask] = 1.0 - (dist_array[gradient_mask] - h_boundary) / (r - h_boundary)
+            pygame.surfarray.pixels_alpha(bs)[:] = (255 * (1.0 - erase_power * opacity)).astype(np.uint8)
             self._img_editor_brush_cache[brush_key] = bs
 
-        brush_surf = self._img_editor_brush_cache[brush_key]
-        size = brush_surf.get_width()
-
-        for px, py in points:
-            if px + r < 0 or px - r > iw or py + r < 0 or py - r > ih:
-                continue
-            p_rect = (int(px - r), int(py - r), size, size)
-            self._img_editor_view_surf.blit(brush_surf, (p_rect[0], p_rect[1]), special_flags=pygame.BLEND_RGBA_MIN)
+        brush_surf = self._img_editor_brush_cache[brush_key]; b_w, b_h = brush_surf.get_size()
+        self._img_editor_push_undo()
+        # Precisione round() per i bordi (Gimp/Photoshop style)
+        rx = int(round((mx - ix) / scale))
+        ry = int(round((my - iy) / scale))
+        r = self._img_editor_eraser_r
         
+        # Superficie dispari per centratura perfetta del pixel
+        bs = r * 2 + 1
+        brush_surf = pygame.Surface((bs, bs), pygame.SRCALPHA)
+        # Inizializza con Alpha 255: il MIN tra Dest e 255 non cambia nulla (lascia i pixel)
+        brush_surf.fill((255, 255, 255, 255))
+        
+        for i in range(r, 0, -1):
+            dist = i / r
+            if dist < self._img_editor_eraser_hardness: a = 0
+            else:
+                denom = max(0.001, 1.0 - self._img_editor_eraser_hardness)
+                a = int(255 * ((dist - self._img_editor_eraser_hardness) / denom))
+            pygame.draw.circle(brush_surf, (0, 0, 0, a), (r, r), i)
+        
+        # Blit con overflow consentito per cancellare sui bordi
+        bx, by = rx - r, ry - r
+        self._img_editor_view_surf.blit(brush_surf, (bx, by), special_flags=pygame.BLEND_RGBA_MIN)
         self._img_editor_dirty = True
 
     def _img_editor_push_undo(self):
-        # Limita lo stack a 20 passi per memoria
         self._img_editor_undo_stack.append(self._img_editor_view_surf.copy())
-        if len(self._img_editor_undo_stack) > 20:
-            self._img_editor_undo_stack.pop(0)
+        if len(self._img_editor_undo_stack) > 20: self._img_editor_undo_stack.pop(0)
 
     def _img_editor_undo(self):
-        if not self._img_editor_undo_stack:
-            self._status("Nulla da annullare", WARN_C, 1)
-            return
-        self._img_editor_view_surf = self._img_editor_undo_stack.pop()
-        self._img_editor_dirty = True
-        self._status("Undo effettuato", ACCENT, 1)
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # RENDERING
-    # ─────────────────────────────────────────────────────────────────────────
+        if not self._img_editor_undo_stack: return
+        self._img_editor_view_surf = self._img_editor_undo_stack.pop(); self._img_editor_dirty = True
 
     def _r_img_editor_modal(self, w, h):
         if not self._img_editor_active: return
+        dim = pygame.Surface((w, h), pygame.SRCALPHA); dim.fill((0, 0, 0, 215)); self.screen.blit(dim, (0, 0))
         
-        # Sfondo scuro
-        dim = pygame.Surface((w, h), pygame.SRCALPHA)
-        dim.fill((0, 0, 0, 180))
-        self.screen.blit(dim, (0, 0))
-        
-        ew, eh = 850, 650
+        # Responsive Modal Size (Liquida & Studio-Grade)
+        ew = int(min(w * 0.94, 1280))
+        eh = int(min(h * 0.90, 820))
         ex, ey = (w - ew) // 2, (h - eh) // 2
+        
         box = pygame.Rect(ex, ey, ew, eh)
-        _rect(self.screen, PANEL, box, radius=12)
-        _rect(self.screen, ACCENT, box, 2, radius=12)
+        _rect(self.screen, (25, 25, 30), box, radius=18)
+        _rect(self.screen, ACCENT, box, 1, radius=18)
         
         mx, my = pygame.mouse.get_pos()
+        _draw_text(self.screen, f"STUDIO ASSET: {self._img_editor_id}", "lg", TXT_HI, ex + 30, ey + 25)
         
-        # Header
-        title = _txt(f"Edit Image: {self._img_editor_id}", "lg", TXT_HI)
-        self.screen.blit(title, (ex + 20, ey + 15))
+        # Calcolo layout base con supporto Auto-Fit
+        ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
+        if self._img_editor_zoom == 0.0:
+            self._img_editor_zoom = 1.0
+            self._img_editor_pan = [0, 0]
+            ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
         
-        # Area Lavoro Immagine
-        iw, ih = self._img_editor_view_surf.get_size()
-        # Riserva spazio in basso (corrispondente a _img_editor_get_img_layout)
-        work_w, work_h = ew - 220, eh - 140
-        scale = min(work_w / iw, work_h / ih)
-        scaled_w, scaled_h = int(iw * scale), int(ih * scale)
-        ix = ex + 20 + (work_w - scaled_w) // 2
-        iy = ey + 60 + (work_h - scaled_h) // 2
-        
-        # Scacchiera trasparenza
-        chess_size = 16
-        for cx in range(ix, ix + scaled_w, chess_size):
-            for cy in range(iy, iy + scaled_h, chess_size):
-                if ((cx-ix)//chess_size + (cy-iy)//chess_size) % 2 == 0:
-                    cw = min(chess_size, ix + scaled_w - cx)
-                    ch = min(chess_size, iy + scaled_h - cy)
-                    pygame.draw.rect(self.screen, (30, 30, 35), (cx, cy, cw, ch))
-                else:
-                    cw = min(chess_size, ix + scaled_w - cx)
-                    ch = min(chess_size, iy + scaled_h - cy)
-                    pygame.draw.rect(self.screen, (45, 45, 50), (cx, cy, cw, ch))
+        # Area Lavoro
+        pygame.draw.rect(self.screen, (10, 10, 15), (ix-2, iy-2, sw+4, sh+4), border_radius=6)
+        if self._img_editor_bg_mode == "check":
+            cs = 20
+            for cx in range(ix, ix + sw, cs):
+                for cy in range(iy, iy + sh, cs):
+                    col = (32, 32, 38) if ((cx-ix)//cs + (cy-iy)//cs) % 2 == 0 else (48, 48, 54)
+                    pygame.draw.rect(self.screen, col, (cx, cy, min(cs, ix+sw-cx), min(cs, iy+sh-cy)))
+        elif self._img_editor_bg_mode == "black": pygame.draw.rect(self.screen, (5, 5, 5), (ix, iy, sw, sh))
+        else: pygame.draw.rect(self.screen, (248, 248, 248), (ix, iy, sw, sh))
 
-        # Immagine scalata
-        scaled_img = pygame.transform.smoothscale(self._img_editor_view_surf, (scaled_w, scaled_h))
+        # Tasto Background (Spostato per non sovrapporre la tela)
+        bg_r = pygame.Rect(ex + ew - 110, ey + 25, 80, 32)
+        _button(self.screen, bg_r, f" {self._img_editor_bg_mode.upper()}", _in_rect((mx, my), bg_r))
+
+        if scale >= 1.0: scaled_img = pygame.transform.scale(self._img_editor_view_surf, (sw, sh))
+        else: scaled_img = pygame.transform.smoothscale(self._img_editor_view_surf, (sw, sh))
         self.screen.blit(scaled_img, (ix, iy))
         
-        # Rettangolo Crop Overlay
-        cl, cr = int(self._img_editor_crop["l"] * scale), int(self._img_editor_crop["r"] * scale)
-        ct, cb = int(self._img_editor_crop["t"] * scale), int(self._img_editor_crop["b"] * scale)
-        
-        # Rettangolo Crop Overlay Professionale
-        cl, cr = int(self._img_editor_crop["l"] * scale), int(self._img_editor_crop["r"] * scale)
-        ct, cb = int(self._img_editor_crop["t"] * scale), int(self._img_editor_crop["b"] * scale)
-        
-        if any([cl, cr, ct, cb]):
-            # Oscuramento delle aree fuori dal crop (Photoshop Style)
-            overlay = pygame.Surface((scaled_w, scaled_h), pygame.SRCALPHA)
-            overlay.fill((0, 0, 0, 160)) # Tutto scuro
-            # Sfondiamo l'area centrale (quella che rimane)
-            r_keep = pygame.Rect(cl, ct, scaled_w - cl - cr, scaled_h - ct - cb)
-            pygame.draw.rect(overlay, (0, 0, 0, 0), r_keep)
-            self.screen.blit(overlay, (ix, iy))
-            
-            # Cornice gialla vivida sull'area attiva
-            r_final = pygame.Rect(ix + cl, iy + ct, r_keep.w, r_keep.h)
-            pygame.draw.rect(self.screen, (255, 230, 0), r_final, 2)
-            # Angoli rinforzati bianchi
-            d = 12
-            pygame.draw.lines(self.screen, (255, 255, 255), False, [(r_final.x, r_final.y+d), (r_final.x, r_final.y), (r_final.x+d, r_final.y)], 2)
-            pygame.draw.lines(self.screen, (255, 255, 255), False, [(r_final.right-d, r_final.y), (r_final.right, r_final.y), (r_final.right, r_final.y+d)], 2)
-            pygame.draw.lines(self.screen, (255, 255, 255), False, [(r_final.x, r_final.bottom-d), (r_final.x, r_final.bottom), (r_final.x+d, r_final.bottom)], 2)
-            pygame.draw.lines(self.screen, (255, 255, 255), False, [(r_final.right-d, r_final.bottom), (r_final.right, r_final.bottom), (r_final.right, r_final.bottom-d)], 2)
-        
-        # Toolbar laterale
-        bx = ex + ew - 190
-        
-        # Selezione Strumenti
-        _draw_text(self.screen, "Strumenti:", "sm", TXT_DIM, bx, ey + 55)
-        ty, bw_t = ey + 75, 40
-        tools = [("eraser", "eraser", "Gomma: cancella pixel in modo netto"), ("soft", "blur", "Sfuma: cancella con bordi morbidi")]
-        for i, (tid, ico, tip) in enumerate(tools):
-            tx, act = bx + i*(bw_t+10), (self._img_editor_tool == tid)
-            tr = pygame.Rect(tx, ty, bw_t, bw_t)
-            _button(self.screen, tr, "", _in_rect((mx, my), tr), active=act)
-            self._r_vector_icon(ico, tr.inflate(-12, -12), active=act)
-            if _in_rect((mx, my), tr): self._img_editor_tip = tip
-
-        # Selezione Forme
-        _draw_text(self.screen, "Forma:", "sm", TXT_DIM, bx, ty + 55)
-        fy, bw_f = ty + 55, 40
-        shapes = [("round", "circle_p", "Pennello tondo"), ("square", "square_p", "Pennello quadrato")]
-        for i, (sid, ico, tip) in enumerate(shapes):
-            fx, act = bx + i*(bw_f+10), (self._img_editor_shape == sid)
-            fr = pygame.Rect(fx, fy, bw_f, bw_f)
-            _button(self.screen, fr, "", _in_rect((mx, my), fr), active=act)
-            self._r_vector_icon(ico, fr.inflate(-16, -16), active=act)
-            if _in_rect((mx, my), fr): self._img_editor_tip = tip
-
-        # Gomma
-        _draw_text(self.screen, f"Raggio: {self._img_editor_eraser_r}px", "sm", TXT_HI, bx, fy + 55)
-        y_sl = fy + 78
-        _slider(self.screen, (bx, y_sl, 170, 20), (self._img_editor_eraser_r - 5) / 95, 0, 1)
-        
-        # Crop Sliders
-        y_c = y_sl + 40
-        _draw_text(self.screen, "Ritaglio Manuale:", "sm", TXT_DIM, bx, y_c)
-        y_c += 24
-        crop_labels = [("L", "l"), ("R", "r"), ("T", "t"), ("B", "b")]
-        for i, (lbl, side) in enumerate(crop_labels):
-            _draw_text(self.screen, f"{lbl}: {self._img_editor_crop[side]}px", "sm", TXT_DIM, bx, y_c)
-            y_c += 18
-            max_val = iw if side in ("l", "r") else ih
-            val_p = self._img_editor_crop[side] / max_val if max_val > 0 else 0
-            _slider(self.screen, (bx, y_c, 170, 16), val_p, 0, 1) # Leggermente più sottili
-            y_c += 32
-            
-        # Pulsanti Rotazione (Con L/R labels come richiesto)
-        y_rot = y_c + 15
-        bw_rot  = 170 // 2 - 5
-        rot_l = pygame.Rect(bx, y_rot, bw_rot, 40)
-        rot_r = pygame.Rect(bx + bw_rot + 10, y_rot, bw_rot, 40)
-        _button(self.screen, rot_l, "L", _in_rect((mx, my), rot_l))
-        _button(self.screen, rot_r, "R", _in_rect((mx, my), rot_r))
-        self._r_vector_icon("rot_ccw", rot_l.inflate(-12, -12), active=_in_rect((mx, my), rot_l), text_offset=-5)
-        self._r_vector_icon("rot_cw", rot_r.inflate(-12, -12), active=_in_rect((mx, my), rot_r), text_offset=-5)
-        if _in_rect((mx, my), rot_l): self._img_editor_tip = "Ruota 90° antioraria (L)"
-        if _in_rect((mx, my), rot_r): self._img_editor_tip = "Ruota 90° oraria (R)"
-
-        # Pulsante Auto-Crop
-        ac_r = pygame.Rect(bx, y_rot + 50, 170, 36)
-        _button(self.screen, ac_r, "", _in_rect((mx, my), ac_r))
-        self._r_vector_icon("crop", ac_r.inflate(-16, -16), active=_in_rect((mx, my), ac_r))
-        _draw_text(self.screen, "AUTO TRIM", "sm", TXT_HI, ac_r.x + 55, ac_r.y + 9)
-        if _in_rect((mx, my), ac_r): self._img_editor_tip = "Elimina bordi trasparenti in eccesso"
-            
-        # Bottoni finali su unica riga centrata a fondo modale (SOTTO Tutto)
-        by_bot = ey + eh - 60
-        bx_bot = ex + (ew - 260) // 2 # Centrato in 850px
-        bw_act = 125
-        save_r = pygame.Rect(bx_bot, by_bot, bw_act, 40)
-        canc_r = pygame.Rect(bx_bot + bw_act + 10, by_bot, bw_act, 40)
-        
-        # Logica Conferma Salvataggio
-        s_lbl = "CONFERMI?" if self._img_editor_save_confirm else "SALVA PNG"
-        s_act = self._img_editor_dirty or any(self._img_editor_crop.values())
-        
-        if self._img_editor_save_confirm:
-            # Colore di conferma (Ambra/Giallo) alternativo
-            confirm_bg = (200, 150, 0)
-            _rect(self.screen, confirm_bg, save_r, radius=4)
-            _draw_text(self.screen, s_lbl, "sm", (255, 255, 255), save_r.x + 30, save_r.y + 11)
+        # Overlay Hitbox (per precisione chirurgica)
+        hb_col = (0, 255, 255, 120)
+        if self._img_editor_asset_shape == "rect":
+            pygame.draw.rect(self.screen, hb_col, (ix, iy, sw, sh), 2)
         else:
-            _button(self.screen, save_r, s_lbl, _in_rect((mx, my), save_r), active=s_act)
-            
-        _button(self.screen, canc_r, "Esci", _in_rect((mx, my), canc_r), danger=True)
-        
-        # Mirino gomma se sopra immagine
-        # Mirino pennello se nell'area di lavoro
-        work_rect = pygame.Rect(ex + 10, ey + 40, ew - 210, eh - 60)
-        if _in_rect((mx, my), work_rect):
-            r = self._img_editor_eraser_r
-            if self._img_editor_shape == "round":
-                pygame.draw.circle(self.screen, TXT_HI, (mx, my), int(r), 1)
-            else:
-                pygame.draw.rect(self.screen, TXT_HI, (mx - int(r), my - int(r), int(r*2), int(r*2)), 1)
+            pygame.draw.circle(self.screen, hb_col, (ix + sw//2, iy + sh//2), min(sw, sh)//2, 2)
 
-        # Tooltip finale sopra a tutto
-        if hasattr(self, "_img_editor_tip") and self._img_editor_tip:
-             from editor.ui.draw import _draw_tooltip
-             _draw_tooltip(self.screen, self._img_editor_tip, (mx, my))
-             self._img_editor_tip = ""
+        if scale > 8.0:
+            gs = pygame.Surface((sw, sh), pygame.SRCALPHA)
+            for gx in range(0, sw+1, int(scale)): pygame.draw.line(gs, (100,100,100,50), (gx,0), (gx,sh))
+            for gy in range(0, sh+1, int(scale)): pygame.draw.line(gs, (100,100,100,50), (0,gy), (sw,gy))
+            self.screen.blit(gs, (ix, iy))
+
+        # HUD Technical Data
+        if _in_rect((mx, my), (ix, iy, sw, sh)):
+            rx = int((mx - ix) / scale); ry = int((my - iy) / scale)
+            iw, ih = self._img_editor_view_surf.get_size()
+            if 0 <= rx < iw and 0 <= ry < ih:
+                c = self._img_editor_view_surf.get_at((rx, ry))
+                hud_txt = f"X:{rx} Y:{ry} | RGBA:{c[0]},{c[1]},{c[2]},{c[3]}"
+                _draw_text(self.screen, hud_txt, "sm", TXT_DIM, ix + 5, iy + sh + 8)
+
+        # SIDEBAR (Compatta)
+        sb_w = 320
+        sb_x = ex + ew - sb_w - 15
+        col1_x, col2_x = sb_x + 10, sb_x + 165
+        
+        # Strumenti
+        _draw_text(self.screen, "PENNELLI", "sm", TXT_DIM, col1_x, ey + 60)
+        sy = ey + 85
+        for i, (tid, ico) in enumerate([("eraser", "eraser"), ("wand", "wand")]):
+            tr = pygame.Rect(col1_x + i*60, sy, 52, 52); act = (self._img_editor_tool == tid)
+            _button(self.screen, tr, "", _in_rect((mx, my), tr), active=act)
+            self._r_blit_icon(ico, tr, active=act)
+            
+        for i, (sid, ico) in enumerate([("round", "circle_p"), ("square", "square_p")]):
+            fr = pygame.Rect(col1_x + i*60, sy + 65, 52, 52); act = (self._img_editor_shape == sid)
+            _button(self.screen, fr, "", _in_rect((mx, my), fr), active=act)
+            self._r_blit_icon(ico, fr, active=act)
+                  
+        # Pennello
+        sy_sl = ey + 255
+        sl_w = 145
+        if self._img_editor_tool == "eraser":
+            _draw_text(self.screen, f"RAGGIO: {self._img_editor_eraser_r}px", "sm", TXT_HI, col1_x, sy_sl - 25)
+            _slider(self.screen, (col1_x, sy_sl, sl_w, 20), (self._img_editor_eraser_r - 1) / 63, 0, 1)
+            _draw_text(self.screen, f"DUREZZA: {int(self._img_editor_eraser_hardness*100)}%", "sm", TXT_DIM, col1_x, sy_sl + 45)
+            _slider(self.screen, (col1_x, sy_sl + 70, sl_w, 20), self._img_editor_eraser_hardness, 0, 1)
+            _draw_text(self.screen, f"OPACITÀ: {int(self._img_editor_eraser_opacity*100)}%", "sm", TXT_DIM, col1_x, sy_sl + 115)
+            _slider(self.screen, (col1_x, sy_sl + 140, sl_w, 20), self._img_editor_eraser_opacity, 0, 1)
+            sy_ch = sy_sl + 195
+        else:
+            _draw_text(self.screen, f"TOLLERANZA: {self._img_editor_wand_tol}", "sm", TXT_HI, col1_x, sy_sl - 25)
+            _slider(self.screen, (col1_x, sy_sl, sl_w, 20), self._img_editor_wand_tol / 128, 0, 1)
+            _draw_text(self.screen, f"SFUMATURA: {self._img_editor_wand_feather}", "sm", TXT_HI, col1_x, sy_sl + 45)
+            _slider(self.screen, (col1_x, sy_sl + 70, sl_w, 20), self._img_editor_wand_feather / 32, 0, 1)
+            sy_ch = sy_sl + 195
+            
+        _draw_text(self.screen, "CHROMA REMOVER", "sm", TXT_DIM, col1_x, sy_ch - 25)
+        for i, (m, c) in enumerate([("G", (0, 200, 0)), ("W", (230, 230, 230)), ("B", (40, 40, 40))]):
+            tr_c = pygame.Rect(col1_x + i*50, sy_ch, 45, 40)
+            _button(self.screen, tr_c, m, _in_rect((mx, my), tr_c))
+        _draw_text(self.screen, f"INTENSITÀ: {self._img_editor_chroma_intensity:.1f}", "sm", TXT_DIM, col1_x, sy_ch + 75)
+        _slider(self.screen, (col1_x, sy_ch + 100, sl_w, 20), (self._img_editor_chroma_intensity - 0.5) / 3.5, 0, 1)
+
+        # Colonna 2 (Zoom & Trans)
+        _draw_text(self.screen, "NAVIGAZIONE", "sm", TXT_DIM, col2_x, ey + 60)
+        sy2 = ey + 85; bw2 = (sl_w // 2) - 3
+        r_f, r_1 = pygame.Rect(col2_x, sy2, bw2, 40), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 40)
+        _button(self.screen, r_f, "    FIT", _in_rect((mx, my), r_f))
+        self._r_blit_icon("zoom_fit", pygame.Rect(r_f.x+4, r_f.y, 25, 40), active=_in_rect((mx, my), r_f))
+        _button(self.screen, r_1, "    1:1", _in_rect((mx, my), r_1))
+        self._r_blit_icon("zoom_100", pygame.Rect(r_1.x+4, r_1.y, 25, 40), active=_in_rect((mx, my), r_1))
+        
+        sy2 += 105; _draw_text(self.screen, "ROTAZIONE", "sm", TXT_DIM, col2_x, sy2 - 25)
+        r_l, r_r = pygame.Rect(col2_x, sy2, bw2, 42), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 42)
+        _button(self.screen, r_l, "", _in_rect((mx, my), r_l)); self._r_blit_icon("undo", r_l, active=_in_rect((mx, my), r_l))
+        _button(self.screen, r_r, "", _in_rect((mx, my), r_r)); self._r_blit_icon("rotate_cw", r_r, active=_in_rect((mx, my), r_r))
+        
+        sy2 += 85; _draw_text(self.screen, "AUTOMAZIONE", "sm", TXT_DIM, col2_x, sy2 - 25)
+        r_at = pygame.Rect(col2_x, sy2, 145, 40)
+        _button(self.screen, r_at, "      AUTO TRIM", _in_rect((mx, my), r_at))
+        self._r_blit_icon("crop", pygame.Rect(r_at.x+6, r_at.y, 25, 40), active=_in_rect((mx, my), r_at))
+        
+        sy2 += 75; _draw_text(self.screen, "RIFLESSO", "sm", TXT_DIM, col2_x, sy2 - 25)
+        r_fh, r_fv = pygame.Rect(col2_x, sy2, bw2, 38), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 38)
+        _button(self.screen, r_fh, "   HORZ", _in_rect((mx, my), r_fh))
+        self._r_blit_icon("flip_h", pygame.Rect(r_fh.x+3, r_fh.y, 25, 38), active=_in_rect((mx, my), r_fh))
+        _button(self.screen, r_fv, "   VRT", _in_rect((mx, my), r_fv))
+        self._r_blit_icon("flip_v", pygame.Rect(r_fv.x+3, r_fv.y, 25, 38), active=_in_rect((mx, my), r_fv))
+        
+        sy2 += 75; r_sm = pygame.Rect(col2_x, sy2, 145, 38)
+        _button(self.screen, r_sm, "      SMOOTH", _in_rect((mx, my), r_sm))
+        self._r_blit_icon("smooth", pygame.Rect(r_sm.x+6, r_sm.y, 25, 38), active=_in_rect((mx, my), r_sm))
+        
+        sy2 += 85; _draw_text(self.screen, "HITBOX", "sm", TXT_DIM, col2_x, sy2 - 25)
+        r_re, r_ci = pygame.Rect(col2_x, sy2, bw2, 38), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 38)
+        _button(self.screen, r_re, "RECT", _in_rect((mx, my), r_re), active=(self._img_editor_asset_shape=="rect"))
+        _button(self.screen, r_ci, "CIRC", _in_rect((mx, my), r_ci), active=(self._img_editor_asset_shape=="circle"))
+
+        # Footer (Compattato e Corretto)
+        fy = ey + eh - 65; bw, bh = 150, 42
+        total_footer_w = bw * 3 + 40
+        fb_start_x = ex + (ew - sb_w) // 2 - total_footer_w // 2
+        fb_rects = [pygame.Rect(fb_start_x + i*(bw + 20), fy, bw, bh) for i in range(3)]
+        is_d = self._img_editor_dirty or any(self._img_editor_crop.values())
+        sl = "      SALVA" if not self._img_editor_save_confirm else "      CONF?"
+        cl = "      COPIA" if not self._img_editor_copy_confirm else "      CONF?"
+        el = "      ESCI" if not self._img_editor_exit_confirm else "      CONF?"
+        
+        h0 = _in_rect((mx, my), fb_rects[0])
+        _button(self.screen, fb_rects[0], sl, h0 and is_d, active=self._img_editor_save_confirm)
+        self._r_blit_icon("save", pygame.Rect(fb_rects[0].x+8, fb_rects[0].y, 25, 42), active=h0)
+        h1 = _in_rect((mx, my), fb_rects[1])
+        _button(self.screen, fb_rects[1], cl, h1, active=self._img_editor_copy_confirm)
+        self._r_blit_icon("copy", pygame.Rect(fb_rects[1].x+8, fb_rects[1].y, 25, 42), active=h1)
+        h2 = _in_rect((mx, my), fb_rects[2])
+        _button(self.screen, fb_rects[2], el, h2, danger=True, active=self._img_editor_exit_confirm)
+        self._r_blit_icon("exit", pygame.Rect(fb_rects[2].x+12, fb_rects[2].y, 25, 42), active=h2)
+
+        # Cursore Strumento (Workspace Wide)
+        is_in_work = mx < sb_x and my < fy - 10 and my > ey + 60
+        if is_in_work:
+            r_vis = self._img_editor_eraser_r * scale
+            if self._img_editor_shape == "round": pygame.draw.circle(self.screen, TXT_HI, (mx, my), int(round(r_vis)), 1)
+            else: rv = int(round(r_vis)); pygame.draw.rect(self.screen, TXT_HI, (mx-rv, my-rv, rv*2, rv*2), 1)
+
+    def _r_blit_icon(self, name: str, rect: pygame.Rect, active: bool = False):
+        """Blit di un'icona PNG caricata, con fallback a cerchio se mancante."""
+        icon = self._img_editor_icons.get(name)
+        if icon:
+            # Centra l'icona nel rect
+            ix = rect.x + (rect.w - icon.get_width()) // 2
+            iy = rect.y + (rect.h - icon.get_height()) // 2
+            # Se attiva, facciamo un piccolo effetto "glow" o tinta
+            if active:
+                # Disegna un piccolo cerchio di sfondo per evidenziare
+                pygame.draw.circle(self.screen, ACCENT, (ix+16, iy+16), 18, 1)
+            self.screen.blit(icon, (ix, iy))
+        else:
+            # Fallback vector
+            self._r_vector_icon(name, rect, active=active)
 
     def _r_vector_icon(self, name, rect, text_offset=0, active=False):
-        """Disegna icone vettoriali semplici."""
         c = (255, 255, 255) if active else (180, 180, 190)
-        if name == "rot_ccw":
-            # Freccia rotazione antioraria
-            pygame.draw.arc(self.screen, c, (rect.x+2, rect.y+5, 12, 12), 0.5, 4.5, 2)
-            pygame.draw.polygon(self.screen, c, [(rect.x+2, rect.y+11), (rect.x+6, rect.y+11), (rect.x+4, rect.y+15)])
-        elif name == "rot_cw":
-            # Freccia rotazione oraria
-            pygame.draw.arc(self.screen, c, (rect.x+2, rect.y+5, 12, 12), -1.5, 2.5, 2)
-            pygame.draw.polygon(self.screen, c, [(rect.x+10, rect.y+11), (rect.x+14, rect.y+11), (rect.x+12, rect.y+15)])
-        elif name == "crop":
-            # Icona ritaglio (cornici)
-            r = pygame.Rect(rect.x + 5, rect.y + 5, 14, 14)
-            pygame.draw.lines(self.screen, c, False, [(r.x, r.y+5), (r.x, r.y), (r.x+5, r.y)], 2)
-            pygame.draw.lines(self.screen, c, False, [(r.right-5, r.y), (r.right, r.y), (r.right, r.y+5)], 2)
-            pygame.draw.lines(self.screen, c, False, [(r.right, r.bottom-5), (r.right, r.bottom), (r.right-5, r.bottom)], 2)
-            pygame.draw.lines(self.screen, c, False, [(r.x+5, r.bottom), (r.x, r.bottom), (r.x, r.bottom-5)], 2)
+        cx, cy = rect.center
+        if name == "rot_ccw" or name == "undo":
+            pygame.draw.arc(self.screen, c, (cx-8, cy-8, 16, 16), 0.5, 4.5, 2)
+            pygame.draw.polygon(self.screen, c, [(cx-8, cy), (cx-4, cy), (cx-6, cy+4)])
+        elif name == "rot_cw" or name == "rotate_cw":
+            pygame.draw.arc(self.screen, c, (cx-8, cy-8, 16, 16), -1.5, 2.5, 2)
+            pygame.draw.polygon(self.screen, c, [(cx+4, cy), (cx+8, cy), (cx+6, cy+4)])
         elif name == "eraser":
-            # Icona gomma realistica (con parte che cancella e impugnatura)
-            r = rect.inflate(-4, -4)
-            # Parte superiore (impugnatura)
+            r = rect.inflate(-24, -24)
             pygame.draw.rect(self.screen, c, (r.x, r.y, r.w, r.h//2), border_radius=2)
-            # Parte inferiore (gomma)
             pygame.draw.rect(self.screen, c, (r.x+2, r.y+r.h//2, r.w-4, r.h//2), 1, border_radius=1)
-        elif name == "blur":
-            # Icona sfumatura (cerchio con aura)
-            cx, cy = rect.center
-            for r_a in range(12, 0, -3):
-                alpha = 255 - (r_a * 15)
-                # Simuliamo sfumatura con cerchi multipli se possibile, o solo simbolico
-                pygame.draw.circle(self.screen, c, (cx, cy), r_a, 1)
-            pygame.draw.circle(self.screen, c, (cx, cy), 3)
-        elif name == "circle_p":
-            pygame.draw.circle(self.screen, c, rect.center, 12)
-        elif name == "square_p":
-            pygame.draw.rect(self.screen, c, rect.inflate(-14, -14), border_radius=2)
-
+        elif name == "wand":
+            pygame.draw.line(self.screen, c, (cx-6, cy+6), (cx+6, cy-6), 3)
+            pygame.draw.circle(self.screen, c, (cx+6, cy-6), 3)
+        elif name == "save":
+            r = rect.inflate(-34, -34)
+            pygame.draw.rect(self.screen, c, r, 2, border_radius=2)
+            pygame.draw.rect(self.screen, c, (r.x+4, r.y, r.w-8, r.h//3), 1)
+        elif name == "copy":
+            r = rect.inflate(-36, -36)
+            pygame.draw.rect(self.screen, c, (r.x+4, r.y+4, r.w-4, r.h-4), 1)
+            pygame.draw.rect(self.screen, c, (r.x, r.y, r.w-4, r.h-4), 2, border_radius=1)
+        elif name == "exit":
+            pygame.draw.line(self.screen, c, (cx-6, cy-6), (cx+6, cy+6), 2)
+            pygame.draw.line(self.screen, c, (cx+6, cy-6), (cx-6, cy+6), 2)
+        elif name == "zoom_fit":
+            pygame.draw.rect(self.screen, c, (cx-7, cy-7, 14, 14), 1)
+            pygame.draw.line(self.screen, c, (cx-9, cy), (cx-5, cy)); pygame.draw.line(self.screen, c, (cx+5, cy), (cx+9, cy))
+        elif name == "zoom_100":
+            pygame.draw.circle(self.screen, c, (cx, cy), 8, 1)
+            _draw_text(self.screen, "1", "sm", c, cx-3, cy-7)
+        elif name == "crop":
+            pygame.draw.rect(self.screen, c, (cx-6, cy-6, 12, 12), 2)
+            pygame.draw.line(self.screen, c, (cx-9, cy-9), (cx-4, cy-4), 1)
+        elif name == "flip_h":
+            pygame.draw.polygon(self.screen, c, [(cx-8, cy), (cx-2, cy-6), (cx-2, cy+6)])
+            pygame.draw.polygon(self.screen, c, [(cx+8, cy), (cx+2, cy-6), (cx+2, cy+6)])
+        elif name == "flip_v":
+            pygame.draw.polygon(self.screen, c, [(cx, cy-8), (cx-6, cy-2), (cx+6, cy-2)])
+            pygame.draw.polygon(self.screen, c, [(cx, cy+8), (cx-6, cy+2), (cx+6, cy+2)])
+        elif name == "smooth":
+            pygame.draw.circle(self.screen, c, (cx, cy), 6, 2)
+            pygame.draw.circle(self.screen, c, (cx+4, cy-4), 2)
+        elif name == "circle_p": pygame.draw.circle(self.screen, c, rect.center, 12)
+        elif name == "square_p": pygame.draw.rect(self.screen, c, rect.inflate(-32, -32), border_radius=2)

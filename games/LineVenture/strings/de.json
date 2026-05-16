@@ -7,6 +7,7 @@
   "btn_resume": "Riprendi",
   "btn_settings": "Impostazioni",
   "game_title": "LineVenture",
+  "gs_placeholder_new": "Geben Sie einen Namen ein...",
   "hud_found": "GEFUNDEN",
   "hud_hint_seek": "Hint Seek",
   "hud_remaining_status": "Remaining Status",
@@ -67,5 +68,9 @@
   "obj_la_xilofono": "Xylophon",
   "obj_la_zaino": "Rucksack",
   "pause_title": "Pause Title",
-  "scene_nuova_name": "scene_nuova"
+  "scene_nuova_name": "scene_nuova",
+  "obj_ca_beach_ball": "",
+  "obj_la_arpa": "",
+  "obj_ca_amulet_eye_golden": "",
+  "obj_ca_anvil_heavy_workshop": ""
 }

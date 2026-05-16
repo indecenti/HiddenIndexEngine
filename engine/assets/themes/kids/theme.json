@@ -1,0 +1,69 @@
+{
+  "id": "kids",
+  "display_name": "Playground",
+
+  "colors": {
+    "background_overlay":   [ 50,  70,  90, 160],
+    "btn_normal":           [174, 198, 207],
+    "btn_hover":            [255, 253, 208],
+    "btn_locked":           [211, 211, 211],
+    "btn_border_normal":    [130, 150, 160],
+    "btn_border_hover":     [220, 210, 150],
+    "btn_border_locked":    [180, 180, 180],
+    "text_normal":          [ 50,  65,  75],
+    "text_hover":           [ 90,  85,  40],
+    "text_locked":          [140, 140, 140],
+    "text_label":           [220, 230, 235],
+    "divider_color":        [160, 180, 190],
+    "slider_track_bg":      [120, 140, 150],
+    "slider_track_border":  [100, 120, 130],
+    "slider_fill":          [255, 240, 150],
+    "slider_handle":        [255, 255, 255],
+    "scene_border_normal":  [160, 180, 190],
+    "scene_border_hover":   [255, 250, 200],
+    "scene_overlay_hover":  [ 80, 100, 120, 100],
+    "scene_overlay_normal": [ 60,  80, 100,  80],
+    "lock_text":            [180, 100, 100]
+  },
+
+  "layout": {
+    "btn_layout":           "centered",
+    "btn_indent_step":      0,
+    "btn_border_radius":    24,
+    "btn_width":            160,
+    "btn_height":           160,
+    "btn_center_x":         640,
+    "btn_y_start":          180,
+    "btn_y_step":           190,
+    "btn_border_width":     0,
+    "icons_only":           true,
+    "icon_btn_size":        160,
+    "no_btn_bg":            true,
+    "slider_height":        28,
+    "scene_grid_cols":      3,
+    "scene_thumb_w":        320,
+    "scene_thumb_h":        180
+  },
+
+  "font": {
+    "family":               null,
+    "size_btn":             32,
+    "size_label":           20,
+    "size_scene":           22,
+    "size_lock":            38,
+    "bold":                 false
+  },
+
+  "effects": {
+    "btn_shadow":           true,
+    "btn_shadow_offset":    [3, 4],
+    "btn_shadow_color":     [155,  78,   0, 115],
+    "btn_glow":             false,
+    "text_shadow":          true,
+    "text_shadow_offset":   [1, 2],
+    "text_shadow_color":    [145,  55,   0,  85],
+    "pulse_hover":          true,
+    "pulse_scale":          1.04,
+    "flicker":              false
+  }
+}

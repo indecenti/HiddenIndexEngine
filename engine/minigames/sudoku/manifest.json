@@ -1,0 +1,7 @@
+{
+  "id": "sudoku",
+  "name": "Sudoku Arcade",
+  "main_class": "SudokuGame",
+  "version": "1.0.0",
+  "icon": "../../assets/objects/sudoku_icon.png"
+}

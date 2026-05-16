@@ -1,0 +1,17 @@
+{
+  "mg_title": "LUCKY REELS",
+  "mg_description": "Drehe die Walzen und gewinne! Gleiche Symbole auf der mittleren Gewinnlinie bringen Preise.",
+  "credits": "GUTHABEN",
+  "bet": "EINSATZ",
+  "win": "GEWINN",
+  "spin": "DREHEN!",
+  "max_bet": "MAX EINSATZ",
+  "bet_up": "+",
+  "bet_down": "-",
+  "free_spins": "FREISPIELE: {n}",
+  "jackpot": "JACKPOT!!!",
+  "game_over": "KEIN GUTHABEN",
+  "press_spin": "Leertaste oder DREHEN! klicken",
+  "win_msg": "GEWONNEN {amount}!",
+  "fever_prefix": "FEVER GEWINN x2! "
+}

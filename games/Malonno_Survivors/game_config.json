@@ -10,7 +10,8 @@
     ]
   },
   "levels": [
-    "Welcome_To_Malonno",
-    "level_nuo"
-  ]
+    "Welcome_To_Malonno"
+  ],
+  "ui_theme": "mystery",
+  "category": "desktop"
 }

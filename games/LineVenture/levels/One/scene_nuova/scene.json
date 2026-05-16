@@ -28,15 +28,15 @@
     },
     {
       "catalog_id": "ca_map_folded_small",
-      "x": 988,
-      "y": 1421,
+      "x": 837,
+      "y": 1499,
       "detection_type": "circle",
       "layer": "objects_mid",
       "is_goal": true,
       "hint_delay": 20,
-      "radius": 90,
-      "width": 180,
-      "height": 180
+      "radius": 102.0,
+      "width": 247,
+      "height": 161
     },
     {
       "catalog_id": "ca_compass_brass",

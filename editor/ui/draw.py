@@ -282,7 +282,7 @@ def _slider(surf, r, value, min_v, max_v, color=(100, 100, 255), power=1.0):
     pygame.draw.circle(surf, (40, 40, 50), (hx, hy), 7, 1)
 
 
-def _input_box(surf, r, text, focused=False, hint="", icon=None, font="md", all_selected=False):
+def _input_box(surf, r, text, focused=False, hint="", icon=None, font="md", all_selected=False, cursor_pos=None):
     """Disegna una casella di input premium con glow, placeholder e cursore smooth."""
     from editor.constants import BTN, BORDER, TXT_HI, TXT_DIM, ACCENT
     import math
@@ -328,13 +328,17 @@ def _input_box(surf, r, text, focused=False, hint="", icon=None, font="md", all_
         # 7. Rendering testo
         _draw_text(surf, txt_s, font, TXT_HI, text_x, ty, max_w=r[2] - (text_x - r[0]) - 10)
         
-        # 8. Cursore Smooth (Alpha Interpolated)
+        # 8. Cursore Smooth (Alpha Interpolated) — posizionato a cursor_pos se fornito
         if focused and not all_selected:
             cursor_alpha = int(127 + math.sin(t * 15) * 127)
             c_h = th - 4
             c_surf = pygame.Surface((2, c_h), pygame.SRCALPHA)
             c_surf.fill((*TXT_HI[:3], cursor_alpha))
-            surf.blit(c_surf, (text_x + tw + 1, ty + 2))
+            if cursor_pos is not None:
+                cx, _ = _text_wh(txt_s[:max(0, min(cursor_pos, len(txt_s)))], font)
+            else:
+                cx = tw
+            surf.blit(c_surf, (text_x + cx + 1, ty + 2))
 
 def _scrollbar(screen, x, y, w, h, scroll, total_items, visible_items):
     """Disegna una scrollbar verticale moderna e discreta."""
@@ -346,3 +350,28 @@ def _scrollbar(screen, x, y, w, h, scroll, total_items, visible_items):
     thumb_y = y + int(scroll_ratio * (h - thumb_h))
     pygame.draw.rect(screen, (35, 38, 48), (x, y, w, h), border_radius=w//2)
     pygame.draw.rect(screen, (80, 85, 110), (x, thumb_y, w, thumb_h), border_radius=w//2)
+
+def _draw_tag_chip(surf, r, label, active=False, hovered=False, removable=False):
+    """Disegna un chip di tag premium con supporto per stato attivo e rimozione."""
+    from editor.constants import ACCENT, TXT_HI, TXT_DIM, BORDER
+    bg = ACCENT if active else ((55, 60, 80) if hovered else (40, 42, 54))
+    tcol = (15, 15, 25) if active else (TXT_HI if hovered else (200, 205, 220))
+    
+    _rect(surf, bg, r, radius=6)
+    if active:
+        _rect(surf, (255, 255, 255, 100), r, 1, radius=6)
+    else:
+        _rect(surf, BORDER, r, 1, radius=6)
+    
+    # Label
+    tw, th = _text_wh(label, "sm")
+    text_x = r[0] + (r[2] - tw) // 2
+    if removable:
+        text_x = r[0] + 8
+    
+    _draw_text(surf, label, "sm", tcol, text_x, r[1] + (r[3] - th) // 2, max_w=r[2]-10)
+    
+    if removable:
+        # Icona X per rimozione
+        xr = pygame.Rect(r[0] + r[2] - 22, r[1] + (r[3]-16)//2, 16, 16)
+        _draw_shape_icon(surf, xr, "x", (255, 100, 100) if hovered else tcol)

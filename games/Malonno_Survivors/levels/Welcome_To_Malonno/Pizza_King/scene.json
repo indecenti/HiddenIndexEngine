@@ -187,8 +187,8 @@
     },
     {
       "catalog_id": "hourglass",
-      "x": 2391,
-      "y": 1427,
+      "x": 2415,
+      "y": 1323,
       "detection_type": "rect",
       "layer": "scene_global",
       "hint_delay": 40,
@@ -267,5 +267,12 @@
   ],
   "music": [],
   "flashlight": false,
-  "flashlight_radius": 150.0
+  "flashlight_radius": 150.0,
+  "layer_locked": {
+    "objects_low": false,
+    "objects_mid": false,
+    "objects_high": false,
+    "overlay": false,
+    "effects": false
+  }
 }

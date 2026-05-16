@@ -1,0 +1,16 @@
+{
+  "mg_title": "Sudoku Arcade",
+  "mg_description": "Complete 3 levels of Sudoku (Easy, Medium, Hard). Playable with mouse.",
+  "sudoku_level": "Level",
+  "sudoku_score": "Score:",
+  "sudoku_clear": "DEL",
+  "sudoku_submit": "CHECK",
+  "sudoku_game_over": "COMPLETED!",
+  "sudoku_time_up": "TIME UP!",
+  "tut_step_0": "Hi! Fill the grid so each number is unique per row, column, and square.\nClick an empty cell to start!",
+  "tut_step_1": "To start,\nclick an empty cell.",
+  "tut_step_2": "Great!\nNow click a number on the right.",
+  "tut_step_3": "Watch the timer!\nIf it runs out, the arcade challenge ends.",
+  "tut_step_4": "Do it as fast as possible.\nGood luck!",
+  "sudoku_pts": "pt"
+}

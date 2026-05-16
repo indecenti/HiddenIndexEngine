@@ -40,9 +40,10 @@ class ObjectOpsMixin:
         # Carica offset angoli
         coff = obj.get("corners", [[0,0], [0,0], [0,0], [0,0]]) # NW, NE, SE, SW
 
+        obj_scale = obj.get("scale", 1.0)
         if dt == "circle":
-            r_x = obj.get("width", obj.get("radius", 30) * 2) / 2
-            r_y = obj.get("height", obj.get("radius", 30) * 2) / 2
+            r_x = (obj.get("width", obj.get("radius", 30) * 2) * obj_scale) / 2
+            r_y = (obj.get("height", obj.get("radius", 30) * 2) * obj_scale) / 2
             pts = [
                 ("move", x,   y),
                 ("nw",   x-r_x+coff[0][0], y-r_y+coff[0][1]), 
@@ -63,8 +64,8 @@ class ObjectOpsMixin:
             return res
 
         elif dt == "rect":
-            w  = obj.get("width",  60)
-            h  = obj.get("height", 60)
+            w  = obj.get("width",  60) * obj_scale
+            h  = obj.get("height", 60) * obj_scale
             cx, cy = x + w/2, y + h/2
             pts = [
                 ("move", cx,   cy),
@@ -122,17 +123,18 @@ class ObjectOpsMixin:
     def _hit_obj(self, obj: dict, rx, ry) -> bool:
         dt  = obj.get("detection_type", "circle")
         rot = obj.get("rotation", 0)
+        scale = obj.get("scale", 1.0)
         ox, oy = obj["x"], obj["y"]
         if dt == "circle":
             cx, cy = ox, oy
             rrx, rry = self._rotate_pt(rx, ry, cx, cy, -rot)
-            r_x = obj.get("width",  obj.get("radius", 30) * 2) / 2
-            r_y = obj.get("height", obj.get("radius", 30) * 2) / 2
+            r_x = (obj.get("width",  obj.get("radius", 30) * 2) * scale) / 2
+            r_y = (obj.get("height", obj.get("radius", 30) * 2) * scale) / 2
             dx, dy = rrx - ox, rry - oy
             if r_x <= 0 or r_y <= 0: return False
             return (dx / r_x) ** 2 + (dy / r_y) ** 2 <= 1.0001
         elif dt == "rect":
-            w, h = obj.get("width", 60), obj.get("height", 60)
+            w, h = obj.get("width", 60) * scale, obj.get("height", 60) * scale
             cx, cy = ox + w/2, oy + h/2
             rrx, rry = self._rotate_pt(rx, ry, cx, cy, -rot)
             return ox <= rrx <= ox+w and oy <= rry <= oy+h
@@ -162,12 +164,18 @@ class ObjectOpsMixin:
 
     def _objs_at(self, rx: float, ry: float) -> list:
         hits = []
+        from editor.constants import DEFAULT_LAYERS
+        clickable_map = {l["id"]: l.get("clickable", True) for l in DEFAULT_LAYERS}
+        
         for i, obj in enumerate(self.scene_data.get("objects", [])):
             # Filtro layer visibili e non bloccati
             lid = obj.get("layer", "objects_mid")
             if not getattr(self, "layer_vis", {}).get(lid, True):
                 continue
             if getattr(self, "layer_locked", {}).get(lid, False):
+                continue
+            # Filtro layer non cliccabili (es: overlay)
+            if not clickable_map.get(lid, True):
                 continue
                 
             if self._hit_obj(obj, rx, ry):
@@ -268,6 +276,7 @@ class ObjectOpsMixin:
         self.selected_idx = new_idx
         self.selected_indices = [new_idx]
         self.sel_effect_idx = None
+        self._mark_dirty()
         self._cancel_rect()
         self.mode = MODE_SELECT
         # Harvesting immediato: copia PNG + aggiorna catalog JSON di gioco
@@ -315,6 +324,7 @@ class ObjectOpsMixin:
         self.selected_idx = new_idx
         self.selected_indices = [new_idx]
         self.sel_effect_idx = None
+        self._mark_dirty()
         self._cancel_rect()
         self.mode = MODE_SELECT
         # Harvesting immediato: copia PNG + aggiorna catalog JSON di gioco
@@ -328,156 +338,199 @@ class ObjectOpsMixin:
             self._status(f"Aggiunto: {cat['id']} (rect)", OK_C, 2)
 
     def _scatter_click(self, mx, my_raw):
-        """Piazza 4 oggetti casuali dal catalogo vicino al cursore."""
+        """
+        Piazza un 'Cluster' di oggetti (Cluester Power-Up).
+        Algoritmo potenziato:
+        1. Distribuzione a spirale per naturalezza.
+        2. Multi-pass: ancora prima gli oggetti grandi, poi riempie con i piccoli.
+        3. Collision Detection con margini negativi (look stratificato).
+        4. Supporto Shift per densità estrema (Arcade Mode).
+        """
         if not self.catalog:
             self._status("Nessun oggetto nel catalogo", ERR_C, 2)
             return
 
-        # --- 1. Analisi Stile Dominante (Intelligenza Contestuale) ---
+        # --- 1. Selezione Pool e Stile ---
         scene_objs = self.scene_data.get("objects", [])
         chosen_pool = self.catalog
         if scene_objs:
-            # Mappa rapida ID -> Stile
             style_map = {c["id"]: c.get("style", "real") for c in self.catalog}
             scene_styles = [style_map.get(o.get("catalog_id"), "real") for o in scene_objs]
             total = len(scene_styles)
-            
-            # Se uno stile domina al 90%, restringiamo il pool a quello stile
             real_p = scene_styles.count("real") / total
             la_p = scene_styles.count("line art") / total
             ca_p = scene_styles.count("cartoon") / total
             
-            if real_p >= 0.9:
-                chosen_pool = [c for c in self.catalog if c.get("style") == "real"]
-            elif la_p >= 0.9:
-                chosen_pool = [c for c in self.catalog if c.get("style") == "line art"]
-            elif ca_p >= 0.9:
-                chosen_pool = [c for c in self.catalog if c.get("style") == "cartoon"]
-            
-            # Fallback se il pool filtrato è vuoto per errore di catalogazione
+            if real_p >= 0.8: chosen_pool = [c for c in self.catalog if c.get("style") == "real"]
+            elif la_p >= 0.8: chosen_pool = [c for c in self.catalog if c.get("style") == "line art"]
+            elif ca_p >= 0.8: chosen_pool = [c for c in self.catalog if c.get("style") == "cartoon"]
             if not chosen_pool: chosen_pool = self.catalog
+
+        # Suddividi in Grandi e Piccoli per posizionamento stratificato
+        pool_small = [c for c in chosen_pool if "piccolo" in c.get("tags", [])]
+        pool_large = [c for c in chosen_pool if c not in pool_small]
+        if not pool_small: pool_small = chosen_pool
+        if not pool_large: pool_large = chosen_pool
 
         rx, ry = self._s2r(mx, my_raw)
         self._push_undo()
 
-        # Scegliamo 4 oggetti random dal pool (filtrato o globale)
-        count = 4
-        if len(chosen_pool) < count:
-            chosen_cats = random.choices(chosen_pool, k=count)
-        else:
-            chosen_cats = random.sample(chosen_pool, count)
-
-        new_indices = []
-
-        # Calcolo fattore di scala basato sulla scena (rif 1280x720)
-        sw, sh = (REF_W, REF_H)
-        if getattr(self, "bg_surf", None):
-            sw, sh = self.bg_surf.get_size()
+        # --- 2. Parametri Densità (Shift = Massive Cluster) ---
+        is_shift = bool(pygame.key.get_mods() & pygame.KMOD_SHIFT)
+        target_count = random.randint(10, 18) if not is_shift else 30
         
+        sw = self.bg_surf.get_width() if getattr(self, "bg_surf", None) else REF_W
         scale = sw / REF_W
         
-        # Offset dinamici scalati
-        off_v = 60 * scale
-        offsets = [
-            (-off_v, -off_v), (off_v, -off_v),
-            (-off_v,  off_v), (off_v,  off_v)
-        ]
+        # Area di spargimento (raggio della spirale)
+        base_radius = 120 * scale * (1.5 if is_shift else 1.0)
+        
+        placed_rects = []
+        new_indices = []
+        lyr = self.active_layer
+        if lyr not in ("objects_low", "objects_mid", "objects_high"):
+            lyr = "objects_mid"
+            self.active_layer = lyr
 
-        for i, cat in enumerate(chosen_cats):
-            ox_off, oy_off = offsets[i]
-            tx, ty = self._snap(rx + ox_off), self._snap(ry + oy_off)
+        # --- 3. Loop Posizionamento Multi-Pass ---
+        # Pass 1: Grandi (Ancore) | Pass 2: Piccoli (Noise/Detail)
+        for pass_num in [1, 2]:
+            current_pass_target = int(target_count * 0.4) if pass_num == 1 else int(target_count * 0.6)
+            if is_shift: current_pass_target = int(target_count * 0.5) # 50/50 per shift
             
-            # Sanificazione layer di creazione
-            lyr = self.active_layer
-            if lyr not in ("objects_low", "objects_mid", "objects_high"):
-                lyr = "objects_mid"
-                self.active_layer = lyr
-                self._status("Layer auto-impostato su: MEDIO", WARN_C, 1)
+            pass_pool = pool_large if pass_num == 1 else pool_small
             
-            # Forza visibilità se nascosto
-            if not self.layer_vis.get(lyr, True):
-                self.layer_vis[lyr] = True
-                self._status(f"Layer '{lyr}' riattivato", ACCENT, 1)
-
-            if self.layer_locked.get(lyr, False):
-                self._status(f"Scatter interrotto: layer '{lyr}' bloccato!", ERR_C, 2)
-                return
-
-            # Determina tipo rilevamento e dimensioni base
-            dt = cat.get("default_detection_type", "circle")
-            hd = cat.get("default_hint_delay", 30)
-
-            # --- Calcolo scala intelligente (Tag + Jitter casuale) ---
-            tags = cat.get("tags", [])
-            tag_scale = 1.0
-            if "piccolo" in tags:
-                tag_scale = 0.7
-            elif "grande" in tags:
-                tag_scale = 1.5
-            
-            # Jitter per naturalezza (variazione del 10%)
-            jitter = random.uniform(0.9, 1.1)
-            f_scale = scale * tag_scale * jitter
-
-            # Jitter posizione per evitare effetto griglia (±15px scalati)
-            pjx = random.uniform(-15, 15) * scale
-            pjy = random.uniform(-15, 15) * scale
-            tx, ty = self._snap(rx + ox_off + pjx), self._snap(ry + oy_off + pjy)
-
-            if dt == "circle":
-                r_def = cat.get("default_radius", 30)
-                obj = _default_obj(cat["id"], tx, ty, "circle", 
-                                   radius=round(r_def * f_scale),
-                                   hint_delay=hd,
-                                   layer=lyr)
-            else:
-                w_def = cat.get("default_width", 60)
-                h_def = cat.get("default_height", 60)
+            for _ in range(current_pass_target):
+                cat = random.choice(pass_pool)
+                
+                # Calcolo Scala Intelligente
+                tag_scale = 1.0
+                tags = cat.get("tags", [])
+                if "piccolo" in tags: tag_scale = 0.65
+                elif "grande" in tags: tag_scale = 1.4
+                
+                jitter = random.uniform(0.85, 1.15)
+                f_scale = scale * tag_scale * jitter
+                
+                dt = cat.get("default_detection_type", "circle")
+                w_def = cat.get("default_width", 60) if dt == "rect" else cat.get("default_radius", 30) * 2
+                h_def = cat.get("default_height", 60) if dt == "rect" else cat.get("default_radius", 30) * 2
                 nw, nh = round(w_def * f_scale), round(h_def * f_scale)
-                obj = _default_obj(cat["id"], tx - nw/2, ty - nh/2, "rect", 
-                                   width=nw, height=nh,
-                                   hint_delay=hd,
-                                   layer=lyr)
-            
-            self.scene_data.setdefault("objects", []).append(obj)
-            new_indices.append(len(self.scene_data["objects"]) - 1)
-            # Harvesting immediato per ogni oggetto del cluster
-            self._harvest_asset(cat["id"])
+                
+                # Tentativi di posizionamento a spirale
+                found = False
+                for attempt in range(15):
+                    # Angolo e raggio spirale (Golden Angle inspired)
+                    angle = random.uniform(0, math.pi * 2)
+                    dist = math.sqrt(random.random()) * base_radius
+                    
+                    tx = rx + math.cos(angle) * dist
+                    ty = ry + math.sin(angle) * dist
+                    
+                    # Rect virtuale per collisione (con margine negativo per permettere overlap naturale)
+                    # -15% di margine = gli oggetti possono compenetrarsi leggermente
+                    margin = -int(min(nw, nh) * 0.2) 
+                    new_rect = pygame.Rect(tx - nw/2, ty - nh/2, nw, nh)
+                    
+                    overlap = False
+                    for pr in placed_rects:
+                        if new_rect.inflate(margin, margin).colliderect(pr.inflate(margin, margin)):
+                            overlap = True
+                            break
+                    
+                    if not overlap:
+                        # Piazza l'oggetto
+                        obj_x, obj_y = self._snap(tx), self._snap(ty)
+                        if dt == "circle":
+                            obj = _default_obj(cat["id"], obj_x, obj_y, "circle",
+                                               radius=nw//2, layer=lyr,
+                                               hint_delay=cat.get("default_hint_delay", 30))
+                        else:
+                            obj = _default_obj(cat["id"], obj_x - nw/2, obj_y - nh/2, "rect",
+                                               width=nw, height=nh, layer=lyr,
+                                               hint_delay=cat.get("default_hint_delay", 30))
+                        
+                        # Varietà Estetica (Rotazione e Flip)
+                        obj["rotation"] = random.randint(0, 359) if "no_rot" not in tags else 0
+                        if random.random() > 0.5: obj["flip_x"] = True
+                        
+                        self.scene_data.setdefault("objects", []).append(obj)
+                        new_indices.append(len(self.scene_data["objects"]) - 1)
+                        placed_rects.append(new_rect)
+                        self._harvest_asset(cat["id"])
+                        found = True
+                        break
+                
+                if not found and pass_num == 1:
+                    # Se non trova spazio per un grande, non bloccare il pass dei piccoli
+                    continue
 
-        self.scene_dirty = True
-        self.selected_indices = new_indices
-        self.selected_idx = new_indices[0] if new_indices else None
-        self.sel_effect_idx = None
-        # Garantisce placeholder traduzione per ogni catalogo usato nel cluster
-        seen_keys = set()
-        for idx in new_indices:
-            cid = self.scene_data["objects"][idx].get("catalog_id")
-            cat_entry = next((c for c in self.catalog if c["id"] == cid), None)
-            if cat_entry:
-                lk = cat_entry.get("label_key", f"obj_{cid}")
-                if lk not in seen_keys:
-                    seen_keys.add(lk)
-                    self._ensure_translation_key(lk)
-        self._status(f"Cluster creato: {len(new_indices)} oggetti inseriti", OK_C, 2)
+        # --- 4. Finalizzazione ---
+        if new_indices:
+            self.scene_dirty = True
+            self._mark_dirty()
+            self.selected_indices = new_indices
+            self.selected_idx = new_indices[0]
+            self.sel_effect_idx = None
+            
+            # Garantisce traduzioni
+            seen_keys = set()
+            for idx in new_indices:
+                cid = self.scene_data["objects"][idx].get("catalog_id")
+                cat_entry = next((c for c in self.catalog if c["id"] == cid), None)
+                if cat_entry:
+                    lk = cat_entry.get("label_key", f"obj_{cid}")
+                    if lk not in seen_keys:
+                        seen_keys.add(lk); self._ensure_translation_key(lk)
+            
+            msg = f"Cluster creato: {len(new_indices)} oggetti"
+            if is_shift: msg += " (DENSITÀ MASSIMA)"
+            self._status(msg, OK_C, 2)
+        else:
+            self._status("Spazio insufficiente per creare il cluster!", WARN_C, 2)
+
 
     def _delete_sel(self):
         if not self.selected_indices and self.selected_idx is None: return
         indices = sorted(list(set(self.selected_indices + ([self.selected_idx] if self.selected_idx is not None else []))), reverse=True)
+        
+        to_delete = []
+        skipped_locked = 0
+        deleted_catalog_ids = set()
+
         for idx in indices:
-            lid = self.scene_data["objects"][idx].get("layer", "objects_mid")
+            if idx >= len(self.scene_data["objects"]): continue
+            obj = self.scene_data["objects"][idx]
+            lid = obj.get("layer", "objects_mid")
+            
             if self.layer_locked.get(lid, False):
-                self._status(f"Impossibile eliminare: layer '{lid}' bloccato!", ERR_C, 2)
-                return
-        # Raccoglie i catalog_id da eliminare PRIMA del pop
-        deleted_catalog_ids = {self.scene_data["objects"][idx].get("catalog_id") for idx in indices}
-        deleted_catalog_ids.discard(None)
+                skipped_locked += 1
+                continue
+            
+            to_delete.append(idx)
+            cid = obj.get("catalog_id")
+            if cid: deleted_catalog_ids.add(cid)
+
+        if not to_delete:
+            if skipped_locked:
+                self._status(f"Eliminazione negata: {skipped_locked} oggetti in layer bloccati", ERR_C, 3)
+            return
+
         self._push_undo()
-        for idx in indices: self.scene_data["objects"].pop(idx)
+        for idx in to_delete:
+            self.scene_data["objects"].pop(idx)
+
         self.selected_idx = None
         self.selected_indices = []
-        self._ctx_menu = None  # Chiude il menu se aperto sul vecchio indice
+        self._ctx_menu = None
         self.scene_dirty = True
-        self._status(f"Rimosse {len(indices)} oggetti", WARN_C, 2)
+        self._mark_dirty()
+
+        msg = f"Rimosse {len(to_delete)} oggetti"
+        if skipped_locked:
+            msg += f" ({skipped_locked} saltati perché bloccati)"
+        self._status(msg, WARN_C, 3)
+
         # Cleanup risorse orfane (traduzioni + PNG game-specific)
         if deleted_catalog_ids:
             self._cleanup_orphaned_assets(deleted_catalog_ids)
@@ -640,6 +693,7 @@ class ObjectOpsMixin:
         self.selected_indices = new_indices
         self.selected_idx = new_indices[0] if new_indices else None
         self.scene_dirty = True
+        self._mark_dirty()
         self._status(f"Duplicati {len(indices)} oggetti", OK_C, 2)
 
     def _copy_sel(self):
@@ -671,6 +725,7 @@ class ObjectOpsMixin:
         self.selected_indices = new_indices
         self.selected_idx = new_indices[0] if new_indices else None
         self.scene_dirty = True
+        self._mark_dirty()
         self._status(f"Incollati {len(self.clipboard)} oggetti", OK_C, 2)
 
     def _select_all(self):
@@ -688,18 +743,20 @@ class ObjectOpsMixin:
                 self.layer_vis[lid] = True
                 self._status(f"Visibilità '{lid}' riattivata", ACCENT, 1)
                 
-        if self.selected_idx is not None:
-            old_lid = self.scene_data["objects"][self.selected_idx].get("layer", "objects_mid")
-            if self.layer_locked.get(old_lid, False):
-                self._status(f"Spostamento negato: layer '{old_lid}' bloccato!", ERR_C, 2)
-                return
-            if self.layer_locked.get(lid, False):
-                self._status(f"Spostamento negato: layer DESTINAZIONE '{lid}' bloccato!", ERR_C, 2)
-                return
-                
+        # Batch Move
+        idxs = self.selected_indices if len(self.selected_indices) > 1 else ([self.selected_idx] if self.selected_idx is not None else [])
+        if idxs:
             self._push_undo()
-            self.scene_data["objects"][self.selected_idx]["layer"] = lid
+            for idx in idxs:
+                if idx < len(self.scene_data["objects"]):
+                    obj = self.scene_data["objects"][idx]
+                    old_lid = obj.get("layer", "objects_mid")
+                    if not self.layer_locked.get(old_lid, False) and not self.layer_locked.get(lid, False):
+                        obj["layer"] = lid
+            
             self.scene_dirty = True
+            self._mark_dirty()
+            self._status(f"Oggetti spostati su: {lid}", OK_C, 2)
         else:
             self._status(f"Layer di creazione impostato: {lid}", ACCENT, 1)
 
@@ -728,6 +785,9 @@ class ObjectOpsMixin:
             self.selected_idx = idx
             self.sel_effect_idx = None
             self._editing_prop = None  # Reset editing prop
+            # Se l'oggetto cliccato non è nella multi-selezione corrente, resetta
+            if idx not in self.selected_indices:
+                self.selected_indices = [idx]
             
             # Estrazione palette per suggerimenti rapidi (primi 10 colori)
             palette = []
@@ -774,14 +834,20 @@ class ObjectOpsMixin:
         if idx >= len(objs):
             self._ctx_menu = None
             return []
+        
+        target_indices = self.selected_indices if len(self.selected_indices) > 1 else [idx]
+        n_sel = len(target_indices)
+        del_label = "ELIMINA OGGETTO" if n_sel <= 1 else f"ELIMINA SELEZIONE ({n_sel})"
+        dupe_label = "Duplica Oggetto" if n_sel <= 1 else f"Duplica Selezione ({n_sel})"
+
         obj = objs[idx]
         is_gs = obj.get("grayscale", False)
         gs_lbl = f"Bianco e Nero: {int(obj.get('grayscale_factor', 1.0) * 100)}%" if is_gs else "Bianco e Nero"
         perc = int(obj.get("alpha", 255) / 255 * 100)
         
         items = [
-            ("dupe",     "Duplica Oggetto"),
-            ("delete",   "ELIMINA OGGETTO"),
+            ("dupe",     dupe_label),
+            ("delete",   del_label),
             ("sep",      "---"),
             ("flip_x",   f"{'✓ ' if obj.get('flip_x') else ''}Specchia Orizzontalmente"),
             ("flip_y",   f"{'✓ ' if obj.get('flip_y') else ''}Specchia Verticalmente"),
@@ -864,6 +930,8 @@ class ObjectOpsMixin:
         # Effetti / Oggetti
         idx = self._ctx_menu["idx"]
         obj = self.scene_data["objects"][idx] if self._ctx_menu.get("type") == "object" else None
+        # Target multipli: usa la multi-selezione se ci sono più oggetti selezionati
+        target_indices = self.selected_indices if len(self.selected_indices) > 1 else [idx]
         
         for cid, lbl in items:
             ih = self._get_item_h(cid)
@@ -887,27 +955,38 @@ class ObjectOpsMixin:
                         # Spegnere il pulsante (OFF) ora porta l'opacità al 100% (255).
                         # Accendere il pulsante (ON) porta l'opacità all'85% (217).
                         is_now_on = obj.get("alpha", 255) < 255
-                        if is_now_on:
-                            obj["alpha"] = 255
-                        else:
-                            obj["alpha"] = 217 # 85% di 255
+                        new_alpha = 255 if is_now_on else 217
+                        for ti in target_indices:
+                            self.scene_data["objects"][ti]["alpha"] = new_alpha
                         self.scene_dirty = True
+                        self._mark_dirty()
                         return True
 
                     # Slider
                     rel_x = max(0, min(1.0, (mx - sx) / sw))
-                    self._push_undo(); obj["alpha"] = int(rel_x * 255); self.scene_dirty = True
-                    self._dragging_ctx_slider = {"idx": idx, "key": "alpha", "sx": sx, "sw": sw}
+                    self._push_undo()
+                    new_alpha = int(rel_x * 255)
+                    for ti in target_indices:
+                        self.scene_data["objects"][ti]["alpha"] = new_alpha
+                    self.scene_dirty = True
+                    self._mark_dirty()
+                    self._dragging_ctx_slider = {"idx": idx, "key": "alpha", "sx": sx, "sw": sw, "targets": target_indices}
                     return True
                 elif cid == "flip_x" and obj:
                     self._push_undo()
-                    obj["flip_x"] = not obj.get("flip_x", False)
+                    new_val = not obj.get("flip_x", False)
+                    for ti in target_indices:
+                        self.scene_data["objects"][ti]["flip_x"] = new_val
                     self.scene_dirty = True
+                    self._mark_dirty()
                     return True
                 elif cid == "flip_y" and obj:
                     self._push_undo()
-                    obj["flip_y"] = not obj.get("flip_y", False)
+                    new_val = not obj.get("flip_y", False)
+                    for ti in target_indices:
+                        self.scene_data["objects"][ti]["flip_y"] = new_val
                     self.scene_dirty = True
+                    self._mark_dirty()
                     return True
                 elif cid == "grayscale" and obj:
                     # Pulsante toggle a SINISTRA (X=12)
@@ -915,30 +994,36 @@ class ObjectOpsMixin:
                     if _in_rect((mx, my_raw), btn_toggle_r):
                         self._push_undo()
                         is_now_on = obj.get("grayscale", False) and obj.get("grayscale_factor", 0.0) > 0
-                        if is_now_on:
-                            obj["grayscale"] = False
-                            obj["grayscale_factor"] = 0.0
-                        else:
-                            obj["grayscale"] = True
-                            obj["grayscale_factor"] = 1.0
+                        for ti in target_indices:
+                            o = self.scene_data["objects"][ti]
+                            if is_now_on:
+                                o["grayscale"] = False
+                                o["grayscale_factor"] = 0.0
+                            else:
+                                o["grayscale"] = True
+                                o["grayscale_factor"] = 1.0
                         self.scene_dirty = True
+                        self._mark_dirty()
                         return True
-                    
+
                     # Logic Slider Standard - Allineamento a 54px
                     sw = m_w - 68
                     sx = mx_m + 54
                     rel_x = max(0, min(1.0, (mx - sx) / sw))
-                    
+
                     self._push_undo()
-                    if rel_x < 0.05:
-                        obj["grayscale"] = False
-                        obj["grayscale_factor"] = 0.0
-                    else:
-                        obj["grayscale"] = True
-                        obj["grayscale_factor"] = round(rel_x, 2)
-                    
+                    for ti in target_indices:
+                        o = self.scene_data["objects"][ti]
+                        if rel_x < 0.05:
+                            o["grayscale"] = False
+                            o["grayscale_factor"] = 0.0
+                        else:
+                            o["grayscale"] = True
+                            o["grayscale_factor"] = round(rel_x, 2)
+
                     self.scene_dirty = True
-                    self._dragging_ctx_slider = {"idx": idx, "key": "grayscale_factor", "sx": sx, "sw": sw}
+                    self._mark_dirty()
+                    self._dragging_ctx_slider = {"idx": idx, "key": "grayscale_factor", "sx": sx, "sw": sw, "targets": target_indices}
                     return True
                 elif cid == "color":
                     palette = self._ctx_menu.get("palette", [])
@@ -949,16 +1034,22 @@ class ObjectOpsMixin:
                             chip_r = pygame.Rect(mx_m + 54 + col*34, y_off + 32 + row*24, 30, 20)
                             if _in_rect((mx, my_raw), chip_r):
                                 self._push_undo()
-                                obj["color_filter"] = list(p_col)
+                                for ti in target_indices:
+                                    self.scene_data["objects"][ti]["color_filter"] = list(p_col)
                                 self.scene_dirty = True
-                                return False 
-                    self._pick_color_for_sel(); return True
-                elif cid == "color_reset" and obj: 
-                    self._push_undo(); obj["color_filter"] = [255, 255, 255]; 
-                    self.scene_dirty = True; return True
-                elif cid == "warp_reset" and obj: 
-                    self._push_undo(); obj["corners"] = [[0,0],[0,0],[0,0],[0,0]]; 
-                    self.scene_dirty = True; return True
+                                self._mark_dirty()
+                                return False
+                    self._pick_color_for_selection(); return True
+                elif cid == "color_reset" and obj:
+                    self._push_undo()
+                    for ti in target_indices:
+                        self.scene_data["objects"][ti]["color_filter"] = [255, 255, 255]
+                    self.scene_dirty = True; self._mark_dirty(); return True
+                elif cid == "warp_reset" and obj:
+                    self._push_undo()
+                    for ti in target_indices:
+                        self.scene_data["objects"][ti]["corners"] = [[0,0],[0,0],[0,0],[0,0]]
+                    self.scene_dirty = True; self._mark_dirty(); return True
                 elif cid == "l_high": self._set_layer("objects_high"); return False
                 elif cid == "l_mid":  self._set_layer("objects_mid"); return False
                 elif cid == "l_low":  self._set_layer("objects_low"); return False
@@ -969,7 +1060,7 @@ class ObjectOpsMixin:
                 elif cid == "fx_dupe":
                     self._push_undo()
                     new_fx = copy.deepcopy(self.scene_data["effects"][idx])
-                    self.scene_data["effects"].append(new_fx); self.scene_dirty = True; return False
+                    self.scene_data["effects"].append(new_fx); self.scene_dirty = True; self._mark_dirty(); return False
                 elif cid == "fx_delete": self._delete_effect_sel(); return False
                 
             y_off += ih
@@ -979,23 +1070,25 @@ class ObjectOpsMixin:
         """Aggiorna il valore dello slider del menu contestuale durante il trascinamento."""
         ds = getattr(self, "_dragging_ctx_slider", None)
         if not ds or self.selected_idx is None: return
-        
+
         idx, key, sx, sw = ds["idx"], ds["key"], ds["sx"], ds["sw"]
-        if idx >= len(self.scene_data["objects"]): return
-        obj = self.scene_data["objects"][idx]
-        
+        targets = ds.get("targets", [idx])
+
         rel_x = max(0.0, min(1.0, (mx - sx) / sw))
-        
-        if key == "alpha":
-            obj["alpha"] = int(rel_x * 255)
-        elif key == "grayscale_factor":
-            if rel_x < 0.05:
-                obj["grayscale"] = False
-                obj["grayscale_factor"] = 0.0
-            else:
-                obj["grayscale"] = True
-                obj["grayscale_factor"] = round(rel_x, 2)
-        
+
+        for ti in targets:
+            if ti >= len(self.scene_data["objects"]): continue
+            obj = self.scene_data["objects"][ti]
+            if key == "alpha":
+                obj["alpha"] = int(rel_x * 255)
+            elif key == "grayscale_factor":
+                if rel_x < 0.05:
+                    obj["grayscale"] = False
+                    obj["grayscale_factor"] = 0.0
+                else:
+                    obj["grayscale"] = True
+                    obj["grayscale_factor"] = round(rel_x, 2)
+
         self.scene_dirty = True
 
     def _r_ctx_menu(self, w_win, h_win):
@@ -1089,17 +1182,37 @@ class ObjectOpsMixin:
 
             y_off += ih
 
-    def _pick_color_for_sel(self):
-        if self.selected_idx is None: return
-        obj = self.scene_data["objects"][self.selected_idx]
+    def _pick_color_for_selection(self, objs_sel=None):
+        if objs_sel is None:
+            idxs = self.selected_indices if len(self.selected_indices) > 1 else ([self.selected_idx] if self.selected_idx is not None else [])
+            objs_sel = [self.scene_data["objects"][i] for i in idxs if i < len(self.scene_data["objects"])]
+        
+        if not objs_sel: return
+        
         try:
             from editor.ui.color_picker import ask_color
             bg_surf = getattr(self, "bg_surf", None)
-            init_c = obj.get("color_filter", (255, 255, 255))
-            color = ask_color(self.screen, bg_surf, init_c, title="Colore Filtro Oggetto")
+            init_c = objs_sel[0].get("color_filter", (255, 255, 255))
+            color = ask_color(self.screen, bg_surf, init_c, title="Colore Filtro Selezione")
             if color:
-                self._push_undo(); obj["color_filter"] = [int(x) for x in color]; self.scene_dirty = True
-        except Exception: logging.error("Color picker fallito (oggetto)")
+                self._push_undo()
+                c_list = [int(x) for x in color]
+                for o in objs_sel:
+                    o["color_filter"] = c_list
+                self.scene_dirty = True
+                self._mark_dirty()
+        except Exception: logging.error("Color picker fallito (selezione)")
+
+    def _open_layer_selector_for_selection(self, objs_sel):
+        # Ciclo tra i layer disponibili se cliccato
+        layers = ["objects_low", "objects_mid", "objects_high", "overlay"]
+        curr = objs_sel[0].get("layer", "objects_mid")
+        try:
+            idx = layers.index(curr)
+            next_l = layers[(idx + 1) % len(layers)]
+            self._set_layer(next_l)
+        except ValueError:
+            self._set_layer("objects_mid")
 
     def _pick_color_for_effect(self, idx, key="color", title="Colore Effetto"):
         if idx is None or idx >= len(self.scene_data.get("effects", [])): return
@@ -1110,7 +1223,7 @@ class ObjectOpsMixin:
             init_c = fx.get(key, (255, 215, 60))
             color = ask_color(self.screen, bg_surf, init_c, title=title)
             if color:
-                self._push_undo(); fx[key] = [int(x) for x in color]; self.scene_dirty = True
+                self._push_undo(); fx[key] = [int(x) for x in color]; self.scene_dirty = True; self._mark_dirty()
         except Exception: logging.error("Color picker fallito (effetto)")
 
     def _delete_effect_sel(self):
@@ -1120,6 +1233,7 @@ class ObjectOpsMixin:
             self.sel_effect_idx = None
             self._ctx_menu = None # Chiude il menu
             self.scene_dirty = True
+            self._mark_dirty()
             self._status("Effetto rimosso", WARN_C, 2)
 
     def _sanitize_effects(self):

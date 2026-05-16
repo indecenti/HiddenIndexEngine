@@ -1,0 +1,17 @@
+{
+  "mg_title": "LUCKY REELS",
+  "mg_description": "Gira i rulli e vinci! Abbina simboli identici sulla linea centrale per incassare il premio.",
+  "credits": "CREDITI",
+  "bet": "PUNTATA",
+  "win": "VINCITA",
+  "spin": "GIRA!",
+  "max_bet": "MAX BET",
+  "bet_up": "+",
+  "bet_down": "-",
+  "free_spins": "FREE SPINS: {n}",
+  "jackpot": "JACKPOT!!!",
+  "game_over": "CREDITI ESAURITI",
+  "press_spin": "Premi SPAZIO o clicca GIRA!",
+  "win_msg": "VINCI {amount}!",
+  "fever_prefix": "FEVER WIN x2! "
+}

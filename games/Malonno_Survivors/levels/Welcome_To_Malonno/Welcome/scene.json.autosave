@@ -5,8 +5,8 @@
   "objects": [
     {
       "catalog_id": "creature_claw",
-      "x": 2639,
-      "y": 1406,
+      "x": 2058,
+      "y": 1383,
       "detection_type": "circle",
       "layer": "objects_mid",
       "is_goal": true,
@@ -47,6 +47,19 @@
       "hint_delay": 30,
       "width": 348,
       "height": 338
+    },
+    {
+      "catalog_id": "runed_skull",
+      "x": 2111,
+      "y": 1440,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "always_show": false,
+      "is_goal": true,
+      "hint_delay": 40,
+      "radius": 5,
+      "width": 10,
+      "height": 10
     }
   ],
   "music": [

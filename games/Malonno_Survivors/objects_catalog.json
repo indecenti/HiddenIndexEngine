@@ -49,25 +49,6 @@
       ]
     },
     {
-      "id": "arcade_asteroids_front",
-      "label_key": "obj_arcade_asteroids_front",
-      "icon": "objects/arcade_asteroids_front.png",
-      "default_detection": "rect",
-      "default_width": 80,
-      "default_height": 180,
-      "default_hint_delay": 45,
-      "tags": [
-        "elettronica",
-        "grande",
-        "plastica",
-        "retro",
-        "variante",
-        "videogame",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
       "id": "arcade_joystick",
       "label_key": "obj_arcade_joystick",
       "icon": "objects/arcade_joystick.png",
@@ -115,21 +96,6 @@
       ]
     },
     {
-      "id": "bar_menu",
-      "label_key": "obj_bar_menu",
-      "icon": "objects/bar_menu.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 75,
-      "tags": [
-        "carta",
-        "decorazione",
-        "legno",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
       "id": "black_coral",
       "label_key": "obj_black_coral",
       "icon": "objects/black_coral.png",
@@ -145,6 +111,21 @@
         "natura",
         "oceano"
       ]
+    },
+    {
+      "id": "bone_dice",
+      "label_key": "obj_bone_dice",
+      "icon": "objects/bone_dice.png",
+      "default_detection": "rect",
+      "default_width": 90,
+      "default_height": 60,
+      "tags": [
+        "gioco",
+        "horror",
+        "osso",
+        "piccolo"
+      ],
+      "style": "real"
     },
     {
       "id": "bow_tie",
@@ -172,54 +153,6 @@
         "plastica",
         "pulizia"
       ]
-    },
-    {
-      "id": "card_two_clubs",
-      "label_key": "obj_card_two_clubs",
-      "icon": "objects/card_two_clubs.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 55,
-      "default_hint_delay": 20,
-      "tags": [
-        "carta",
-        "carta_individuale",
-        "carte_da_gioco",
-        "gioco",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "carrot_bundle",
-      "label_key": "obj_carrot_bundle",
-      "icon": "objects/carrot_bundle.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 75,
-      "default_hint_delay": 30,
-      "tags": [
-        "biologico",
-        "cibo",
-        "natura",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "cash_register_retro",
-      "label_key": "obj_cash_register_retro",
-      "icon": "objects/cash_register_retro.png",
-      "default_detection": "rect",
-      "default_width": 70,
-      "default_height": 75,
-      "tags": [
-        "metallo",
-        "vintage",
-        "denaro",
-        "grande"
-      ],
-      "style": "real"
     },
     {
       "id": "cellphone_retro",
@@ -301,22 +234,6 @@
       ]
     },
     {
-      "id": "compass_antique",
-      "label_key": "obj_compass_antique",
-      "icon": "objects/compass_antique.png",
-      "default_detection": "circle",
-      "default_radius": 35,
-      "default_hint_delay": 35,
-      "tags": [
-        "horror",
-        "metallo",
-        "piccolo",
-        "viaggio",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
       "id": "console_pin",
       "label_key": "obj_console_pin",
       "icon": "objects/console_pin.png",
@@ -333,22 +250,6 @@
       ]
     },
     {
-      "id": "cooler_box",
-      "label_key": "obj_cooler_box",
-      "icon": "objects/cooler_box.png",
-      "default_detection": "rect",
-      "default_width": 65,
-      "default_height": 50,
-      "default_hint_delay": 35,
-      "tags": [
-        "viaggio",
-        "cucina",
-        "plastica",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
       "id": "creature_claw",
       "label_key": "obj_creature_claw",
       "icon": "objects/creature_claw.png",
@@ -361,23 +262,6 @@
         "natura",
         "piccolo"
       ]
-    },
-    {
-      "id": "deerstalker_hat",
-      "label_key": "obj_deerstalker_hat",
-      "icon": "objects/deerstalker_hat.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 50,
-      "default_hint_delay": 30,
-      "tags": [
-        "abbigliamento",
-        "cappello",
-        "medio",
-        "noir",
-        "stoffa"
-      ],
-      "style": "real"
     },
     {
       "id": "dried_fish",
@@ -490,55 +374,38 @@
       ]
     },
     {
-      "id": "flag_austria",
-      "label_key": "obj_flag_austria",
-      "icon": "objects/flag_austria.png",
+      "id": "flag_ecuador",
+      "label_key": "obj_flag_ecuador",
+      "icon": "objects/flag_ecuador.png",
       "default_detection": "rect",
       "default_width": 55,
       "default_height": 75,
       "default_hint_delay": 35,
       "tags": [
         "bandiera",
-        "europa",
         "metallo",
         "nazione",
         "piccolo",
-        "stoffa"
+        "stoffa",
+        "sudamerica"
       ],
       "style": "real"
     },
     {
-      "id": "flag_finland",
-      "label_key": "obj_flag_finland",
-      "icon": "objects/flag_finland.png",
+      "id": "flag_paraguay",
+      "label_key": "obj_flag_paraguay",
+      "icon": "objects/flag_paraguay.png",
       "default_detection": "rect",
       "default_width": 55,
       "default_height": 75,
       "default_hint_delay": 35,
       "tags": [
         "bandiera",
-        "europa",
         "metallo",
         "nazione",
-        "nordico",
         "piccolo",
-        "stoffa"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "flag_france",
-      "label_key": "obj_flag_france",
-      "icon": "objects/flag_france.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 80,
-      "default_hint_delay": 35,
-      "tags": [
-        "bandiera",
-        "europa",
-        "medio",
-        "stoffa"
+        "stoffa",
+        "sudamerica"
       ],
       "style": "real"
     },
@@ -558,24 +425,6 @@
         "stoffa",
         "sudamerica"
       ]
-    },
-    {
-      "id": "flag_portugal",
-      "label_key": "obj_flag_portugal",
-      "icon": "objects/flag_portugal.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 75,
-      "default_hint_delay": 35,
-      "tags": [
-        "bandiera",
-        "europa",
-        "metallo",
-        "nazione",
-        "piccolo",
-        "stoffa"
-      ],
-      "style": "real"
     },
     {
       "id": "flintlock_pistol",
@@ -640,39 +489,6 @@
         "ufficio",
         "vintage"
       ]
-    },
-    {
-      "id": "frayed_controller",
-      "label_key": "obj_frayed_controller",
-      "icon": "objects/frayed_controller.png",
-      "default_detection": "rect",
-      "default_width": 65,
-      "default_height": 40,
-      "default_hint_delay": 35,
-      "tags": [
-        "piccolo",
-        "plastica",
-        "retro",
-        "tecnologia",
-        "videogame"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "fresh_pineapple",
-      "label_key": "obj_fresh_pineapple",
-      "icon": "objects/fresh_pineapple.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 95,
-      "default_hint_delay": 45,
-      "tags": [
-        "biologico",
-        "cibo",
-        "grande",
-        "natura"
-      ],
-      "style": "real"
     },
     {
       "id": "funnel",
@@ -783,24 +599,6 @@
         "studio",
         "vintage"
       ]
-    },
-    {
-      "id": "godfather_poster",
-      "label_key": "obj_godfather_poster",
-      "icon": "objects/godfather_poster.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 65,
-      "default_hint_delay": 40,
-      "tags": [
-        "carta",
-        "cinema",
-        "noir",
-        "piccolo",
-        "poster",
-        "vintage"
-      ],
-      "style": "real"
     },
     {
       "id": "golden_bell",
@@ -1009,23 +807,6 @@
       ]
     },
     {
-      "id": "liquid_hourglass",
-      "label_key": "obj_liquid_hourglass",
-      "icon": "objects/liquid_hourglass.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 80,
-      "default_hint_delay": 30,
-      "tags": [
-        "horror",
-        "luce",
-        "medio",
-        "vetro",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
       "id": "lit_candle",
       "label_key": "obj_lit_candle",
       "icon": "objects/lit_candle.png",
@@ -1038,22 +819,6 @@
         "luce",
         "piccolo"
       ]
-    },
-    {
-      "id": "mantel_clock",
-      "label_key": "obj_mantel_clock",
-      "icon": "objects/mantel_clock.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 75,
-      "default_hint_delay": 45,
-      "tags": [
-        "arredamento",
-        "legno",
-        "medio",
-        "vintage"
-      ],
-      "style": "real"
     },
     {
       "id": "marble_bust",
@@ -1102,40 +867,6 @@
       ]
     },
     {
-      "id": "mechanical_keyboard_lowpro",
-      "label_key": "obj_mechanical_keyboard_lowpro",
-      "icon": "objects/obj_mechanical_keyboard_lowpro.png",
-      "default_detection": "rect",
-      "default_width": 95,
-      "default_height": 35,
-      "default_hint_delay": 45,
-      "tags": [
-        "elettronica",
-        "tecnologia",
-        "ufficio",
-        "scrittura",
-        "grande"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "medieval_banner",
-      "label_key": "obj_medieval_banner",
-      "icon": "objects/obj_medieval_banner.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 90,
-      "default_hint_delay": 40,
-      "tags": [
-        "decorazione",
-        "stoffa",
-        "vintage",
-        "fantasy",
-        "grande"
-      ],
-      "style": "real"
-    },
-    {
       "id": "metal_flashlight",
       "label_key": "obj_metal_flashlight",
       "icon": "objects/metal_flashlight.png",
@@ -1181,52 +912,17 @@
       ]
     },
     {
-      "id": "monopoly_game",
-      "label_key": "obj_monopoly_game",
-      "icon": "objects/monopoly_game.png",
+      "id": "mummified_hand",
+      "label_key": "obj_mummified_hand",
+      "icon": "objects/mummified_hand.png",
       "default_detection": "rect",
-      "default_width": 75,
-      "default_height": 75,
-      "default_hint_delay": 40,
-      "tags": [
-        "carta",
-        "giocattolo",
-        "gioco",
-        "legno",
-        "piccolo",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "morel_mushroom",
-      "label_key": "obj_morel_mushroom",
-      "icon": "objects/morel_mushroom.png",
-      "default_detection": "circle",
-      "default_radius": 30,
+      "default_width": 40,
+      "default_height": 80,
       "default_hint_delay": 35,
       "tags": [
-        "natura",
         "biologico",
-        "cibo",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "n64_console",
-      "label_key": "obj_n64_console",
-      "icon": "objects/n64_console.png",
-      "default_detection": "rect",
-      "default_width": 80,
-      "default_height": 50,
-      "default_hint_delay": 40,
-      "tags": [
-        "videogame",
-        "tecnologia",
-        "elettronica",
-        "retro",
-        "plastica",
+        "decorazione",
+        "horror",
         "medio"
       ],
       "style": "real"
@@ -1277,24 +973,6 @@
         "metallo",
         "grande"
       ]
-    },
-    {
-      "id": "obj_stand_mixer_50s",
-      "label_key": "obj_stand_mixer_50s",
-      "icon": "objects/obj_stand_mixer_50s.png",
-      "default_detection": "rect",
-      "default_width": 65,
-      "default_height": 75,
-      "default_hint_delay": 45,
-      "tags": [
-        "cucina",
-        "elettronica",
-        "metallo",
-        "vintage",
-        "nordamerica",
-        "grande"
-      ],
-      "style": "real"
     },
     {
       "id": "obj_tetrimino_s",
@@ -1395,23 +1073,6 @@
       ]
     },
     {
-      "id": "parking_meter",
-      "label_key": "obj_parking_meter",
-      "icon": "objects/obj_parking_meter.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 95,
-      "default_hint_delay": 40,
-      "tags": [
-        "strada",
-        "città",
-        "metallo",
-        "denaro",
-        "grande"
-      ],
-      "style": "real"
-    },
-    {
       "id": "peacock",
       "label_key": "obj_peacock",
       "icon": "objects/peacock.png",
@@ -1456,21 +1117,6 @@
         "profumo",
         "vetro"
       ]
-    },
-    {
-      "id": "pickaxe_miner",
-      "label_key": "obj_pickaxe_miner",
-      "icon": "objects/pickaxe_miner.png",
-      "default_detection": "rect",
-      "default_width": 80,
-      "default_height": 80,
-      "tags": [
-        "attrezzo",
-        "metallo",
-        "legno",
-        "medio"
-      ],
-      "style": "real"
     },
     {
       "id": "pirate_symbol",
@@ -1563,37 +1209,6 @@
         "fumetti",
         "piccolo"
       ]
-    },
-    {
-      "id": "pufferfish",
-      "label_key": "obj_pufferfish",
-      "icon": "objects/pufferfish.png",
-      "default_detection": "circle",
-      "default_radius": 25,
-      "default_hint_delay": 30,
-      "tags": [
-        "natura",
-        "biologico",
-        "oceano",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "purple_eggplant",
-      "label_key": "obj_purple_eggplant",
-      "icon": "objects/purple_eggplant.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 85,
-      "default_hint_delay": 35,
-      "tags": [
-        "biologico",
-        "cibo",
-        "medio",
-        "natura"
-      ],
-      "style": "real"
     },
     {
       "id": "rabbit",
@@ -1728,20 +1343,6 @@
         "pelle",
         "piccolo"
       ]
-    },
-    {
-      "id": "shower_head",
-      "label_key": "obj_shower_head",
-      "icon": "objects/shower_head.png",
-      "default_detection": "circle",
-      "default_radius": 30,
-      "default_hint_delay": 30,
-      "tags": [
-        "medio",
-        "metallo",
-        "pulizia"
-      ],
-      "style": "real"
     },
     {
       "id": "silk_tie",
@@ -1957,21 +1558,6 @@
       ]
     },
     {
-      "id": "succulent_plant",
-      "label_key": "obj_succulent_plant",
-      "icon": "objects/succulent_plant.png",
-      "default_detection": "circle",
-      "default_radius": 30,
-      "default_hint_delay": 25,
-      "tags": [
-        "biologico",
-        "giardino",
-        "natura",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
       "id": "sunglasses",
       "label_key": "obj_sunglasses",
       "icon": "objects/sunglasses.png",
@@ -2017,6 +1603,24 @@
         "metallo",
         "piccolo"
       ]
+    },
+    {
+      "id": "tactical_fixed_knife",
+      "label_key": "obj_tactical_fixed_knife",
+      "icon": "objects/tactical_fixed_knife.png",
+      "default_detection": "rect",
+      "default_width": 90,
+      "default_height": 30,
+      "default_hint_delay": 35,
+      "tags": [
+        "arma",
+        "attrezzo",
+        "medio",
+        "metallo",
+        "pericolo",
+        "tecnologia"
+      ],
+      "style": "real"
     },
     {
       "id": "tamagotchi",
@@ -2079,20 +1683,6 @@
       ]
     },
     {
-      "id": "teapot",
-      "label_key": "obj_teapot",
-      "icon": "objects/teapot.png",
-      "default_detection": "circle",
-      "default_radius": 40,
-      "default_hint_delay": 35,
-      "tags": [
-        "ceramica",
-        "cucina",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
       "id": "teddy_bear",
       "label_key": "obj_teddy_bear",
       "icon": "objects/teddy_bear.png",
@@ -2106,20 +1696,6 @@
         "stoffa",
         "vintage"
       ]
-    },
-    {
-      "id": "teleport_pad",
-      "label_key": "obj_teleport_pad",
-      "icon": "objects/teleport_pad.png",
-      "default_detection": "circle",
-      "radius": 45,
-      "tags": [
-        "scifi",
-        "tecnologia",
-        "metallo",
-        "grande"
-      ],
-      "style": "real"
     },
     {
       "id": "tennis_shoe",
@@ -2259,6 +1835,23 @@
       ]
     },
     {
+      "id": "vintage_desk_fan",
+      "label_key": "obj_vintage_desk_fan",
+      "icon": "objects/vintage_desk_fan.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "arredamento",
+        "elettronica",
+        "medio",
+        "metallo",
+        "tecnologia",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
       "id": "voodoo_doll",
       "label_key": "obj_voodoo_doll",
       "icon": "objects/voodoo_doll.png",
@@ -2306,22 +1899,6 @@
         "grande",
         "metallo"
       ]
-    },
-    {
-      "id": "weather_vane",
-      "label_key": "obj_weather_vane",
-      "icon": "objects/obj_weather_vane.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 95,
-      "default_hint_delay": 40,
-      "tags": [
-        "casa",
-        "metallo",
-        "vintage",
-        "medio"
-      ],
-      "style": "real"
     },
     {
       "id": "wooden_train",

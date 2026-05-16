@@ -46,6 +46,7 @@ class SceneObject:
     grayscale_factor: float = 1.0
     color_filter: tuple = (255, 255, 255)
     corners: list[list[int]] = field(default_factory=lambda: [[0,0], [0,0], [0,0], [0,0]])
+    scale: float = 1.0
     minigame_trigger: Optional[dict] = None
 
     icon_surface: Optional[pygame.Surface] = field(default=None, repr=False)
@@ -260,6 +261,7 @@ class SceneLoader:
                 grayscale_factor=float(raw.get("grayscale_factor", 1.0)),
                 color_filter=tuple(raw.get("color_filter", (255, 255, 255))),
                 corners=raw.get("corners", [[0,0], [0,0], [0,0], [0,0]]),
+                scale=float(raw.get("scale", 1.0)),
                 minigame_trigger=raw.get("minigame_trigger"),
                 icon_surface=icon_surf
             )

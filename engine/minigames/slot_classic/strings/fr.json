@@ -1,0 +1,17 @@
+{
+  "mg_title": "LUCKY REELS",
+  "mg_description": "Faites tourner les rouleaux et gagnez! Alignez des symboles identiques sur la ligne de paiement centrale.",
+  "credits": "CRÉDITS",
+  "bet": "MISE",
+  "win": "GAIN",
+  "spin": "JOUER!",
+  "max_bet": "MISE MAX",
+  "bet_up": "+",
+  "bet_down": "-",
+  "free_spins": "TOURS GRATUITS: {n}",
+  "jackpot": "JACKPOT!!!",
+  "game_over": "CRÉDITS ÉPUISÉS",
+  "press_spin": "Appuyez ESPACE ou cliquez JOUER!",
+  "win_msg": "VOUS GAGNEZ {amount}!",
+  "fever_prefix": "GAIN FEVER x2! "
+}

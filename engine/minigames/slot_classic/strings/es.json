@@ -1,0 +1,17 @@
+{
+  "mg_title": "LUCKY REELS",
+  "mg_description": "¡Gira los carretes y gana! Combina símbolos idénticos en la línea de pago central para cobrar tu premio.",
+  "credits": "CRÉDITOS",
+  "bet": "APUESTA",
+  "win": "GANANCIA",
+  "spin": "¡GIRAR!",
+  "max_bet": "APUESTA MÁX",
+  "bet_up": "+",
+  "bet_down": "-",
+  "free_spins": "TIRADAS GRATIS: {n}",
+  "jackpot": "¡¡¡JACKPOT!!!",
+  "game_over": "SIN CRÉDITOS",
+  "press_spin": "Pulsa ESPACIO o haz clic en GIRAR!",
+  "win_msg": "¡GANAS {amount}!",
+  "fever_prefix": "¡GANANCIA FEVER x2! "
+}

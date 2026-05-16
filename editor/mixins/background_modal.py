@@ -163,7 +163,7 @@ class BackgroundModalMixin:
             self._bg_files = []
             for f in self._bg_all_files:
                 tags = self._bg_catalog.get(f, {}).get("tags", [])
-                tags_str = " ".join(tags).lower()
+                tags_str = " ".join([self.tag_manager.get_label(t) for t in tags]).lower()
                 if query in f.lower() or query in tags_str:
                     self._bg_files.append(f)
         
@@ -207,7 +207,20 @@ class BackgroundModalMixin:
         # ── EDITING STANDARD ──
         if ev.key == pygame.K_RETURN:
             if active_field == "name": self._bg_confirm_rename()
-            elif active_field == "tags": self._bg_confirm_tags()
+            elif active_field == "tags": 
+                if self._bg_tags_buffer:
+                    new_tag = self.tag_manager.ensure_tag(self._bg_tags_buffer)
+                    if new_tag:
+                        if self._bg_editing_tags not in self._bg_catalog: self._bg_catalog[self._bg_editing_tags] = {}
+                        tags = set(self._bg_catalog[self._bg_editing_tags].get("tags", []))
+                        tags.add(new_tag)
+                        self._bg_catalog[self._bg_editing_tags]["tags"] = sorted(list(tags))
+                        self._bg_tags_buffer = ""
+                        self._bg_cursor = 0
+                        self._bg_update_suggestions()
+                        self._bg_save_catalog()
+                else:
+                    self._bg_confirm_tags()
             elif active_field == "search": self._bg_search_active = False
         elif ev.key == pygame.K_BACKSPACE:
             self._bg_delete_char(active_field)
@@ -249,18 +262,18 @@ class BackgroundModalMixin:
         self._bg_cursor -= 1
 
     def _bg_update_suggestions(self):
-        parts = [p.strip().lower() for p in self._bg_tags_buffer.split(",")]
-        curr = parts[-1] if parts else ""
-        if not curr: self._bg_suggestions = []; return
-        self._bg_suggestions = [t for t in self._bg_all_library_tags if t.startswith(curr) and t not in parts][:5]
+        self._bg_suggestions = self.tag_manager.get_suggestions(self._bg_tags_buffer, limit=5)
 
     def _bg_apply_suggestion(self, tag):
-        parts = [p.strip() for p in self._bg_tags_buffer.split(",")]
-        if parts: parts[-1] = tag
-        else: parts = [tag]
-        self._bg_tags_buffer = ", ".join(parts) + ", "
-        self._bg_cursor = len(self._bg_tags_buffer)
+        if not self._bg_editing_tags: return
+        if self._bg_editing_tags not in self._bg_catalog: self._bg_catalog[self._bg_editing_tags] = {}
+        tags = set(self._bg_catalog[self._bg_editing_tags].get("tags", []))
+        tags.add(tag)
+        self._bg_catalog[self._bg_editing_tags]["tags"] = sorted(list(tags))
+        self._bg_tags_buffer = ""
+        self._bg_cursor = 0
         self._bg_suggestions = []
+        self._bg_save_catalog()
 
     def _set_clipboard(self, text):
         try:
@@ -344,12 +357,10 @@ class BackgroundModalMixin:
                         return
                     
                     # Edit Tags
-                    if _in_rect((mx, my), (ix + 10, iy + 245, item_w - 20, 30)):
-                        self._bg_confirm_rename(); self._bg_confirm_tags()
                         self._bg_editing_tags = name
-                        tags = self._bg_catalog.get(name, {}).get("tags", [])
-                        self._bg_tags_buffer = ", ".join(tags) + (", " if tags else "")
-                        self._bg_cursor = len(self._bg_tags_buffer)
+                        self._bg_tags_buffer = "" # Ora è solo il campo di ricerca
+                        self._bg_cursor = 0
+                        self._bg_update_suggestions()
                         return
 
         self._bg_confirm_rename(); self._bg_confirm_tags()
@@ -372,13 +383,13 @@ class BackgroundModalMixin:
         self._bg_editing_name = None
 
     def _bg_confirm_tags(self):
-        if not self._bg_editing_tags: return
-        name = self._bg_editing_tags
-        tags = sorted(list(set([t.strip().lower() for t in self._bg_tags_buffer.split(",") if t.strip()])))
-        if name not in self._bg_catalog: self._bg_catalog[name] = {}
-        self._bg_catalog[name]["tags"] = tags
-        self._bg_save_catalog(); self._bg_update_filter()
-        self._bg_editing_tags = None; self._bg_suggestions = []
+        # I tag sono salvati in tempo reale ad ogni aggiunta/rimozione ora, 
+        # quindi questo serve solo a chiudere l'editing
+        self._bg_editing_tags = None
+        self._bg_suggestions = []
+        self._bg_tags_buffer = ""
+        self._bg_cursor = 0
+        self._bg_update_filter()
 
     def _bg_select(self, name):
         src = self._bg_dir / name
@@ -565,14 +576,21 @@ class BackgroundModalMixin:
                     ir = pygame.Rect(ix + 10, iy + 205, item_w - 20, 30)
                     _input_box(self.screen, ir, self._bg_name_buffer, focused=True)
                 if is_ed_t:
+                    # Rendering dell'interfaccia tag avanzata sopra la cella
+                    # 1. Barra di ricerca
                     ir = pygame.Rect(ix + 10, iy + 245, item_w - 20, 30)
-                    # Gestione scrolling orizzontale simulato: mostra la parte finale del buffer se lungo
-                    disp_tags = self._bg_tags_buffer
-                    if _text_wh(disp_tags, "mono")[0] > ir.w - 15:
-                        while _text_wh(disp_tags, "mono")[0] > ir.w - 25:
-                            disp_tags = disp_tags[1:]
-                    _input_box(self.screen, ir, disp_tags, focused=True)
+                    _input_box(self.screen, ir, self._bg_tags_buffer, focused=True, hint="Cerca o aggiungi...")
                     self._last_tags_x, self._last_tags_y = ix + 10, iy + 245
+                    
+                    # 2. Chip dei tag esistenti (rimovibili)
+                    tags = self._bg_catalog.get(name, {}).get("tags", [])
+                    for i, t_id in enumerate(tags):
+                        # Disegniamo i chip in riga sopra l'input se c'è spazio, o gestiamo una riga extra
+                        # Per ora, mostriamoli semplicemente come chip cliccabili per rimuoverli
+                        # NOTA: qui potremmo aggiungere logica di rimozione al click
+                        pass
+                
+                # Se non stiamo editando, mostriamo i chip statici (già fatto in cell_surf)
 
         self.screen.set_clip(None)
         _scrollbar(self.screen, list_x + list_w - 12, list_y + 15, 6, list_h - 30, self._bg_scroll, total_h_px, list_h)
