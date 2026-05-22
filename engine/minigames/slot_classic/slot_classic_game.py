@@ -345,6 +345,17 @@ class SlotClassicGame(BaseMinigame):
             return (255, int(150 + 50 * math.cos(self.neon_cycle*2)), 0)
         return (int(100 + 50 * math.sin(self.neon_cycle)), 50, 255)
 
+    def _font(self, name: str, size, bold: bool = False) -> pygame.font.Font:
+        """Font cacheato (evita SysFont ogni frame: lento su Android)."""
+        if not hasattr(self, "_font_cache"):
+            self._font_cache = {}
+        key = (name, int(size), bold)
+        f = self._font_cache.get(key)
+        if f is None:
+            f = pygame.font.SysFont(name, max(8, int(size)), bold=bold)
+            self._font_cache[key] = f
+        return f
+
     def draw(self) -> None:
         sw, sh = self.scaling_manager.screen_w, self.scaling_manager.screen_h
         scale = self.scaling_manager.scale
@@ -395,7 +406,7 @@ class SlotClassicGame(BaseMinigame):
         pygame.draw.rect(self.screen, (0, 0, 0), j_rect.inflate(4*scale, 4*scale), border_radius=int(17*scale))
         pygame.draw.rect(self.screen, (5, 5, 10), j_rect, border_radius=int(15*scale))
         pygame.draw.rect(self.screen, neon, j_rect, int(2*scale), border_radius=int(15*scale))
-        self._draw_text_centered(f"JACKPOT: {int(self.progressive_jackpot)}", pygame.font.SysFont("Impact", int(38*scale)), j_rect.center, neon)
+        self._draw_text_centered(f"JACKPOT: {int(self.progressive_jackpot)}", self._font("Impact", 38*scale), j_rect.center, neon)
 
     def _draw_reels(self, area, scale):
         rw, sh = area.width // self.num_reels, area.height // 3
@@ -451,14 +462,14 @@ class SlotClassicGame(BaseMinigame):
         if self.credits < MIN_BET and not any(self.spinning) and self.free_spins_left <= 0:
             overlay = pygame.Surface((sw, sh), pygame.SRCALPHA); overlay.fill((0,0,0,230))
             self.screen.blit(overlay, (0,0))
-            self._draw_text_comic(self._("game_over"), pygame.font.SysFont("Impact", int(110*scale)), (sw//2, sh//2), (255, 0, 0))
+            self._draw_text_comic(self._("game_over"), self._font("Impact", 110*scale), (sw//2, sh//2), (255, 0, 0))
             
         self._draw_ui(sw, sh, scale, cab_rect)
         if self.show_paytable: self._draw_paytable_overlay(sw, sh, scale)
 
     def _draw_comic_win(self, sw, y, scale):
         text = f"{self._('fever_prefix') if self.free_spins_left > 0 else ''}{self._('win_msg').format(amount=self.last_win)}"
-        font = pygame.font.SysFont("Impact", int(75 * scale * self.win_text_scale))
+        font = self._font("Impact", 75*scale*self.win_text_scale)
         center = (sw//2, y)
         points = []
         num_points = 18
@@ -484,9 +495,9 @@ class SlotClassicGame(BaseMinigame):
         self.screen.blit(surf, surf.get_rect(center=center))
 
     def _draw_ui(self, sw, sh, scale, cab_rect):
-        f_m = pygame.font.SysFont("Impact", int(30*scale))
-        f_s = pygame.font.SysFont("Impact", int(16*scale))
-        f_info = pygame.font.SysFont("Arial", int(14*scale))
+        f_m = self._font("Impact", 30*scale)
+        f_s = self._font("Impact", 16*scale)
+        f_info = self._font("Arial", 14*scale)
         
         # HUD Comic Stickers: Box Dinamici su riga unica (LABEL: VALORE)
         labels = ["CREDITI", "PUNTATA", "VINCITA"]
@@ -495,7 +506,7 @@ class SlotClassicGame(BaseMinigame):
         text_colors = [(100, 255, 150), (255, 150, 150), (255, 255, 200)]
         
         # Font unico più leggibile per riga singola
-        f_hud = pygame.font.SysFont("Impact", int(24*scale))
+        f_hud = self._font("Impact", 24*scale)
         
         # Calcolo ingombri per centratura
         items_data = []
@@ -575,7 +586,7 @@ class SlotClassicGame(BaseMinigame):
     def _draw_paytable_overlay(self, sw, sh, scale):
         ov = pygame.Surface((sw, sh), pygame.SRCALPHA); ov.fill((5, 5, 10, 245))
         self.screen.blit(ov, (0,0))
-        f_title = pygame.font.SysFont("Impact", int(65*scale))
+        f_title = self._font("Impact", 65*scale)
         self._draw_text_comic("TABELLA PAGAMENTI", f_title, (sw//2, 80*scale), (255, 215, 0))
         
         items = list(PAYTABLE.items())
@@ -584,7 +595,7 @@ class SlotClassicGame(BaseMinigame):
         start_x = sw//2 - ((card_w + margin_x) * cols) // 2 + margin_x//2
         start_y = 180 * scale
         
-        f_val, f_lbl = pygame.font.SysFont("Impact", int(32*scale)), pygame.font.SysFont("Arial", int(14*scale), bold=True)
+        f_val, f_lbl = self._font("Impact", 32*scale), self._font("Arial", 14*scale, bold=True)
         for idx, (sym, mult) in enumerate(items):
             r, c = idx // cols, idx % cols
             rect = pygame.Rect(start_x + c * (card_w + margin_x), start_y + r * (card_h + margin_y), card_w, card_h)
@@ -608,7 +619,7 @@ class SlotClassicGame(BaseMinigame):
                 ex = f_lbl.render("+10 FREE SPINS", True, (255, 215, 0))
                 self.screen.blit(ex, (rect.right - ex.get_width() - 25*scale, rect.centery + 22*scale))
 
-        self._draw_text_centered("Clicca ovunque per tornare al gioco", pygame.font.SysFont("Arial", int(22*scale)), (sw//2, sh - 60*scale), (140, 140, 150))
+        self._draw_text_centered("Clicca ovunque per tornare al gioco", self._font("Arial", 22*scale), (sw//2, sh - 60*scale), (140, 140, 150))
 
     def finish_game(self):
         total_win = int(self.credits - INITIAL_CREDITS)

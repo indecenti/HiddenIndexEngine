@@ -37,7 +37,23 @@ def _get_icon(icon_id):
         "delete": "delete", "trash": "delete", "remove": "delete",
         "settings": "settings", "gear": "settings",
         "search": "search", "find": "search", "magnify": "search",
-        "tag": "tag", "label": "tag"
+        "tag": "tag", "label": "tag",
+        # Nuove icone (griglia 4x4 generata)
+        "globe": "globe", "web": "globe", "html": "globe", "internet": "globe",
+        "android": "android", "apk": "android", "mobile": "android", "phone": "android",
+        "folder": "folder", "directory": "folder",
+        "refresh": "refresh", "reload": "refresh", "sync": "refresh",
+        "download": "download", "export": "download",
+        "upload": "upload", "import": "upload",
+        "layers": "layers", "stack": "layers",
+        "copy": "copy", "duplicate": "copy",
+        "music": "music", "note": "music",
+        "speaker": "speaker", "audio": "speaker", "sound": "speaker",
+        "warning": "warning", "alert": "warning",
+        "info": "info", "help": "info",
+        "undo": "undo",
+        "redo": "redo",
+        "grid_view": "grid_view", "grid": "grid_view",
     }
     
     fname = mapping.get(icon_id)
@@ -198,12 +214,14 @@ def _button(surf, r, label, hovered=False, active=False, danger=False, font="sm"
             _draw_text(surf, label, font, TXT_HI, r[0] + 12 + icon_sz + spacing, ty)
         return
 
-    # Riconoscimento Icone
+    # Riconoscimento Icone (label stringa -> id icona)
     icon_map = {
-        "^": "up", "v": "down", "▴": "up", "▾": "down", 
-        "▲": "up", "▼": "down", "▶": "play", "✎": "edit", 
+        "^": "up", "v": "down", "▴": "up", "▾": "down",
+        "▲": "up", "▼": "down", "▶": "play", "✎": "edit",
         "×": "cross", "X": "x", "+": "plus", "⬆": "up",
-        "EXE": "build", "BUILD": "build"
+        "EXE": "build", "BUILD": "build",
+        "APK": "android",
+        "WEB": "globe",
     }
     if label in icon_map:
         _draw_shape_icon(surf, r, icon_map[label], TXT_HI)

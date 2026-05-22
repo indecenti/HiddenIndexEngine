@@ -2,7 +2,7 @@
 title = LineVenture
 package.name = lineventure
 package.domain = org.hiddenindex
-version = 1.0
+version = 1.4
 
 source.dir = .
 source.include_exts = py,json,png,jpg,jpeg,ogg,wav,mp3,ttf,ini,txt,xml
@@ -21,6 +21,16 @@ source.exclude_patterns = *.pyc,*.pyo,*.autosave,*.bak,*.tmp,*.log,*.spec,*.md,r
 #   - scipy: opzionale, solo se warp_surface (utils.py) viene chiamato.
 requirements = python3,pygame,android,pyjnius,numpy
 
+# Icona app: usa l'icona del gioco selezionata (1024x1024). p4a genera i
+# mipmap per tutte le densità. Path relativo alla root del workspace (games/
+# viene sincronizzato dallo script di build).
+icon.filename = %(source.dir)s/games/LineVenture/assets/icon.png
+
+# Presplash (schermata di caricamento) e colore di sfondo: sostituisce il
+# logo Kivy di default con la grafica del gioco.
+presplash.filename = %(source.dir)s/games/LineVenture/assets/presplash.png
+android.presplash_color = #0a0c12
+
 orientation = landscape
 fullscreen = 1
 
@@ -29,12 +39,15 @@ fullscreen = 1
 # disponibili solo da API 24. >99% device attivi sono >= API 24 nel 2026.
 # NDK 28.2: necessario per 16 KB page size alignment (Android 15+ Pixel 9+).
 # NDK 27 e precedenti allineano a 4 KB → dlopen fallisce su device 16 KB.
-# archs: solo arm64-v8a per il 2026. armeabi-v7a è obsoleto (Android pre-2017,
-# meno dell'1% dei device); droppandolo: APK -30MB, build più veloce, GPU
-# performance migliore (compilatori arm64 ottimizzano meglio).
+# archs: arm64-v8a per i device reali del 2026 (armeabi-v7a obsoleto, droppato).
+# x86_64 aggiunto per poter testare/eseguire sull'emulatore Android Studio
+# (AVD x86_64). Per una release puramente arm si può rimuovere x86_64 e
+# ridurre dimensione APK + tempi di build.
 android.api = 35
 android.minapi = 24
 android.ndk = 28b
+# Release/produzione: solo arm64-v8a (device reali). x86_64 era solo per
+# l'emulatore Android Studio durante lo sviluppo.
 android.archs = arm64-v8a
 android.accept_sdk_license = True
 android.allow_backup = False
@@ -57,8 +70,6 @@ android.permissions = android.permission.WAKE_LOCK
 # - android:hardwareAccelerated="true" (default true API 14+)
 # - android:largeHeap="true" (aumenta heap a ~256MB/512MB per il bytecode Python)
 
-# Modalità presplash semplice
-presplash.filename =
 
 [buildozer]
 log_level = 2

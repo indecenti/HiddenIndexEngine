@@ -59,6 +59,62 @@ class ScalingManager:
 
         self._resize_pending: bool = False
 
+        # ── Safe area (insets per notch/angoli arrotondati/barre di sistema) ──
+        # Disattivata di default: su desktop i safe_* coincidono con i bordi
+        # grezzi, quindi nessun cambiamento. Su Android viene abilitata da core
+        # e combina un padding minimo (% schermo) con il display cutout reale.
+        self._safe_enabled: bool = False
+        self._cut_l: int = 0
+        self._cut_t: int = 0
+        self._cut_r: int = 0
+        self._cut_b: int = 0
+        self._safe_pad_ref: int = 22   # padding minimo in unità di riferimento
+        self._safe_pct: float = 0.035  # frazione della dimensione schermo
+
+    # ------------------------------------------------------------------
+    # Safe area
+    # ------------------------------------------------------------------
+
+    def configure_safe_area(self, enabled: bool, cut_l: int = 0, cut_t: int = 0,
+                            cut_r: int = 0, cut_b: int = 0) -> None:
+        """Abilita la safe area e imposta gli inset del cutout (in px schermo)."""
+        self._safe_enabled = enabled
+        self._cut_l, self._cut_t, self._cut_r, self._cut_b = cut_l, cut_t, cut_r, cut_b
+
+    def _base_margin_x(self) -> int:
+        return max(self.scale_value(self._safe_pad_ref), int(self._screen_w * self._safe_pct))
+
+    def _base_margin_y(self) -> int:
+        return max(self.scale_value(self._safe_pad_ref), int(self._screen_h * self._safe_pct))
+
+    @property
+    def safe_left(self) -> int:
+        """Coordinata X del bordo sinistro sicuro."""
+        if not self._safe_enabled:
+            return 0
+        return max(self._base_margin_x(), self._cut_l)
+
+    @property
+    def safe_right(self) -> int:
+        """Coordinata X del bordo destro sicuro."""
+        if not self._safe_enabled:
+            return self._screen_w
+        return self._screen_w - max(self._base_margin_x(), self._cut_r)
+
+    @property
+    def safe_top(self) -> int:
+        """Coordinata Y del bordo superiore sicuro."""
+        if not self._safe_enabled:
+            return 0
+        return max(self._base_margin_y(), self._cut_t)
+
+    @property
+    def safe_bottom(self) -> int:
+        """Coordinata Y del bordo inferiore sicuro."""
+        if not self._safe_enabled:
+            return self._screen_h
+        return self._screen_h - max(self._base_margin_y(), self._cut_b)
+
     # ------------------------------------------------------------------
     # Setup e resize
     # ------------------------------------------------------------------

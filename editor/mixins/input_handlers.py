@@ -409,6 +409,10 @@ class InputHandlersMixin:
                 idxs = self.selected_indices if len(self.selected_indices) > 1 else [idx]
                 if key == 'grayscale_factor':
                     val = _clamp(float(val) / 100.0, 0.0, 1.0)
+                # Coerce a int per campi tipicamente interi
+                if key in ('x', 'y', 'rotation', 'alpha', 'layer_z',
+                           'radius', 'width', 'height', 'mg_max_levels'):
+                    val = int(val)
                 for i in idxs:
                     if 0 <= i < len(objs):
                         if key == 'mg_max_levels':
@@ -439,6 +443,8 @@ class InputHandlersMixin:
         
         self._editing_prop = None
         self._editing_preset_name = False
+        self._confirm_clear = False
+        self._layer_dropdown_open = False
 
     def _cancel_rect(self):
         self._rect_placing   = False
@@ -492,6 +498,13 @@ class InputHandlersMixin:
                     # Click fuori: chiudi e lascia passare (pass-through)
                     self._ctx_menu = None
 
+            # Conferma uscita/salvataggio: priorità massima — sopra ogni altra modale
+            if self._confirm_leave_modal:
+                self._confirm_leave_click(mx, my_raw); return
+            # Scatter modal
+            if getattr(self, "_scatter_modal_open", False):
+                if self._scatter_modal_click(mx, my_raw, w, h):
+                    return
             if self._newobj_modal:
                 self._newobj_click(mx, my_raw, w, h); return
             if self._tag_modal_active:
@@ -506,8 +519,6 @@ class InputHandlersMixin:
                 self._vid_modal_click(mx, my_raw, w, h); return
             if self._minigame_modal:
                 self._minigame_click(mx, my_raw); return
-            if self._confirm_leave_modal:
-                self._confirm_leave_click(mx, my_raw); return
             if getattr(self, "_icon_modal", False):
                 if self._icon_click(mx, my_raw, w, h): return
             if self._img_editor_active:
@@ -635,6 +646,29 @@ class InputHandlersMixin:
             self.panel_r_w = _clamp(w - mx, PANEL_MIN_W, PANEL_MAX_W)
             return
 
+        # --- AUTO-HEAL STATI "APPICCICATI" ---------------------------------
+        # Riconcilia gli stati di trascinamento con i tasti realmente premuti.
+        # Se un mouseup è andato perso (es. rilascio fuori dalla finestra), un
+        # drag/pan poteva restare attivo facendo "seguire" gli oggetti al mouse
+        # o spostandoli durante il pan col tasto destro. Qui lo annulliamo.
+        pressed = pygame.mouse.get_pressed(num_buttons=3)
+        if self._panning and not (pressed[1] or pressed[2]):
+            self._panning = False
+        if not pressed[0]:
+            if (self._drag_active or self._handle_id or self._sel_box_active
+                    or getattr(self, "_dragging_effect_idx", None) is not None
+                    or getattr(self, "_dragging_slider", None)
+                    or getattr(self, "_dragging_ctx_slider", None)
+                    or getattr(self, "_dragging_catalog_scroll", False)):
+                self._drag_active = False
+                self._handle_id = None
+                self._handle_snap = None
+                self._dragging_effect_idx = None
+                self._sel_box_active = False
+                self._dragging_slider = None
+                self._dragging_ctx_slider = None
+                self._dragging_catalog_scroll = False
+
         # --- FEEDBACK CURSORE (Solo se NON stiamo già operando) ---
         # Disabilita se una modale è aperta (copre il canvas/pannelli)
         is_modal = (
@@ -702,6 +736,10 @@ class InputHandlersMixin:
                 self._pan_moved = True
             self.origin_x = self._pan_start_ox + dx
             self.origin_y = self._pan_start_oy + dy
+            # Il pan sposta l'origine: invalida la cache statica del canvas
+            # (grid + background + overlay oggetti) così segue il movimento,
+            # altrimenti restavano fermi mentre solo gli overlay live scorrevano.
+            self._mark_dirty()
             return
 
         if self._drag_active and self.selected_idx is not None:
@@ -777,6 +815,10 @@ class InputHandlersMixin:
             self._minigame_wheel(ev.y)
             return
 
+        if getattr(self, "_scatter_modal_open", False):
+            if self._scatter_modal_wheel(mx, my_raw, ev.y):
+                return
+
         if self.state == STATE_GAME_SELECT:
             self._gs_wheel(ev); return
 
@@ -847,6 +889,13 @@ class InputHandlersMixin:
     # ─────────────────────────────────────────────────────────────────────────
 
     def _start_pan(self, mx, my):
+        # Entrando in pan annulliamo qualsiasi drag/handle armato: il pan (tasto
+        # destro/centrale) non deve mai spostare oggetti o effetti.
+        self._drag_active = False
+        self._handle_id = None
+        self._handle_snap = None
+        self._dragging_effect_idx = None
+        self._sel_box_active = False
         self._panning      = True
         self._pan_start_mx = mx
         self._pan_start_my = my
@@ -858,6 +907,12 @@ class InputHandlersMixin:
     # ─────────────────────────────────────────────────────────────────────────
 
     def _canvas_ldown(self, mx, my_raw):
+        # Reset stati pendenti del panel destro (es: conferma svuota scena)
+        if getattr(self, "_confirm_clear", False):
+            self._confirm_clear = False
+        if getattr(self, "_layer_dropdown_open", False):
+            self._layer_dropdown_open = False
+
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE]:
             self._start_pan(mx, my_raw); return
@@ -1161,7 +1216,7 @@ class InputHandlersMixin:
         # Avvisa se l'utente ha tirato troppo
         if res_w != clamped_w or res_h != clamped_h:
             self._status(
-                f"⚠️ Dimensione max raggiunta ({MAX_DIM}px) - evita artefatti",
+                f"Dimensione max raggiunta ({MAX_DIM}px) - evita artefatti",
                 WARN_C, 2
             )
 
@@ -1188,6 +1243,11 @@ class InputHandlersMixin:
 
     def _left_click(self, mx, my_raw):
         logging.info(f"  [_left_click] Dispatching at ({mx}, {my_raw}) | Tab: {self.l_tab}")
+        # Reset stati pendenti del panel destro
+        if getattr(self, "_confirm_clear", False):
+            self._confirm_clear = False
+        if getattr(self, "_layer_dropdown_open", False):
+            self._layer_dropdown_open = False
         my = my_raw - TOP_BAR_H
         
         # 1. Gestione Tab (Area superiore 32px)
@@ -1424,24 +1484,6 @@ class InputHandlersMixin:
             # 1. Background
             if _in_rect((mx, my), hboxes.get("bg_btn", pygame.Rect(0,0,0,0))):
                 self._load_background(); return
-            
-            # 2. Objects To Show
-            if _in_rect((mx, my), hboxes.get("ots_box", pygame.Rect(0,0,0,0))):
-                self._editing_prop = ('scene', 0, 'objects_to_show')
-                self._prop_buf = str(self.scene_data.get("objects_to_show", 0))
-                return
-            ots_sl = hboxes.get("ots_slider")
-            if ots_sl and _in_rect((mx, my), ots_sl):
-                self._push_undo()
-                rel_x = mx - ots_sl.x
-                ratio = _clamp(rel_x / ots_sl.w, 0.0, 1.0)
-                max_obj = len(self.scene_data.get("objects", []))
-                val = int(ratio * max_obj)
-                self.scene_data["objects_to_show"] = max(1, val)
-                self.scene_dirty = True
-                self._mark_dirty()
-                self._dragging_slider = ('scene', 0, 'objects_to_show', 1, max_obj, ots_sl.x, ots_sl.w)
-                return
 
             # 3. Rotazione Automatica Toggle
             if _in_rect((mx, my), hboxes.get("auto_btn", pygame.Rect(0,0,0,0))):
@@ -1535,6 +1577,21 @@ class InputHandlersMixin:
                 self._mark_dirty()
                 self._status("Musiche della scena rimosse", WARN_C, 3)
                 return
+            # Rimozione singola traccia (cliccando ×)
+            for hb_key, hb_r in list(hboxes.items()):
+                if hb_key.startswith("mus_del_") and _in_rect((mx, my), hb_r):
+                    try:
+                        track_idx = int(hb_key[len("mus_del_"):])
+                    except ValueError:
+                        continue
+                    music = self.scene_data.get("music", [])
+                    if 0 <= track_idx < len(music):
+                        self._push_undo()
+                        removed = music.pop(track_idx)
+                        self.scene_dirty = True
+                        self._mark_dirty()
+                        self._status(f"Rimossa: {removed}", WARN_C, 2)
+                    return
             
             # 10. Svuota Scena (con conferma)
             if _in_rect((mx, my), hboxes.get("clear_scene_btn", pygame.Rect(0,0,0,0))):
@@ -1567,27 +1624,6 @@ class InputHandlersMixin:
             self.active_layer = "scene_global"
             return
 
-        # Grayscale Slider/Box
-        gs_box_r = hboxes.get("gs_box")
-        if gs_box_r and _in_rect((rx, my), gs_box_r):
-            self._editing_prop = ('object', self.selected_idx, 'grayscale_factor')
-            # Mostriamo come percentuale intera per comodità
-            self._prop_buf = str(int(obj.get("grayscale_factor", 1.0) * 100))
-            return
-        
-        gs_slider_r = hboxes.get("gs_slider")
-        if gs_slider_r and _in_rect((rx, my), gs_slider_r):
-            self._push_undo()
-            rel_x = rx - gs_slider_r.x
-            val = round(_clamp(rel_x / gs_slider_r.w, 0.0, 1.0), 2)
-            for o in objs_sel:
-                o["grayscale_factor"] = val
-            self.scene_dirty = True
-            self._mark_dirty()
-            # Avvia dragging (usiamo l'indice primario come riferimento per il sistema dragging)
-            self._dragging_slider = ('object', self.selected_idx, 'grayscale_factor', 0.0, 1.0, gs_slider_r.x, gs_slider_r.w)
-            return
-
         # Obiettivo Fisso (Toggle)
         always_r = hboxes.get("always_btn")
         if always_r and _in_rect((rx, my), always_r):
@@ -1611,32 +1647,118 @@ class InputHandlersMixin:
             self._mark_dirty()
             return
 
+        # Hide / Lock toggle (editor-only)
+        if _in_rect((rx, my), hboxes.get("hide_btn", pygame.Rect(0,0,0,0))):
+            self._push_undo()
+            new_val = not all(o.get("editor_hidden", False) for o in objs_sel)
+            for o in objs_sel: o["editor_hidden"] = new_val
+            self.scene_dirty = True; self._mark_dirty()
+            self._status(f"Hide editor: {'ON' if new_val else 'OFF'}", WARN_C, 2)
+            return
+        if _in_rect((rx, my), hboxes.get("lock_btn", pygame.Rect(0,0,0,0))):
+            self._push_undo()
+            new_val = not all(o.get("editor_locked", False) for o in objs_sel)
+            for o in objs_sel: o["editor_locked"] = new_val
+            self.scene_dirty = True; self._mark_dirty()
+            self._status(f"Lock editor: {'ON' if new_val else 'OFF'}", ERR_C, 2)
+            return
+
+        # Reset transform / reset tint
+        if _in_rect((rx, my), hboxes.get("reset_transform_btn", pygame.Rect(0,0,0,0))):
+            self._reset_transform_for_selection(); return
+        if _in_rect((rx, my), hboxes.get("tint_reset_btn", pygame.Rect(0,0,0,0))):
+            self._reset_tint_for_selection(); return
+
+        # Multi-sel: Align / Distribute / Copy props
+        for aid in ("left","right","top","bottom","h_center","v_center"):
+            if _in_rect((rx, my), hboxes.get(f"align_{aid}", pygame.Rect(0,0,0,0))):
+                self._align_selection(aid); return
+        if _in_rect((rx, my), hboxes.get("distr_h", pygame.Rect(0,0,0,0))):
+            self._distribute_selection("h"); return
+        if _in_rect((rx, my), hboxes.get("distr_v", pygame.Rect(0,0,0,0))):
+            self._distribute_selection("v"); return
+        if _in_rect((rx, my), hboxes.get("copy_props_btn", pygame.Rect(0,0,0,0))):
+            self._copy_props_from_primary(transform=True, visual=True, gameplay=False); return
+
+        # Hit-detection type selector
+        if _in_rect((rx, my), hboxes.get("hit_type_circle", pygame.Rect(0,0,0,0))):
+            self._push_undo()
+            obj["detection_type"] = "circle"
+            if "radius" not in obj or obj.get("radius", 0) <= 0:
+                obj["radius"] = max(30, int(min(obj.get("width", 60), obj.get("height", 60)) / 2))
+            self.scene_dirty = True; self._mark_dirty(); return
+        if _in_rect((rx, my), hboxes.get("hit_type_rect", pygame.Rect(0,0,0,0))):
+            self._push_undo()
+            obj["detection_type"] = "rect"
+            if obj.get("width", 0) <= 0: obj["width"] = obj.get("radius", 30) * 2
+            if obj.get("height", 0) <= 0: obj["height"] = obj.get("radius", 30) * 2
+            self.scene_dirty = True; self._mark_dirty(); return
+
+        # Warp toggle
+        if _in_rect((rx, my), hboxes.get("warp_toggle", pygame.Rect(0,0,0,0))):
+            self._push_undo()
+            coff = obj.get("corners", [[0,0],[0,0],[0,0],[0,0]])
+            has_warp = any(c[0] != 0 or c[1] != 0 for c in coff)
+            if has_warp:
+                obj["corners"] = [[0,0],[0,0],[0,0],[0,0]]
+                self._status("Warp mesh disattivato", FX_C, 2)
+            else:
+                # Inizializzo piccolo offset per rendere visibili le maniglie
+                obj["corners"] = [[-8,-8],[8,-8],[8,8],[-8,8]]
+                self._status("Warp mesh attivato — trascina gli angoli", FX_C, 3)
+            self.scene_dirty = True; self._mark_dirty(); return
+
         # --- LOGICA SLIDERS & BOXES PER OGGETTI (BATCH) ---
-        keys = ["x", "y", "scale", "rotation", "alpha"]
-        fmts = {"scale": "{:.2f}", "x": "{:.0f}", "y": "{:.0f}", "rotation": "{:.0f}", "alpha": "{:.0f}"}
-        mins = {"x": -REF_W, "y": -REF_H, "scale": 0.05, "rotation": 0, "alpha": 0}
-        maxs = {"x": REF_W*2, "y": REF_H*2, "scale": 5.0, "rotation": 360, "alpha": 255}
+        # Range slider X/Y: dimensioni reali del BG se disponibili (allineato al render)
+        bg_surf = getattr(self, "bg_surf", None)
+        if bg_surf is not None:
+            try:
+                _x_max, _y_max = bg_surf.get_size()
+            except Exception:
+                _x_max, _y_max = REF_W, REF_H
+        else:
+            _x_max, _y_max = REF_W, REF_H
+
+        keys = ["x", "y", "scale", "rotation", "alpha",
+                "layer_z", "radius", "width", "height", "grayscale_factor"]
+        fmts = {"scale": "{:.2f}", "x": "{:.0f}", "y": "{:.0f}",
+                "rotation": "{:.0f}", "alpha": "{:.0f}",
+                "layer_z": "{:.0f}", "radius": "{:.0f}",
+                "width": "{:.0f}", "height": "{:.0f}",
+                "grayscale_factor": "{:.2f}"}
+        mins = {"x": 0, "y": 0, "scale": 0.1, "rotation": 0, "alpha": 0,
+                "layer_z": 0, "radius": 5, "width": 5, "height": 5, "grayscale_factor": 0.0}
+        maxs = {"x": _x_max, "y": _y_max, "scale": 3.0, "rotation": 360, "alpha": 255,
+                "layer_z": 100, "radius": 500, "width": 1000, "height": 1000, "grayscale_factor": 1.0}
+        int_keys = {"x", "y", "rotation", "alpha", "layer_z", "radius", "width", "height"}
 
         for k in keys:
             br = hboxes.get(f"box_{k}")
             if br and _in_rect((rx, my), br):
                 self._editing_prop = ('object', self.selected_idx, k)
-                val = obj.get(k, 0)
-                self._prop_buf = fmts[k].format(val)
+                if k == "grayscale_factor":
+                    self._prop_buf = str(int(round(obj.get(k, 1.0) * 100)))
+                elif k == "layer_z":
+                    from editor.constants import layer_z as _lzd
+                    lz = obj.get("layer_z")
+                    self._prop_buf = str(int(lz) if lz is not None else _lzd(obj.get("layer", "objects_mid")))
+                else:
+                    val = obj.get(k, 0)
+                    self._prop_buf = fmts[k].format(val)
                 return
-            
+
             sr = hboxes.get(f"slider_{k}")
             if sr and _in_rect((rx, my), sr):
                 self._push_undo()
                 mn, mx_v = mins[k], maxs[k]
                 ratio = _clamp((rx - sr.x) / sr.w, 0.0, 1.0)
                 val = mn + ratio * (mx_v - mn)
-                if k in ("x", "y", "rotation", "alpha"): val = int(val)
+                if k in int_keys: val = int(val)
                 else: val = round(val, 2)
-                
+
                 for o in objs_sel:
                     o[k] = val
-                
+
                 self.scene_dirty = True
                 self._mark_dirty()
                 self._dragging_slider = ('object', self.selected_idx, k, mn, mx_v, sr.x, sr.w)
@@ -1664,9 +1786,25 @@ class InputHandlersMixin:
         if _in_rect((rx, my), hboxes.get("tint_color", pygame.Rect(0,0,0,0))):
             self._pick_color_for_selection(objs_sel); return
 
-        # Layer Selection
+        # Layer Selection (dropdown)
         if _in_rect((rx, my), hboxes.get("layer_sel", pygame.Rect(0,0,0,0))):
-            self._open_layer_selector_for_selection(objs_sel); return
+            self._layer_dropdown_open = not getattr(self, "_layer_dropdown_open", False)
+            return
+
+        if getattr(self, "_layer_dropdown_open", False):
+            for k, hr in hboxes.items():
+                if k.startswith("layer_opt_") and _in_rect((rx, my), hr):
+                    lid = k[len("layer_opt_"):]
+                    self._push_undo()
+                    for o in objs_sel:
+                        o["layer"] = lid
+                    self.scene_dirty = True
+                    self._mark_dirty()
+                    self._layer_dropdown_open = False
+                    self._status(f"Layer: {lid.replace('objects_','').upper()}", ACCENT, 2)
+                    return
+            # Click fuori dalle opzioni e fuori dal bottone → chiudi
+            self._layer_dropdown_open = False
 
         # Minigame Trigger (Solo se singola selezione o non implementato batch per ora)
         mg_btn = hboxes.get("minigame_btn")
@@ -1798,6 +1936,14 @@ class InputHandlersMixin:
             # --- LOGICA EFFETTI STANDARD ---
             if _in_rect((rx, my), hboxes.get("color_effect", pygame.Rect(0,0,0,0))):
                 self._pick_color_for_effect(idx); return
+
+        # --- POSIZIONE X / Y (solo box, no slider) ---
+        for pkey in ("x", "y"):
+            br_xy = hboxes.get(f"box_{pkey}")
+            if br_xy and _in_rect((rx, my), br_xy):
+                self._editing_prop = ('effect', idx, pkey)
+                self._prop_buf = str(round(fx.get(pkey, 0)))
+                return
 
         # --- LOGICA SLIDERS & BOXES (COMUNE) ---
         keys = ["radius", "intensity", "pulse_period", "pulse_min", "phase"]

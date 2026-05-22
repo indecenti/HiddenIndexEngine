@@ -1,0 +1,12 @@
+# ── HiddenEngine — dipendenze di SVILUPPO / BUILD / CI ──────────────────────
+#
+# Usa INSIEME a requirements.txt:
+#   pip install -r requirements.txt -r requirements-dev.txt
+#
+# Queste NON finiscono dentro l'EXE distribuito al giocatore.
+
+# Pacchettizzazione Windows EXE
+pyinstaller==6.20.0
+
+# Test (smoke test post-build, unit test su safe_write_json / safe_delete)
+pytest==9.0.2

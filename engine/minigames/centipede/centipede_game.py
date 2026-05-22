@@ -201,6 +201,15 @@ class CentipedeGame(BaseMinigame):
         self.scanline_surf = None
         self.last_mouse_pos = pygame.mouse.get_pos()
         self.using_mouse = False
+        self._font_cache: dict = {}
+
+    def _font(self, size: int, bold: bool = False) -> pygame.font.Font:
+        key = (size, bold)
+        f = self._font_cache.get(key)
+        if f is None:
+            f = pygame.font.SysFont("Courier New", max(8, size), bold=bold)
+            self._font_cache[key] = f
+        return f
 
     def start(self) -> None:
         self.score, self.lives, self.level, self.phase = 0, cfg.INITIAL_LIVES, 0, "START"
@@ -388,7 +397,7 @@ class CentipedeGame(BaseMinigame):
 
     def _draw_ui(self):
         sm = self.scaling_manager
-        font = pygame.font.SysFont("Courier New", sm.scale_value(28), bold=True)
+        font = self._font(sm.scale_value(28), bold=True)
         score_surf = font.render(self._("centipede_score").format(score=self.score), True, (255, 255, 255))
         self.screen.blit(score_surf, (sm.scale_value(1260 - score_surf.get_width()), sm.scale_value(10)))
         for i in range(self.lives):
@@ -412,12 +421,12 @@ class CentipedeGame(BaseMinigame):
         
         if self.phase == "START":
             self._blit_centered_text(self._("centipede_title"), panel_x, panel_y + sm.scale_value(40), panel_w, font, (0, 255, 255))
-            sm_font = pygame.font.SysFont("Courier New", sm.scale_value(18))
+            sm_font = self._font(sm.scale_value(18))
             self._blit_centered_text(self._("centipede_instructions"), panel_x, panel_y + sm.scale_value(100), panel_w, sm_font, (200, 200, 200))
             self._blit_centered_text(self._("centipede_start"), panel_x, panel_y + sm.scale_value(160), panel_w, font, (255, 255, 255))
         elif self.phase == "GAMEOVER":
             self._blit_centered_text(self._("centipede_gameover"), panel_x, panel_y + sm.scale_value(60), panel_w, font, (255, 50, 50))
-            sm_font = pygame.font.SysFont("Courier New", sm.scale_value(20))
+            sm_font = self._font(sm.scale_value(20))
             self._blit_centered_text(self._("centipede_exit"), panel_x, panel_y + sm.scale_value(130), panel_w, sm_font, (255, 255, 255))
 
     def _blit_centered_text(self, text, px, py, pw, font, color):

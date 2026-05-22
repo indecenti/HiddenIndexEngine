@@ -98,7 +98,8 @@ class MenuTheme:
         self.theme_id: str = data.get("id", "default")
         self.game_id: str = game_id
         
-        # Cache icone: Sistema (Base) + Tema (Override) + Gioco (Override Max)
+        # Cache icone: Sistema (Base) + Tema (Override) + Gioco (Override Max).
+        # Le icone sono artwork PNG a colori e vengono usate così come sono.
         self._icons: dict[str, pygame.Surface] = {}
         self._load_system_icons()
         self._load_theme_icons()
@@ -634,6 +635,3 @@ def load_theme_for_game(game_id: str) -> MenuTheme:
 
     logger.info("MenuTheme: caricato tema '%s' per gioco '%s' con ereditarietà.", theme_id, game_id)
     return MenuTheme(final_data, game_id=game_id)
-    data = _load_theme_data(default_path)
-    logger.info("MenuTheme: tema 'default' engine caricato (fallback).")
-    return MenuTheme(data if data else {}, game_id=game_id)

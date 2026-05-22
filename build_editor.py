@@ -100,46 +100,17 @@ class EditorBuilderApp:
             if not entry_point.exists():
                 raise FileNotFoundError("run_editor.py non trovato nella root del progetto.")
 
-            # PyInstaller command
-            cmd = [
-                "pyinstaller",
-                str(entry_point),
-                "-y",              # Sovrascrive dist senza chiedere
-                "-D",              # Directory mode
-                "-w",              # Senza console cmd
-                "--name=HiddenEditor",
-                "--clean",
-                "--collect-all=jsonschema",
-                "--collect-all=jsonschema_specifications",
-                "--collect-all=rpds",
-                "--hidden-import=cv2",
-                "--hidden-import=numpy",
-                "--hidden-import=scipy.ndimage",
-            ]
-
-            # Esclusioni pesanti
-            exclusions = [
-                "torch", "torchvision", "torchaudio", "onnxruntime", 
-                "sklearn", "matplotlib", "pandas", "pyarrow", 
-                "transformers", "tokenizers", "llvmlite", "numba", 
-                "lxml", "IPython", "notebook", "jupyter"
-            ]
-            for ex in exclusions:
-                if f"--exclude-module={ex}" not in cmd:
-                    cmd.append(f"--exclude-module={ex}")
-                    
-            # Aggiunta dinamica di tutti i minigiochi noti
-            mg_dir = self.base_path / "engine" / "minigames"
-            if mg_dir.exists():
-                for sub in mg_dir.iterdir():
-                    if sub.is_dir() and sub.name != "__pycache__":
-                        mg_id = sub.name
-                        cmd.append(f"--hidden-import=engine.minigames.{mg_id}.{mg_id}_game")
-                        
-            # Aggiungiamo icona se presente
-            icon_path = self.base_path / "editor" / "assets" / "icon.ico"
-            if icon_path.exists():
-                cmd.append(f"--icon={icon_path}")
+            # Costruzione argomenti via modulo comune — same source of truth
+            # condivisa con HiddenEditor.spec e editor/build_system.py.
+            from editor.pyinstaller_common import build_cli_args
+            cmd = build_cli_args(
+                entry_point,
+                name="HiddenEditor",
+                project_root=self.base_path,
+                onedir=True,
+                windowed=True,
+                icon=self.base_path / "editor" / "assets" / "icon.ico",
+            )
 
             self.log(f"Esecuzione comando: {' '.join(cmd)}")
 

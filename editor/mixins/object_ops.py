@@ -166,8 +166,11 @@ class ObjectOpsMixin:
         hits = []
         from editor.constants import DEFAULT_LAYERS
         clickable_map = {l["id"]: l.get("clickable", True) for l in DEFAULT_LAYERS}
-        
+
         for i, obj in enumerate(self.scene_data.get("objects", [])):
+            # Flag editor-only: nascosti o bloccati non selezionabili da canvas
+            if obj.get("editor_hidden", False) or obj.get("editor_locked", False):
+                continue
             # Filtro layer visibili e non bloccati
             lid = obj.get("layer", "objects_mid")
             if not getattr(self, "layer_vis", {}).get(lid, True):
@@ -177,9 +180,12 @@ class ObjectOpsMixin:
             # Filtro layer non cliccabili (es: overlay)
             if not clickable_map.get(lid, True):
                 continue
-                
+
             if self._hit_obj(obj, rx, ry):
-                hits.append((layer_z(lid), i))
+                # Effective Z: override per-oggetto se presente, altrimenti default del layer
+                lz_raw = obj.get("layer_z")
+                eff_z = int(lz_raw) if lz_raw is not None else layer_z(lid)
+                hits.append((eff_z, i))
         hits.sort(key=lambda t: -t[0])
         return [i for _, i in hits]
 
@@ -285,7 +291,7 @@ class ObjectOpsMixin:
         label_key = cat.get("label_key", f"obj_{cat['id']}")
         missing = self._ensure_translation_key(label_key)
         if missing:
-            self._status(f"⚠ Traduci '{label_key}' ({', '.join(missing)})", WARN_C, 4)
+            self._status(f"Traduci '{label_key}' ({', '.join(missing)})", WARN_C, 4)
         else:
             self._status(f"Aggiunto: {cat['id']} (cerchio)", OK_C, 2)
 
@@ -333,7 +339,7 @@ class ObjectOpsMixin:
         label_key = cat.get("label_key", f"obj_{cat['id']}")
         missing = self._ensure_translation_key(label_key)
         if missing:
-            self._status(f"⚠ Traduci '{label_key}' ({', '.join(missing)})", WARN_C, 4)
+            self._status(f"Traduci '{label_key}' ({', '.join(missing)})", WARN_C, 4)
         else:
             self._status(f"Aggiunto: {cat['id']} (rect)", OK_C, 2)
 
@@ -517,7 +523,9 @@ class ObjectOpsMixin:
             return
 
         self._push_undo()
-        for idx in to_delete:
+        # Pop in ordine decrescente: pop(i) shifta tutti gli indici > i di -1,
+        # quindi se cancelliamo prima gli indici alti gli altri restano validi.
+        for idx in sorted(to_delete, reverse=True):
             self.scene_data["objects"].pop(idx)
 
         self.selected_idx = None
@@ -601,25 +609,38 @@ class ObjectOpsMixin:
 
         removed_keys, removed_pngs, removed_json_ids = [], [], []
 
+        # ── Pre-load di TUTTI i file lingua una sola volta (riduce la finestra
+        #    di inconsistenza tra le 5 lingue). Le modifiche vengono accumulate
+        #    in memoria e committate UNA volta sola alla fine — non per ogni
+        #    cid orfano. Se crashiamo a metà del commit finale al massimo
+        #    desincronizziamo PARTE delle 5 lingue, non NxLINGUE.
+        langs = getattr(self, 'LANGS', ['it', 'en', 'de', 'fr', 'es'])
+        strings_dir = self.game_path / "strings"
+        lang_buffers: dict[str, dict] = {}
+        lang_dirty: dict[str, bool] = {lang: False for lang in langs}
+        if strings_dir.exists():
+            for lang in langs:
+                lang_file = strings_dir / f"{lang}.json"
+                if lang_file.exists():
+                    lang_buffers[lang] = _load_json(lang_file)
+
         for cid in truly_orphaned:
             cat = catalog_map.get(cid)
             if not cat:
                 continue
 
-            # ── A. Rimuove label_key dai file lingua del gioco ───────────────
+            # ── A. Marca label_key per rimozione nei buffer in memoria ───────
             label_key = cat.get("label_key", f"obj_{cid}")
             if label_key and label_key not in still_used_label_keys:
-                strings_dir = self.game_path / "strings"
-                if strings_dir.exists():
-                    for lang in getattr(self, 'LANGS', ['it', 'en', 'de', 'fr', 'es']):
-                        lang_file = strings_dir / f"{lang}.json"
-                        if lang_file.exists():
-                            lang_data = _load_json(lang_file)
-                            if label_key in lang_data:
-                                del lang_data[label_key]
-                                _save_json(lang_file, lang_data)
-                                if label_key not in removed_keys:
-                                    removed_keys.append(label_key)
+                key_removed_from_any = False
+                for lang in langs:
+                    buf = lang_buffers.get(lang)
+                    if buf is not None and label_key in buf:
+                        del buf[label_key]
+                        lang_dirty[lang] = True
+                        key_removed_from_any = True
+                if key_removed_from_any and label_key not in removed_keys:
+                    removed_keys.append(label_key)
 
             # ── B. Rimuove PNG dalla cartella di gioco (MAI dall'engine) ─────
             icon_rel = cat.get("icon", "")
@@ -635,12 +656,13 @@ class ObjectOpsMixin:
                     if game_png.exists():
                         # Ulteriore protezione: elimina solo se esiste nel master
                         # engine (recuperabile). PNG custom rimangono sempre.
+                        # Soft-delete tramite cestino — il PNG può essere ripristinato.
                         if (master_assets_p / icon_rel).exists():
-                            try:
-                                game_png.unlink()
+                            from engine.utils import safe_delete
+                            if safe_delete(game_png, reason=f"orphan_catalog_id={cid}"):
                                 removed_pngs.append(f"{subfolder}/{icon_name}")
-                            except Exception as e:
-                                logging.warning(f"[ASSET] Cleanup PNG fallito '{subfolder}/{icon_name}': {e}")
+                            else:
+                                logging.warning(f"[ASSET] Cleanup PNG fallito '{subfolder}/{icon_name}'")
                         else:
                             logging.info(
                                 f"[ASSET] PNG custom '{subfolder}/{icon_name}' mantenuto "
@@ -649,6 +671,16 @@ class ObjectOpsMixin:
 
             # ── C. Segna entry per rimozione dal catalogo JSON di gioco ──────
             removed_json_ids.append(cid)
+
+        # ── Commit dei buffer lingua: una sola scrittura atomica per file ────
+        #    Riduce la finestra di inconsistenza tra lingue rispetto al loop
+        #    nested precedente (NxLINGUE scritture).
+        for lang, dirty in lang_dirty.items():
+            if not dirty:
+                continue
+            lang_file = strings_dir / f"{lang}.json"
+            if not _save_json(lang_file, lang_buffers[lang]):
+                logging.warning(f"[ASSET] Cleanup strings {lang}.json fallito (atomic write)")
 
         # Aggiorna objects_catalog.json in un'unica scrittura atomica
         if removed_json_ids:
@@ -661,8 +693,8 @@ class ObjectOpsMixin:
                         o for o in game_cat.get("objects", [])
                         if o.get("id") not in removed_json_ids
                     ]
-                    with open(game_cat_path, "w", encoding="utf-8") as f:
-                        _json.dump(game_cat, f, indent=2, ensure_ascii=False)
+                    if not _save_json(game_cat_path, game_cat):
+                        logging.warning("[ASSET] Cleanup catalog JSON fallito (atomic write)")
                 except Exception as e:
                     logging.warning(f"[ASSET] Cleanup catalog JSON fallito: {e}")
 
@@ -849,8 +881,8 @@ class ObjectOpsMixin:
             ("dupe",     dupe_label),
             ("delete",   del_label),
             ("sep",      "---"),
-            ("flip_x",   f"{'✓ ' if obj.get('flip_x') else ''}Specchia Orizzontalmente"),
-            ("flip_y",   f"{'✓ ' if obj.get('flip_y') else ''}Specchia Verticalmente"),
+            ("flip_x",   f"{'[ON] ' if obj.get('flip_x') else ''}Specchia Orizzontalmente"),
+            ("flip_y",   f"{'[ON] ' if obj.get('flip_y') else ''}Specchia Verticalmente"),
             ("sep",      "---"),
             ("alpha",    f"Opacità: {perc}%"),
             ("grayscale", gs_lbl),
@@ -864,8 +896,8 @@ class ObjectOpsMixin:
         has_warp = any(c[0] != 0 or c[1] != 0 for c in coff)
         
         if cf != (255, 255, 255) or has_warp:
-            if cf != (255, 255, 255): items.append(("color_reset", "× Rimuovi Filtro Colore"))
-            if has_warp: items.append(("warp_reset", "× Reset Prospettiva"))
+            if cf != (255, 255, 255): items.append(("color_reset", "Rimuovi Filtro Colore"))
+            if has_warp: items.append(("warp_reset", "Reset Prospettiva"))
             items.append(("sep", "---"))
 
         items += [
@@ -1213,6 +1245,155 @@ class ObjectOpsMixin:
             self._set_layer(next_l)
         except ValueError:
             self._set_layer("objects_mid")
+
+    def _get_objs_selection(self) -> list:
+        """Restituisce la lista degli oggetti correntemente selezionati (multi o singolo)."""
+        idxs = self.selected_indices if len(self.selected_indices) > 1 else ([self.selected_idx] if self.selected_idx is not None else [])
+        objs = self.scene_data.get("objects", [])
+        return [objs[i] for i in idxs if 0 <= i < len(objs)]
+
+    def _reset_transform_for_selection(self):
+        """Reset trasformazione (rotazione, alpha, scale) per la selezione corrente.
+        Mantiene la posizione X/Y per non disorientare l'utente."""
+        objs_sel = self._get_objs_selection()
+        if not objs_sel: return
+        self._push_undo()
+        for o in objs_sel:
+            o["rotation"] = 0
+            o["scale"]    = 1.0
+            o["alpha"]    = 255
+            o["flip_x"]   = False
+            o["flip_y"]   = False
+            # Azzera warp
+            o["corners"]  = [[0,0], [0,0], [0,0], [0,0]]
+        self.scene_dirty = True
+        self._mark_dirty()
+        self._status(f"Trasformazione resettata ({len(objs_sel)})", OK_C, 2)
+
+    def _reset_tint_for_selection(self):
+        """Rimuove tint (color_filter → bianco) per la selezione corrente."""
+        objs_sel = self._get_objs_selection()
+        if not objs_sel: return
+        self._push_undo()
+        for o in objs_sel:
+            o["color_filter"] = [255, 255, 255]
+        self.scene_dirty = True
+        self._mark_dirty()
+        self._status(f"Tint rimosso ({len(objs_sel)})", OK_C, 2)
+
+    def _get_obj_bbox(self, obj: dict) -> tuple:
+        """Calcola il bounding rect dell'oggetto in coordinate scena (x_min, y_min, x_max, y_max)."""
+        dt = obj.get("detection_type", "circle")
+        scale = obj.get("scale", 1.0)
+        ox, oy = obj.get("x", 0), obj.get("y", 0)
+        if dt == "circle":
+            r = obj.get("radius", 30) * scale
+            return (ox - r, oy - r, ox + r, oy + r)
+        else:
+            w = obj.get("width", 60) * scale
+            h = obj.get("height", 60) * scale
+            return (ox, oy, ox + w, oy + h)
+
+    def _align_selection(self, mode: str):
+        """Allinea gli oggetti selezionati. mode ∈ {left,right,top,bottom,h_center,v_center}.
+
+        Riferimento: bounding rect del primo oggetto della selezione (selected_idx).
+        Tutti gli altri si allineano a esso.
+        """
+        idxs = self.selected_indices if len(self.selected_indices) > 1 else []
+        if len(idxs) < 2: return
+        objs = self.scene_data.get("objects", [])
+        ref = objs[self.selected_idx] if (self.selected_idx in idxs) else objs[idxs[0]]
+        ref_box = self._get_obj_bbox(ref)
+        rx_min, ry_min, rx_max, ry_max = ref_box
+        rcx = (rx_min + rx_max) / 2
+        rcy = (ry_min + ry_max) / 2
+
+        self._push_undo()
+        for i in idxs:
+            obj = objs[i]
+            if obj is ref: continue
+            ox, oy = obj.get("x", 0), obj.get("y", 0)
+            x_min, y_min, x_max, y_max = self._get_obj_bbox(obj)
+            cx = (x_min + x_max) / 2
+            cy = (y_min + y_max) / 2
+
+            if mode == "left":
+                obj["x"] = ox + (rx_min - x_min)
+            elif mode == "right":
+                obj["x"] = ox + (rx_max - x_max)
+            elif mode == "top":
+                obj["y"] = oy + (ry_min - y_min)
+            elif mode == "bottom":
+                obj["y"] = oy + (ry_max - y_max)
+            elif mode == "h_center":
+                obj["x"] = ox + (rcx - cx)
+            elif mode == "v_center":
+                obj["y"] = oy + (rcy - cy)
+        self.scene_dirty = True
+        self._mark_dirty()
+        self._status(f"Allineato {mode} ({len(idxs)} oggetti)", OK_C, 2)
+
+    def _distribute_selection(self, axis: str):
+        """Distribuzione equidistante su asse 'h' (orizzontale) o 'v' (verticale).
+
+        Richiede ≥ 3 oggetti. Mantiene il primo e l'ultimo (estremi sull'asse),
+        ridistribuisce quelli intermedi a spazio uguale tra i loro centri.
+        """
+        idxs = list(self.selected_indices) if len(self.selected_indices) > 1 else []
+        if len(idxs) < 3: return
+        objs = self.scene_data.get("objects", [])
+
+        # Calcola centro su asse per ogni oggetto
+        def _ax_center(i):
+            x_min, y_min, x_max, y_max = self._get_obj_bbox(objs[i])
+            return ((x_min + x_max) / 2) if axis == "h" else ((y_min + y_max) / 2)
+
+        idxs.sort(key=_ax_center)
+        first_c = _ax_center(idxs[0])
+        last_c  = _ax_center(idxs[-1])
+        n = len(idxs)
+        step = (last_c - first_c) / (n - 1)
+
+        self._push_undo()
+        for k, i in enumerate(idxs):
+            if k == 0 or k == n - 1: continue
+            target_c = first_c + k * step
+            cur_c    = _ax_center(i)
+            delta = target_c - cur_c
+            if axis == "h":
+                objs[i]["x"] = objs[i].get("x", 0) + delta
+            else:
+                objs[i]["y"] = objs[i].get("y", 0) + delta
+        self.scene_dirty = True
+        self._mark_dirty()
+        self._status(f"Distribuito {axis} ({n} oggetti)", OK_C, 2)
+
+    def _copy_props_from_primary(self, *, transform=False, visual=True, gameplay=False):
+        """Copia proprietà dall'oggetto primario (selected_idx) agli altri selezionati."""
+        if self.selected_idx is None: return
+        idxs = self.selected_indices if len(self.selected_indices) > 1 else []
+        if len(idxs) < 2: return
+        objs = self.scene_data.get("objects", [])
+        src = objs[self.selected_idx]
+        TRANSFORM_KEYS = ("scale", "rotation", "flip_x", "flip_y", "alpha")
+        VISUAL_KEYS    = ("grayscale", "grayscale_factor", "color_filter")
+        GAMEPLAY_KEYS  = ("layer", "layer_z", "is_goal", "always_show", "detection_type",
+                          "radius", "width", "height")
+        keys = []
+        if transform: keys += TRANSFORM_KEYS
+        if visual:    keys += VISUAL_KEYS
+        if gameplay:  keys += GAMEPLAY_KEYS
+        if not keys: return
+        self._push_undo()
+        for i in idxs:
+            if i == self.selected_idx: continue
+            for k in keys:
+                if k in src:
+                    objs[i][k] = copy.deepcopy(src[k])
+        self.scene_dirty = True
+        self._mark_dirty()
+        self._status(f"Proprietà copiate a {len(idxs)-1} oggetti", OK_C, 2)
 
     def _pick_color_for_effect(self, idx, key="color", title="Colore Effetto"):
         if idx is None or idx >= len(self.scene_data.get("effects", [])): return

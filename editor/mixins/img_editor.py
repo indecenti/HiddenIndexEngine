@@ -279,10 +279,8 @@ class ImgEditorMixin:
         
         elif ev.type == pygame.MOUSEWHEEL:
             mx, my = pygame.mouse.get_pos()
-            w, h = self.screen.get_size()
-            ew, eh = 1350, 850
-            ex, ey = (w - ew) // 2, (h - eh) // 2
-            
+            ex, ey, ew, eh = self._img_editor_get_modal_rect()
+
             # Layout corrente prima dello zoom
             ix, iy, sw, sh, old_scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
             
@@ -326,8 +324,8 @@ class ImgEditorMixin:
                 if self._img_editor_last_m:
                     lx, ly = self._img_editor_last_m
                     dx, dy = mx - lx, my - ly
-                    w, h = self.screen.get_size()
-                    _, _, _, _, scale = self._img_editor_get_img_layout(1350, 850, (w-1350)//2, (h-850)//2)
+                    ex, ey, ew, eh = self._img_editor_get_modal_rect()
+                    _, _, _, _, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
                     self._img_editor_pan[0] += dx / scale
                     self._img_editor_pan[1] += dy / scale
                     self._img_editor_last_m = (mx, my)
@@ -355,131 +353,150 @@ class ImgEditorMixin:
         iy = work_cy - (scaled_h // 2) + int(self._img_editor_pan[1] * total_scale)
         return ix, iy, scaled_w, scaled_h, total_scale
 
-    def _img_editor_click(self, mx, my, btn):
-        if not self._img_editor_active: return
+    def _img_editor_get_modal_rect(self):
+        """Sorgente unica per dimensioni e posizione del modal."""
         w, h = self.screen.get_size()
         ew = int(min(w * 0.94, 1280))
         eh = int(min(h * 0.90, 820))
         ex, ey = (w - ew) // 2, (h - eh) // 2
+        return ex, ey, ew, eh
+
+    def _img_editor_click(self, mx, my, btn):
+        if not self._img_editor_active: return
+        ex, ey, ew, eh = self._img_editor_get_modal_rect()
         ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
-        
+
         reset_confirm = True
         sb_w = 320
         sb_x = ex + ew - sb_w - 15
-        col1_x, col2_x = sb_x + 20, sb_x + 175
-        
-        # Area Lavoro & Workspace (Photoshop Style: attivo ovunque se non colpisci UI)
-        is_ui = False
-        fy = ey + eh - 65; bw, bh = 150, 42; total_footer_w = bw * 3 + 40
-        fb_start_x = ex + (ew - sb_w) // 2 - total_footer_w // 2
-        for i in range(3):
-            if _in_rect((mx, my), (fb_start_x + i*(bw + 20), fy, bw, bh)): is_ui = True
-        if mx > sb_x: is_ui = True
-        if my < ey + 60: is_ui = True # Header area
-        
-        if not is_ui:
-            if self._img_editor_tool == "wand": self._img_editor_apply_wand(mx, my, ix, iy, scale)
-            else: self._img_editor_dragging = "eraser"; self._img_editor_erase(mx, my, ix, iy, scale)
-            return
+        # ALLINEATO al render: col1_x = sb_x + 10, col2_x = sb_x + 165
+        col1_x = sb_x + 10
+        col2_x = sb_x + 165
+        sl_w = 145
+        bw2 = (sl_w // 2) - 3
 
-        # Footer Azioni
+        # Footer rects (uguale al render)
         fy = ey + eh - 65
         bw, bh = 150, 42
         total_footer_w = bw * 3 + 40
         fb_start_x = ex + (ew - sb_w) // 2 - total_footer_w // 2
-        
-        fb_rects = [pygame.Rect(fb_start_x + i*(bw + 20), fy, bw, bh) for i in range(3)]
-        
-        if _in_rect((mx, my), fb_rects[0]):
-            if self._img_editor_dirty or any(self._img_editor_crop.values()):
-                if not self._img_editor_save_confirm: self._img_editor_save_confirm = True; reset_confirm = False
-                else: self._img_editor_save()
-            return
-        if _in_rect((mx, my), fb_rects[1]):
-            if not self._img_editor_copy_confirm: self._img_editor_copy_confirm = True; reset_confirm = False
-            else: self._img_editor_save_copy()
-            return
-        if _in_rect((mx, my), fb_rects[2]): # ESCI
-            if self._img_editor_dirty and not self._img_editor_exit_confirm:
-                self._img_editor_exit_confirm = True; reset_confirm = False
-            else: self._img_editor_active = False
+        fb_rects = [pygame.Rect(fb_start_x + i * (bw + 20), fy, bw, bh) for i in range(3)]
+
+        # Toggle background nel top-right
+        bg_r = pygame.Rect(ex + ew - 110, ey + 25, 80, 32)
+        if _in_rect((mx, my), bg_r):
+            modes = ["check", "black", "white"]
+            self._img_editor_bg_mode = modes[(modes.index(self._img_editor_bg_mode) + 1) % 3]
             return
 
-        # Sidebar Strumenti (Y: 85)
+        # Determina se il click cade su un elemento UI (sidebar / header / footer)
+        is_ui = (mx > sb_x) or (my < ey + 60) or (my >= fy - 5)
+
+        if not is_ui:
+            if self._img_editor_tool == "wand":
+                self._img_editor_apply_wand(mx, my, ix, iy, scale)
+            else:
+                self._img_editor_dragging = "eraser"
+                self._img_editor_last_m = None
+                self._img_editor_erase(mx, my, ix, iy, scale)
+            return
+
+        # ---------- FOOTER ----------
+        if _in_rect((mx, my), fb_rects[0]):
+            if self._img_editor_dirty or any(self._img_editor_crop.values()):
+                if not self._img_editor_save_confirm:
+                    self._img_editor_save_confirm = True; reset_confirm = False
+                else:
+                    self._img_editor_save()
+            return
+        if _in_rect((mx, my), fb_rects[1]):
+            if not self._img_editor_copy_confirm:
+                self._img_editor_copy_confirm = True; reset_confirm = False
+            else:
+                self._img_editor_save_copy()
+            return
+        if _in_rect((mx, my), fb_rects[2]):
+            if self._img_editor_dirty and not self._img_editor_exit_confirm:
+                self._img_editor_exit_confirm = True; reset_confirm = False
+            else:
+                self._img_editor_active = False
+            return
+
+        # ---------- COLONNA 1: PENNELLI ----------
         sy = ey + 85
-        for i in range(2):
-            if _in_rect((mx, my), (col1_x + i*60, sy, 52, 52)):
-                self._img_editor_tool = ["eraser", "wand"][i]; return
-            if _in_rect((mx, my), (col1_x + i*60, sy + 65, 52, 52)):
-                self._img_editor_shape = ["round", "square"][i]; return
-        
-        # Sliders (Y: 245)
-        sy_sl = ey + 245
-        sl_w = 145
+        for i, tid in enumerate(["eraser", "wand"]):
+            if _in_rect((mx, my), (col1_x + i * 60, sy, 52, 52)):
+                self._img_editor_tool = tid; return
+        for i, sid in enumerate(["round", "square"]):
+            if _in_rect((mx, my), (col1_x + i * 60, sy + 65, 52, 52)):
+                self._img_editor_shape = sid; return
+
+        # Sliders (ALLINEATO al render: sy_sl = ey + 255, offset +70 e +140)
+        sy_sl = ey + 255
         if self._img_editor_tool == "eraser":
             if _in_rect((mx, my), (col1_x, sy_sl, sl_w, 20)):
                 self._img_editor_dragging = "sl_radius"
-                self._img_editor_eraser_r = int(1 + ((mx - col1_x) / sl_w) * 63); return
-            if _in_rect((mx, my), (col1_x, sy_sl + 60, sl_w, 20)):
+                self._img_editor_eraser_r = int(1 + max(0, min(1, (mx - col1_x) / sl_w)) * 63); return
+            if _in_rect((mx, my), (col1_x, sy_sl + 70, sl_w, 20)):
                 self._img_editor_dragging = "sl_hardness"
-                self._img_editor_eraser_hardness = (mx - col1_x) / sl_w; return
-            if _in_rect((mx, my), (col1_x, sy_sl + 120, sl_w, 20)):
+                self._img_editor_eraser_hardness = max(0, min(1, (mx - col1_x) / sl_w)); return
+            if _in_rect((mx, my), (col1_x, sy_sl + 140, sl_w, 20)):
                 self._img_editor_dragging = "sl_opacity"
-                self._img_editor_eraser_opacity = (mx - col1_x) / sl_w; return
-            sy_ch = sy_sl + 185
+                self._img_editor_eraser_opacity = max(0, min(1, (mx - col1_x) / sl_w)); return
         else:
             if _in_rect((mx, my), (col1_x, sy_sl, sl_w, 20)):
                 self._img_editor_dragging = "sl_tol"
-                self._img_editor_wand_tol = int(((mx - col1_x) / sl_w) * 128); return
-            if _in_rect((mx, my), (col1_x, sy_sl + 60, sl_w, 20)):
+                self._img_editor_wand_tol = int(max(0, min(1, (mx - col1_x) / sl_w)) * 128); return
+            if _in_rect((mx, my), (col1_x, sy_sl + 70, sl_w, 20)):
                 self._img_editor_dragging = "sl_feather"
-                self._img_editor_wand_feather = int(((mx - col1_x) / sl_w) * 32); return
-            if _in_rect((mx, my), (col1_x, sy_sl + 105, sl_w, 35)):
-                self._img_editor_wand_global = not self._img_editor_wand_global; return
-            sy_ch = sy_sl + 185
-            
-        for i, mode in enumerate(["green", "white", "black"]):
-            if _in_rect((mx, my), (col1_x + i*50, sy_ch, 45, 40)):
-                self._img_editor_apply_smart_chroma(mode); return
-        if _in_rect((mx, my), (col1_x, sy_ch + 85, sl_w, 20)):
-            self._img_editor_dragging = "sl_chroma"
-            self._img_editor_chroma_intensity = 0.5 + ((mx - col1_x) / sl_w) * 3.5; return
+                self._img_editor_wand_feather = int(max(0, min(1, (mx - col1_x) / sl_w)) * 32); return
 
-        # Colonna 2 (Zoom / Trans)
+        sy_ch = sy_sl + 195
+        for i, mode in enumerate(["green", "white", "black"]):
+            if _in_rect((mx, my), (col1_x + i * 50, sy_ch, 45, 40)):
+                self._img_editor_apply_smart_chroma(mode); return
+        if _in_rect((mx, my), (col1_x, sy_ch + 100, sl_w, 20)):
+            self._img_editor_dragging = "sl_chroma"
+            self._img_editor_chroma_intensity = 0.5 + max(0, min(1, (mx - col1_x) / sl_w)) * 3.5; return
+
+        # ---------- COLONNA 2: NAVIGAZIONE/TRANS (ALLINEATO al render) ----------
         sy2 = ey + 85
-        bw2 = (sl_w // 2) - 3
+        # FIT / 1:1
         if _in_rect((mx, my), (col2_x, sy2, bw2, 40)):
             self._img_editor_zoom = 1.0; self._img_editor_pan = [0, 0]; return
         if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 40)):
             self._img_editor_zoom = 2.0; return
-        
-        sy2 += 90
-        if _in_rect((mx, my), (col2_x, sy2, bw2, 42)): self._img_editor_apply_rotation(90); return
-        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 42)): self._img_editor_apply_rotation(-90); return
-        
-        sy2 += 75
-        if _in_rect((mx, my), (col2_x, sy2, 145, 40)): self._img_editor_auto_crop(); return
-        sy2 += 65
-        if _in_rect((mx, my), (col2_x, sy2, bw2, 38)): self._img_editor_apply_flip(True, False); return
-        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 38)): self._img_editor_apply_flip(False, True); return
-        sy2 += 60
-        if _in_rect((mx, my), (col2_x, sy2, 145, 38)): self._img_editor_apply_smooth_edges(); return
-        
-        sy2 += 75
-        if _in_rect((mx, my), (col2_x, sy2, bw2, 38)): self._img_editor_asset_shape = "rect"; return
-        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 38)): self._img_editor_asset_shape = "circle"; return
 
-        if _in_rect((mx, my), (ix + sw - 110, iy - 40, 110, 32)):
-            modes = ["check", "black", "white"]
-            self._img_editor_bg_mode = modes[(modes.index(self._img_editor_bg_mode) + 1) % 3]; return
+        sy2 += 105  # ROTAZIONE
+        if _in_rect((mx, my), (col2_x, sy2, bw2, 42)):
+            self._img_editor_apply_rotation(90); return
+        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 42)):
+            self._img_editor_apply_rotation(-90); return
 
-        if _in_rect((mx, my), (ix, iy, sw, sh)):
-            if self._img_editor_tool == "wand": self._img_editor_apply_wand(mx, my, ix, iy, scale)
-            else: self._img_editor_dragging = "eraser"; self._img_editor_erase(mx, my, ix, iy, scale)
-            return
+        sy2 += 85  # AUTO TRIM
+        if _in_rect((mx, my), (col2_x, sy2, 145, 40)):
+            self._img_editor_auto_crop(); return
+
+        sy2 += 75  # RIFLESSO
+        if _in_rect((mx, my), (col2_x, sy2, bw2, 38)):
+            self._img_editor_apply_flip(True, False); return
+        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 38)):
+            self._img_editor_apply_flip(False, True); return
+
+        sy2 += 75  # SMOOTH
+        if _in_rect((mx, my), (col2_x, sy2, 145, 38)):
+            self._img_editor_apply_smooth_edges(); return
+
+        sy2 += 85  # HITBOX
+        if _in_rect((mx, my), (col2_x, sy2, bw2, 38)):
+            self._img_editor_asset_shape = "rect"; return
+        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 38)):
+            self._img_editor_asset_shape = "circle"; return
 
         if reset_confirm:
-            self._img_editor_save_confirm = False; self._img_editor_copy_confirm = False
+            self._img_editor_save_confirm = False
+            self._img_editor_copy_confirm = False
+            self._img_editor_exit_confirm = False
 
     def _img_editor_auto_crop(self):
         """Algoritmo di Trim Evoluto: Conservativo, ignora solo pixel isolati."""
@@ -594,16 +611,13 @@ class ImgEditorMixin:
         except: self._status("Smooth non disponibile", WARN_C, 2)
 
     def _img_editor_drag(self, mx, my):
-        w, h = self.screen.get_size()
-        ew = int(min(w * 0.94, 1280))
-        eh = int(min(h * 0.90, 820))
-        ex, ey = (w - ew) // 2, (h - eh) // 2
+        ex, ey, ew, eh = self._img_editor_get_modal_rect()
         sb_w = 320
         sb_x = ex + ew - sb_w - 15
-        col1_x = sb_x + 10
+        col1_x = sb_x + 10  # ALLINEATO al render
         sl_w = 145
-        
-        if self._img_editor_dragging == "eraser_active" or self._img_editor_dragging == "eraser":
+
+        if self._img_editor_dragging in ("eraser_active", "eraser"):
             ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
             self._img_editor_erase(mx, my, ix, iy, scale)
         elif self._img_editor_dragging == "sl_radius":
@@ -619,65 +633,72 @@ class ImgEditorMixin:
         elif self._img_editor_dragging == "sl_chroma":
             self._img_editor_chroma_intensity = 0.5 + max(0, min(1, (mx - col1_x) / sl_w)) * 3.5
 
+
+
+
     def _img_editor_erase(self, mx, my, ix, iy, scale):
-        rx = (mx - ix) / scale; ry = (my - iy) / scale
+        """Gomma a pennello morbido con interpolazione tra frame."""
+        if self._img_editor_dragging != "eraser_active":
+            self._img_editor_push_undo()
+            self._img_editor_dragging = "eraser_active"
+
+        rx = (mx - ix) / scale
+        ry = (my - iy) / scale
         r = float(self._img_editor_eraser_r)
-        if not (self._img_editor_dragging == "eraser_active"):
-            self._img_editor_push_undo(); self._img_editor_dragging = "eraser_active"
-        
+        hardness = self._img_editor_eraser_hardness
+        opacity = self._img_editor_eraser_opacity
+        shape = self._img_editor_shape
+
+        # Interpolazione tra l'ultima posizione e quella attuale
         points = [(rx, ry)]
-        if self._img_editor_last_m:
-            lx, ly = self._img_editor_last_m; dist = math.hypot(rx - lx, ry - ly)
-            # Densità estrema per raggio piccolo (0.2px step)
-            step_dist = max(0.2, r / 8.0)
+        if self._img_editor_last_m is not None:
+            lx, ly = self._img_editor_last_m
+            dist = math.hypot(rx - lx, ry - ly)
+            step_dist = max(0.5, r / 4.0)
             if dist > step_dist:
                 steps = int(dist / step_dist)
                 for i in range(1, steps + 1):
-                    f = i / steps; points.append((lx + (rx - lx) * f, ly + (ry - ly) * f))
+                    f = i / steps
+                    points.append((lx + (rx - lx) * f, ly + (ry - ly) * f))
         self._img_editor_last_m = (rx, ry)
 
-        iw, ih = self._img_editor_view_surf.get_size()
-        hardness, opacity = self._img_editor_eraser_hardness, self._img_editor_eraser_opacity
-        brush_key = (self._img_editor_tool, self._img_editor_shape, int(r), int(hardness * 100), int(opacity * 100))
-        if not hasattr(self, "_img_editor_brush_cache"): self._img_editor_brush_cache = {}
-        
+        # Cache del pennello per i parametri correnti
+        ri = max(1, int(round(r)))
+        brush_key = (shape, ri, int(hardness * 100), int(opacity * 100))
+        if not hasattr(self, "_img_editor_brush_cache"):
+            self._img_editor_brush_cache = {}
+
         if brush_key not in self._img_editor_brush_cache:
             import numpy as np
-            diameter = int(r * 2); size = diameter + (1 if diameter % 2 == 0 else 0)
-            center = size / 2.0 - 0.5; bs = pygame.Surface((size, size), pygame.SRCALPHA)
-            y, x = np.ogrid[0:size, 0:size]
-            dist_array = np.sqrt((x - center)**2 + (y - center)**2) if self._img_editor_shape == "round" else np.maximum(np.abs(x - center), np.abs(y - center))
-            h_boundary = r * hardness; erase_power = np.zeros((size, size), dtype=float)
-            erase_power[dist_array <= h_boundary] = 1.0
-            gradient_mask = (dist_array > h_boundary) & (dist_array <= r)
-            if r > h_boundary: erase_power[gradient_mask] = 1.0 - (dist_array[gradient_mask] - h_boundary) / (r - h_boundary)
-            pygame.surfarray.pixels_alpha(bs)[:] = (255 * (1.0 - erase_power * opacity)).astype(np.uint8)
-            self._img_editor_brush_cache[brush_key] = bs
-
-        brush_surf = self._img_editor_brush_cache[brush_key]; b_w, b_h = brush_surf.get_size()
-        self._img_editor_push_undo()
-        # Precisione round() per i bordi (Gimp/Photoshop style)
-        rx = int(round((mx - ix) / scale))
-        ry = int(round((my - iy) / scale))
-        r = self._img_editor_eraser_r
-        
-        # Superficie dispari per centratura perfetta del pixel
-        bs = r * 2 + 1
-        brush_surf = pygame.Surface((bs, bs), pygame.SRCALPHA)
-        # Inizializza con Alpha 255: il MIN tra Dest e 255 non cambia nulla (lascia i pixel)
-        brush_surf.fill((255, 255, 255, 255))
-        
-        for i in range(r, 0, -1):
-            dist = i / r
-            if dist < self._img_editor_eraser_hardness: a = 0
+            size = ri * 2 + 1
+            center = float(ri)
+            y_arr, x_arr = np.ogrid[0:size, 0:size]
+            if shape == "round":
+                dist_arr = np.sqrt((x_arr - center) ** 2 + (y_arr - center) ** 2)
             else:
-                denom = max(0.001, 1.0 - self._img_editor_eraser_hardness)
-                a = int(255 * ((dist - self._img_editor_eraser_hardness) / denom))
-            pygame.draw.circle(brush_surf, (0, 0, 0, a), (r, r), i)
-        
-        # Blit con overflow consentito per cancellare sui bordi
-        bx, by = rx - r, ry - r
-        self._img_editor_view_surf.blit(brush_surf, (bx, by), special_flags=pygame.BLEND_RGBA_MIN)
+                dist_arr = np.maximum(np.abs(x_arr - center), np.abs(y_arr - center))
+            h_boundary = ri * hardness
+            erase_power = np.zeros((size, size), dtype=float)
+            erase_power[dist_arr <= h_boundary] = 1.0
+            gradient_mask = (dist_arr > h_boundary) & (dist_arr <= ri)
+            if ri > h_boundary:
+                erase_power[gradient_mask] = 1.0 - (dist_arr[gradient_mask] - h_boundary) / (ri - h_boundary)
+            alpha_brush = (255.0 * (1.0 - erase_power * opacity)).astype(np.uint8)
+
+            # Brush con RGB=255 (per non sporcare i canali RGB con BLEND_RGBA_MIN)
+            bs_surf = pygame.Surface((size, size), pygame.SRCALPHA)
+            bs_surf.fill((255, 255, 255, 255))
+            arr_a = pygame.surfarray.pixels_alpha(bs_surf)
+            arr_a[:] = alpha_brush
+            del arr_a
+            self._img_editor_brush_cache[brush_key] = bs_surf
+
+        brush_surf = self._img_editor_brush_cache[brush_key]
+        for px, py in points:
+            bx = int(round(px)) - ri
+            by = int(round(py)) - ri
+            self._img_editor_view_surf.blit(brush_surf, (bx, by), special_flags=pygame.BLEND_RGBA_MIN)
+
         self._img_editor_dirty = True
 
     def _img_editor_push_undo(self):
@@ -743,14 +764,15 @@ class ImgEditorMixin:
             for gy in range(0, sh+1, int(scale)): pygame.draw.line(gs, (100,100,100,50), (0,gy), (sw,gy))
             self.screen.blit(gs, (ix, iy))
 
-        # HUD Technical Data
+        # HUD Technical Data — collocato nell'header per non sovrapporsi MAI al footer.
         if _in_rect((mx, my), (ix, iy, sw, sh)):
             rx = int((mx - ix) / scale); ry = int((my - iy) / scale)
             iw, ih = self._img_editor_view_surf.get_size()
             if 0 <= rx < iw and 0 <= ry < ih:
                 c = self._img_editor_view_surf.get_at((rx, ry))
-                hud_txt = f"X:{rx} Y:{ry} | RGBA:{c[0]},{c[1]},{c[2]},{c[3]}"
-                _draw_text(self.screen, hud_txt, "sm", TXT_DIM, ix + 5, iy + sh + 8)
+                hud_txt = f"X:{rx}  Y:{ry}  |  RGBA: {c[0]},{c[1]},{c[2]},{c[3]}"
+                # ancorato a destra della title bar, a sinistra del toggle BG
+                _draw_text(self.screen, hud_txt, "sm", TXT_DIM, ex + 320, ey + 32)
 
         # SIDEBAR (Compatta)
         sb_w = 320

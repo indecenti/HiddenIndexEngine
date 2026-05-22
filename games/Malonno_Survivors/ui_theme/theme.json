@@ -1,73 +1,172 @@
 {
   "id": "mystery",
   "display_name": "The Detective",
-
+  "category": "desktop",
   "colors": {
-    "background_overlay":   [ 16,  10,   5, 215],
-    "btn_normal":           [ 42,  30,  14],
-    "btn_hover":            [ 65,  46,  18],
-    "btn_locked":           [ 26,  22,  18],
-    "btn_border_normal":    [115,  88,  42],
-    "btn_border_hover":     [255, 140,  0],
-    "btn_border_locked":    [ 55,  45,  32],
-    "text_normal":          [205, 182, 132],
-    "text_hover":           [255, 225, 165],
-    "text_locked":          [ 82,  72,  55],
-    "text_label":           [165, 142,  98],
-    "divider_color":        [ 85,  65,  35],
-    "slider_track_bg":      [ 28,  20,   8],
-    "slider_track_border":  [ 95,  75,  35],
-    "slider_fill":          [145, 105,  40],
-    "slider_handle":        [215, 185, 132],
-    "scene_border_normal":  [105,  82,  36],
-    "scene_border_hover":   [185, 145,  72],
-    "scene_overlay_hover":  [ 28,  18,   4, 195],
-    "scene_overlay_normal": [ 16,  10,   3, 115],
-    "lock_text":            [145,  85,  35],
-    "btn_glow_color":       [255, 100,  0]
+    "background_overlay": [
+      16,
+      10,
+      5,
+      215
+    ],
+    "btn_normal": [
+      42,
+      30,
+      14,
+      0
+    ],
+    "btn_hover": [
+      65,
+      46,
+      18,
+      0
+    ],
+    "btn_locked": [
+      26,
+      22,
+      18,
+      0
+    ],
+    "btn_border_normal": [
+      115,
+      88,
+      42,
+      0
+    ],
+    "btn_border_hover": [
+      255,
+      140,
+      0,
+      0
+    ],
+    "btn_border_locked": [
+      55,
+      45,
+      32,
+      0
+    ],
+    "text_normal": [
+      205,
+      182,
+      132
+    ],
+    "text_hover": [
+      255,
+      225,
+      165
+    ],
+    "text_locked": [
+      82,
+      72,
+      55
+    ],
+    "icon_color": [
+      210,
+      186,
+      134
+    ],
+    "slider_bg": [
+      28,
+      20,
+      8
+    ],
+    "slider_fill": [
+      145,
+      105,
+      40
+    ],
+    "slider_handle": [
+      215,
+      185,
+      132
+    ],
+    "scene_border_normal": [
+      105,
+      82,
+      36
+    ],
+    "scene_border_hover": [
+      185,
+      145,
+      72
+    ],
+    "scene_overlay_hover": [
+      28,
+      18,
+      4,
+      195
+    ],
+    "scene_overlay_normal": [
+      16,
+      10,
+      3,
+      115
+    ],
+    "lock_text": [
+      145,
+      85,
+      35
+    ],
+    "btn_glow_color": [
+      255,
+      100,
+      0
+    ]
   },
-
   "layout": {
-    "btn_layout":           "centered",
-    "btn_indent_step":      0,
-    "btn_border_radius":    8,
-    "btn_width":            140,
-    "btn_height":           140,
-    "btn_center_x":         640,
-    "btn_y_start":          200,
-    "btn_y_step":           160,
-    "btn_border_width":     0,
-    "icons_only":           true,
-    "icon_btn_size":        140,
-    "no_btn_bg":            true,
-    "btn_inner_border":     false,
-    "slider_height":        24,
-    "scene_grid_cols":      3,
-    "scene_thumb_w":        320,
-    "scene_thumb_h":        180
+    "btn_border_radius": 8,
+    "btn_width": 140,
+    "btn_height": 140,
+    "btn_center_x": 640,
+    "btn_y_start": 220,
+    "btn_y_step": 160,
+    "btn_border_width": 0,
+    "icons_only": true,
+    "icon_btn_size": 140,
+    "no_btn_bg": true,
+    "slider_height": 24,
+    "scene_grid_cols": 3,
+    "scene_thumb_w": 320,
+    "scene_thumb_h": 180,
+    "title_font_size": 44,
+    "title_y_offset": 105
   },
-
   "font": {
-    "family":               null,
-    "size_btn":             28,
-    "size_label":           20,
-    "size_scene":           22,
-    "size_lock":            36,
-    "bold":                 false
+    "family": null,
+    "size_btn": 28,
+    "size_label": 20,
+    "size_scene": 22,
+    "size_lock": 36,
+    "bold": false
   },
-
   "effects": {
-    "btn_shadow":           true,
-    "btn_shadow_offset":    [2, 2],
-    "btn_shadow_color":     [6, 4, 0, 195],
-    "btn_glow":             true,
-    "glow_type":            "square",
-    "text_shadow":          true,
-    "text_shadow_offset":   [1, 1],
-    "text_shadow_color":    [0, 0, 0, 175],
-    "pulse_hover":          false,
-    "flicker":              false,
-    "sepia_overlay":        true,
-    "sepia_alpha":          35
+    "btn_shadow": true,
+    "btn_shadow_offset": [
+      2,
+      3
+    ],
+    "btn_shadow_color": [
+      6,
+      4,
+      0,
+      180
+    ],
+    "btn_glow": true,
+    "glow_type": "round",
+    "text_shadow": true,
+    "text_shadow_offset": [
+      1,
+      1
+    ],
+    "text_shadow_color": [
+      0,
+      0,
+      0,
+      175
+    ],
+    "pulse_hover": true,
+    "pulse_scale": 1.07,
+    "sepia_overlay": true,
+    "sepia_alpha": 22
   }
 }

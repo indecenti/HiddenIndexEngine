@@ -221,13 +221,13 @@
     },
     {
       "catalog_id": "la_pc_desktop",
-      "x": 3685,
+      "x": 3694,
       "y": 2126,
       "detection_type": "rect",
       "layer": "objects_mid",
       "is_goal": true,
       "hint_delay": 50,
-      "width": 476,
+      "width": 423,
       "height": 422
     },
     {

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Back Office — HiddenEngine</title>
+<meta name="theme-color" content="#6f8fff">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="dot"></span> HiddenEngine · Back Office</div>
+  <nav class="links">
+    <a href="/">Vetrina</a>
+    <a href="#" id="logout" style="display:none">Esci</a>
+  </nav>
+</header>
+
+<div class="panel">
+  <!-- Login -->
+  <div class="box" id="loginBox">
+    <h2>Accedi</h2>
+    <div class="field"><label>Utente</label><input id="user" autocomplete="username" value="admin"></div>
+    <div class="field"><label>Password</label><input id="pass" type="password" autocomplete="current-password"></div>
+    <button class="btn" id="loginBtn">Entra</button>
+    <div class="msg err" id="loginMsg"></div>
+  </div>
+
+  <!-- Pannello (autenticato) -->
+  <div class="box" id="adminBox" style="display:none">
+    <h2>Aggiungi un gioco</h2>
+    <div class="dropzone" id="drop">
+      <p>Trascina qui lo <strong>.zip</strong> del gioco esportato</p>
+      <p style="font-size:13px;margin-top:8px">oppure <a href="#" id="pick" style="color:var(--accent)">scegli un file</a></p>
+      <input type="file" id="file" accept=".zip" hidden>
+    </div>
+    <div class="bar" id="bar"><div></div></div>
+    <div class="msg" id="upMsg"></div>
+
+    <h2 style="margin-top:28px">Giochi pubblicati</h2>
+    <div class="gamelist" id="list"></div>
+  </div>
+</div>
+
+<script src="/admin.js"></script>
+</body>
+</html>

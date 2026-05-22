@@ -69,6 +69,7 @@ from editor.mixins.video_modal import VideoModalMixin
 from editor.mixins.tag_modal import TagModalMixin
 from editor.mixins.icon_modal import IconModalMixin
 from editor.mixins.auditor    import AuditorMixin
+from editor.mixins.scatter_modal import ScatterModalMixin
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -95,6 +96,7 @@ class LevelEditor(
     TagModalMixin,
     IconModalMixin,
     AuditorMixin,
+    ScatterModalMixin,
 ):
     """
     Editor di livelli HiddenEngine.
@@ -351,6 +353,9 @@ class LevelEditor(
         self._img_editor_init_state()
         self._init_extra_data(initial_game)
         self._icon_modal_init()
+        self._scatter_modal_init()
+        # Pre-carica il modello IA in background (se l'utente lo ha scelto e disponibile)
+        self._scatter_preload_async()
         self._load_bubble_presets()
         self._tag_modal_active = False
         self._confirm_leave_modal = False
@@ -476,10 +481,21 @@ class LevelEditor(
     def run(self):
         while self.running:
             self.clock.tick(60)
-            self._handle_events()
-            self._update()
-            self._render()
-            pygame.display.flip()
+            phase = "events"
+            try:
+                self._handle_events()
+                phase = "update"
+                self._update()
+                phase = "render"
+                self._render()
+                phase = "flip"
+                pygame.display.flip()
+            except Exception:
+                import logging
+                logging.getLogger("crash").critical(
+                    "Crash nel main loop (fase=%s)", phase, exc_info=True
+                )
+                raise
 
     def _with_loading(self, action, *args, **kwargs):
         """
@@ -563,9 +579,6 @@ class LevelEditor(
             self._r_img_editor_modal(w, h)
         if self._tag_modal_active:
             self._r_tag_modal(w, h)
-        if self._confirm_leave_modal:
-            self._r_confirm_leave_modal(w, h)
-        # Modali globali (funzionano sia in dashboard che in editor)
         # Modali globali (funzionano sia in dashboard che in editor)
         if getattr(self, "_music_modal", False):
             self._music_modal_modal_active = True # Segnaposto se serve
@@ -581,6 +594,12 @@ class LevelEditor(
         # Auditor modale (funziona sia in dashboard che in editor)
         if getattr(self, "_auditor_active", False):
             self._r_auditor_modal(w, h)
+        # Scatter modal
+        if getattr(self, "_scatter_modal_open", False):
+            self._r_scatter_modal(w, h)
+        # Conferma uscita/salvataggio: sempre sopra TUTTE le altre modali
+        if self._confirm_leave_modal:
+            self._r_confirm_leave_modal(w, h)
 
         # Status Bar (Globale, disegnata sopra tutto)
         self._r_status(w, h)
@@ -647,6 +666,8 @@ class LevelEditor(
 
 def main():
     setup_logging()
+    from engine.utils import install_crash_handlers
+    install_crash_handlers()
     parser = argparse.ArgumentParser(description="HiddenEngine Level Editor")
     parser.add_argument("--game", default=None, help="Nome del gioco da aprire subito")
     parser.add_argument("--play-game", default=None, help="Esegue il gioco standalone (usato da subprocess EXE)")

@@ -2,9 +2,10 @@
   "id": "Malonno_Survivors",
   "game_id": "Malonno_Survivors",
   "title_key": "game_title",
-  "version": "1.30",
+  "version": "1.41",
   "menu": {
     "background": "assets/Creazione_Video_Hidden_Object_Malonno_Hill.mp4",
+    "background_static": "assets/menu_poster.jpg",
     "music": [
       "audio/music/Indecenti - Backspace.mp3"
     ]

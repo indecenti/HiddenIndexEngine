@@ -241,6 +241,41 @@ class GameSelectMixin:
             logger.exception(f"Errore lancio subprocess APK: {e}")
             self._status(f"Errore: {str(e)}", ERR_C, 4)
 
+    def _gs_export_html(self, idx: int):
+        """Esporta il gioco selezionato come sito statico HTML/JS tramite web_exporter."""
+        if idx is None or idx >= len(self.gs_games):
+            self._status("Errore: gioco non valido", ERR_C, 2)
+            return
+
+        game_id = self.gs_games[idx]
+        game_path = self.base_path / "games" / game_id
+        if not (game_path / "game_config.json").exists():
+            self._status(f"Errore: game_config.json non trovato per '{game_id}'", ERR_C, 3)
+            return
+
+        output_dir = self.base_path / "build_web" / game_id
+        self._status(f"Esportazione HTML: {game_id}...", WARN_C, 2)
+
+        def _do_export():
+            try:
+                from editor.web_exporter import export_web_game
+                result = export_web_game(game_id, output_dir, self.base_path)
+                if result.get("success"):
+                    lvls = result.get("levels", 0)
+                    scenes = result.get("scenes", 0)
+                    self._status(
+                        f"HTML esportato: {game_id} "
+                        f"({lvls} livelli, {scenes} scene) → build_web/{game_id}",
+                        OK_C, 5
+                    )
+                else:
+                    self._status(f"Esportazione HTML fallita: {game_id}", ERR_C, 4)
+            except Exception as e:
+                logger.exception(f"Errore esportazione HTML: {e}")
+                self._status(f"Errore HTML: {str(e)[:60]}", ERR_C, 4)
+
+        self._with_loading(_do_export)
+
     def _gs_run_game(self, idx: int):
         """Avvia il gioco in modalità standalone."""
         if idx is None or idx >= len(self.gs_games):
@@ -600,10 +635,15 @@ class GameSelectMixin:
                         self._img_cache.clear()
                         gc.collect()
                         old_p.rename(new_p)
-                    except:
+                    except OSError as e:
+                        # Rename atomic fallito (es. cross-device, lock): fallback
+                        # copia + rimozione sorgente. La rimozione passa per
+                        # safe_delete (cestino), così se la copia ha avuto
+                        # problemi il vecchio resta recuperabile.
+                        logger.warning(f"Rename fallito ({e}), fallback copytree+delete")
                         shutil.copytree(old_p, new_p, dirs_exist_ok=True)
-                        try: shutil.rmtree(old_p)
-                        except: pass
+                        from engine.utils import safe_delete
+                        safe_delete(old_p, reason="game_rename_fallback")
                     
                     self.gs_games[self.gs_sel_game] = clean_id
                     sync_editor_state(old_p, new_p)
@@ -738,13 +778,12 @@ class GameSelectMixin:
                 
                 audio_dir = new_p / "audio" / "music"
                 if audio_dir.exists():
+                    from engine.utils import safe_delete
                     for f in audio_dir.glob("*.mp3"):
                         if f.name not in all_active_music:
-                            try:
-                                logger.info(f"Pulizia musica inutilizzata: {f.name}")
-                                f.unlink()
-                            except Exception as e:
-                                logger.error(f"Errore eliminazione file inutilizzato {f.name}: {e}")
+                            logger.info(f"Pulizia musica inutilizzata: {f.name}")
+                            if not safe_delete(f, reason="game_save_unused_music"):
+                                logger.error(f"Errore eliminazione file inutilizzato {f.name}")
                 for l, val in getattr(self, "_gs_edit_lang_bufs", {}).items():
                     self._gs_update_strings(clean_id, {t_key: val}, lang=l)
                 
@@ -781,16 +820,16 @@ class GameSelectMixin:
                     if Path(sel_s).is_absolute():
                         p = Path(sel_s); dst = scn_p / p.name
                         
-                        # Pulizia vecchia risorsa scena (IMG <-> VID)
+                        # Pulizia vecchia risorsa scena (IMG <-> VID).
+                        # Soft-delete: il vecchio background va nel cestino, recuperabile.
                         if old_s and old_s != p.name:
                             old_p_del = (scn_p / old_s).resolve()
                             new_p_check = dst.resolve()
-                            
+
                             if old_p_del.exists() and old_p_del != new_p_check:
-                                try:
-                                    logger.info(f"Pulizia asset scena: {old_p_del}")
-                                    old_p_del.unlink(missing_ok=True)
-                                except: pass
+                                from engine.utils import safe_delete
+                                logger.info(f"Pulizia asset scena: {old_p_del}")
+                                safe_delete(old_p_del, reason="scene_bg_replaced")
 
                         if not dst.exists() or p.resolve() != dst.resolve():
                             shutil.copy2(str(p), str(dst))
@@ -1322,8 +1361,14 @@ if __name__ == "__main__":
                     _del_name_key = _load_json(p_cfg).get("name_key")
 
             if p.is_dir():
-                shutil.rmtree(p)
-            self._status(f"Eliminato: {self._gs_del_name}", WARN_C, 3)
+                # Soft-delete: sposta l'INTERA cartella (gioco/livello/scena)
+                # in .editor_trash/<sessione>/. Pienamente recuperabile.
+                # Tracciato in .editor_audit.log con tag esplicito sull'oggetto eliminato.
+                from engine.utils import safe_delete
+                if not safe_delete(p, reason=f"user_delete_{self._gs_del_mode}={self._gs_del_name}"):
+                    self._status(f"Errore eliminazione: {self._gs_del_name}", ERR_C, 4)
+                    return
+            self._status(f"Eliminato: {self._gs_del_name} (recuperabile dal cestino)", WARN_C, 4)
 
             # Rimuovi le chiavi traduzione orfane da tutti i file strings/
             if _del_gname and _del_name_key:
@@ -1626,8 +1671,8 @@ if __name__ == "__main__":
                     if _in_rect((mx, my_raw), (dx + 20, _y_cat + 64, 270, 32)):
                         self._gs_edit_category = "android"; self._gs_edit_cat_dropdown = False; return
 
-                # Hitbox dinamica per i temi (Ora sono bottoni, non immagini)
-                _t_btn_w, _t_btn_h, _t_gap = 260, 34, 10
+                # Hitbox dinamica per i temi (card-anteprima a 2 colonne)
+                _t_btn_w, _t_btn_h, _t_gap = 260, 42, 8
                 _t_start = dx + 20
                 _y_theme = dy + int(dh * 0.55)
                 _cur_cat = getattr(self, "_gs_edit_category", "desktop")
@@ -1765,6 +1810,16 @@ if __name__ == "__main__":
                             self._status("Seleziona prima un gioco", WARN_C, 2)
                         return
 
+                # Bottone ESPORTA HTML (solo per i==0)
+                if i == 0:
+                    html_r = (cx2 + col_w - 122, cy2 + 5, 26, 24)
+                    if _in_rect((mx, my_raw), html_r):
+                        if self.gs_sel_game is not None:
+                            self._gs_export_html(self.gs_sel_game)
+                        else:
+                            self._status("Seleziona prima un gioco", WARN_C, 2)
+                        return
+
                 if i in (1, 2):
                     del_r = (cx2 + col_w - 62, cy2 + 5, 26, 24)
                     if _in_rect((mx, my_raw), del_r):
@@ -1775,8 +1830,8 @@ if __name__ == "__main__":
                         return
 
                 if i == 0:
-                    # Spostato a -152 per fare spazio al bottone APK
-                    del_r = (cx2 + col_w - 152, cy2 + 5, 26, 24)
+                    # Spostato a -182 per fare spazio ai bottoni APK e HTML
+                    del_r = (cx2 + col_w - 182, cy2 + 5, 26, 24)
                     if _in_rect((mx, my_raw), del_r):
                         if self.gs_sel_game is not None:
                             self._gs_del_game(self.gs_sel_game)
@@ -1785,8 +1840,8 @@ if __name__ == "__main__":
                         return
 
                 # Clic su Modifica (✎)
-                # Per i==0 (giochi) sposto a -122 per fare spazio al bottone APK a -92
-                edit_off = -122 if i == 0 else -92
+                # Per i==0 (giochi) sposto a -152 per fare spazio ai bottoni APK/HTML
+                edit_off = -152 if i == 0 else -92
                 edit_r = (cx2 + col_w + edit_off, cy2 + 5, 26, 24)
                 if _in_rect((mx, my_raw), edit_r):
                     sel = self.gs_sel_game if i == 0 else (self.gs_sel_level if i == 1 else self.gs_sel_scene)
@@ -2238,24 +2293,30 @@ if __name__ == "__main__":
                 _button(self.screen, build_r, "EXE", build_hov, active=has_sel_build)
                 if build_hov: self.active_tooltip = self.lang_manager.get("gs_tip_build", "Compila e pacchettizza il gioco (Crea EXE Windows)")
 
-                # Pulsante COMPILA APK Android (nuovo)
+                # Pulsante COMPILA APK Android
                 apk_r = pygame.Rect(cx2 + col_w - 92, cy2 + 5, 26, 24)
                 apk_hov = _in_rect((mx, my_raw), apk_r)
                 _button(self.screen, apk_r, "APK", apk_hov, active=has_sel_build)
                 if apk_hov: self.active_tooltip = self.lang_manager.get("gs_tip_build_apk", "Compila e pacchettizza il gioco per Android (Crea APK)")
 
-                # Pulsante ELIMINA GIOCO — spostato a -152 per fare spazio ad APK
-                del_g_r = pygame.Rect(cx2 + col_w - 152, cy2 + 5, 26, 24)
+                # Pulsante ESPORTA HTML (sito statico)
+                html_r = pygame.Rect(cx2 + col_w - 122, cy2 + 5, 26, 24)
+                html_hov = _in_rect((mx, my_raw), html_r)
+                _button(self.screen, html_r, "WEB", html_hov, active=has_sel_build)
+                if html_hov: self.active_tooltip = self.lang_manager.get("gs_tip_export_html", "Esporta il gioco come sito statico HTML/JS → build_web/")
+
+                # Pulsante ELIMINA GIOCO — spostato a -182 per fare spazio a EXE/APK/WEB
+                del_g_r = pygame.Rect(cx2 + col_w - 182, cy2 + 5, 26, 24)
                 del_g_hov = _in_rect((mx, my_raw), del_g_r)
                 _button(self.screen, del_g_r, "×", del_g_hov, danger=has_sel_build)
                 if del_g_hov: self.active_tooltip = self.lang_manager.get("gs_tip_delete_game", "ELIMINA COMPLETAMENTE il progetto dal disco")
 
             # Pulsante ✎ di modifica
-            # Per i==0 (giochi): spostato a -122 per fare spazio al bottone APK a -92
+            # Per i==0 (giochi): spostato a -152 per fare spazio ai bottoni EXE/APK/WEB
             has_sel = (i == 0 and self.gs_sel_game is not None) or \
                       (i == 1 and self.gs_sel_level is not None) or \
                       (i == 2 and self.gs_sel_scene is not None)
-            edit_off = -122 if i == 0 else -92
+            edit_off = -152 if i == 0 else -92
             edit_r = pygame.Rect(cx2 + col_w + edit_off, cy2 + 5, 26, 24)
             edit_hov = _in_rect((mx, my_raw), edit_r)
             _button(self.screen, edit_r, "✎", edit_hov, active=has_sel)
@@ -2709,25 +2770,46 @@ if __name__ == "__main__":
             if not _THEME_INFO: 
                 _THEME_INFO = [{"id": "default", "name": "Default"}]
             
-            _t_btn_w, _t_btn_h, _t_gap = 260, 34, 10
+            _t_btn_w, _t_btn_h, _t_gap = 260, 42, 8
             _t_start = dx + 20
             _cur_theme = getattr(self, "_gs_edit_theme_id", "default")
-            
+
+            def _tcol(colors, key, fallback):
+                v = colors.get(key)
+                return tuple(v[:3]) if v else fallback
+
             for _ti, _tdata in enumerate(_THEME_INFO):
                 _tid = _tdata["id"]
                 _tlabel = _tdata["name"]
-                
-                # Griglia 2 colonne per i bottoni dei temi
-                _tx = _t_start + (_ti % 2) * (_t_btn_w + _t_gap) 
+                _cols = self.theme_manager._cached_themes.get(_tid, {}).get("colors", {})
+                _bg = _tcol(_cols, "background_overlay", (30, 32, 42))
+                _acc = _tcol(_cols, "btn_border_hover", _tcol(_cols, "btn_glow_color", ACCENT))
+                _ico = _tcol(_cols, "icon_color", _tcol(_cols, "text_normal", (235, 238, 245)))
+
+                # Griglia 2 colonne: card che anteprima i colori reali del tema
+                _tx = _t_start + (_ti % 2) * (_t_btn_w + _t_gap)
                 _ty = _y_theme + (_ti // 2) * (_t_btn_h + _t_gap)
                 _tr = pygame.Rect(_tx, _ty, _t_btn_w, _t_btn_h)
                 _is_sel = (_cur_theme == _tid)
                 _t_hov = _in_rect((mx2, my2), _tr)
-                
-                _button(self.screen, _tr, _tlabel, _t_hov, active=_is_sel)
+
+                # Sfondo card = colore base del tema (più chiaro su hover)
+                _fill = tuple(min(255, c + 22) for c in _bg) if _t_hov else _bg
+                _rect(self.screen, _fill, _tr, radius=8)
+                # Barra accento a sinistra (identità cromatica del tema)
+                _rect(self.screen, _acc, (_tx, _ty, 6, _t_btn_h), radius=0)
+                # Bordo: ACCENT se selezionato
+                _rect(self.screen, ACCENT if _is_sel else BORDER, _tr, 2 if _is_sel else 1, radius=8)
+                # Nome tema
+                _draw_text(self.screen, _tlabel, "sm", TXT_HI, _tx + 18, _ty + 12, max_w=_t_btn_w - 90)
+                # Chip palette (accento + colore icone) sulla destra
+                _cy = _ty + _t_btn_h // 2
+                for _ci, _cc in enumerate((_acc, _ico)):
+                    _cr = pygame.Rect(_tx + _t_btn_w - 52 + _ci * 22, _cy - 9, 18, 18)
+                    _rect(self.screen, _cc, _cr, radius=4)
+                    _rect(self.screen, (0, 0, 0), _cr, 1, radius=4)
                 if _is_sel:
-                    # Piccolo indicatore "ACTIVE" a destra del bottone
-                    _draw_text(self.screen, "●", "xs", ACCENT, _tx + _t_btn_w - 25, _ty + 8)
+                    _draw_text(self.screen, "●", "xs", ACCENT, _tx + _t_btn_w - 14, _ty + 4)
 
             # Opzioni Extra Tema
             _y_extra = _y_theme + ((len(_THEME_INFO) + 1) // 2) * (_t_btn_h + _t_gap) + 10

@@ -25,6 +25,87 @@ class RenderPanelsMixin:
     """Rendering pannelli sinistro e destro dell'editor."""
 
     # ─────────────────────────────────────────────────────────────────────────
+    # HELPER UI CONDIVISI
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def _render_toggle(self, x, y, w, h, label, value, *, mixed=False,
+                       on_color=None, hover=False):
+        """Pulsante toggle uniforme: label semantica a sinistra, badge ON/OFF a destra.
+
+        Restituisce il pygame.Rect del toggle disegnato.
+        """
+        on_color = on_color or OK_C
+        r = pygame.Rect(x, y, w, h)
+        bg_c = (35, 45, 35) if (value and not mixed) else (40, 40, 45)
+        border_c = on_color if (value and not mixed) else BORDER
+        _rect(self.screen, bg_c, r, radius=5)
+        _rect(self.screen, border_c, r, 2 if hover else 1, radius=5)
+        # Label
+        label_c = on_color if (value and not mixed) else TXT
+        _draw_text(self.screen, label, "sm", label_c, r.x + 12, r.y + (h - 14) // 2, r.w - 64)
+        # Badge ON/OFF/MIX a destra
+        badge_w = 42
+        badge_r = pygame.Rect(r.right - badge_w - 8, r.y + 4, badge_w, h - 8)
+        if mixed:
+            badge_bg, badge_fg, badge_txt = (60, 60, 65), TXT_DIM, "MIX"
+        elif value:
+            badge_bg, badge_fg, badge_txt = on_color, (15, 15, 20), "ON"
+        else:
+            badge_bg, badge_fg, badge_txt = (55, 55, 60), TXT_DIM, "OFF"
+        _rect(self.screen, badge_bg, badge_r, radius=3)
+        bt = _txt(badge_txt, "xs", badge_fg)
+        self.screen.blit(bt, (badge_r.centerx - bt.get_width() // 2,
+                              badge_r.centery - bt.get_height() // 2))
+        return r
+
+    def _render_section_header(self, x, y, w, title, *, key, color=None, hover=False):
+        """Header di sezione collassabile.
+
+        `key` è l'identificativo univoco usato in self._panel_sections_collapsed.
+        Restituisce (header_rect, is_collapsed).
+        """
+        color = color or ACCENT
+        r = pygame.Rect(x, y, w, 22)
+        if not hasattr(self, "_panel_sections_collapsed"):
+            self._panel_sections_collapsed = {}
+        collapsed = self._panel_sections_collapsed.get(key, False)
+        # Bg + bordo lievi
+        _rect(self.screen, (28, 30, 36) if hover else (24, 26, 32), r, radius=4)
+        # Chevron
+        cx, cy = r.x + 10, r.centery
+        if collapsed:
+            pygame.draw.polygon(self.screen, color, [(cx-3, cy-4), (cx+3, cy), (cx-3, cy+4)])
+        else:
+            pygame.draw.polygon(self.screen, color, [(cx-4, cy-3), (cx+4, cy-3), (cx, cy+4)])
+        _draw_text(self.screen, title.upper(), "sm", color, r.x + 22, r.y + 4, r.w - 28)
+        return r, collapsed
+
+    def _get_friendly_name(self, obj):
+        """Ritorna il nome amichevole dell'oggetto (label_key tradotta) o catalog_id."""
+        cat_id = obj.get("catalog_id", "")
+        cat_e = next((c for c in getattr(self, "catalog", []) if c["id"] == cat_id), None)
+        if cat_e:
+            lbl_key = cat_e.get("label_key")
+            if lbl_key:
+                try:
+                    tr = self._TR(lbl_key)
+                    if tr and tr != lbl_key:
+                        return tr
+                except Exception:
+                    pass
+        return cat_id or "?"
+
+    def _get_bg_size(self):
+        """Dimensioni del background corrente come (w, h) o None."""
+        bg = getattr(self, "bg_surf", None)
+        if bg is not None:
+            try:
+                return bg.get_size()
+            except Exception:
+                return None
+        return None
+
+    # ─────────────────────────────────────────────────────────────────────────
     # PANNELLO SINISTRO
     # ─────────────────────────────────────────────────────────────────────────
 
@@ -761,6 +842,13 @@ class RenderPanelsMixin:
             s = _txt(self._TR("prop_background"), "sm", TXT_DIM)
             self.screen.blit(s, (rx0+8, y)); y += 20
             _draw_text(self.screen, bg_name, "sm", TXT, rx0+8, y, self.panel_r_w-16); y += 20
+            # Dimensioni BG (px) — informazione utile per dimensionare oggetti
+            bg_size = self._get_bg_size()
+            if bg_size:
+                bw, bh = bg_size
+                size_txt = f"{bw} x {bh} px"
+                _draw_text(self.screen, size_txt, "xs", TXT_DIM, rx0+8, y, self.panel_r_w-16)
+                y += 16
             if self.bg_surf:
                 tw = self.panel_r_w - 16
                 th = int(tw * 9/16)
@@ -779,23 +867,19 @@ class RenderPanelsMixin:
 
             # Rotazione Automatica
             auto_r = self.scene_data.get("auto_random_finds", False)
-            btn_r_auto = pygame.Rect(rx0+4, y, self.panel_r_w-8, 28)
-            hov_auto = _in_rect((mx, my_raw), btn_r_auto)
-            _rect(self.screen, (30, 60, 40) if auto_r else BTN, btn_r_auto, radius=4)
-            _rect(self.screen, OK_C if auto_r else BORDER, btn_r_auto, 1 if not hov_auto else 2, radius=4)
-            label_auto = ("ON - " if auto_r else "OFF - ") + self._TR("prop_auto_random")
-            _draw_text(self.screen, label_auto, "sm", OK_C if auto_r else TXT_DIM, rx0+12, y+6)
+            tgl_r = pygame.Rect(rx0+4, y, self.panel_r_w-8, 28)
+            self._render_toggle(tgl_r.x, tgl_r.y, tgl_r.w, tgl_r.h,
+                                self._TR("prop_auto_random"), auto_r,
+                                on_color=OK_C, hover=_in_rect((mx, my_raw), tgl_r))
             self._set_hbox_scene("auto_btn", 4, y, self.panel_r_w-8, 28)
             y += 34
 
-            # Selezione Layer Casuale (NEW)
+            # Selezione Layer Casuale
             rand_l = self.scene_data.get("random_layer_selection", False)
-            btn_r_rand = pygame.Rect(rx0+4, y, self.panel_r_w-8, 28)
-            hov_rand = _in_rect((mx, my_raw), btn_r_rand)
-            _rect(self.screen, (60, 40, 60) if rand_l else BTN, btn_r_rand, radius=4)
-            _rect(self.screen, ALWAYS_C if rand_l else BORDER, btn_r_rand, 1 if not hov_rand else 2, radius=4)
-            label_rand = ("ON - " if rand_l else "OFF - ") + self._TR("prop_random_layer")
-            _draw_text(self.screen, label_rand, "sm", ALWAYS_C if rand_l else TXT_DIM, rx0+12, y+6)
+            tgl_r = pygame.Rect(rx0+4, y, self.panel_r_w-8, 28)
+            self._render_toggle(tgl_r.x, tgl_r.y, tgl_r.w, tgl_r.h,
+                                self._TR("prop_random_layer"), rand_l,
+                                on_color=ALWAYS_C, hover=_in_rect((mx, my_raw), tgl_r))
             self._set_hbox_scene("rand_l_btn", 4, y, self.panel_r_w-8, 28)
             y += 34
 
@@ -826,11 +910,11 @@ class RenderPanelsMixin:
             pygame.draw.line(self.screen, BORDER, (rx0, y), (rx0+self.panel_r_w, y)); y += 8
             hdr3 = _txt(self._TR("prop_canvas_icons"), "sm", TXT_DIM)
             self.screen.blit(hdr3, (rx0+8, y)); y += 20
-            ico_r  = pygame.Rect(rx0+4, y, self.panel_r_w-8, 26)
-            lbl_ico = ("ON - " if self.show_icons else "OFF - ") + self._TR("prop_show_png")
-            _button(self.screen, ico_r, lbl_ico,
-                    _in_rect((mx, my_raw), ico_r), active=self.show_icons)
-            self._set_hbox_scene("ico_btn", 4, y, self.panel_r_w-8, 26)
+            ico_r  = pygame.Rect(rx0+4, y, self.panel_r_w-8, 28)
+            self._render_toggle(ico_r.x, ico_r.y, ico_r.w, ico_r.h,
+                                self._TR("prop_show_png"), self.show_icons,
+                                on_color=ACCENT, hover=_in_rect((mx, my_raw), ico_r))
+            self._set_hbox_scene("ico_btn", 4, y, self.panel_r_w-8, 28)
             y += 34
 
             # --- EFFETTO TORCIA (FLASHLIGHT) ---
@@ -840,14 +924,11 @@ class RenderPanelsMixin:
             
             flashlight = self.scene_data.get("flashlight", False)
             fl_btn_r = pygame.Rect(rx0+4, y, self.panel_r_w-8, 28)
-            hov_fl = _in_rect((mx, my_raw), fl_btn_r)
-            
-            # Stile pulsante toggle
-            fl_bg = (30, 45, 60) if flashlight else (40, 40, 45)
-            _rect(self.screen, fl_bg, fl_btn_r, radius=4)
-            _rect(self.screen, FX_C if flashlight else BORDER, fl_btn_r, 1 if not hov_fl else 2, radius=4)
-            label_fl = (self._TR("prop_flashlight_on") if flashlight else self._TR("prop_flashlight_off"))
-            _draw_text(self.screen, label_fl, "sm", FX_C if flashlight else TXT_DIM, rx0+12, y+6)
+            # Label semantica costante (no inversione ON/OFF→stringhe diverse)
+            fl_label = self._TR("prop_flashlight_on") if flashlight else self._TR("prop_flashlight_off")
+            self._render_toggle(fl_btn_r.x, fl_btn_r.y, fl_btn_r.w, fl_btn_r.h,
+                                fl_label, flashlight,
+                                on_color=FX_C, hover=_in_rect((mx, my_raw), fl_btn_r))
             self._set_hbox_scene("fl_btn", 4, y, self.panel_r_w-8, 28)
             y += 34
             
@@ -881,10 +962,17 @@ class RenderPanelsMixin:
                 _draw_text(self.screen, self._TR("prop_no_music"), "sm", TXT_DIM, rx0+8, y)
                 y += 20
             else:
-                for m in music_list:
-                    # Rimosso ♪ per pulizia visiva richiesta
-                    _draw_text(self.screen, m, "sm", OK_C, rx0+8, y, self.panel_r_w-40)
-                    y += 20
+                for mi, m in enumerate(music_list):
+                    # Nome traccia + pulsante X di rimozione singola
+                    _draw_text(self.screen, m, "sm", OK_C, rx0+8, y, self.panel_r_w-44)
+                    rm_r = pygame.Rect(rx0 + self.panel_r_w - 26, y - 2, 18, 18)
+                    hov_rm = _in_rect((mx, my_raw), rm_r)
+                    _rect(self.screen, (60, 30, 30) if hov_rm else (40, 25, 25), rm_r, radius=3)
+                    _rect(self.screen, ERR_C if hov_rm else BORDER, rm_r, 1, radius=3)
+                    xs = _txt("X", "sm", ERR_C if hov_rm else TXT_DIM)
+                    self.screen.blit(xs, (rm_r.centerx - xs.get_width()//2, rm_r.centery - xs.get_height()//2 - 1))
+                    self._set_hbox_scene(f"mus_del_{mi}", self.panel_r_w - 26, y - 2, 18, 18)
+                    y += 22
             y += 4
             mus_btn_r = pygame.Rect(rx0+4, y, self.panel_r_w-8, 26)
             _button(self.screen, mus_btn_r, self._TR("prop_btn_add_music"),
@@ -919,30 +1007,95 @@ class RenderPanelsMixin:
             obj = main_obj # Compatibilità con codice esistente
             mx, my_raw = pygame.mouse.get_pos()
 
-            # Pulsante "Torna alla Scena"
-            back_r = pygame.Rect(rx0+4, y, self.panel_r_w-8, 26)
-            hov_back = _in_rect((mx, my_raw), back_r)
-            _button(self.screen, back_r, self._TR("prop_back_to_scene"), hov_back, font="sm")
-            self._set_hbox_obj("back_btn", 4, y, self.panel_r_w-8, 26)
-            y += 40
+            # Breadcrumb: SCENA › OGGETTO (clickable per tornare alla scena)
+            scene_lbl = self.scene_data.get("id", self.scene_path.name if self.scene_path else "—")
+            bc_r = pygame.Rect(rx0+4, y, self.panel_r_w-8, 22)
+            hov_bc = _in_rect((mx, my_raw), bc_r)
+            _rect(self.screen, (30, 32, 38) if hov_bc else (24, 26, 30), bc_r, radius=4)
+            _rect(self.screen, ACCENT if hov_bc else BORDER, bc_r, 1, radius=4)
+            # "< Scena: <id>  >  Oggetto"
+            scene_txt = f"< {self._TR('prop_back_to_scene')}: {scene_lbl}"
+            _draw_text(self.screen, scene_txt, "xs", ACCENT if hov_bc else TXT_DIM, bc_r.x + 8, bc_r.y + 5, bc_r.w - 16)
+            self._set_hbox_obj("back_btn", 4, y, self.panel_r_w-8, 22)
+            y += 28
 
-            # Intestazione e Icona
+            # Intestazione: icona + NOME AMICHEVOLE + catalog_id sotto
             icon_drawn = False
             if not is_multi:
                 cat_id = main_obj.get("catalog_id", "?")
                 cat_e  = next((c for c in self.catalog if c["id"] == cat_id), None)
                 if cat_e and self.game_path:
-                    ic = self._load_img(self.game_path / cat_e.get("icon", ""), (38, 38))
+                    ic = self._load_img(self.game_path / cat_e.get("icon", ""), (44, 44))
                     if ic:
                         self.screen.blit(ic, (rx0+12, y))
                         icon_drawn = True
-                _draw_text(self.screen, cat_id.upper(), "md", TXT_HI, rx0+(55 if icon_drawn else 12), y+10, self.panel_r_w-70)
+                friendly = self._get_friendly_name(main_obj)
+                name_x = rx0 + (62 if icon_drawn else 12)
+                _draw_text(self.screen, friendly, "md", TXT_HI, name_x, y + 4, self.panel_r_w - (name_x - rx0) - 12)
+                _draw_text(self.screen, cat_id, "xs", TXT_DIM, name_x, y + 26, self.panel_r_w - (name_x - rx0) - 12)
             else:
-                _draw_text(self.screen, self._TR("prop_multi_selection").format(len(objs_sel)), "md", ACCENT, rx0+12, y+10)
-            
-            y += 54
+                _draw_text(self.screen, self._TR("prop_multi_selection").format(len(objs_sel)), "md", ACCENT, rx0+12, y+12)
+
+            y += 50
             pygame.draw.line(self.screen, BORDER, (rx0+8, y), (rx0+self.panel_r_w-8, y))
-            y += 12
+            y += 10
+
+            # ── BARRA HIDE/LOCK per singolo oggetto (editor-only) ────────────
+            hide_vals = [o.get("editor_hidden", False) for o in objs_sel]
+            lock_vals = [o.get("editor_locked", False) for o in objs_sel]
+            hide_on = all(hide_vals)
+            lock_on = all(lock_vals)
+            half_w = (self.panel_r_w - 30) // 2
+            tgl_hide = pygame.Rect(rx0+12, y, half_w, 24)
+            tgl_lock = pygame.Rect(rx0+12+half_w+6, y, half_w, 24)
+            self._render_toggle(tgl_hide.x, tgl_hide.y, tgl_hide.w, tgl_hide.h,
+                                "Hide", hide_on, on_color=WARN_C, hover=_in_rect((mx, my_raw), tgl_hide))
+            self._render_toggle(tgl_lock.x, tgl_lock.y, tgl_lock.w, tgl_lock.h,
+                                "Lock", lock_on, on_color=ERR_C, hover=_in_rect((mx, my_raw), tgl_lock))
+            self._set_hbox_obj("hide_btn", 12, y, half_w, 24)
+            self._set_hbox_obj("lock_btn", 12+half_w+6, y, half_w, 24)
+            y += 32
+
+            # ── MULTI-SELECT TOOLBAR: align / distribute / copy props ────────
+            if is_multi:
+                _draw_text(self.screen, "ALLINEA / DISTRIBUISCI", "xs", ACCENT, rx0+12, y); y += 16
+                # 6 bottoni piccoli per allineamento: L R T B Hc Vc
+                align_ids = [("left","L"), ("h_center","H"), ("right","R"),
+                             ("top","T"), ("v_center","V"), ("bottom","B")]
+                btn_w = (self.panel_r_w - 24 - 5*4) // 6  # 6 bottoni con 4px gap
+                for col, (aid, lbl) in enumerate(align_ids):
+                    bx = rx0 + 12 + col * (btn_w + 4)
+                    br = pygame.Rect(bx, y, btn_w, 22)
+                    hov = _in_rect((mx, my_raw), br)
+                    _rect(self.screen, BTN_HO if hov else BTN, br, radius=3)
+                    _rect(self.screen, ACCENT if hov else BORDER, br, 1, radius=3)
+                    ts = _txt(lbl, "sm", TXT_HI if hov else TXT)
+                    self.screen.blit(ts, (br.centerx - ts.get_width()//2, br.centery - ts.get_height()//2))
+                    self._set_hbox_obj(f"align_{aid}", bx - rx0, y, btn_w, 22)
+                y += 28
+                # Distribute H / V (richiede >=3)
+                if len(objs_sel) >= 3:
+                    half_w = (self.panel_r_w - 30) // 2
+                    db1 = pygame.Rect(rx0+12, y, half_w, 22)
+                    db2 = pygame.Rect(rx0+12+half_w+6, y, half_w, 22)
+                    for br, lbl, aid in [(db1, "DISTR H", "distr_h"), (db2, "DISTR V", "distr_v")]:
+                        hov = _in_rect((mx, my_raw), br)
+                        _rect(self.screen, BTN_HO if hov else BTN, br, radius=3)
+                        _rect(self.screen, ACCENT if hov else BORDER, br, 1, radius=3)
+                        _draw_text(self.screen, lbl, "xs", TXT_HI if hov else TXT, br.x+8, br.y+5, br.w-12)
+                        self._set_hbox_obj(aid, br.x - rx0, y, br.w, 22)
+                    y += 28
+                # Copy props from primary
+                cp_r = pygame.Rect(rx0+12, y, self.panel_r_w-24, 24)
+                hov_cp = _in_rect((mx, my_raw), cp_r)
+                _rect(self.screen, BTN_HO if hov_cp else BTN, cp_r, radius=3)
+                _rect(self.screen, ACCENT if hov_cp else BORDER, cp_r, 1, radius=3)
+                _draw_text(self.screen, "COPIA PROPRIETA' AGLI ALTRI", "xs", TXT_HI if hov_cp else TXT,
+                           cp_r.x+8, cp_r.y+6, cp_r.w-12)
+                self._set_hbox_obj("copy_props_btn", 12, y, cp_r.w, 24)
+                y += 30
+                pygame.draw.line(self.screen, BORDER, (rx0+8, y), (rx0+self.panel_r_w-8, y))
+                y += 10
 
             # Posizione e Scala
             _draw_text(self.screen, self._TR("prop_transform_hdr"), "sm", ACCENT, rx0+12, y); y += 26
@@ -973,11 +1126,25 @@ class RenderPanelsMixin:
                 self._set_hbox_obj(f"slider_{key}", 12 + box_w + 10, y + 21, slider_w, 20)
                 y += 46
 
-            _prop_row_obj(self._TR("prop_pos_x"), "x", -REF_W, REF_W*2)
-            _prop_row_obj(self._TR("prop_pos_y"), "y", -REF_H, REF_H*2)
-            _prop_row_obj(self._TR("prop_scale"), "scale", 0.05, 5.0, "{:.2f}")
+            # Range slider X/Y: dimensioni reali del BG se disponibili, altrimenti REF
+            bg_sz = self._get_bg_size()
+            x_max = bg_sz[0] if bg_sz else REF_W
+            y_max = bg_sz[1] if bg_sz else REF_H
+            _prop_row_obj(self._TR("prop_pos_x"), "x", 0, x_max)
+            _prop_row_obj(self._TR("prop_pos_y"), "y", 0, y_max)
+            _prop_row_obj(self._TR("prop_scale"), "scale", 0.1, 3.0, "{:.2f}")
             _prop_row_obj(self._TR("prop_rotation"), "rotation", 0, 360)
             _prop_row_obj(self._TR("prop_alpha"), "alpha", 0, 255)
+
+            # Reset transform (azzera rotation/scale/alpha/flip/warp)
+            rt_r = pygame.Rect(rx0+12, y, self.panel_r_w-24, 22)
+            hov_rt = _in_rect((mx, my_raw), rt_r)
+            _rect(self.screen, BTN_HO if hov_rt else BTN, rt_r, radius=3)
+            _rect(self.screen, WARN_C if hov_rt else BORDER, rt_r, 1, radius=3)
+            _draw_text(self.screen, "RESET TRASFORMAZIONE", "xs", WARN_C if hov_rt else TXT_DIM,
+                       rt_r.x+8, rt_r.y+5, rt_r.w-12)
+            self._set_hbox_obj("reset_transform_btn", 12, y, rt_r.w, 22)
+            y += 30
 
             # Opzioni Visive
             pygame.draw.line(self.screen, BORDER, (rx0 + 12, y), (rx0+self.panel_r_w - 12, y))
@@ -1014,7 +1181,25 @@ class RenderPanelsMixin:
             lbl_gs = self._TR("prop_grayscale") if not gs_mixed else f"{self._TR('prop_grayscale')} (MIX)"
             _button(self.screen, btn_gs, lbl_gs, _in_rect((mx, my_raw), btn_gs), active=gs)
             self._set_hbox_obj("grayscale", 12, y, self.panel_r_w-24, 26)
-            y += 34
+            y += 30
+
+            # Slider grayscale_factor (intensità BN, 0-100%) — solo se gs ON
+            if gs and not gs_mixed:
+                gsf_vals = [o.get("grayscale_factor", 1.0) for o in objs_sel]
+                gsf_mixed = any(v != gsf_vals[0] for v in gsf_vals)
+                gsf = gsf_vals[0]
+                _draw_text(self.screen, "Intensità BN:", "xs", TXT_DIM, rx0+16, y+2)
+                box_gsf_r = pygame.Rect(rx0+12, y+18, 50, 20)
+                is_f_gsf = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, 'grayscale_factor'))
+                gsf_pct = int(round(gsf * 100))
+                _input_box(self.screen, box_gsf_r, self._prop_buf if is_f_gsf else (f"{gsf_pct}%" if not gsf_mixed else "---"), is_f_gsf)
+                self._set_hbox_obj("gs_box", 12, y+18, 50, 20)
+                sl_gsf_r = pygame.Rect(rx0+68, y+19, self.panel_r_w-80, 18)
+                _slider(self.screen, sl_gsf_r, 0 if gsf_mixed else gsf, 0.0, 1.0)
+                self._set_hbox_obj("gs_slider", 68, y+19, self.panel_r_w-80, 18)
+                y += 44
+            else:
+                y += 4
 
             _draw_text(self.screen, self._TR("prop_tint_color"), "sm", TXT_DIM, rx0+12, y)
             tint_vals = [tuple(o.get("color_filter", (255, 255, 255))) for o in objs_sel]
@@ -1033,6 +1218,15 @@ class RenderPanelsMixin:
             
             pygame.draw.rect(self.screen, BORDER, pick_r, 1, border_radius=4)
             self._set_hbox_obj("tint_color", self.panel_r_w - 76, y-1, 60, 20)
+            # Pulsantino X per reset tint (solo se non già none)
+            if not tint_mixed and tint != (255, 255, 255):
+                rmt_r = pygame.Rect(pick_r.x - 22, pick_r.y, 18, pick_r.h)
+                hov_rmt = _in_rect((mx, my_raw), rmt_r)
+                _rect(self.screen, (60, 30, 30) if hov_rmt else (40, 25, 25), rmt_r, radius=3)
+                _rect(self.screen, ERR_C if hov_rmt else BORDER, rmt_r, 1, radius=3)
+                xs = _txt("X", "sm", ERR_C if hov_rmt else TXT_DIM)
+                self.screen.blit(xs, (rmt_r.centerx - xs.get_width()//2, rmt_r.centery - xs.get_height()//2 - 1))
+                self._set_hbox_obj("tint_reset_btn", pick_r.x - rx0 - 22, pick_r.y, 18, pick_r.h)
             y += 36
 
             # Gameplay / Layer
@@ -1045,12 +1239,119 @@ class RenderPanelsMixin:
             lyr_vals = [o.get("layer", "objects_mid") for o in objs_sel]
             lyr_mixed = any(v != lyr_vals[0] for v in lyr_vals)
             lyr = lyr_vals[0]
-            
+
             l_rect = pygame.Rect(rx0 + 80, y-3, self.panel_r_w - 92, 22)
+            is_l_open = getattr(self, "_layer_dropdown_open", False)
             lbl_lyr = lyr.replace("objects_","").upper() if not lyr_mixed else "---"
-            _button(self.screen, l_rect, lbl_lyr, False, font="sm")
+            # Pallino colore layer + label + chevron
+            _rect(self.screen, BTN_AC if is_l_open else BTN, l_rect, radius=4)
+            _rect(self.screen, ACCENT if is_l_open else BORDER, l_rect, 1, radius=4)
+            if not lyr_mixed:
+                pygame.draw.circle(self.screen, layer_color(lyr), (l_rect.x + 10, l_rect.centery), 5)
+                _draw_text(self.screen, lbl_lyr, "sm", TXT_HI, l_rect.x + 22, l_rect.y + 4, l_rect.w - 38)
+            else:
+                _draw_text(self.screen, lbl_lyr, "sm", TXT_DIM, l_rect.x + 8, l_rect.y + 4, l_rect.w - 24)
+            # Chevron
+            cx, cy = l_rect.right - 12, l_rect.centery
+            pygame.draw.polygon(self.screen, TXT_DIM, [(cx-4, cy-2), (cx+4, cy-2), (cx, cy+3)])
             self._set_hbox_obj("layer_sel", 80, y-3, l_rect.w, 22)
             y += 34
+
+            # Lista opzioni dropdown (overlay, render dopo y per non sfasare scroll)
+            if is_l_open:
+                opt_y = l_rect.bottom + 2
+                # Layer disponibili (esclude scene_global / effects)
+                opts = [l for l in self._get_all_layers() if not l.get("is_scene") and not l.get("is_fx")]
+                # Ordine top→bottom: dal layer più alto al più basso
+                opts.sort(key=lambda l: l["z"], reverse=True)
+                opt_h = 24
+                drop_panel_r = pygame.Rect(l_rect.x, opt_y, l_rect.w, opt_h * len(opts) + 4)
+                _rect(self.screen, PANEL, drop_panel_r, radius=4)
+                _rect(self.screen, ACCENT, drop_panel_r, 1, radius=4)
+                for i, opt in enumerate(opts):
+                    oid = opt["id"]
+                    or_r = pygame.Rect(drop_panel_r.x + 2, opt_y + 2 + i*opt_h, drop_panel_r.w - 4, opt_h)
+                    hov_o = _in_rect((mx, my_raw), or_r)
+                    is_sel = (not lyr_mixed and oid == lyr)
+                    bg_c = BTN_AC if is_sel else (BTN_HO if hov_o else BTN)
+                    _rect(self.screen, bg_c, or_r, radius=3)
+                    pygame.draw.circle(self.screen, layer_color(oid), (or_r.x + 12, or_r.centery), 5)
+                    _draw_text(self.screen, oid.replace("objects_","").upper(), "sm",
+                               TXT_HI if (is_sel or hov_o) else TXT, or_r.x + 24, or_r.y + 4, or_r.w - 30)
+                    self._set_hbox_obj(f"layer_opt_{oid}", or_r.x - rx0, or_r.y, or_r.w, or_r.h)
+                # Aggiungo spazio al flusso così la roba sotto non si sovrappone
+                y += drop_panel_r.h + 4
+
+            # Layer Z-order intra-layer (override per-oggetto)
+            from editor.constants import layer_z as _layer_z_default
+            lz_vals = []
+            for o in objs_sel:
+                lz_raw = o.get("layer_z")
+                lz_vals.append(int(lz_raw) if lz_raw is not None else _layer_z_default(o.get("layer", "objects_mid")))
+            lz_mixed = any(v != lz_vals[0] for v in lz_vals)
+            lz_val = lz_vals[0]
+            _draw_text(self.screen, "Z-order:", "sm", TXT_DIM, rx0+12, y)
+            box_lz_r = pygame.Rect(rx0+80, y-3, 50, 22)
+            is_f_lz = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, 'layer_z'))
+            _input_box(self.screen, box_lz_r, self._prop_buf if is_f_lz else (str(lz_val) if not lz_mixed else "---"), is_f_lz)
+            self._set_hbox_obj("box_layer_z", 80, y-3, 50, 22)
+            sl_lz_r = pygame.Rect(rx0+136, y-2, self.panel_r_w - 148, 20)
+            _slider(self.screen, sl_lz_r, lz_val, 0, 100)
+            self._set_hbox_obj("slider_layer_z", 136, y-2, sl_lz_r.w, 20)
+            y += 30
+
+            # ── HIT-DETECTION editor (type + dimensioni) ───────────────────
+            if not is_multi:
+                # Selector type: CIRCLE / RECT
+                _draw_text(self.screen, "Hit-area:", "sm", TXT_DIM, rx0+12, y)
+                cur_dt = obj.get("detection_type", "circle")
+                half = (self.panel_r_w - 24 - 80) // 2
+                btn_c = pygame.Rect(rx0+80, y-3, half, 22)
+                btn_rt = pygame.Rect(rx0+80+half+4, y-3, half, 22)
+                for br, val, lbl in [(btn_c, "circle", "CIRCLE"), (btn_rt, "rect", "RECT")]:
+                    active = (cur_dt == val)
+                    hov = _in_rect((mx, my_raw), br)
+                    _rect(self.screen, BTN_AC if active else (BTN_HO if hov else BTN), br, radius=3)
+                    _rect(self.screen, ACCENT if active else BORDER, br, 2 if hov else 1, radius=3)
+                    _draw_text(self.screen, lbl, "xs", TXT_HI if active else TXT,
+                               br.x + (br.w - 50)//2, br.y + 5)
+                    self._set_hbox_obj(f"hit_type_{val}", br.x - rx0, y-3, br.w, 22)
+                y += 28
+
+                # Dimensioni in base al tipo
+                if cur_dt == "circle":
+                    rad_val = obj.get("radius", 30)
+                    _draw_text(self.screen, "Raggio:", "xs", TXT_DIM, rx0+12, y+2)
+                    box_rad_r = pygame.Rect(rx0+62, y, 50, 22)
+                    is_f_rad = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, 'radius'))
+                    _input_box(self.screen, box_rad_r, self._prop_buf if is_f_rad else f"{int(rad_val)}", is_f_rad)
+                    self._set_hbox_obj("box_radius", 62, y, 50, 22)
+                    sl_rad_r = pygame.Rect(rx0+118, y+1, self.panel_r_w-130, 20)
+                    _slider(self.screen, sl_rad_r, rad_val, 5, 500)
+                    self._set_hbox_obj("slider_radius", 118, y+1, sl_rad_r.w, 20)
+                    y += 28
+                else:  # rect
+                    for k_dim, lbl_dim in [("width","Largh:"), ("height","Alt:")]:
+                        v = obj.get(k_dim, 60)
+                        _draw_text(self.screen, lbl_dim, "xs", TXT_DIM, rx0+12, y+2)
+                        box_d = pygame.Rect(rx0+62, y, 50, 22)
+                        is_f = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, k_dim))
+                        _input_box(self.screen, box_d, self._prop_buf if is_f else f"{int(v)}", is_f)
+                        self._set_hbox_obj(f"box_{k_dim}", 62, y, 50, 22)
+                        sl_d = pygame.Rect(rx0+118, y+1, self.panel_r_w-130, 20)
+                        _slider(self.screen, sl_d, v, 5, 1000)
+                        self._set_hbox_obj(f"slider_{k_dim}", 118, y+1, sl_d.w, 20)
+                        y += 26
+
+                # Warp mesh toggle
+                coff = obj.get("corners", [[0,0],[0,0],[0,0],[0,0]])
+                has_warp = any(c[0] != 0 or c[1] != 0 for c in coff)
+                tgl_warp = pygame.Rect(rx0+12, y, self.panel_r_w-24, 24)
+                self._render_toggle(tgl_warp.x, tgl_warp.y, tgl_warp.w, tgl_warp.h,
+                                    "Warp Mesh (4 angoli)", has_warp,
+                                    on_color=FX_C, hover=_in_rect((mx, my_raw), tgl_warp))
+                self._set_hbox_obj("warp_toggle", 12, y, tgl_warp.w, 24)
+                y += 30
 
             # Logica Gameplay (Fisso / Goal)
             is_auto = self.scene_data.get("auto_random_finds", False)
@@ -1165,11 +1466,23 @@ class RenderPanelsMixin:
 
         # Fine clipping e disegno scrollbar props (Centralizzato)
         self.screen.set_clip(None)
-        total_h = y + self.prop_scroll - list_y_start + 40
+        # y è la coordinata schermo dell'ultimo elemento disegnato (già sottratto prop_scroll
+        # dal valore iniziale). Per ottenere l'altezza totale virtuale del contenuto:
+        # totale = (posizione finale + scroll - inizio lista) + margine inferiore di respiro
+        BOTTOM_PAD = 16
+        total_h = max(0, y + self.prop_scroll - list_y_start) + BOTTOM_PAD
         visible_h = h - STATUS_H - list_y_start
         if total_h > visible_h:
+            # Clamp dello scroll per non superare il fondo del contenuto
+            max_scroll = total_h - visible_h
+            if self.prop_scroll > max_scroll:
+                self.prop_scroll = max_scroll
             _scrollbar(self.screen, rx0 + self.panel_r_w - 6, list_y_start, 4, visible_h,
                        self.prop_scroll, total_h, visible_h)
+        else:
+            # Se contenuto non scrolla, resetta scroll a 0 per evitare elementi in offset
+            if self.prop_scroll != 0:
+                self.prop_scroll = 0
         return
 
     # ── Effect Props ──────────────────────────────────────────────────────────
@@ -1191,13 +1504,17 @@ class RenderPanelsMixin:
         _draw_text(self.screen, lbl.upper(), "md", TXT_HI, rx0+12, y, self.panel_r_w-24); y += 28
         pygame.draw.line(self.screen, BORDER, (rx0+8, y), (rx0+self.panel_r_w-8, y)); y += 16
 
-        # Posizione (Coordinate)
-        for lbl_s, val in [("Posizione X:", round(fx.get("x", 0))), ("Posizione Y:", round(fx.get("y", 0)))]:
-            _draw_text(self.screen, lbl_s, "sm", TXT_DIM, rx0+12, y)
-            sv = _txt(str(val), "mono", TXT_HI)
-            self.screen.blit(sv, (rx0 + self.panel_r_w - sv.get_width() - 16, y))
-            y += 24
-        y += 12
+        # Posizione (Coordinate) — editabili
+        for key_pos, lbl_pos in [("x", "Posizione X:"), ("y", "Posizione Y:")]:
+            _draw_text(self.screen, lbl_pos, "sm", TXT_DIM, rx0+12, y)
+            val_pos = round(fx.get(key_pos, 0))
+            box_pos_r = pygame.Rect(rx0 + self.panel_r_w - 76, y - 2, 60, 22)
+            is_f_pos = (getattr(self, "_editing_prop", None) == ('effect', idx, key_pos))
+            display_pos = self._prop_buf if is_f_pos else str(val_pos)
+            _input_box(self.screen, box_pos_r, display_pos, is_f_pos)
+            self._set_hbox_fx(f"box_{key_pos}", self.panel_r_w - 76, y - 2, 60, 22)
+            y += 28
+        y += 8
         pygame.draw.line(self.screen, BORDER, (rx0+12, y), (rx0+self.panel_r_w-12, y))
         y += 16
 

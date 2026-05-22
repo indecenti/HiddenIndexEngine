@@ -22,8 +22,8 @@
       "default_radius": 10,
       "default_hint_delay": 15,
       "tags": [
-        "NATURA",
-        "BOSCO"
+        "natura",
+        "bosco"
       ],
       "style": "cartoon"
     },
@@ -50,9 +50,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "GIOCO",
-        "DECORAZIONE"
+        "natale",
+        "gioco",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -65,9 +65,9 @@
       "default_height": 65,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "MINERALE",
-        "CRISTALLO"
+        "magia",
+        "minerale",
+        "cristallo"
       ],
       "style": "cartoon"
     },
@@ -80,10 +80,10 @@
       "default_height": 45,
       "default_hint_delay": 30,
       "tags": [
-        "GIOIELLO",
-        "METALLO",
-        "MAGIA",
-        "OCCULTO"
+        "gioiello",
+        "metallo",
+        "magia",
+        "occulto"
       ],
       "style": "cartoon"
     },
@@ -95,9 +95,9 @@
       "default_radius": 22,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "PREZIOSO",
-        "MISTERO"
+        "magia",
+        "prezioso",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -109,9 +109,9 @@
       "default_radius": 18,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "PREZIOSO",
-        "MISTERO"
+        "magia",
+        "prezioso",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -124,9 +124,9 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "MARE",
-        "METALLO",
-        "ANTICO"
+        "mare",
+        "metallo",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -139,9 +139,9 @@
       "default_height": 30,
       "default_hint_delay": 45,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "TECNOLOGIA"
+        "strumento",
+        "metallo",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -168,9 +168,9 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "PLASTICA",
-        "CONTENITORE",
-        "SALUTE",
+        "plastica",
+        "contenitore",
+        "salute",
         "piccolo"
       ],
       "style": "cartoon"
@@ -212,8 +212,8 @@
       "default_radius": 15,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "FRUTTA"
+        "cibo",
+        "frutta"
       ],
       "style": "cartoon"
     },
@@ -242,8 +242,8 @@
       "default_radius": 30,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "GIOCO"
+        "sport",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -270,10 +270,10 @@
       "default_radius": 25,
       "default_hint_delay": 55,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "ANTICO",
-        "MISTERO"
+        "strumento",
+        "metallo",
+        "antico",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -299,10 +299,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "AUDIO",
-        "METALLO",
-        "TECNOLOGIA",
-        "PICCOLO"
+        "audio",
+        "metallo",
+        "tecnologia",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -315,10 +315,10 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "NATURA",
-        "AUTUNNO",
-        "PIANTA",
-        "PICCOLO"
+        "natura",
+        "autunno",
+        "pianta",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -331,10 +331,10 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "NATURA",
-        "AUTUNNO",
-        "PIANTA",
-        "PICCOLO"
+        "natura",
+        "autunno",
+        "pianta",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -347,9 +347,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "VESTIARIO",
-        "AUTUNNO",
-        "MORBIDO"
+        "vestiario",
+        "autunno",
+        "morbido"
       ],
       "style": "cartoon"
     },
@@ -362,9 +362,9 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "CONTENITORE",
-        "STOFFA",
-        "TECNOLOGIA"
+        "contenitore",
+        "stoffa",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -377,9 +377,9 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "CONTENITORE",
-        "STOFFA",
-        "VIAGGIO"
+        "contenitore",
+        "stoffa",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -392,9 +392,9 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "CONTENITORE",
-        "STOFFA",
-        "TECNOLOGIA"
+        "contenitore",
+        "stoffa",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -407,9 +407,9 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "CONTENITORE",
-        "STOFFA",
-        "SICUREZZA"
+        "contenitore",
+        "stoffa",
+        "sicurezza"
       ],
       "style": "cartoon"
     },
@@ -422,8 +422,8 @@
       "default_height": 50,
       "default_hint_delay": 30,
       "tags": [
-        "CONTENITORE",
-        "STOFFA"
+        "contenitore",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -436,8 +436,8 @@
       "default_height": 50,
       "default_hint_delay": 30,
       "tags": [
-        "CONTENITORE",
-        "STOFFA"
+        "contenitore",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -450,10 +450,10 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "CONTENITORE",
-        "STOFFA",
-        "SICUREZZA",
-        "VIAGGIO"
+        "contenitore",
+        "stoffa",
+        "sicurezza",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -466,8 +466,8 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "TECNOLOGIA"
+        "sport",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -480,9 +480,9 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "UFFICIO"
+        "tecnologia",
+        "elettronica",
+        "ufficio"
       ],
       "style": "cartoon"
     },
@@ -495,8 +495,8 @@
       "default_height": 65,
       "default_hint_delay": 25,
       "tags": [
-        "SPORT",
-        "LEGNO"
+        "sport",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -509,7 +509,7 @@
       "default_height": 45,
       "default_hint_delay": 25,
       "tags": [
-        "SPORT"
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -521,9 +521,9 @@
       "default_radius": 22,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "TECNOLOGIA",
-        "PLASTICA"
+        "sport",
+        "tecnologia",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -536,8 +536,8 @@
       "default_height": 45,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "PELLE"
+        "sport",
+        "pelle"
       ],
       "style": "cartoon"
     },
@@ -549,8 +549,8 @@
       "default_radius": 25,
       "default_hint_delay": 20,
       "tags": [
-        "SPORT",
-        "PALLA"
+        "sport",
+        "palla"
       ],
       "style": "cartoon"
     },
@@ -563,8 +563,8 @@
       "default_height": 25,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -577,9 +577,9 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "STRUMENTO"
+        "tecnologia",
+        "elettronica",
+        "strumento"
       ],
       "style": "cartoon"
     },
@@ -606,9 +606,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "PLASTICA",
-        "GIOCO"
+        "estate",
+        "plastica",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -621,9 +621,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "PLASTICA",
-        "GIOCO"
+        "estate",
+        "plastica",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -636,8 +636,8 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "VESTIARIO",
-        "STOFFA"
+        "vestiario",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -649,9 +649,9 @@
       "default_radius": 30,
       "default_hint_delay": 35,
       "tags": [
-        "NATURA",
-        "CIBO",
-        "PERICOLO"
+        "natura",
+        "cibo",
+        "pericolo"
       ],
       "style": "cartoon"
     },
@@ -664,9 +664,9 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "CUCINA",
-        "CONTENITORE"
+        "cibo",
+        "cucina",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -678,9 +678,9 @@
       "default_radius": 15,
       "default_hint_delay": 15,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "VEICOLO"
+        "strumento",
+        "metallo",
+        "veicolo"
       ],
       "style": "cartoon"
     },
@@ -693,9 +693,9 @@
       "default_height": 35,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "SPORT"
+        "tecnologia",
+        "elettronica",
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -707,9 +707,9 @@
       "default_radius": 30,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "VIAGGIO"
+        "strumento",
+        "metallo",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -722,9 +722,9 @@
       "default_height": 55,
       "default_hint_delay": 25,
       "tags": [
-        "STRUMENTO",
-        "SPORT",
-        "METALLO"
+        "strumento",
+        "sport",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -737,8 +737,8 @@
       "default_height": 50,
       "default_hint_delay": 40,
       "tags": [
-        "OTTICA",
-        "STRUMENTO"
+        "ottica",
+        "strumento"
       ],
       "style": "cartoon"
     },
@@ -751,9 +751,9 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "TECNOLOGIA",
-        "VIAGGIO"
+        "strumento",
+        "tecnologia",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -766,9 +766,9 @@
       "default_height": 90,
       "default_hint_delay": 30,
       "tags": [
+        "pericolo",
         "contenitore",
-        "metallo",
-        "pericolo"
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -781,8 +781,8 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "ARREDAMENTO",
-        "METALLO"
+        "arredamento",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -809,7 +809,7 @@
       "default_height": 20,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO"
+        "cibo"
       ],
       "style": "cartoon"
     },
@@ -822,8 +822,8 @@
       "default_height": 40,
       "default_hint_delay": 25,
       "tags": [
-        "RIPOSO",
-        "STOFFA"
+        "riposo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -836,8 +836,8 @@
       "default_height": 45,
       "default_hint_delay": 30,
       "tags": [
-        "CARTA",
-        "CULTURA"
+        "carta",
+        "cultura"
       ],
       "style": "cartoon"
     },
@@ -866,10 +866,10 @@
       "default_height": 45,
       "default_hint_delay": 45,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "ANTICO"
+        "audio",
+        "tecnologia",
+        "elettronica",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -882,9 +882,9 @@
       "default_height": 35,
       "default_hint_delay": 40,
       "tags": [
-        "AUDIO",
-        "MUSICA",
-        "TECNOLOGIA"
+        "audio",
+        "musica",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -897,9 +897,9 @@
       "default_height": 25,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "LEGNO",
-        "ANTICO"
+        "sport",
+        "legno",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -912,8 +912,8 @@
       "default_height": 50,
       "default_hint_delay": 30,
       "tags": [
-        "VESTIARIO",
-        "CUOIO"
+        "vestiario",
+        "cuoio"
       ],
       "style": "cartoon"
     },
@@ -926,8 +926,8 @@
       "default_height": 65,
       "default_hint_delay": 35,
       "tags": [
-        "SPORT",
-        "LEGNO"
+        "sport",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -940,9 +940,9 @@
       "default_height": 65,
       "default_hint_delay": 35,
       "tags": [
-        "ARMA",
-        "LEGNO",
-        "CACCIA"
+        "arma",
+        "legno",
+        "caccia"
       ],
       "style": "cartoon"
     },
@@ -955,8 +955,8 @@
       "default_height": 40,
       "default_hint_delay": 25,
       "tags": [
-        "GIOCO",
-        "SPORT"
+        "gioco",
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -969,9 +969,9 @@
       "default_height": 55,
       "default_hint_delay": 25,
       "tags": [
-        "SPORT",
-        "LEGNO",
-        "PLASTICA"
+        "sport",
+        "legno",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -983,8 +983,8 @@
       "default_radius": 25,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "PELLE"
+        "sport",
+        "pelle"
       ],
       "style": "cartoon"
     },
@@ -997,8 +997,8 @@
       "default_height": 35,
       "default_hint_delay": 25,
       "tags": [
-        "SPORT",
-        "VESTIARIO"
+        "sport",
+        "vestiario"
       ],
       "style": "cartoon"
     },
@@ -1011,8 +1011,8 @@
       "default_height": 45,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "SICUREZZA"
+        "sport",
+        "sicurezza"
       ],
       "style": "cartoon"
     },
@@ -1025,9 +1025,9 @@
       "default_height": 18,
       "default_hint_delay": 15,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "PICCOLO"
+        "strumento",
+        "metallo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -1054,8 +1054,8 @@
       "default_height": 20,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -1068,9 +1068,9 @@
       "default_height": 40,
       "default_hint_delay": 30,
       "tags": [
-        "CONTENITORE",
-        "METALLO",
-        "LAVORO"
+        "contenitore",
+        "metallo",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -1083,9 +1083,9 @@
       "default_height": 40,
       "default_hint_delay": 30,
       "tags": [
-        "CONTENITORE",
-        "CUOIO",
-        "LAVORO"
+        "contenitore",
+        "cuoio",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -1098,8 +1098,8 @@
       "default_height": 40,
       "default_hint_delay": 30,
       "tags": [
-        "CONTENITORE",
-        "UFFICIO"
+        "contenitore",
+        "ufficio"
       ],
       "style": "cartoon"
     },
@@ -1112,8 +1112,8 @@
       "default_height": 55,
       "default_hint_delay": 25,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
+        "plastica",
+        "strumento",
         "piccolo"
       ],
       "style": "cartoon"
@@ -1127,8 +1127,8 @@
       "default_height": 20,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -1140,9 +1140,9 @@
       "default_radius": 25,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO",
-        "NATURA",
-        "ESPLORAZIONE"
+        "strumento",
+        "natura",
+        "esplorazione"
       ],
       "style": "cartoon"
     },
@@ -1155,10 +1155,10 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "UFFICIO",
-        "PLASTICA"
+        "tecnologia",
+        "elettronica",
+        "ufficio",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -1171,9 +1171,9 @@
       "default_height": 40,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "UFFICIO"
+        "tecnologia",
+        "elettronica",
+        "ufficio"
       ],
       "style": "cartoon"
     },
@@ -1186,8 +1186,8 @@
       "default_height": 65,
       "default_hint_delay": 40,
       "tags": [
-        "STRUMENTO",
-        "METALLO"
+        "strumento",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -1200,8 +1200,8 @@
       "default_height": 25,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -1214,8 +1214,8 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "FOTO",
-        "TECNOLOGIA"
+        "foto",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -1228,10 +1228,10 @@
       "default_height": 50,
       "default_hint_delay": 25,
       "tags": [
-        "LUCE",
-        "CERA",
-        "OCCULTO",
-        "NERO"
+        "luce",
+        "cera",
+        "occulto",
+        "nero"
       ],
       "style": "cartoon"
     },
@@ -1244,8 +1244,8 @@
       "default_height": 15,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -1258,9 +1258,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "CIBO",
-        "PICCOLO"
+        "inverno",
+        "cibo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -1289,9 +1289,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "BEVANDA"
+        "strumento",
+        "metallo",
+        "bevanda"
       ],
       "style": "cartoon"
     },
@@ -1304,9 +1304,9 @@
       "default_height": 35,
       "default_hint_delay": 25,
       "tags": [
-        "TECNOLOGIA",
-        "METALLO",
-        "VIAGGIO"
+        "tecnologia",
+        "metallo",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -1318,9 +1318,9 @@
       "default_radius": 15,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "SPORT"
+        "strumento",
+        "metallo",
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -1333,9 +1333,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO"
+        "gioco",
+        "carta",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -1348,10 +1348,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1364,10 +1364,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1380,10 +1380,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1396,10 +1396,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1412,10 +1412,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1428,10 +1428,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1444,26 +1444,26 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
     {
-      "id": "ca_card_diamonds_A",
-      "label_key": "obj_ca_card_diamonds_A",
+      "id": "ca_card_diamonds_a",
+      "label_key": "obj_ca_card_diamonds_a",
       "icon": "objects_cartoon/ca_card_diamonds_A.png",
       "default_detection": "rect",
       "default_width": 30,
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1476,10 +1476,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1492,10 +1492,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1508,10 +1508,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1524,10 +1524,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1540,10 +1540,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1556,10 +1556,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1572,26 +1572,26 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
     {
-      "id": "ca_card_hearts_A",
-      "label_key": "obj_ca_card_hearts_A",
+      "id": "ca_card_hearts_a",
+      "label_key": "obj_ca_card_hearts_a",
       "icon": "objects_cartoon/ca_card_hearts_A.png",
       "default_detection": "rect",
       "default_width": 30,
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO",
-        "ROSSO"
+        "gioco",
+        "carta",
+        "piccolo",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -1604,9 +1604,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "PICCOLO",
-        "LEGNO",
-        "LAVORO"
+        "piccolo",
+        "legno",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -1619,9 +1619,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "ATTREZZO",
-        "METALLO",
-        "LAVORO"
+        "attrezzo",
+        "metallo",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -1634,9 +1634,9 @@
       "default_height": 22,
       "default_hint_delay": 20,
       "tags": [
-        "AUDIO",
-        "MUSICA",
-        "DATI"
+        "audio",
+        "musica",
+        "dati"
       ],
       "style": "cartoon"
     },
@@ -1649,10 +1649,10 @@
       "default_height": 30,
       "default_hint_delay": 35,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "PLASTICA",
-        "ANTICO"
+        "audio",
+        "tecnologia",
+        "plastica",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -1664,9 +1664,9 @@
       "default_radius": 35,
       "default_hint_delay": 40,
       "tags": [
-        "MAGIA",
-        "METALLO",
-        "CUCINA"
+        "magia",
+        "metallo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -1679,8 +1679,8 @@
       "default_height": 25,
       "default_hint_delay": 30,
       "tags": [
-        "CARTA",
-        "STRUMENTO",
+        "carta",
+        "strumento",
         "medio"
       ],
       "style": "cartoon"
@@ -1694,9 +1694,9 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "PLASTICA",
-        "ABBIGLIAMENTO",
-        "LUCE",
+        "plastica",
+        "abbigliamento",
+        "luce",
         "medio"
       ],
       "style": "cartoon"
@@ -1709,9 +1709,9 @@
       "default_radius": 20,
       "default_hint_delay": 20,
       "tags": [
-        "TECNOLOGIA",
-        "DATI",
-        "PLASTICA"
+        "tecnologia",
+        "dati",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -1738,9 +1738,9 @@
       "default_height": 45,
       "default_hint_delay": 30,
       "tags": [
-        "PLASTICA",
-        "CONTENITORE",
-        "SALUTE",
+        "plastica",
+        "contenitore",
+        "salute",
         "piccolo"
       ],
       "style": "cartoon"
@@ -1754,7 +1754,7 @@
       "default_height": 20,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO"
+        "cibo"
       ],
       "style": "cartoon"
     },
@@ -1780,9 +1780,9 @@
       "default_height": 45,
       "default_hint_delay": 25,
       "tags": [
-        "VESTIARIO",
-        "CUCINA",
-        "STOFFA"
+        "vestiario",
+        "cucina",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -1809,8 +1809,8 @@
       "default_height": 35,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -1823,9 +1823,9 @@
       "default_height": 80,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "LEGNO",
-        "DECORAZIONE"
+        "gioco",
+        "legno",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -1838,10 +1838,10 @@
       "default_height": 25,
       "default_hint_delay": 20,
       "tags": [
-        "NATURA",
-        "AUTUNNO",
-        "CIBO",
-        "PICCOLO"
+        "natura",
+        "autunno",
+        "cibo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -1854,10 +1854,10 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "NATURA",
-        "AUTUNNO",
-        "PIANTA",
-        "PICCOLO"
+        "natura",
+        "autunno",
+        "pianta",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -1870,8 +1870,8 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "PLASTICA"
+        "cibo",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -1884,9 +1884,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "ATTREZZO",
-        "METALLO",
-        "LAVORO"
+        "attrezzo",
+        "metallo",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -1913,9 +1913,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "CUCINA",
-        "DOLCE"
+        "cibo",
+        "cucina",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -1928,9 +1928,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "PLASTICA",
-        "DECORAZIONE"
+        "inverno",
+        "plastica",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -1943,9 +1943,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "MORBIDO",
-        "DECORAZIONE"
+        "inverno",
+        "morbido",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -1957,8 +1957,8 @@
       "default_radius": 28,
       "default_hint_delay": 40,
       "tags": [
-        "STRUMENTO",
-        "METALLO"
+        "strumento",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -1971,9 +1971,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "ATTREZZO",
-        "METALLO",
-        "LAVORO"
+        "attrezzo",
+        "metallo",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -1986,10 +1986,10 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "GIOIELLO",
-        "METALLO",
-        "MUSICA",
-        "PICCOLO"
+        "gioiello",
+        "metallo",
+        "musica",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -2002,8 +2002,8 @@
       "default_height": 60,
       "default_hint_delay": 40,
       "tags": [
-        "STOFFA",
-        "STRUMENTO",
+        "stoffa",
+        "strumento",
         "grande"
       ],
       "style": "cartoon"
@@ -2017,8 +2017,8 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "STOFFA",
-        "STRUMENTO",
+        "stoffa",
+        "strumento",
         "grande"
       ],
       "style": "cartoon"
@@ -2031,9 +2031,9 @@
       "default_radius": 22,
       "default_hint_delay": 35,
       "tags": [
-        "STRUMENTO",
-        "TECNOLOGIA",
-        "VIAGGIO"
+        "strumento",
+        "tecnologia",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -2046,9 +2046,9 @@
       "default_height": 80,
       "default_hint_delay": 20,
       "tags": [
-        "AUTUNNO",
-        "VESTIARIO",
-        "PICCOLO"
+        "autunno",
+        "vestiario",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -2074,8 +2074,8 @@
       "default_radius": 10,
       "default_hint_delay": 40,
       "tags": [
-        "OGGETTO",
-        "METALLO"
+        "oggetto",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -2101,8 +2101,8 @@
       "default_radius": 22,
       "default_hint_delay": 25,
       "tags": [
-        "PLASTICA",
-        "BEVANDA",
+        "plastica",
+        "bevanda",
         "piccolo"
       ],
       "style": "cartoon"
@@ -2116,8 +2116,8 @@
       "default_height": 10,
       "default_hint_delay": 15,
       "tags": [
-        "CURA",
-        "PLASTICA"
+        "cura",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -2129,9 +2129,9 @@
       "default_radius": 30,
       "default_hint_delay": 25,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "VIAGGIO"
+        "strumento",
+        "metallo",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -2143,9 +2143,9 @@
       "default_radius": 20,
       "default_hint_delay": 40,
       "tags": [
-        "STRUMENTO",
-        "PREZIOSO",
-        "VIAGGIO"
+        "strumento",
+        "prezioso",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -2158,9 +2158,9 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "STRUMENTO",
-        "PLASTICA",
-        "VIAGGIO"
+        "strumento",
+        "plastica",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -2173,10 +2173,10 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "SICUREZZA",
-        "VIAGGIO"
+        "strumento",
+        "metallo",
+        "sicurezza",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -2188,8 +2188,8 @@
       "default_radius": 15,
       "default_hint_delay": 25,
       "tags": [
-        "STRUMENTO",
-        "VIAGGIO"
+        "strumento",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -2201,8 +2201,8 @@
       "default_radius": 12,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "VIAGGIO"
+        "strumento",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -2215,9 +2215,9 @@
       "default_height": 80,
       "default_hint_delay": 30,
       "tags": [
-        "MUSICA",
-        "LEGNO",
-        "PICCOLO"
+        "musica",
+        "legno",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -2229,8 +2229,8 @@
       "default_radius": 20,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -2243,8 +2243,8 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "CONTENITORE",
-        "PLASTICA"
+        "contenitore",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -2257,8 +2257,8 @@
       "default_height": 30,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "NATURA"
+        "cibo",
+        "natura"
       ],
       "style": "cartoon"
     },
@@ -2271,8 +2271,8 @@
       "default_height": 45,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -2285,8 +2285,8 @@
       "default_height": 70,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "LEGNO"
+        "sport",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -2299,8 +2299,8 @@
       "default_height": 25,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -2326,11 +2326,11 @@
       "default_radius": 30,
       "default_hint_delay": 35,
       "tags": [
-        "VETRO",
-        "CRISTALLO",
-        "MAGIA",
-        "OCCULTO",
-        "MISTERO"
+        "vetro",
+        "cristallo",
+        "magia",
+        "occulto",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -2342,10 +2342,10 @@
       "default_radius": 30,
       "default_hint_delay": 50,
       "tags": [
-        "MAGIA",
-        "VETRO",
-        "LEGNO",
-        "MISTERO"
+        "magia",
+        "vetro",
+        "legno",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -2357,9 +2357,9 @@
       "default_radius": 28,
       "default_hint_delay": 40,
       "tags": [
-        "MINERALE",
-        "MAGIA",
-        "CRISTALLO"
+        "minerale",
+        "magia",
+        "cristallo"
       ],
       "style": "cartoon"
     },
@@ -2371,9 +2371,9 @@
       "default_radius": 25,
       "default_hint_delay": 40,
       "tags": [
-        "MINERALE",
-        "MAGIA",
-        "NATURA"
+        "minerale",
+        "magia",
+        "natura"
       ],
       "style": "cartoon"
     },
@@ -2385,9 +2385,9 @@
       "default_radius": 25,
       "default_hint_delay": 45,
       "tags": [
-        "MINERALE",
-        "MAGIA",
-        "NATURA"
+        "minerale",
+        "magia",
+        "natura"
       ],
       "style": "cartoon"
     },
@@ -2400,10 +2400,10 @@
       "default_height": 65,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "MINERALE",
-        "CRISTALLO",
-        "STRUMENTO"
+        "magia",
+        "minerale",
+        "cristallo",
+        "strumento"
       ],
       "style": "cartoon"
     },
@@ -2431,9 +2431,9 @@
       "default_radius": 15,
       "default_hint_delay": 35,
       "tags": [
-        "MAGIA",
-        "PREZIOSO",
-        "METALLO"
+        "magia",
+        "prezioso",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -2446,8 +2446,8 @@
       "default_height": 35,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "MINERALE"
+        "magia",
+        "minerale"
       ],
       "style": "cartoon"
     },
@@ -2459,9 +2459,9 @@
       "default_radius": 22,
       "default_hint_delay": 50,
       "tags": [
-        "MAGIA",
-        "CRISTALLO",
-        "MISTERO"
+        "magia",
+        "cristallo",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -2474,9 +2474,9 @@
       "default_height": 65,
       "default_hint_delay": 35,
       "tags": [
-        "ARREDO",
-        "LEGNO",
-        "ANTICO"
+        "arredo",
+        "legno",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -2488,8 +2488,8 @@
       "default_radius": 20,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -2502,8 +2502,8 @@
       "default_height": 35,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -2516,10 +2516,10 @@
       "default_height": 60,
       "default_hint_delay": 20,
       "tags": [
-        "CONTENITORE",
-        "BEVANDA",
-        "PLASTICA",
-        "SPORT"
+        "contenitore",
+        "bevanda",
+        "plastica",
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -2532,10 +2532,10 @@
       "default_height": 18,
       "default_hint_delay": 20,
       "tags": [
-        "ACCESSORIO",
-        "OTTICA",
-        "SPORT",
-        "PLASTICA"
+        "accessorio",
+        "ottica",
+        "sport",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -2548,9 +2548,9 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "VESTIARIO",
-        "STOFFA",
-        "SPORT"
+        "vestiario",
+        "stoffa",
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -2562,10 +2562,10 @@
       "default_radius": 35,
       "default_hint_delay": 25,
       "tags": [
-        "VESTIARIO",
-        "CASCO",
-        "SPORT",
-        "PLASTICA"
+        "vestiario",
+        "casco",
+        "sport",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -2577,9 +2577,9 @@
       "default_radius": 25,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "GIOCO",
-        "ELETTRONICA"
+        "sport",
+        "gioco",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -2592,9 +2592,9 @@
       "default_height": 45,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "METALLO",
-        "GIOCO"
+        "sport",
+        "metallo",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -2620,8 +2620,8 @@
       "default_radius": 20,
       "default_hint_delay": 50,
       "tags": [
-        "MINERALE",
-        "PREZIOSO"
+        "minerale",
+        "prezioso"
       ],
       "style": "cartoon"
     },
@@ -2634,9 +2634,9 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "PICCOLO",
-        "PLASTICA"
+        "gioco",
+        "piccolo",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -2649,9 +2649,9 @@
       "default_height": 35,
       "default_hint_delay": 25,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "TECH",
+        "plastica",
+        "strumento",
+        "tech",
         "piccolo"
       ],
       "style": "cartoon"
@@ -2665,9 +2665,9 @@
       "default_height": 45,
       "default_hint_delay": 25,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "TECH",
+        "plastica",
+        "strumento",
+        "tech",
         "piccolo"
       ],
       "style": "cartoon"
@@ -2681,9 +2681,9 @@
       "default_height": 65,
       "default_hint_delay": 30,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "SALUTE",
+        "plastica",
+        "strumento",
+        "salute",
         "piccolo"
       ],
       "style": "cartoon"
@@ -2696,9 +2696,9 @@
       "default_radius": 28,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "CUCINA",
-        "LEGNO"
+        "cibo",
+        "cucina",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -2711,9 +2711,9 @@
       "default_height": 65,
       "default_hint_delay": 25,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "SALUTE",
+        "plastica",
+        "strumento",
+        "salute",
         "piccolo"
       ],
       "style": "cartoon"
@@ -2727,9 +2727,9 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "PLASTICA",
-        "VESTIARIO"
+        "estate",
+        "plastica",
+        "vestiario"
       ],
       "style": "cartoon"
     },
@@ -2758,9 +2758,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "PLASTICA",
-        "PICCOLO"
+        "gioco",
+        "plastica",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -2786,8 +2786,8 @@
       "default_radius": 20,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -2800,9 +2800,9 @@
       "default_height": 25,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "DOLCE",
-        "CONTENITORE"
+        "cibo",
+        "dolce",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -2827,8 +2827,8 @@
       "default_radius": 35,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -2841,8 +2841,8 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "MUSICA",
-        "STRUMENTO"
+        "musica",
+        "strumento"
       ],
       "style": "cartoon"
     },
@@ -2855,9 +2855,9 @@
       "default_height": 65,
       "default_hint_delay": 30,
       "tags": [
-        "CONTENITORE",
-        "PLASTICA",
-        "VIAGGIO"
+        "contenitore",
+        "plastica",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -2869,7 +2869,7 @@
       "default_radius": 15,
       "default_hint_delay": 25,
       "tags": [
-        "STRUMENTO"
+        "strumento"
       ],
       "style": "cartoon"
     },
@@ -2882,9 +2882,9 @@
       "default_height": 30,
       "default_hint_delay": 35,
       "tags": [
-        "CONTENITORE",
-        "STOFFA",
-        "VIAGGIO"
+        "contenitore",
+        "stoffa",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -2897,9 +2897,9 @@
       "default_height": 20,
       "default_hint_delay": 25,
       "tags": [
-        "SPORT",
-        "METALLO",
-        "LAVORO"
+        "sport",
+        "metallo",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -2912,9 +2912,9 @@
       "default_height": 50,
       "default_hint_delay": 30,
       "tags": [
-        "METALLO",
-        "PERICOLO",
-        "ROSSO",
+        "metallo",
+        "pericolo",
+        "rosso",
         "piccolo"
       ],
       "style": "cartoon"
@@ -2928,8 +2928,8 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO",
-        "PERICOLO"
+        "strumento",
+        "pericolo"
       ],
       "style": "cartoon"
     },
@@ -2942,9 +2942,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "VESTIARIO",
-        "MORBIDO"
+        "inverno",
+        "vestiario",
+        "morbido"
       ],
       "style": "cartoon"
     },
@@ -2956,10 +2956,10 @@
       "default_radius": 15,
       "default_hint_delay": 20,
       "tags": [
-        "AUDIO",
-        "ELETTRONICA",
-        "PLASTICA",
-        "PICCOLO"
+        "audio",
+        "elettronica",
+        "plastica",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -2971,7 +2971,7 @@
       "default_radius": 12,
       "default_hint_delay": 10,
       "tags": [
-        "CIBO"
+        "cibo"
       ],
       "style": "cartoon"
     },
@@ -2998,8 +2998,8 @@
       "default_height": 50,
       "default_hint_delay": 30,
       "tags": [
-        "METALLO",
-        "STRUMENTO",
+        "metallo",
+        "strumento",
         "piccolo"
       ],
       "style": "cartoon"
@@ -3013,9 +3013,9 @@
       "default_height": 40,
       "default_hint_delay": 30,
       "tags": [
-        "STOFFA",
-        "STRUMENTO",
-        "SALUTE",
+        "stoffa",
+        "strumento",
+        "salute",
         "medio"
       ],
       "style": "cartoon"
@@ -3029,9 +3029,9 @@
       "default_height": 50,
       "default_hint_delay": 35,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "TECH",
+        "plastica",
+        "strumento",
+        "tech",
         "medio"
       ],
       "style": "cartoon"
@@ -3059,8 +3059,8 @@
       "default_height": 50,
       "default_hint_delay": 35,
       "tags": [
-        "PLASTICA",
-        "ABBIGLIAMENTO",
+        "plastica",
+        "abbigliamento",
         "medio"
       ],
       "style": "cartoon"
@@ -3074,8 +3074,8 @@
       "default_height": 20,
       "default_hint_delay": 20,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
+        "plastica",
+        "strumento",
         "piccolo"
       ],
       "style": "cartoon"
@@ -3088,9 +3088,9 @@
       "default_radius": 22,
       "default_hint_delay": 15,
       "tags": [
-        "CONTENITORE",
-        "METALLO",
-        "BEVANDA"
+        "contenitore",
+        "metallo",
+        "bevanda"
       ],
       "style": "cartoon"
     },
@@ -3103,9 +3103,9 @@
       "default_height": 45,
       "default_hint_delay": 25,
       "tags": [
-        "METALLO",
-        "STRUMENTO",
-        "TECH",
+        "metallo",
+        "strumento",
+        "tech",
         "piccolo"
       ],
       "style": "cartoon"
@@ -3119,7 +3119,7 @@
       "default_height": 20,
       "default_hint_delay": 25,
       "tags": [
-        "CIBO",
+        "cibo",
         "piccolo"
       ],
       "style": "cartoon"
@@ -3132,8 +3132,8 @@
       "default_radius": 25,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "MISTERO"
+        "magia",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -3146,8 +3146,8 @@
       "default_height": 10,
       "default_hint_delay": 15,
       "tags": [
-        "STRUMENTO",
-        "CARTA"
+        "strumento",
+        "carta"
       ],
       "style": "cartoon"
     },
@@ -3160,8 +3160,8 @@
       "default_hint_delay": 20,
       "tags": [
         "biologico",
-        "elettronica",
-        "tecnologia"
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -3173,8 +3173,8 @@
       "default_radius": 35,
       "default_hint_delay": 20,
       "tags": [
-        "antico",
         "biologico",
+        "antico",
         "magia"
       ],
       "style": "cartoon"
@@ -3188,9 +3188,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "VETRO",
-        "STRUMENTO",
-        "SALUTE",
+        "vetro",
+        "strumento",
+        "salute",
         "piccolo"
       ],
       "style": "cartoon"
@@ -3218,8 +3218,8 @@
       "default_hint_delay": 20,
       "tags": [
         "biologico",
-        "mistero",
-        "occulto"
+        "occulto",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -3302,8 +3302,8 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "VESTIARIO",
-        "STOFFA"
+        "vestiario",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3316,9 +3316,9 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "CARTA",
-        "CULTURA",
-        "ANTICO"
+        "carta",
+        "cultura",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -3331,7 +3331,7 @@
       "default_height": 25,
       "default_hint_delay": 40,
       "tags": [
-        "NATURA"
+        "natura"
       ],
       "style": "cartoon"
     },
@@ -3344,8 +3344,8 @@
       "default_height": 75,
       "default_hint_delay": 35,
       "tags": [
-        "SPORT",
-        "METALLO"
+        "sport",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -3358,9 +3358,9 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "SPORT",
-        "SICUREZZA",
-        "METALLO"
+        "sport",
+        "sicurezza",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -3373,9 +3373,9 @@
       "default_height": 50,
       "default_hint_delay": 30,
       "tags": [
-        "METALLO",
-        "FUOCO",
-        "STRUMENTO",
+        "metallo",
+        "fuoco",
+        "strumento",
         "piccolo"
       ],
       "style": "cartoon"
@@ -3389,8 +3389,8 @@
       "default_height": 35,
       "default_hint_delay": 25,
       "tags": [
-        "FOTO",
-        "CINEMA"
+        "foto",
+        "cinema"
       ],
       "style": "cartoon"
     },
@@ -3403,9 +3403,9 @@
       "default_height": 70,
       "default_hint_delay": 20,
       "tags": [
-        "lavoro",
+        "sicurezza",
         "metallo",
-        "sicurezza"
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -3418,9 +3418,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "LEGNO",
-        "NATURA"
+        "inverno",
+        "legno",
+        "natura"
       ],
       "style": "cartoon"
     },
@@ -3433,9 +3433,9 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "MEDICINA",
-        "CONTENITORE",
-        "SICUREZZA"
+        "medicina",
+        "contenitore",
+        "sicurezza"
       ],
       "style": "cartoon"
     },
@@ -3448,8 +3448,8 @@
       "default_height": 20,
       "default_hint_delay": 35,
       "tags": [
-        "CURA",
-        "STRUMENTO"
+        "cura",
+        "strumento"
       ],
       "style": "cartoon"
     },
@@ -3462,8 +3462,8 @@
       "default_height": 95,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "STRUMENTO"
+        "sport",
+        "strumento"
       ],
       "style": "cartoon"
     },
@@ -3476,12 +3476,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3494,12 +3494,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3512,12 +3512,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3530,12 +3530,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3548,12 +3548,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3566,12 +3566,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3584,12 +3584,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3602,12 +3602,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3620,12 +3620,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3638,12 +3638,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3656,12 +3656,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3674,12 +3674,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3692,12 +3692,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3710,12 +3710,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3728,12 +3728,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3746,12 +3746,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3764,12 +3764,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3782,12 +3782,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3800,12 +3800,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3818,12 +3818,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3836,12 +3836,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3854,12 +3854,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3872,12 +3872,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3890,12 +3890,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3908,12 +3908,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3926,12 +3926,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3944,12 +3944,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3962,12 +3962,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3980,12 +3980,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -3998,12 +3998,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4016,12 +4016,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4034,12 +4034,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4052,12 +4052,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4070,12 +4070,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4088,12 +4088,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4106,12 +4106,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4124,12 +4124,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4142,12 +4142,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4160,12 +4160,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4178,12 +4178,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4196,12 +4196,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4214,12 +4214,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4232,12 +4232,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4250,12 +4250,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4268,12 +4268,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4286,12 +4286,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4304,12 +4304,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4322,12 +4322,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4340,12 +4340,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4358,12 +4358,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4376,12 +4376,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4394,12 +4394,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4412,12 +4412,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4430,12 +4430,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4448,12 +4448,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4466,12 +4466,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4484,12 +4484,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4502,12 +4502,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4520,12 +4520,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4538,12 +4538,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4556,12 +4556,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "EUROPA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "europa",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4574,12 +4574,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4592,12 +4592,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "AMERICA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "america",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4610,12 +4610,12 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "BANDIERA",
-        "ASIA",
-        "NAZIONE",
-        "DECORAZIONE",
-        "PICCOLO",
-        "STOFFA"
+        "bandiera",
+        "asia",
+        "nazione",
+        "decorazione",
+        "piccolo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -4628,8 +4628,8 @@
       "default_height": 35,
       "default_hint_delay": 25,
       "tags": [
-        "LUCE",
-        "ELETTRONICA"
+        "luce",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -4641,8 +4641,8 @@
       "default_radius": 12,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "NATURA"
+        "strumento",
+        "natura"
       ],
       "style": "cartoon"
     },
@@ -4671,9 +4671,9 @@
       "default_height": 32,
       "default_hint_delay": 20,
       "tags": [
-        "DATI",
-        "TECNOLOGIA",
-        "PLASTICA"
+        "dati",
+        "tecnologia",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -4686,9 +4686,9 @@
       "default_height": 30,
       "default_hint_delay": 25,
       "tags": [
-        "TECNOLOGIA",
-        "DATI",
-        "PLASTICA"
+        "tecnologia",
+        "dati",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -4714,8 +4714,8 @@
       "default_radius": 22,
       "default_hint_delay": 20,
       "tags": [
-        "NATURA",
-        "PIANTA"
+        "natura",
+        "pianta"
       ],
       "style": "cartoon"
     },
@@ -4728,8 +4728,8 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "METALLO"
+        "cibo",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -4741,9 +4741,9 @@
       "default_radius": 25,
       "default_hint_delay": 40,
       "tags": [
-        "SPORT",
-        "TECNOLOGIA",
-        "PLASTICA"
+        "sport",
+        "tecnologia",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -4756,8 +4756,8 @@
       "default_height": 8,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO",
-        "METALLO"
+        "strumento",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -4769,8 +4769,8 @@
       "default_radius": 20,
       "default_hint_delay": 40,
       "tags": [
-        "NATURA",
-        "ARREDO"
+        "natura",
+        "arredo"
       ],
       "style": "cartoon"
     },
@@ -4783,8 +4783,8 @@
       "default_height": 30,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -4797,9 +4797,9 @@
       "default_height": 25,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "CUCINA",
-        "METALLO"
+        "cibo",
+        "cucina",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -4811,9 +4811,9 @@
       "default_radius": 22,
       "default_hint_delay": 15,
       "tags": [
-        "SPORT",
-        "PLASTICA",
-        "GIOCO"
+        "sport",
+        "plastica",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -4825,11 +4825,11 @@
       "default_radius": 20,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO",
-        "VERDE"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico",
+        "verde"
       ],
       "style": "cartoon"
     },
@@ -4842,11 +4842,11 @@
       "default_height": 50,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO",
-        "GIALLO"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico",
+        "giallo"
       ],
       "style": "cartoon"
     },
@@ -4858,11 +4858,11 @@
       "default_radius": 25,
       "default_hint_delay": 25,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO",
-        "MARRONE"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico",
+        "marrone"
       ],
       "style": "cartoon"
     },
@@ -4875,11 +4875,11 @@
       "default_height": 25,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO",
-        "MARRONE"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico",
+        "marrone"
       ],
       "style": "cartoon"
     },
@@ -4891,11 +4891,11 @@
       "default_radius": 15,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO",
-        "VIOLA"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico",
+        "viola"
       ],
       "style": "cartoon"
     },
@@ -4907,10 +4907,10 @@
       "default_radius": 18,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico"
       ],
       "style": "cartoon"
     },
@@ -4922,11 +4922,11 @@
       "default_radius": 18,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO",
-        "GIALLO"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico",
+        "giallo"
       ],
       "style": "cartoon"
     },
@@ -4938,11 +4938,11 @@
       "default_radius": 12,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO",
-        "ROSA"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico",
+        "rosa"
       ],
       "style": "cartoon"
     },
@@ -4954,10 +4954,10 @@
       "default_radius": 22,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico"
       ],
       "style": "cartoon"
     },
@@ -4969,10 +4969,10 @@
       "default_radius": 30,
       "default_hint_delay": 25,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico"
       ],
       "style": "cartoon"
     },
@@ -4984,11 +4984,11 @@
       "default_radius": 20,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO",
-        "ARANCIONE"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico",
+        "arancione"
       ],
       "style": "cartoon"
     },
@@ -5001,10 +5001,10 @@
       "default_height": 45,
       "default_hint_delay": 25,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico"
       ],
       "style": "cartoon"
     },
@@ -5016,11 +5016,11 @@
       "default_radius": 20,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO",
-        "VERDE"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico",
+        "verde"
       ],
       "style": "cartoon"
     },
@@ -5033,10 +5033,10 @@
       "default_height": 60,
       "default_hint_delay": 25,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico"
       ],
       "style": "cartoon"
     },
@@ -5048,11 +5048,11 @@
       "default_radius": 20,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO",
-        "ROSSO"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -5065,11 +5065,11 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "FRUTTA",
-        "NATURA",
-        "BIOLOGICO",
-        "ROSSO"
+        "cibo",
+        "frutta",
+        "natura",
+        "biologico",
+        "rosso"
       ],
       "style": "cartoon"
     },
@@ -5082,9 +5082,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "ELETTRONICO",
-        "PLASTICA"
+        "gioco",
+        "elettronico",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -5097,9 +5097,9 @@
       "default_height": 60,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "ELETTRONICO",
-        "PLASTICA"
+        "gioco",
+        "elettronico",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -5112,9 +5112,9 @@
       "default_height": 25,
       "default_hint_delay": 30,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "GIOCO"
+        "tecnologia",
+        "elettronica",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -5127,9 +5127,9 @@
       "default_height": 15,
       "default_hint_delay": 30,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "GIOCO"
+        "tecnologia",
+        "elettronica",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -5142,10 +5142,10 @@
       "default_height": 45,
       "default_hint_delay": 40,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "GIOCO"
+        "audio",
+        "tecnologia",
+        "elettronica",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -5172,9 +5172,9 @@
       "default_height": 40,
       "default_hint_delay": 30,
       "tags": [
-        "METALLO",
-        "CONTENITORE",
-        "CUCINA",
+        "metallo",
+        "contenitore",
+        "cucina",
         "piccolo"
       ],
       "style": "cartoon"
@@ -5188,8 +5188,8 @@
       "default_height": 50,
       "default_hint_delay": 40,
       "tags": [
-        "EQUIPAGGIAMENTO",
-        "MISTERO"
+        "equipaggiamento",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -5202,9 +5202,9 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "METALLO",
-        "STRUMENTO",
-        "CUCINA",
+        "metallo",
+        "strumento",
+        "cucina",
         "medio"
       ],
       "style": "cartoon"
@@ -5218,9 +5218,9 @@
       "default_height": 60,
       "default_hint_delay": 20,
       "tags": [
-        "pericolo",
+        "tecnologia",
         "scienza",
-        "tecnologia"
+        "pericolo"
       ],
       "style": "cartoon"
     },
@@ -5232,9 +5232,9 @@
       "default_radius": 15,
       "default_hint_delay": 50,
       "tags": [
-        "MINERALE",
-        "PREZIOSO",
-        "MAGIA"
+        "minerale",
+        "prezioso",
+        "magia"
       ],
       "style": "cartoon"
     },
@@ -5247,8 +5247,8 @@
       "default_height": 65,
       "default_hint_delay": 35,
       "tags": [
-        "METALLO",
-        "STRUMENTO",
+        "metallo",
+        "strumento",
         "medio"
       ],
       "style": "cartoon"
@@ -5262,9 +5262,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "CIBO",
-        "DECORAZIONE"
+        "natale",
+        "cibo",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -5277,9 +5277,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "CIBO",
-        "PICCOLO"
+        "natale",
+        "cibo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -5291,9 +5291,9 @@
       "default_radius": 35,
       "default_hint_delay": 30,
       "tags": [
-        "ARREDO",
-        "VIAGGIO",
-        "CULTURA"
+        "arredo",
+        "viaggio",
+        "cultura"
       ],
       "style": "cartoon"
     },
@@ -5306,7 +5306,7 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO"
+        "strumento"
       ],
       "style": "cartoon"
     },
@@ -5318,9 +5318,9 @@
       "default_radius": 15,
       "default_hint_delay": 20,
       "tags": [
-        "SPORT",
-        "LEGNO",
-        "PLASTICA"
+        "sport",
+        "legno",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -5332,8 +5332,8 @@
       "default_radius": 12,
       "default_hint_delay": 15,
       "tags": [
-        "SPORT",
-        "PALLA"
+        "sport",
+        "palla"
       ],
       "style": "cartoon"
     },
@@ -5346,8 +5346,8 @@
       "default_height": 65,
       "default_hint_delay": 35,
       "tags": [
-        "SPORT",
-        "METALLO"
+        "sport",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -5360,8 +5360,8 @@
       "default_height": 65,
       "default_hint_delay": 35,
       "tags": [
-        "SPORT",
-        "METALLO"
+        "sport",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -5374,9 +5374,9 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "TECH",
+        "plastica",
+        "strumento",
+        "tech",
         "piccolo"
       ],
       "style": "cartoon"
@@ -5390,9 +5390,9 @@
       "default_height": 60,
       "default_hint_delay": 45,
       "tags": [
-        "ANTICO",
-        "MUSICA",
-        "LEGNO"
+        "antico",
+        "musica",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -5405,9 +5405,9 @@
       "default_height": 55,
       "default_hint_delay": 45,
       "tags": [
-        "AUDIO",
-        "ANTICO",
-        "TECNOLOGIA"
+        "audio",
+        "antico",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -5453,9 +5453,9 @@
       "default_height": 45,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "UFFICIO"
+        "tecnologia",
+        "elettronica",
+        "ufficio"
       ],
       "style": "cartoon"
     },
@@ -5468,11 +5468,11 @@
       "default_height": 70,
       "default_hint_delay": 40,
       "tags": [
-        "STUDIO",
-        "CARTA",
-        "CUOIO",
-        "MAGIA",
-        "OCCULTO"
+        "studio",
+        "carta",
+        "cuoio",
+        "magia",
+        "occulto"
       ],
       "style": "cartoon"
     },
@@ -5484,9 +5484,9 @@
       "default_radius": 10,
       "default_hint_delay": 10,
       "tags": [
-        "MUSICA",
-        "PLASTICA",
-        "PICCOLO"
+        "musica",
+        "plastica",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -5513,8 +5513,8 @@
       "default_height": 35,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -5543,9 +5543,9 @@
       "default_height": 60,
       "default_hint_delay": 20,
       "tags": [
-        "ATTREZZO",
-        "METALLO",
-        "LAVORO"
+        "attrezzo",
+        "metallo",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -5558,9 +5558,9 @@
       "default_height": 55,
       "default_hint_delay": 25,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "SALUTE",
+        "plastica",
+        "strumento",
+        "salute",
         "piccolo"
       ],
       "style": "cartoon"
@@ -5574,9 +5574,9 @@
       "default_height": 25,
       "default_hint_delay": 20,
       "tags": [
-        "ATTREZZO",
-        "METALLO",
-        "LAVORO"
+        "attrezzo",
+        "metallo",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -5589,9 +5589,9 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "TECNOLOGIA",
-        "DATI",
-        "ELETTRONICA"
+        "tecnologia",
+        "dati",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -5604,9 +5604,9 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "DATI",
-        "ELETTRONICA"
+        "tecnologia",
+        "dati",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -5619,9 +5619,9 @@
       "default_height": 15,
       "default_hint_delay": 20,
       "tags": [
-        "MUSICA",
-        "METALLO",
-        "PICCOLO"
+        "musica",
+        "metallo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -5648,9 +5648,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "VESTIARIO",
-        "STOFFA",
-        "CUCINA"
+        "vestiario",
+        "stoffa",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -5662,8 +5662,8 @@
       "default_radius": 35,
       "default_hint_delay": 25,
       "tags": [
-        "VESTIARIO",
-        "STOFFA"
+        "vestiario",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -5676,9 +5676,9 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "VESTIARIO",
-        "STOFFA",
-        "VIAGGIO"
+        "vestiario",
+        "stoffa",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -5691,8 +5691,8 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "VESTIARIO",
-        "STOFFA"
+        "vestiario",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -5705,8 +5705,8 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "VESTIARIO",
-        "STOFFA"
+        "vestiario",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -5719,9 +5719,9 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "VESTIARIO",
-        "STOFFA",
-        "MAGIA"
+        "vestiario",
+        "stoffa",
+        "magia"
       ],
       "style": "cartoon"
     },
@@ -5734,9 +5734,9 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "VESTIARIO",
-        "STOFFA",
-        "VIAGGIO"
+        "vestiario",
+        "stoffa",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -5749,9 +5749,9 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "VESTIARIO",
-        "STOFFA",
-        "SICUREZZA"
+        "vestiario",
+        "stoffa",
+        "sicurezza"
       ],
       "style": "cartoon"
     },
@@ -5764,8 +5764,8 @@
       "default_height": 25,
       "default_hint_delay": 30,
       "tags": [
-        "VESTIARIO",
-        "STOFFA"
+        "vestiario",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -5777,8 +5777,8 @@
       "default_radius": 45,
       "default_hint_delay": 35,
       "tags": [
-        "VESTIARIO",
-        "STOFFA"
+        "vestiario",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -5791,9 +5791,9 @@
       "default_height": 30,
       "default_hint_delay": 35,
       "tags": [
-        "VESTIARIO",
-        "STOFFA",
-        "ANTICO"
+        "vestiario",
+        "stoffa",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -5806,9 +5806,9 @@
       "default_height": 35,
       "default_hint_delay": 35,
       "tags": [
-        "VESTIARIO",
-        "STOFFA",
-        "PREZIOSO"
+        "vestiario",
+        "stoffa",
+        "prezioso"
       ],
       "style": "cartoon"
     },
@@ -5821,9 +5821,9 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "VESTIARIO",
-        "METALLO",
-        "ANTICO"
+        "vestiario",
+        "metallo",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -5836,9 +5836,9 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "DATI"
+        "tecnologia",
+        "elettronica",
+        "dati"
       ],
       "style": "cartoon"
     },
@@ -5851,8 +5851,8 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "STOFFA",
-        "ABBIGLIAMENTO",
+        "stoffa",
+        "abbigliamento",
         "medio"
       ],
       "style": "cartoon"
@@ -5866,9 +5866,9 @@
       "default_height": 45,
       "default_hint_delay": 40,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "audio",
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -5881,9 +5881,9 @@
       "default_height": 50,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "AUDIO"
+        "tecnologia",
+        "elettronica",
+        "audio"
       ],
       "style": "cartoon"
     },
@@ -5895,9 +5895,9 @@
       "default_radius": 22,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "TECNOLOGIA",
-        "PLASTICA"
+        "sport",
+        "tecnologia",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -5924,8 +5924,8 @@
       "default_height": 65,
       "default_hint_delay": 40,
       "tags": [
-        "STOFFA",
-        "ABBIGLIAMENTO",
+        "stoffa",
+        "abbigliamento",
         "medio"
       ],
       "style": "cartoon"
@@ -5938,7 +5938,7 @@
       "default_radius": 15,
       "default_hint_delay": 15,
       "tags": [
-        "SPORT"
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -5951,7 +5951,7 @@
       "default_height": 75,
       "default_hint_delay": 35,
       "tags": [
-        "SPORT"
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -5964,8 +5964,8 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "SPORT",
-        "LEGNO"
+        "sport",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -5978,9 +5978,9 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "NATURA",
-        "PICCOLO"
+        "inverno",
+        "natura",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -5993,8 +5993,8 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "gioco",
-        "tecnologia"
+        "tecnologia",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -6007,8 +6007,8 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "CUCINA",
-        "LEGNO"
+        "cucina",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -6035,9 +6035,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "VETRO",
-        "CONTENITORE"
+        "cibo",
+        "vetro",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -6050,9 +6050,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "AUTUNNO",
-        "PICCOLO"
+        "cibo",
+        "autunno",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -6065,9 +6065,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "VETRO",
-        "CONTENITORE"
+        "cibo",
+        "vetro",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -6080,9 +6080,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "CIBO",
-        "PICCOLO"
+        "inverno",
+        "cibo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -6095,9 +6095,9 @@
       "default_height": 60,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "MORBIDO",
-        "PICCOLO"
+        "inverno",
+        "morbido",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -6110,8 +6110,8 @@
       "default_height": 20,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -6124,9 +6124,9 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "STRUMENTO",
-        "VETRO",
-        "ANTICO"
+        "strumento",
+        "vetro",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -6139,8 +6139,8 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "STRUMENTO",
-        "LEGNO"
+        "strumento",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -6153,7 +6153,7 @@
       "default_height": 60,
       "default_hint_delay": 35,
       "tags": [
-        "METALLO",
+        "metallo",
         "attrezzo",
         "viaggio",
         "medio"
@@ -6169,9 +6169,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "DECORAZIONE",
-        "PICCOLO"
+        "inverno",
+        "decorazione",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -6184,9 +6184,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "CIBO",
-        "PICCOLO"
+        "estate",
+        "cibo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -6199,8 +6199,8 @@
       "default_height": 55,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -6213,8 +6213,8 @@
       "default_height": 45,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -6227,9 +6227,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "CIBO",
-        "PICCOLO"
+        "estate",
+        "cibo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -6242,9 +6242,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "ATTREZZO",
-        "PLASTICA"
+        "inverno",
+        "attrezzo",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -6257,9 +6257,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "METALLO",
-        "GIOCO"
+        "inverno",
+        "metallo",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -6272,9 +6272,9 @@
       "default_height": 70,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "NATURA",
-        "PICCOLO"
+        "inverno",
+        "natura",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -6287,9 +6287,9 @@
       "default_height": 55,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "METALLO",
-        "MISTERO"
+        "magia",
+        "metallo",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -6317,8 +6317,8 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "PLASTICA",
-        "RIPOSO",
+        "plastica",
+        "riposo",
         "medio"
       ],
       "style": "cartoon"
@@ -6332,9 +6332,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "ELETTRONICO",
-        "PLASTICA"
+        "estate",
+        "elettronico",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -6347,9 +6347,9 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "SALUTE",
+        "plastica",
+        "strumento",
+        "salute",
         "piccolo"
       ],
       "style": "cartoon"
@@ -6363,10 +6363,10 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "AUDIO",
-        "METALLO",
-        "TECNOLOGIA",
-        "PICCOLO"
+        "audio",
+        "metallo",
+        "tecnologia",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -6379,8 +6379,8 @@
       "default_height": 30,
       "default_hint_delay": 25,
       "tags": [
-        "CIBO",
-        "VETRO"
+        "cibo",
+        "vetro"
       ],
       "style": "cartoon"
     },
@@ -6392,9 +6392,9 @@
       "default_radius": 25,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "DOLCE",
-        "CONTENITORE"
+        "cibo",
+        "dolce",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -6407,9 +6407,9 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "GIOCO"
+        "tecnologia",
+        "elettronica",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -6422,8 +6422,8 @@
       "default_height": 15,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -6436,9 +6436,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "PLASTICA",
-        "CONTENITORE"
+        "cibo",
+        "plastica",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -6450,8 +6450,8 @@
       "default_radius": 20,
       "default_hint_delay": 25,
       "tags": [
-        "SPORT",
-        "METALLO"
+        "sport",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -6463,8 +6463,8 @@
       "default_radius": 18,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "METALLO"
+        "strumento",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -6477,8 +6477,8 @@
       "default_height": 10,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO",
-        "METALLO"
+        "strumento",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -6505,8 +6505,8 @@
       "default_height": 50,
       "default_hint_delay": 30,
       "tags": [
-        "PLASTICA",
-        "ABBIGLIAMENTO",
+        "plastica",
+        "abbigliamento",
         "medio"
       ],
       "style": "cartoon"
@@ -6520,8 +6520,8 @@
       "default_height": 15,
       "default_hint_delay": 35,
       "tags": [
-        "METALLO",
-        "STRUMENTO",
+        "metallo",
+        "strumento",
         "medio"
       ],
       "style": "cartoon"
@@ -6535,9 +6535,9 @@
       "default_height": 50,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "LUCE",
-        "TECNOLOGIA"
+        "strumento",
+        "luce",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -6549,10 +6549,10 @@
       "default_radius": 8,
       "default_hint_delay": 25,
       "tags": [
-        "AUDIO",
-        "ELETTRONICA",
-        "TECNOLOGIA",
-        "PICCOLO"
+        "audio",
+        "elettronica",
+        "tecnologia",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -6565,10 +6565,10 @@
       "default_height": 40,
       "default_hint_delay": 45,
       "tags": [
-        "TECNOLOGIA",
-        "DATI",
-        "ELETTRONICA",
-        "UFFICIO"
+        "tecnologia",
+        "dati",
+        "elettronica",
+        "ufficio"
       ],
       "style": "cartoon"
     },
@@ -6581,8 +6581,8 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "STRUMENTO",
-        "TECNOLOGIA"
+        "strumento",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -6595,9 +6595,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "luce",
+        "tecnologia",
         "piccolo",
-        "tecnologia"
+        "luce"
       ],
       "style": "cartoon"
     },
@@ -6610,9 +6610,9 @@
       "default_height": 45,
       "default_hint_delay": 30,
       "tags": [
-        "PLASTICA",
-        "ABBIGLIAMENTO",
-        "SALUTE",
+        "plastica",
+        "abbigliamento",
+        "salute",
         "piccolo"
       ],
       "style": "cartoon"
@@ -6654,8 +6654,8 @@
       "default_height": 60,
       "default_hint_delay": 20,
       "tags": [
-        "LEGNO",
-        "STRUMENTO",
+        "legno",
+        "strumento",
         "piccolo"
       ],
       "style": "cartoon"
@@ -6669,9 +6669,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "PLASTICA",
-        "PICCOLO"
+        "gioco",
+        "plastica",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -6684,9 +6684,9 @@
       "default_height": 15,
       "default_hint_delay": 35,
       "tags": [
-        "STRUMENTO",
-        "TECNOLOGIA",
-        "PLASTICA"
+        "strumento",
+        "tecnologia",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -6698,9 +6698,9 @@
       "default_radius": 30,
       "default_hint_delay": 20,
       "tags": [
-        "MARE",
-        "SICUREZZA",
-        "PLASTICA"
+        "mare",
+        "sicurezza",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -6713,9 +6713,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "PICCOLO",
-        "DECORAZIONE"
+        "inverno",
+        "piccolo",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -6728,8 +6728,8 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO",
-        "FUOCO"
+        "strumento",
+        "fuoco"
       ],
       "style": "cartoon"
     },
@@ -6756,8 +6756,8 @@
       "default_height": 40,
       "default_hint_delay": 25,
       "tags": [
-        "METALLO",
-        "STRUMENTO",
+        "metallo",
+        "strumento",
         "piccolo"
       ],
       "style": "cartoon"
@@ -6770,8 +6770,8 @@
       "default_radius": 22,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -6784,9 +6784,9 @@
       "default_height": 20,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "DOLCE",
-        "CONTENITORE"
+        "cibo",
+        "dolce",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -6813,8 +6813,8 @@
       "default_height": 65,
       "default_hint_delay": 35,
       "tags": [
-        "MAGIA",
-        "LEGNO"
+        "magia",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -6827,8 +6827,8 @@
       "default_height": 55,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "MISTERO"
+        "magia",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -6840,9 +6840,9 @@
       "default_radius": 25,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "METALLO",
-        "MISTERO"
+        "magia",
+        "metallo",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -6855,9 +6855,9 @@
       "default_height": 55,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "METALLO",
-        "VETRO"
+        "magia",
+        "metallo",
+        "vetro"
       ],
       "style": "cartoon"
     },
@@ -6870,8 +6870,8 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "MAGIA",
-        "LEGNO"
+        "magia",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -6883,8 +6883,8 @@
       "default_radius": 20,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "OTTICA"
+        "strumento",
+        "ottica"
       ],
       "style": "cartoon"
     },
@@ -6896,9 +6896,9 @@
       "default_radius": 25,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "OTTICA"
+        "strumento",
+        "metallo",
+        "ottica"
       ],
       "style": "cartoon"
     },
@@ -6911,8 +6911,8 @@
       "default_height": 40,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "VIAGGIO"
+        "strumento",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -6925,9 +6925,9 @@
       "default_height": 22,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO",
-        "CARTA",
-        "VIAGGIO"
+        "strumento",
+        "carta",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -6940,9 +6940,9 @@
       "default_height": 35,
       "default_hint_delay": 35,
       "tags": [
-        "CARTA",
-        "VIAGGIO",
-        "MISTERO"
+        "carta",
+        "viaggio",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -6955,9 +6955,9 @@
       "default_height": 45,
       "default_hint_delay": 25,
       "tags": [
-        "STRUMENTO",
-        "CARTA",
-        "VIAGGIO"
+        "strumento",
+        "carta",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -6970,8 +6970,8 @@
       "default_height": 15,
       "default_hint_delay": 25,
       "tags": [
-        "STRUMENTO",
-        "FUOCO"
+        "strumento",
+        "fuoco"
       ],
       "style": "cartoon"
     },
@@ -6984,8 +6984,8 @@
       "default_height": 25,
       "default_hint_delay": 15,
       "tags": [
-        "STRUMENTO",
-        "FUOCO"
+        "strumento",
+        "fuoco"
       ],
       "style": "cartoon"
     },
@@ -6997,9 +6997,9 @@
       "default_radius": 22,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "PLASTICA"
+        "strumento",
+        "metallo",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -7011,9 +7011,9 @@
       "default_radius": 20,
       "default_hint_delay": 30,
       "tags": [
-        "METALLO",
-        "PREZIOSO",
-        "SPORT"
+        "metallo",
+        "prezioso",
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -7026,9 +7026,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "METALLO",
-        "STRUMENTO",
-        "SALUTE",
+        "metallo",
+        "strumento",
+        "salute",
         "piccolo"
       ],
       "style": "cartoon"
@@ -7042,9 +7042,9 @@
       "default_height": 50,
       "default_hint_delay": 25,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "COMUNICAZIONE"
+        "strumento",
+        "metallo",
+        "comunicazione"
       ],
       "style": "cartoon"
     },
@@ -7057,9 +7057,9 @@
       "default_height": 40,
       "default_hint_delay": 30,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "SICUREZZA"
+        "audio",
+        "tecnologia",
+        "sicurezza"
       ],
       "style": "cartoon"
     },
@@ -7072,9 +7072,9 @@
       "default_height": 40,
       "default_hint_delay": 30,
       "tags": [
-        "CONTENITORE",
-        "STOFFA",
-        "UFFICIO"
+        "contenitore",
+        "stoffa",
+        "ufficio"
       ],
       "style": "cartoon"
     },
@@ -7103,8 +7103,8 @@
       "default_height": 30,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -7117,8 +7117,8 @@
       "default_height": 30,
       "default_hint_delay": 30,
       "tags": [
-        "STOFFA",
-        "IGIENE",
+        "stoffa",
+        "igiene",
         "medio"
       ],
       "style": "cartoon"
@@ -7132,8 +7132,8 @@
       "default_height": 30,
       "default_hint_delay": 40,
       "tags": [
-        "STRUMENTO",
-        "METALLO"
+        "strumento",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -7146,9 +7146,9 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "audio",
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -7161,9 +7161,9 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "audio",
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -7176,8 +7176,8 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "SCIENZA",
-        "TECNOLOGIA"
+        "scienza",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -7190,9 +7190,9 @@
       "default_height": 60,
       "default_hint_delay": 40,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "SCIENZA"
+        "strumento",
+        "metallo",
+        "scienza"
       ],
       "style": "cartoon"
     },
@@ -7219,8 +7219,8 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "CONTENITORE"
+        "cibo",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -7233,8 +7233,8 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -7277,9 +7277,9 @@
       "default_height": 40,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "DATI",
-        "ELETTRONICA"
+        "tecnologia",
+        "dati",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -7292,8 +7292,8 @@
       "default_height": 45,
       "default_hint_delay": 45,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -7320,8 +7320,8 @@
       "default_height": 30,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -7333,8 +7333,8 @@
       "default_radius": 20,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -7347,9 +7347,9 @@
       "default_height": 60,
       "default_hint_delay": 30,
       "tags": [
-        "METALLO",
-        "STRUMENTO",
-        "CUCINA",
+        "metallo",
+        "strumento",
+        "cucina",
         "piccolo"
       ],
       "style": "cartoon"
@@ -7363,8 +7363,8 @@
       "default_height": 90,
       "default_hint_delay": 45,
       "tags": [
-        "STOFFA",
-        "RIPOSO",
+        "stoffa",
+        "riposo",
         "grande"
       ],
       "style": "cartoon"
@@ -7378,9 +7378,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "NATURA",
-        "AUTUNNO",
-        "PICCOLO"
+        "natura",
+        "autunno",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -7393,10 +7393,10 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "NATURA",
-        "AUTUNNO",
-        "CIBO",
-        "PICCOLO"
+        "natura",
+        "autunno",
+        "cibo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -7409,9 +7409,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "PLASTICA",
-        "CONTENITORE"
+        "cibo",
+        "plastica",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -7424,9 +7424,9 @@
       "default_height": 55,
       "default_hint_delay": 25,
       "tags": [
-        "CIBO",
-        "PLASTICA",
-        "CONTENITORE"
+        "cibo",
+        "plastica",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -7439,8 +7439,8 @@
       "default_height": 30,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -7453,9 +7453,9 @@
       "default_height": 25,
       "default_hint_delay": 20,
       "tags": [
-        "METALLO",
-        "PICCOLO",
-        "LAVORO"
+        "metallo",
+        "piccolo",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -7468,8 +7468,8 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "CARTA",
-        "INFORMAZIONE"
+        "carta",
+        "informazione"
       ],
       "style": "cartoon"
     },
@@ -7482,8 +7482,8 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "CARTA"
+        "strumento",
+        "carta"
       ],
       "style": "cartoon"
     },
@@ -7496,9 +7496,9 @@
       "default_height": 70,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "LEGNO",
-        "GIOCO"
+        "natale",
+        "legno",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -7511,9 +7511,9 @@
       "default_height": 65,
       "default_hint_delay": 35,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "TECH",
+        "plastica",
+        "strumento",
+        "tech",
         "medio"
       ],
       "style": "cartoon"
@@ -7541,9 +7541,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "DECORAZIONE",
-        "PICCOLO"
+        "inverno",
+        "decorazione",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -7556,9 +7556,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "ATTREZZO",
-        "LAVORO",
-        "DECORAZIONE"
+        "attrezzo",
+        "lavoro",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -7571,9 +7571,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "METALLO",
-        "LAVORO",
-        "DECORAZIONE"
+        "metallo",
+        "lavoro",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -7600,9 +7600,9 @@
       "default_height": 30,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "DOLCE",
-        "CUCINA"
+        "cibo",
+        "dolce",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -7615,8 +7615,8 @@
       "default_height": 45,
       "default_hint_delay": 30,
       "tags": [
-        "VESTIARIO",
-        "STOFFA"
+        "vestiario",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -7629,8 +7629,8 @@
       "default_height": 20,
       "default_hint_delay": 25,
       "tags": [
-        "CARTA",
-        "MISTERO"
+        "carta",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -7643,9 +7643,9 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "CARTA",
-        "VIAGGIO",
-        "SICUREZZA"
+        "carta",
+        "viaggio",
+        "sicurezza"
       ],
       "style": "cartoon"
     },
@@ -7657,8 +7657,8 @@
       "default_radius": 25,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -7671,9 +7671,9 @@
       "default_height": 45,
       "default_hint_delay": 45,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "METALLO"
+        "tecnologia",
+        "elettronica",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -7686,8 +7686,8 @@
       "default_height": 30,
       "default_hint_delay": 15,
       "tags": [
-        "STRUMENTO",
-        "CARTA"
+        "strumento",
+        "carta"
       ],
       "style": "cartoon"
     },
@@ -7700,10 +7700,10 @@
       "default_height": 60,
       "default_hint_delay": 30,
       "tags": [
-        "GIOIELLO",
-        "METALLO",
-        "MISTERO",
-        "OCCULTO"
+        "gioiello",
+        "metallo",
+        "mistero",
+        "occulto"
       ],
       "style": "cartoon"
     },
@@ -7730,9 +7730,9 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "LAVORO"
+        "strumento",
+        "metallo",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -7759,9 +7759,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "PICCOLO",
-        "SOLDI",
-        "DECORAZIONE"
+        "piccolo",
+        "soldi",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -7774,9 +7774,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "NATURA",
-        "PICCOLO"
+        "inverno",
+        "natura",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -7788,9 +7788,9 @@
       "default_radius": 12,
       "default_hint_delay": 15,
       "tags": [
-        "SPORT",
-        "PLASTICA",
-        "PALLA"
+        "sport",
+        "plastica",
+        "palla"
       ],
       "style": "cartoon"
     },
@@ -7802,8 +7802,8 @@
       "default_radius": 18,
       "default_hint_delay": 20,
       "tags": [
-        "SPORT",
-        "LEGNO"
+        "sport",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -7816,9 +7816,9 @@
       "default_height": 45,
       "default_hint_delay": 25,
       "tags": [
-        "SPORT",
-        "LEGNO",
-        "PLASTICA"
+        "sport",
+        "legno",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -7831,9 +7831,9 @@
       "default_height": 20,
       "default_hint_delay": 30,
       "tags": [
-        "FUMO",
-        "LEGNO",
-        "MISTERO"
+        "fumo",
+        "legno",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -7846,9 +7846,9 @@
       "default_height": 35,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA",
-        "ITALIA"
+        "cibo",
+        "cucina",
+        "italia"
       ],
       "style": "cartoon"
     },
@@ -7861,8 +7861,8 @@
       "default_height": 35,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -7875,9 +7875,9 @@
       "default_height": 55,
       "default_hint_delay": 25,
       "tags": [
-        "CARTA",
-        "STRUMENTO",
-        "SALUTE",
+        "carta",
+        "strumento",
+        "salute",
         "piccolo"
       ],
       "style": "cartoon"
@@ -7891,9 +7891,9 @@
       "default_height": 60,
       "default_hint_delay": 30,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "TECH",
+        "plastica",
+        "strumento",
+        "tech",
         "piccolo"
       ],
       "style": "cartoon"
@@ -7907,9 +7907,9 @@
       "default_height": 40,
       "default_hint_delay": 25,
       "tags": [
-        "ATTREZZO",
-        "METALLO",
-        "LAVORO"
+        "attrezzo",
+        "metallo",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -7922,8 +7922,8 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "STRUMENTO",
-        "METALLO"
+        "strumento",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -7936,10 +7936,10 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "MUSICA",
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "PICCOLO"
+        "musica",
+        "tecnologia",
+        "elettronica",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -7951,9 +7951,9 @@
       "default_radius": 20,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "PREZIOSO"
+        "strumento",
+        "metallo",
+        "prezioso"
       ],
       "style": "cartoon"
     },
@@ -7966,10 +7966,10 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "NATURA",
-        "AUTUNNO",
-        "CIBO",
-        "PICCOLO"
+        "natura",
+        "autunno",
+        "cibo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -7995,8 +7995,8 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "CINEMA"
+        "cibo",
+        "cinema"
       ],
       "style": "cartoon"
     },
@@ -8009,10 +8009,10 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "CUCINA",
-        "CARTA",
-        "CONTENITORE"
+        "cibo",
+        "cucina",
+        "carta",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -8025,10 +8025,10 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "VETRO",
-        "BEVANDA",
-        "MAGIA",
-        "VIOLA"
+        "vetro",
+        "bevanda",
+        "magia",
+        "viola"
       ],
       "style": "cartoon"
     },
@@ -8040,9 +8040,9 @@
       "default_radius": 20,
       "default_hint_delay": 35,
       "tags": [
-        "MAGIA",
-        "ALCHIMIA",
-        "VETRO"
+        "magia",
+        "alchimia",
+        "vetro"
       ],
       "style": "cartoon"
     },
@@ -8055,8 +8055,8 @@
       "default_height": 45,
       "default_hint_delay": 30,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -8068,8 +8068,8 @@
       "default_radius": 20,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "DOLCE"
+        "cibo",
+        "dolce"
       ],
       "style": "cartoon"
     },
@@ -8081,9 +8081,9 @@
       "default_radius": 25,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "CUCINA",
-        "LEGNO"
+        "cibo",
+        "cucina",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -8096,9 +8096,9 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "UFFICIO"
+        "tecnologia",
+        "elettronica",
+        "ufficio"
       ],
       "style": "cartoon"
     },
@@ -8128,9 +8128,9 @@
       "default_height": 45,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "CINEMA",
-        "ANTICO"
+        "tecnologia",
+        "cinema",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -8143,9 +8143,9 @@
       "default_height": 30,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "CINEMA",
-        "ELETTRONICA"
+        "tecnologia",
+        "cinema",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -8158,9 +8158,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "NATURA",
-        "AUTUNNO",
-        "CIBO"
+        "natura",
+        "autunno",
+        "cibo"
       ],
       "style": "cartoon"
     },
@@ -8173,9 +8173,9 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "CARTA",
-        "PICCOLO"
+        "gioco",
+        "carta",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -8188,9 +8188,9 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "EQUIPAGGIAMENTO",
-        "CUOIO",
-        "CACCIA"
+        "equipaggiamento",
+        "cuoio",
+        "caccia"
       ],
       "style": "cartoon"
     },
@@ -8203,9 +8203,9 @@
       "default_height": 35,
       "default_hint_delay": 35,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "ANTICO"
+        "audio",
+        "tecnologia",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -8218,9 +8218,9 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "audio",
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -8233,9 +8233,9 @@
       "default_height": 30,
       "default_hint_delay": 30,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "audio",
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -8248,9 +8248,9 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "SICUREZZA"
+        "audio",
+        "tecnologia",
+        "sicurezza"
       ],
       "style": "cartoon"
     },
@@ -8263,8 +8263,8 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -8277,10 +8277,10 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "SICUREZZA"
+        "audio",
+        "tecnologia",
+        "elettronica",
+        "sicurezza"
       ],
       "style": "cartoon"
     },
@@ -8293,9 +8293,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "VESTIARIO",
-        "AUTUNNO",
-        "PLASTICA"
+        "vestiario",
+        "autunno",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -8308,9 +8308,9 @@
       "default_height": 15,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "DATI"
+        "tecnologia",
+        "elettronica",
+        "dati"
       ],
       "style": "cartoon"
     },
@@ -8323,8 +8323,8 @@
       "default_height": 35,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -8337,9 +8337,9 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "PLASTICA",
-        "VEICOLO",
-        "TECH",
+        "plastica",
+        "veicolo",
+        "tech",
         "medio"
       ],
       "style": "cartoon"
@@ -8353,9 +8353,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "PICCOLO",
-        "DECORAZIONE"
+        "natale",
+        "piccolo",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -8368,9 +8368,9 @@
       "default_height": 20,
       "default_hint_delay": 25,
       "tags": [
-        "STRUMENTO",
-        "SPORT",
-        "CONTENITORE"
+        "strumento",
+        "sport",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -8383,10 +8383,10 @@
       "default_height": 80,
       "default_hint_delay": 30,
       "tags": [
-        "ARMA",
-        "METALLO",
-        "OCCULTO",
-        "MACABRO"
+        "arma",
+        "metallo",
+        "occulto",
+        "macabro"
       ],
       "style": "cartoon"
     },
@@ -8399,9 +8399,9 @@
       "default_height": 65,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "ATTREZZO",
-        "PICCOLO"
+        "inverno",
+        "attrezzo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -8414,9 +8414,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "CIBO",
-        "PICCOLO"
+        "inverno",
+        "cibo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -8428,9 +8428,9 @@
       "default_radius": 30,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "PLASTICA"
+        "tecnologia",
+        "elettronica",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -8443,9 +8443,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "MORBIDO",
-        "VESTIARIO"
+        "inverno",
+        "morbido",
+        "vestiario"
       ],
       "style": "cartoon"
     },
@@ -8458,8 +8458,8 @@
       "default_height": 45,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "TECNOLOGIA"
+        "sport",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -8472,8 +8472,8 @@
       "default_height": 30,
       "default_hint_delay": 25,
       "tags": [
-        "EQUIPAGGIAMENTO",
-        "SPORT"
+        "equipaggiamento",
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -8485,8 +8485,8 @@
       "default_radius": 22,
       "default_hint_delay": 10,
       "tags": [
-        "GIOCO",
-        "PLASTICA"
+        "gioco",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -8499,9 +8499,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "PLASTICA",
-        "PICCOLO"
+        "gioco",
+        "plastica",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -8513,8 +8513,8 @@
       "default_radius": 22,
       "default_hint_delay": 15,
       "tags": [
-        "SPORT",
-        "PALLA"
+        "sport",
+        "palla"
       ],
       "style": "cartoon"
     },
@@ -8527,9 +8527,9 @@
       "default_height": 55,
       "default_hint_delay": 45,
       "tags": [
-        "METALLO",
-        "STRUMENTO",
-        "TECH",
+        "metallo",
+        "strumento",
+        "tech",
         "grande"
       ],
       "style": "cartoon"
@@ -8543,9 +8543,9 @@
       "default_height": 50,
       "default_hint_delay": 30,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "TECH",
+        "plastica",
+        "strumento",
+        "tech",
         "piccolo"
       ],
       "style": "cartoon"
@@ -8588,9 +8588,9 @@
       "default_height": 70,
       "default_hint_delay": 35,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "SALUTE",
+        "plastica",
+        "strumento",
+        "salute",
         "medio"
       ],
       "style": "cartoon"
@@ -8604,8 +8604,8 @@
       "default_height": 30,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -8618,9 +8618,9 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "VESTIARIO",
-        "MORBIDO"
+        "natale",
+        "vestiario",
+        "morbido"
       ],
       "style": "cartoon"
     },
@@ -8633,9 +8633,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "PICCOLO",
-        "DECORAZIONE"
+        "natale",
+        "piccolo",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -8648,9 +8648,9 @@
       "default_height": 70,
       "default_hint_delay": 35,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "TECH",
+        "plastica",
+        "strumento",
+        "tech",
         "medio"
       ],
       "style": "cartoon"
@@ -8664,9 +8664,9 @@
       "default_height": 70,
       "default_hint_delay": 25,
       "tags": [
+        "tecnologia",
         "comunicazione",
-        "metallo",
-        "tecnologia"
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -8679,7 +8679,7 @@
       "default_height": 10,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO"
+        "cibo"
       ],
       "style": "cartoon"
     },
@@ -8692,9 +8692,9 @@
       "default_height": 25,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "UFFICIO"
+        "tecnologia",
+        "elettronica",
+        "ufficio"
       ],
       "style": "cartoon"
     },
@@ -8707,9 +8707,9 @@
       "default_height": 65,
       "default_hint_delay": 40,
       "tags": [
-        "NATURA",
-        "GIARDINO",
-        "LEGNO"
+        "natura",
+        "giardino",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -8722,9 +8722,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "ATTREZZO",
-        "METALLO",
-        "LAVORO"
+        "attrezzo",
+        "metallo",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -8737,9 +8737,9 @@
       "default_height": 25,
       "default_hint_delay": 20,
       "tags": [
-        "METALLO",
-        "PICCOLO",
-        "LAVORO"
+        "metallo",
+        "piccolo",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -8752,9 +8752,9 @@
       "default_height": 40,
       "default_hint_delay": 40,
       "tags": [
-        "MAGIA",
-        "CARTA",
-        "DATI"
+        "magia",
+        "carta",
+        "dati"
       ],
       "style": "cartoon"
     },
@@ -8767,9 +8767,9 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "NATURA",
-        "PICCOLO"
+        "estate",
+        "natura",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -8781,7 +8781,7 @@
       "default_radius": 12,
       "default_hint_delay": 35,
       "tags": [
-        "NATURA"
+        "natura"
       ],
       "style": "cartoon"
     },
@@ -8794,9 +8794,9 @@
       "default_height": 55,
       "default_hint_delay": 45,
       "tags": [
-        "TECNOLOGIA",
-        "DATI",
-        "ELETTRONICA"
+        "tecnologia",
+        "dati",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -8823,9 +8823,9 @@
       "default_height": 40,
       "default_hint_delay": 50,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "MARE"
+        "strumento",
+        "metallo",
+        "mare"
       ],
       "style": "cartoon"
     },
@@ -8838,10 +8838,10 @@
       "default_height": 45,
       "default_hint_delay": 40,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "ANTICO",
-        "VIAGGIO"
+        "strumento",
+        "metallo",
+        "antico",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -8853,9 +8853,9 @@
       "default_radius": 30,
       "default_hint_delay": 30,
       "tags": [
-        "ARMA",
-        "DIFESA",
-        "LEGNO"
+        "arma",
+        "difesa",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -8868,9 +8868,9 @@
       "default_height": 30,
       "default_hint_delay": 40,
       "tags": [
-        "ARREDO",
-        "VETRO",
-        "COLLEZIONE"
+        "arredo",
+        "vetro",
+        "collezione"
       ],
       "style": "cartoon"
     },
@@ -8882,10 +8882,10 @@
       "default_radius": 35,
       "default_hint_delay": 50,
       "tags": [
-        "STRUMENTO",
-        "LEGNO",
-        "METALLO",
-        "VIAGGIO"
+        "strumento",
+        "legno",
+        "metallo",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -8898,9 +8898,9 @@
       "default_height": 45,
       "default_hint_delay": 25,
       "tags": [
-        "CIBO",
-        "VETRO",
-        "CUCINA"
+        "cibo",
+        "vetro",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -8912,8 +8912,8 @@
       "default_radius": 15,
       "default_hint_delay": 20,
       "tags": [
-        "SPORT",
-        "GIOCO"
+        "sport",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -8926,9 +8926,9 @@
       "default_height": 65,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "PLASTICA",
-        "CONTENITORE"
+        "sport",
+        "plastica",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -8941,8 +8941,8 @@
       "default_height": 45,
       "default_hint_delay": 30,
       "tags": [
-        "VETRO",
-        "STRUMENTO",
+        "vetro",
+        "strumento",
         "piccolo"
       ],
       "style": "cartoon"
@@ -8956,8 +8956,8 @@
       "default_height": 20,
       "default_hint_delay": 35,
       "tags": [
-        "SPORT",
-        "LEGNO"
+        "sport",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -8970,9 +8970,9 @@
       "default_height": 40,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "MISTERO"
+        "strumento",
+        "metallo",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -8985,9 +8985,9 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "GIOCO",
-        "VESTIARIO"
+        "inverno",
+        "gioco",
+        "vestiario"
       ],
       "style": "cartoon"
     },
@@ -9000,9 +9000,9 @@
       "default_height": 75,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "METALLO",
-        "GIOCO"
+        "inverno",
+        "metallo",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -9015,8 +9015,8 @@
       "default_height": 85,
       "default_hint_delay": 35,
       "tags": [
-        "SPORT",
-        "TECNOLOGIA"
+        "sport",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -9028,9 +9028,9 @@
       "default_radius": 25,
       "default_hint_delay": 50,
       "tags": [
-        "MAGIA",
-        "CRISTALLO",
-        "MISTERO"
+        "magia",
+        "cristallo",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -9042,9 +9042,9 @@
       "default_radius": 25,
       "default_hint_delay": 50,
       "tags": [
-        "MAGIA",
-        "MINERALE",
-        "MISTERO"
+        "magia",
+        "minerale",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -9056,10 +9056,10 @@
       "default_radius": 25,
       "default_hint_delay": 40,
       "tags": [
-        "OSSO",
-        "MACABRO",
-        "OCCULTO",
-        "SIMBOLO"
+        "osso",
+        "macabro",
+        "occulto",
+        "simbolo"
       ],
       "style": "cartoon"
     },
@@ -9072,9 +9072,9 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "EQUIPAGGIAMENTO",
-        "RIPOSO",
-        "STOFFA"
+        "equipaggiamento",
+        "riposo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -9086,9 +9086,9 @@
       "default_radius": 20,
       "default_hint_delay": 30,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "audio",
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -9101,9 +9101,9 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "STRUMENTO",
-        "ELETTRONICA"
+        "tecnologia",
+        "strumento",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -9116,10 +9116,10 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "INVERNO",
-        "PLASTICA",
-        "DECORAZIONE"
+        "natale",
+        "inverno",
+        "plastica",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -9132,9 +9132,9 @@
       "default_height": 75,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "ATTREZZO",
-        "METALLO"
+        "inverno",
+        "attrezzo",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -9147,9 +9147,9 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "NATURA",
-        "PICCOLO"
+        "inverno",
+        "natura",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -9162,9 +9162,9 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "NATURA",
-        "PICCOLO"
+        "inverno",
+        "natura",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -9177,9 +9177,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "PICCOLO",
-        "DECORAZIONE"
+        "inverno",
+        "piccolo",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -9191,8 +9191,8 @@
       "default_radius": 25,
       "default_hint_delay": 25,
       "tags": [
-        "SPORT",
-        "PALLA"
+        "sport",
+        "palla"
       ],
       "style": "cartoon"
     },
@@ -9205,9 +9205,9 @@
       "default_height": 40,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "METALLO",
-        "CONTENITORE"
+        "cibo",
+        "metallo",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -9220,8 +9220,8 @@
       "default_height": 60,
       "default_hint_delay": 25,
       "tags": [
-        "lavoro",
-        "tecnologia"
+        "tecnologia",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -9234,9 +9234,9 @@
       "default_height": 35,
       "default_hint_delay": 25,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "TECH",
+        "plastica",
+        "strumento",
+        "tech",
         "piccolo"
       ],
       "style": "cartoon"
@@ -9250,9 +9250,9 @@
       "default_height": 65,
       "default_hint_delay": 45,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "ELETTRONICA"
+        "strumento",
+        "metallo",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -9265,9 +9265,9 @@
       "default_height": 10,
       "default_hint_delay": 35,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "audio",
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -9280,9 +9280,9 @@
       "default_height": 85,
       "default_hint_delay": 40,
       "tags": [
-        "ARMA",
-        "LEGNO",
-        "ANTICO"
+        "arma",
+        "legno",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -9295,9 +9295,9 @@
       "default_height": 55,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "PREZIOSO",
-        "CARTA"
+        "magia",
+        "prezioso",
+        "carta"
       ],
       "style": "cartoon"
     },
@@ -9310,9 +9310,9 @@
       "default_height": 35,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "CARTA",
-        "MISTERO"
+        "magia",
+        "carta",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -9325,9 +9325,9 @@
       "default_height": 45,
       "default_hint_delay": 50,
       "tags": [
-        "MAGIA",
-        "CARTA",
-        "STOFFA"
+        "magia",
+        "carta",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -9340,10 +9340,10 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "GIOCATTOLO",
-        "PICCOLO",
-        "LEGNO"
+        "gioco",
+        "giocattolo",
+        "piccolo",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -9356,8 +9356,8 @@
       "default_height": 10,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO",
-        "METALLO"
+        "strumento",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -9370,8 +9370,8 @@
       "default_height": 8,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO",
-        "PLASTICA"
+        "strumento",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -9384,8 +9384,8 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "TECNOLOGIA"
+        "sport",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -9398,9 +9398,9 @@
       "default_height": 50,
       "default_hint_delay": 30,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "DATI"
+        "tecnologia",
+        "elettronica",
+        "dati"
       ],
       "style": "cartoon"
     },
@@ -9413,9 +9413,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "NATURA",
-        "PICCOLO"
+        "estate",
+        "natura",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -9474,8 +9474,8 @@
       "default_radius": 20,
       "default_hint_delay": 40,
       "tags": [
-        "MEDICINA",
-        "STRUMENTO"
+        "medicina",
+        "strumento"
       ],
       "style": "cartoon"
     },
@@ -9502,9 +9502,9 @@
       "default_radius": 22,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "SPORT"
+        "strumento",
+        "metallo",
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -9516,9 +9516,9 @@
       "default_radius": 18,
       "default_hint_delay": 35,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "SPORT"
+        "strumento",
+        "metallo",
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -9531,9 +9531,9 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "VESTIARIO",
-        "LEGNO"
+        "estate",
+        "vestiario",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -9546,9 +9546,9 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "STRUMENTO",
-        "TECNOLOGIA",
-        "METALLO"
+        "strumento",
+        "tecnologia",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -9561,7 +9561,7 @@
       "default_height": 10,
       "default_hint_delay": 10,
       "tags": [
-        "CIBO"
+        "cibo"
       ],
       "style": "cartoon"
     },
@@ -9574,9 +9574,9 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "CONTENITORE",
-        "PELLE",
-        "VIAGGIO"
+        "contenitore",
+        "pelle",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -9589,9 +9589,9 @@
       "default_height": 65,
       "default_hint_delay": 35,
       "tags": [
-        "CONTENITORE",
-        "PLASTICA",
-        "VIAGGIO"
+        "contenitore",
+        "plastica",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -9604,9 +9604,9 @@
       "default_height": 25,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "VESTIARIO",
-        "MORBIDO"
+        "estate",
+        "vestiario",
+        "morbido"
       ],
       "style": "cartoon"
     },
@@ -9619,9 +9619,9 @@
       "default_height": 20,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "VESTIARIO",
-        "PICCOLO"
+        "estate",
+        "vestiario",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -9633,9 +9633,9 @@
       "default_radius": 20,
       "default_hint_delay": 35,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "ANTICO"
+        "strumento",
+        "metallo",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -9661,8 +9661,8 @@
       "default_height": 15,
       "default_hint_delay": 20,
       "tags": [
-        "ACCESSORIO",
-        "PLASTICA"
+        "accessorio",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -9675,8 +9675,8 @@
       "default_height": 20,
       "default_hint_delay": 30,
       "tags": [
-        "VESTIARIO",
-        "METALLO"
+        "vestiario",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -9689,9 +9689,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "PLASTICA",
-        "PICCOLO"
+        "estate",
+        "plastica",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -9704,8 +9704,8 @@
       "default_height": 40,
       "default_hint_delay": 25,
       "tags": [
-        "CURA",
-        "PLASTICA"
+        "cura",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -9718,9 +9718,9 @@
       "default_height": 85,
       "default_hint_delay": 40,
       "tags": [
-        "SPORT",
-        "TECNOLOGIA",
-        "PLASTICA"
+        "sport",
+        "tecnologia",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -9733,9 +9733,9 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "STOFFA",
-        "ABBIGLIAMENTO",
-        "SALUTE",
+        "stoffa",
+        "abbigliamento",
+        "salute",
         "piccolo"
       ],
       "style": "cartoon"
@@ -9749,8 +9749,8 @@
       "default_height": 55,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -9762,8 +9762,8 @@
       "default_radius": 15,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "ASIA"
+        "cibo",
+        "asia"
       ],
       "style": "cartoon"
     },
@@ -9776,8 +9776,8 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -9790,9 +9790,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "PLASTICA",
-        "GIOCO"
+        "estate",
+        "plastica",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -9805,9 +9805,9 @@
       "default_height": 15,
       "default_hint_delay": 25,
       "tags": [
-        "SPORT",
-        "PLASTICA",
-        "SICUREZZA"
+        "sport",
+        "plastica",
+        "sicurezza"
       ],
       "style": "cartoon"
     },
@@ -9820,8 +9820,8 @@
       "default_height": 12,
       "default_hint_delay": 35,
       "tags": [
-        "STRUMENTO",
-        "METALLO"
+        "strumento",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -9834,9 +9834,9 @@
       "default_height": 45,
       "default_hint_delay": 45,
       "tags": [
-        "MEDICINA",
-        "STRUMENTO",
-        "PERICOLO"
+        "medicina",
+        "strumento",
+        "pericolo"
       ],
       "style": "cartoon"
     },
@@ -9849,9 +9849,9 @@
       "default_height": 40,
       "default_hint_delay": 30,
       "tags": [
-        "PLASTICA",
-        "CONTENITORE",
-        "TECH",
+        "plastica",
+        "contenitore",
+        "tech",
         "medio"
       ],
       "style": "cartoon"
@@ -9865,8 +9865,8 @@
       "default_height": 25,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -9879,8 +9879,8 @@
       "default_height": 30,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "CUCINA"
+        "cibo",
+        "cucina"
       ],
       "style": "cartoon"
     },
@@ -9893,9 +9893,9 @@
       "default_height": 40,
       "default_hint_delay": 25,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "TECH",
+        "plastica",
+        "strumento",
+        "tech",
         "piccolo"
       ],
       "style": "cartoon"
@@ -9908,9 +9908,9 @@
       "default_radius": 30,
       "default_hint_delay": 25,
       "tags": [
-        "MUSICA",
-        "LEGNO",
-        "PICCOLO"
+        "musica",
+        "legno",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -9923,9 +9923,9 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "ATTREZZO",
-        "PLASTICA",
-        "LAVORO"
+        "attrezzo",
+        "plastica",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -9938,9 +9938,9 @@
       "default_height": 45,
       "default_hint_delay": 40,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "audio",
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -9953,9 +9953,9 @@
       "default_height": 45,
       "default_hint_delay": 50,
       "tags": [
-        "MAGIA",
-        "CARTA",
-        "MISTERO"
+        "magia",
+        "carta",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -9968,10 +9968,10 @@
       "default_height": 65,
       "default_hint_delay": 35,
       "tags": [
-        "CARTE_DA_GIOCO",
-        "CARTA",
-        "OCCULTO",
-        "MISTERO"
+        "carte_da_gioco",
+        "carta",
+        "occulto",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -9984,9 +9984,9 @@
       "default_height": 50,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "CARTA",
-        "CONTENITORE"
+        "magia",
+        "carta",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -9999,8 +9999,8 @@
       "default_height": 20,
       "default_hint_delay": 15,
       "tags": [
-        "CIBO",
-        "BEVANDA"
+        "cibo",
+        "bevanda"
       ],
       "style": "cartoon"
     },
@@ -10013,8 +10013,8 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "GIOCO",
-        "PELUCHE"
+        "gioco",
+        "peluche"
       ],
       "style": "cartoon"
     },
@@ -10027,9 +10027,9 @@
       "default_height": 15,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "VIAGGIO"
+        "strumento",
+        "metallo",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -10042,9 +10042,9 @@
       "default_height": 60,
       "default_hint_delay": 45,
       "tags": [
-        "OTTICA",
-        "TECNOLOGIA",
-        "SCIENZA"
+        "ottica",
+        "tecnologia",
+        "scienza"
       ],
       "style": "cartoon"
     },
@@ -10072,9 +10072,9 @@
       "default_height": 15,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "VIAGGIO"
+        "strumento",
+        "metallo",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -10087,9 +10087,9 @@
       "default_height": 45,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "CINEMA",
-        "ELETTRONICA"
+        "tecnologia",
+        "cinema",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -10102,9 +10102,9 @@
       "default_height": 65,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "PLASTICA",
-        "CONTENITORE"
+        "sport",
+        "plastica",
+        "contenitore"
       ],
       "style": "cartoon"
     },
@@ -10117,8 +10117,8 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "STRUMENTO"
+        "sport",
+        "strumento"
       ],
       "style": "cartoon"
     },
@@ -10131,8 +10131,8 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "SPORT",
-        "TECNOLOGIA"
+        "sport",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -10145,8 +10145,8 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO",
-        "METALLO"
+        "strumento",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -10159,9 +10159,9 @@
       "default_height": 55,
       "default_hint_delay": 45,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "TECNOLOGIA"
+        "strumento",
+        "metallo",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -10174,8 +10174,8 @@
       "default_height": 40,
       "default_hint_delay": 30,
       "tags": [
-        "TECNOLOGIA",
-        "STRUMENTO"
+        "tecnologia",
+        "strumento"
       ],
       "style": "cartoon"
     },
@@ -10188,9 +10188,9 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "VETRO",
-        "TECNOLOGIA"
+        "strumento",
+        "vetro",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -10203,10 +10203,10 @@
       "default_height": 35,
       "default_hint_delay": 25,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "ANTICO",
-        "METALLO"
+        "tecnologia",
+        "elettronica",
+        "antico",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -10233,9 +10233,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "LEGNO",
-        "LAVORO",
-        "DECORAZIONE"
+        "legno",
+        "lavoro",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -10248,8 +10248,8 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "CURA",
-        "PLASTICA"
+        "cura",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -10262,8 +10262,8 @@
       "default_height": 35,
       "default_hint_delay": 25,
       "tags": [
-        "CURA",
-        "PLASTICA"
+        "cura",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -10276,9 +10276,9 @@
       "default_height": 75,
       "default_hint_delay": 50,
       "tags": [
-        "MAGIA",
-        "LEGNO",
-        "ANTICO"
+        "magia",
+        "legno",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -10291,9 +10291,9 @@
       "default_height": 65,
       "default_hint_delay": 35,
       "tags": [
-        "PLASTICA",
-        "STRUMENTO",
-        "SALUTE",
+        "plastica",
+        "strumento",
+        "salute",
         "piccolo"
       ],
       "style": "cartoon"
@@ -10321,9 +10321,9 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCATTOLO",
-        "PLASTICA",
-        "PICCOLO"
+        "giocattolo",
+        "plastica",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -10336,9 +10336,9 @@
       "default_height": 65,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCATTOLO",
-        "METALLO",
-        "PICCOLO"
+        "giocattolo",
+        "metallo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -10351,9 +10351,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCATTOLO",
-        "PLASTICA",
-        "PICCOLO"
+        "giocattolo",
+        "plastica",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -10380,9 +10380,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "lavoro",
+        "sicurezza",
         "plastica",
-        "sicurezza"
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -10616,9 +10616,9 @@
       "default_height": 65,
       "default_hint_delay": 35,
       "tags": [
-        "METALLO",
-        "STRUMENTO",
-        "SALUTE",
+        "metallo",
+        "strumento",
+        "salute",
         "medio"
       ],
       "style": "cartoon"
@@ -10632,9 +10632,9 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "CARTA",
-        "VIAGGIO",
-        "MISTERO"
+        "carta",
+        "viaggio",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -10647,9 +10647,9 @@
       "default_height": 55,
       "default_hint_delay": 40,
       "tags": [
-        "PREZIOSO",
-        "METALLO",
-        "SPORT"
+        "prezioso",
+        "metallo",
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -10662,9 +10662,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "CIBO",
-        "DECORAZIONE"
+        "estate",
+        "cibo",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -10691,9 +10691,9 @@
       "default_height": 60,
       "default_hint_delay": 30,
       "tags": [
-        "MUSICA",
-        "METALLO",
-        "STRUMENTO"
+        "musica",
+        "metallo",
+        "strumento"
       ],
       "style": "cartoon"
     },
@@ -10706,10 +10706,10 @@
       "default_height": 40,
       "default_hint_delay": 25,
       "tags": [
-        "MUSICA",
-        "METALLO",
-        "STRUMENTO",
-        "PICCOLO"
+        "musica",
+        "metallo",
+        "strumento",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -10722,10 +10722,10 @@
       "default_height": 20,
       "default_hint_delay": 15,
       "tags": [
-        "MUSICA",
-        "METALLO",
-        "STRUMENTO",
-        "PICCOLO"
+        "musica",
+        "metallo",
+        "strumento",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -10738,9 +10738,9 @@
       "default_height": 40,
       "default_hint_delay": 45,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "audio",
+        "tecnologia",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -10753,10 +10753,10 @@
       "default_height": 45,
       "default_hint_delay": 45,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "ANTICO",
-        "PLASTICA"
+        "tecnologia",
+        "elettronica",
+        "antico",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -10769,10 +10769,10 @@
       "default_height": 45,
       "default_hint_delay": 45,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "ANTICO",
-        "UFFICIO"
+        "tecnologia",
+        "elettronica",
+        "antico",
+        "ufficio"
       ],
       "style": "cartoon"
     },
@@ -10785,9 +10785,9 @@
       "default_height": 45,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "UFFICIO",
-        "ANTICO"
+        "tecnologia",
+        "ufficio",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -10814,8 +10814,8 @@
       "default_height": 65,
       "default_hint_delay": 20,
       "tags": [
-        "VESTIARIO",
-        "STOFFA"
+        "vestiario",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -10828,9 +10828,9 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "DATI",
-        "TECNOLOGIA",
-        "PLASTICA"
+        "dati",
+        "tecnologia",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -10843,9 +10843,9 @@
       "default_height": 15,
       "default_hint_delay": 30,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "DATI"
+        "tecnologia",
+        "elettronica",
+        "dati"
       ],
       "style": "cartoon"
     },
@@ -10874,9 +10874,9 @@
       "default_height": 25,
       "default_hint_delay": 30,
       "tags": [
-        "DATI",
-        "CINEMA",
-        "PLASTICA"
+        "dati",
+        "cinema",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -10889,9 +10889,9 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "MAGIA",
-        "ALCHIMIA",
-        "VETRO"
+        "magia",
+        "alchimia",
+        "vetro"
       ],
       "style": "cartoon"
     },
@@ -10904,9 +10904,9 @@
       "default_height": 25,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "GIOCO"
+        "tecnologia",
+        "elettronica",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -10919,9 +10919,9 @@
       "default_height": 65,
       "default_hint_delay": 35,
       "tags": [
-        "MUSICA",
-        "LEGNO",
-        "CULTURA"
+        "musica",
+        "legno",
+        "cultura"
       ],
       "style": "cartoon"
     },
@@ -10933,9 +10933,9 @@
       "default_radius": 15,
       "default_hint_delay": 15,
       "tags": [
-        "MUSICA",
-        "BIOLOGICO",
-        "PICCOLO"
+        "musica",
+        "biologico",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -10948,10 +10948,10 @@
       "default_height": 45,
       "default_hint_delay": 35,
       "tags": [
-        "AUDIO",
-        "ELETTRONICA",
-        "TECNOLOGIA",
-        "PICCOLO"
+        "audio",
+        "elettronica",
+        "tecnologia",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -10963,8 +10963,8 @@
       "default_radius": 20,
       "default_hint_delay": 15,
       "tags": [
-        "SPORT",
-        "PALLA"
+        "sport",
+        "palla"
       ],
       "style": "cartoon"
     },
@@ -10977,9 +10977,9 @@
       "default_height": 45,
       "default_hint_delay": 50,
       "tags": [
-        "MAGIA",
-        "STOFFA",
-        "MISTERO"
+        "magia",
+        "stoffa",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -10992,8 +10992,8 @@
       "default_height": 55,
       "default_hint_delay": 50,
       "tags": [
-        "MAGIA",
-        "MISTERO"
+        "magia",
+        "mistero"
       ],
       "style": "cartoon"
     },
@@ -11006,9 +11006,9 @@
       "default_height": 55,
       "default_hint_delay": 50,
       "tags": [
-        "MAGIA",
-        "LEGNO",
-        "ANTICO"
+        "magia",
+        "legno",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -11021,9 +11021,9 @@
       "default_height": 60,
       "default_hint_delay": 45,
       "tags": [
-        "MAGIA",
-        "LEGNO",
-        "ANTICO"
+        "magia",
+        "legno",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -11036,9 +11036,9 @@
       "default_height": 30,
       "default_hint_delay": 45,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "GIOCO"
+        "tecnologia",
+        "elettronica",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -11051,10 +11051,10 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "AUDIO",
-        "TECNOLOGIA",
-        "SICUREZZA",
-        "VIAGGIO"
+        "audio",
+        "tecnologia",
+        "sicurezza",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -11067,8 +11067,8 @@
       "default_height": 10,
       "default_hint_delay": 15,
       "tags": [
-        "CURA",
-        "VIAGGIO"
+        "cura",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -11095,9 +11095,9 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "ESTATE",
-        "CIBO",
-        "NATURA"
+        "estate",
+        "cibo",
+        "natura"
       ],
       "style": "cartoon"
     },
@@ -11109,9 +11109,9 @@
       "default_radius": 15,
       "default_hint_delay": 30,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "FOTO"
+        "tecnologia",
+        "elettronica",
+        "foto"
       ],
       "style": "cartoon"
     },
@@ -11124,9 +11124,9 @@
       "default_height": 30,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "UFFICIO"
+        "tecnologia",
+        "elettronica",
+        "ufficio"
       ],
       "style": "cartoon"
     },
@@ -11138,8 +11138,8 @@
       "default_radius": 25,
       "default_hint_delay": 25,
       "tags": [
-        "SPORT",
-        "METALLO"
+        "sport",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -11152,9 +11152,9 @@
       "default_height": 90,
       "default_hint_delay": 35,
       "tags": [
-        "METALLO",
-        "STRUMENTO",
-        "TECH",
+        "metallo",
+        "strumento",
+        "tech",
         "medio"
       ],
       "style": "cartoon"
@@ -11168,8 +11168,8 @@
       "default_height": 15,
       "default_hint_delay": 15,
       "tags": [
-        "STRUMENTO",
-        "PLASTICA"
+        "strumento",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -11181,9 +11181,9 @@
       "default_radius": 12,
       "default_hint_delay": 25,
       "tags": [
-        "SPORT",
-        "METALLO",
-        "AUDIO"
+        "sport",
+        "metallo",
+        "audio"
       ],
       "style": "cartoon"
     },
@@ -11196,9 +11196,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "LEGNO",
-        "AUTUNNO",
-        "DECORAZIONE"
+        "legno",
+        "autunno",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -11211,9 +11211,9 @@
       "default_height": 40,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "DATI"
+        "tecnologia",
+        "elettronica",
+        "dati"
       ],
       "style": "cartoon"
     },
@@ -11226,9 +11226,9 @@
       "default_height": 45,
       "default_hint_delay": 40,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA",
-        "DATI"
+        "tecnologia",
+        "elettronica",
+        "dati"
       ],
       "style": "cartoon"
     },
@@ -11241,8 +11241,8 @@
       "default_height": 140,
       "default_hint_delay": 30,
       "tags": [
-        "natura",
-        "tecnologia"
+        "tecnologia",
+        "natura"
       ],
       "style": "cartoon"
     },
@@ -11269,9 +11269,9 @@
       "default_height": 65,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "METALLO",
-        "PICCOLO"
+        "inverno",
+        "metallo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -11284,9 +11284,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "METALLO",
-        "DECORAZIONE"
+        "inverno",
+        "metallo",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -11299,9 +11299,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "VESTIARIO",
-        "MORBIDO"
+        "inverno",
+        "vestiario",
+        "morbido"
       ],
       "style": "cartoon"
     },
@@ -11314,9 +11314,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "VESTIARIO",
-        "MORBIDO"
+        "inverno",
+        "vestiario",
+        "morbido"
       ],
       "style": "cartoon"
     },
@@ -11329,9 +11329,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "VESTIARIO",
-        "MORBIDO"
+        "inverno",
+        "vestiario",
+        "morbido"
       ],
       "style": "cartoon"
     },
@@ -11344,9 +11344,9 @@
       "default_height": 70,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "ATTREZZO",
-        "METALLO"
+        "inverno",
+        "attrezzo",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -11359,9 +11359,9 @@
       "default_height": 55,
       "default_hint_delay": 35,
       "tags": [
-        "MAGIA",
-        "VESTIARIO",
-        "STOFFA"
+        "magia",
+        "vestiario",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -11374,10 +11374,10 @@
       "default_height": 60,
       "default_hint_delay": 20,
       "tags": [
-        "ATTREZZO",
-        "METALLO",
-        "LEGNO",
-        "LAVORO"
+        "attrezzo",
+        "metallo",
+        "legno",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -11390,9 +11390,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "PICCOLO",
-        "PLASTICA",
-        "LAVORO"
+        "piccolo",
+        "plastica",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -11405,8 +11405,8 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "LEGNO",
-        "NATURA"
+        "legno",
+        "natura"
       ],
       "style": "cartoon"
     },
@@ -11419,9 +11419,9 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "ATTREZZO",
-        "LEGNO",
-        "LAVORO"
+        "attrezzo",
+        "legno",
+        "lavoro"
       ],
       "style": "cartoon"
     },
@@ -11434,8 +11434,8 @@
       "default_height": 50,
       "default_hint_delay": 35,
       "tags": [
-        "CONTENITORE",
-        "LEGNO"
+        "contenitore",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -11448,9 +11448,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "LEGNO",
-        "GIOCO"
+        "inverno",
+        "legno",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -11463,9 +11463,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "INVERNO",
-        "VESTIARIO",
-        "MORBIDO"
+        "inverno",
+        "vestiario",
+        "morbido"
       ],
       "style": "cartoon"
     },
@@ -11478,9 +11478,9 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "VESTIARIO",
-        "AUTUNNO",
-        "MORBIDO"
+        "vestiario",
+        "autunno",
+        "morbido"
       ],
       "style": "cartoon"
     },
@@ -11493,9 +11493,9 @@
       "default_height": 50,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "DECORAZIONE",
-        "PICCOLO"
+        "natale",
+        "decorazione",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -11508,9 +11508,9 @@
       "default_height": 35,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "METALLO",
-        "PICCOLO"
+        "natale",
+        "metallo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -11523,9 +11523,9 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "METALLO",
-        "DECORAZIONE"
+        "natale",
+        "metallo",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -11538,9 +11538,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "INVERNO",
-        "DECORAZIONE"
+        "natale",
+        "inverno",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -11553,9 +11553,9 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "INVERNO",
-        "DECORAZIONE"
+        "natale",
+        "inverno",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -11568,10 +11568,10 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "NATURA",
-        "PIANTA",
-        "DECORAZIONE"
+        "natale",
+        "natura",
+        "pianta",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -11584,10 +11584,10 @@
       "default_height": 70,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "INVERNO",
-        "DECORAZIONE",
-        "NATURA"
+        "natale",
+        "inverno",
+        "decorazione",
+        "natura"
       ],
       "style": "cartoon"
     },
@@ -11600,9 +11600,9 @@
       "default_height": 55,
       "default_hint_delay": 20,
       "tags": [
-        "NATALE",
-        "INVERNO",
-        "DECORAZIONE"
+        "natale",
+        "inverno",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -11615,9 +11615,9 @@
       "default_height": 30,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "GIOCATTOLO",
-        "PICCOLO"
+        "gioco",
+        "giocattolo",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -12651,7 +12651,11 @@
       "default_detection": "rect",
       "default_width": 30,
       "default_height": 45,
-      "tags": ["rifiuto", "metallo", "medio"],
+      "tags": [
+        "rifiuto",
+        "metallo",
+        "medio"
+      ],
       "style": "cartoon"
     },
     {
@@ -12661,7 +12665,11 @@
       "default_detection": "rect",
       "default_width": 15,
       "default_height": 40,
-      "tags": ["rifiuto", "plastica", "piccolo"],
+      "tags": [
+        "rifiuto",
+        "plastica",
+        "piccolo"
+      ],
       "style": "cartoon"
     },
     {
@@ -12671,7 +12679,11 @@
       "default_detection": "rect",
       "default_width": 35,
       "default_height": 20,
-      "tags": ["rifiuto", "biologico", "piccolo"],
+      "tags": [
+        "rifiuto",
+        "biologico",
+        "piccolo"
+      ],
       "style": "cartoon"
     },
     {
@@ -12681,7 +12693,11 @@
       "default_detection": "rect",
       "default_width": 45,
       "default_height": 35,
-      "tags": ["rifiuto", "pelle", "medio"],
+      "tags": [
+        "rifiuto",
+        "pelle",
+        "medio"
+      ],
       "style": "cartoon"
     },
     {
@@ -12691,7 +12707,11 @@
       "default_detection": "rect",
       "default_width": 65,
       "default_height": 35,
-      "tags": ["rifiuto", "legno", "grande"],
+      "tags": [
+        "rifiuto",
+        "legno",
+        "grande"
+      ],
       "style": "cartoon"
     },
     {
@@ -12701,7 +12721,11 @@
       "default_detection": "rect",
       "default_width": 40,
       "default_height": 40,
-      "tags": ["rifiuto", "plastica", "medio"],
+      "tags": [
+        "rifiuto",
+        "plastica",
+        "medio"
+      ],
       "style": "cartoon"
     },
     {
@@ -12711,7 +12735,11 @@
       "default_detection": "rect",
       "default_width": 45,
       "default_height": 25,
-      "tags": ["rifiuto", "carta", "piccolo"],
+      "tags": [
+        "rifiuto",
+        "carta",
+        "piccolo"
+      ],
       "style": "cartoon"
     },
     {
@@ -12721,7 +12749,11 @@
       "default_detection": "rect",
       "default_width": 55,
       "default_height": 20,
-      "tags": ["rifiuto", "elettronica", "medio"],
+      "tags": [
+        "rifiuto",
+        "elettronica",
+        "medio"
+      ],
       "style": "cartoon"
     },
     {
@@ -12731,7 +12763,11 @@
       "default_detection": "rect",
       "default_width": 70,
       "default_height": 45,
-      "tags": ["rifiuto", "metallo", "grande"],
+      "tags": [
+        "rifiuto",
+        "metallo",
+        "grande"
+      ],
       "style": "cartoon"
     },
     {
@@ -12741,7 +12777,11 @@
       "default_detection": "rect",
       "default_width": 25,
       "default_height": 65,
-      "tags": ["rifiuto", "tessuto", "medio"],
+      "tags": [
+        "rifiuto",
+        "tessuto",
+        "medio"
+      ],
       "style": "cartoon"
     },
     {
@@ -12751,7 +12791,11 @@
       "default_detection": "rect",
       "default_width": 25,
       "default_height": 45,
-      "tags": ["rifiuto", "plastica", "piccolo"],
+      "tags": [
+        "rifiuto",
+        "plastica",
+        "piccolo"
+      ],
       "style": "cartoon"
     },
     {
@@ -12761,7 +12805,11 @@
       "default_detection": "rect",
       "default_width": 50,
       "default_height": 40,
-      "tags": ["rifiuto", "vetro", "medio"],
+      "tags": [
+        "rifiuto",
+        "vetro",
+        "medio"
+      ],
       "style": "cartoon"
     },
     {
@@ -12771,7 +12819,11 @@
       "default_detection": "rect",
       "default_width": 60,
       "default_height": 15,
-      "tags": ["rifiuto", "metallo", "medio"],
+      "tags": [
+        "rifiuto",
+        "metallo",
+        "medio"
+      ],
       "style": "cartoon"
     },
     {
@@ -12781,7 +12833,11 @@
       "default_detection": "rect",
       "default_width": 55,
       "default_height": 55,
-      "tags": ["rifiuto", "carta", "medio"],
+      "tags": [
+        "rifiuto",
+        "carta",
+        "medio"
+      ],
       "style": "cartoon"
     },
     {
@@ -12791,7 +12847,11 @@
       "default_detection": "rect",
       "default_width": 30,
       "default_height": 40,
-      "tags": ["rifiuto", "tessuto", "piccolo"],
+      "tags": [
+        "rifiuto",
+        "tessuto",
+        "piccolo"
+      ],
       "style": "cartoon"
     },
     {
@@ -12801,7 +12861,11 @@
       "default_detection": "rect",
       "default_width": 50,
       "default_height": 30,
-      "tags": ["rifiuto", "metallo", "medio"],
+      "tags": [
+        "rifiuto",
+        "metallo",
+        "medio"
+      ],
       "style": "cartoon"
     }
   ]

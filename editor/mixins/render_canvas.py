@@ -163,8 +163,13 @@ class RenderCanvasMixin:
         from editor.constants import layer_z
         objs  = self.scene_data.get("objects", [])
 
+        def _eff_z(o):
+            # Override per-oggetto se presente, altrimenti default del layer
+            lz = o.get("layer_z")
+            return int(lz) if lz is not None else layer_z(o.get("layer", "objects_mid"))
+
         # Ordinamento indici per Z-index crescente
-        sorted_indices = sorted(range(len(objs)), key=lambda idx: layer_z(objs[idx].get("layer", "objects_mid")))
+        sorted_indices = sorted(range(len(objs)), key=lambda idx: _eff_z(objs[idx]))
 
         if self.show_icons:
             for i in sorted_indices:
@@ -172,10 +177,12 @@ class RenderCanvasMixin:
                 # per permettere il movimento fluido durante il drag senza invalidare l'intera cache.
                 if i in self.selected_indices or i == self.selected_idx:
                     continue
-                
+
                 obj = objs[i]
                 lid = obj.get("layer", "objects_mid")
                 if not self.layer_vis.get(lid, True): continue
+                # Flag editor-only: oggetto nascosto solo nell'editor (engine lo ignora)
+                if obj.get("editor_hidden", False): continue
                 self._draw_obj_icon(obj, target, ox_off, oy_off)
 
     def _draw_obj_icon(self, obj, target, ox_off, oy_off):
@@ -187,6 +194,8 @@ class RenderCanvasMixin:
         ip = self.game_path / cat_e.get("icon", "")
         dt = obj.get("detection_type", "circle")
         ox, oy = obj.get("x", 0), obj.get("y", 0)
+        # obj_scale serve per calcolare il centro corretto del rect (top-left + width*scale/2)
+        obj_scale = obj.get("scale", 1.0)
         if dt == "circle":
             rw = obj.get("width", obj.get("radius", 30) * 2)
             rh = obj.get("height", obj.get("radius", 30) * 2)
@@ -194,10 +203,11 @@ class RenderCanvasMixin:
         else:
             rw = obj.get("width", 60)
             rh = obj.get("height", 60)
-            cx_, cy_ = ox + rw/2, oy + rh/2
+            # Per rect: x/y e' top-left dell'oggetto SCALATO, quindi il centro
+            # va calcolato moltiplicando width per obj_scale prima.
+            cx_, cy_ = ox + rw * obj_scale / 2, oy + rh * obj_scale / 2
 
         MAX_SCREEN_DIM = 2000
-        obj_scale = obj.get("scale", 1.0)
         scr_w = max(8, min(MAX_SCREEN_DIM, int(rw * self.zoom * obj_scale)))
         scr_h = max(8, min(MAX_SCREEN_DIM, int(rh * self.zoom * obj_scale)))
         rot = obj.get("rotation", 0)
@@ -278,7 +288,12 @@ class RenderCanvasMixin:
         """Rendering di poligoni, handles, labels (Ogni frame)."""
         from editor.constants import layer_z
         objs  = self.scene_data.get("objects", [])
-        sorted_indices = sorted(range(len(objs)), key=lambda idx: layer_z(objs[idx].get("layer", "objects_mid")))
+
+        def _eff_z(o):
+            lz = o.get("layer_z")
+            return int(lz) if lz is not None else layer_z(o.get("layer", "objects_mid"))
+
+        sorted_indices = sorted(range(len(objs)), key=lambda idx: _eff_z(objs[idx]))
 
         # --- PRIMO PASSAGGIO DINAMICO: Icone PNG per oggetti selezionati ---
         if self.show_icons:
@@ -365,8 +380,8 @@ class RenderCanvasMixin:
                     label = cid2
                     lcol  = TXT_DIM
                 else:
-                    label  = (f"★ {cid2}" if always else cid2)
-                    if m_trigger: label += " 🕹️"
+                    label  = (f"[FIX] {cid2}" if always else cid2)
+                    if m_trigger: label += " [MG]"
                     if not is_goal: label += " [DECO]"
                     lcol   = ALWAYS_C if always else (TXT_HI if is_goal else TXT_DIM)
                 
@@ -393,13 +408,14 @@ class RenderCanvasMixin:
 
                 has_warp = any(c[0] != 0 or c[1] != 0 for c in coff)
                 if has_warp:
+                    # Anello rosso esterno + cerchio interno bianco: warp handles ben visibili
                     for corner_idx in range(4):
                         cp_x = bx + (rw if corner_idx in (1, 2) else 0) + coff[corner_idx][0]
                         cp_y = by + (rh if corner_idx in (2, 3) else 0) + coff[corner_idx][1]
                         cp_x_rot, cp_y_rot = self._rotate_pt(cp_x, cp_y, rcx, rcy, rot)
                         cp_sx, cp_sy = self._r2s(cp_x_rot, cp_y_rot)
-                        pygame.draw.circle(self.screen, (255, 150, 150), (int(cp_sx), int(cp_sy)), 4)
-                        pygame.draw.circle(self.screen, (255, 255, 255), (int(cp_sx), int(cp_sy)), 4, 1)
+                        pygame.draw.circle(self.screen, (255, 80, 80), (int(cp_sx), int(cp_sy)), 6)
+                        pygame.draw.circle(self.screen, (255, 255, 255), (int(cp_sx), int(cp_sy)), 6, 2)
                 
                 if self._handle_id == "rot":
                     rot_val = obj.get("rotation", 0)
@@ -407,7 +423,73 @@ class RenderCanvasMixin:
                 elif self._handle_id and self._handle_id != "move":
                     cur_w, cur_h = obj.get("width", rw), obj.get("height", rh)
                     _draw_text(self.screen, f"{int(cur_w)}x{int(cur_h)}", "sm", (255,255,255), int(sx)+sw//2+4, int(sy)+sh//2+4)
-                
+
+        # --- GHOST OVERLAY (auto-scatter preview) ------------------------------
+        # Disegna gli oggetti pendenti dell'auto-scatter come icone semi-trasparenti
+        # con bordo giallo, per dare un'anteprima visiva prima di applicare.
+        ghosts = getattr(self, "_scatter_ghosts", [])
+        if ghosts:
+            self._r_scatter_ghosts(ghosts)
+
+
+    def _r_scatter_ghosts(self, ghosts):
+        """Disegna gli oggetti pendenti dell'auto-scatter come ghost gialli."""
+        for g in ghosts:
+            # Un singolo ghost malformato non deve abbattere l'intero render
+            # (e quindi il processo): isola e logga una volta per catalog_id.
+            try:
+                self._r_scatter_ghost_one(g)
+            except Exception:
+                errs = getattr(self, "_ghost_render_errs", None)
+                if errs is None:
+                    errs = self._ghost_render_errs = set()
+                cid = getattr(g, "catalog_id", "?")
+                if cid not in errs:
+                    errs.add(cid)
+                    import logging
+                    logging.getLogger("crash").warning(
+                        "Render ghost fallito per '%s'", cid, exc_info=True
+                    )
+
+    def _r_scatter_ghost_one(self, g):
+        cat = next((c for c in self.catalog if c["id"] == g.catalog_id), None)
+        if not cat or not self.game_path:
+            return
+        ip = self.game_path / cat.get("icon", "")
+        dt = g.detection_type
+        # Usa g.width e g.height (proporzionati ad aspect PNG) anche per circle
+        rw = g.width * g.scale
+        rh = g.height * g.scale
+        if dt == "circle":
+            cx_, cy_ = g.x, g.y
+        else:
+            cx_, cy_ = g.x + rw / 2, g.y + rh / 2
+
+        scr_w = max(8, int(rw * self.zoom))
+        scr_h = max(8, int(rh * self.zoom))
+        sx, sy = self._r2s(cx_, cy_)
+
+        ic = self._load_img(ip, (scr_w, scr_h))
+        if ic:
+            # Versione ghost: alpha ridotto
+            ghost_surf = ic.copy()
+            ghost_surf.set_alpha(150)
+            if g.rotation:
+                ghost_surf = pygame.transform.rotozoom(ghost_surf, -g.rotation, 1.0)
+            if g.flip_x or g.flip_y:
+                ghost_surf = pygame.transform.flip(ghost_surf, g.flip_x, g.flip_y)
+            rect = ghost_surf.get_rect(center=(int(sx), int(sy)))
+            self.screen.blit(ghost_surf, rect)
+
+        # Bordo giallo tratteggiato per identificare il ghost
+        bbox_w = int(rw * self.zoom)
+        bbox_h = int(rh * self.zoom)
+        rect_b = pygame.Rect(int(sx) - bbox_w // 2, int(sy) - bbox_h // 2, bbox_w, bbox_h)
+        pygame.draw.rect(self.screen, (255, 220, 60), rect_b, 2)
+        # Score label
+        from editor.ui.draw import _txt
+        ts = _txt(f"{g.visibility_score:.2f}", "xs", (255, 220, 60))
+        self.screen.blit(ts, (rect_b.right - ts.get_width() - 2, rect_b.top + 2))
 
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -554,7 +636,7 @@ class RenderCanvasMixin:
 
         if dt == "rect":
             w_o, h_o = int(obj.get("width", 60)), int(obj.get("height", 60))
-            label = f"x:{x}  y:{y}    {w_o} × {h_o} px{rot_str}"
+            label = f"x:{x}  y:{y}    {w_o} x {h_o} px{rot_str}"
         else:
             label = f"x:{x}  y:{y}    r:{int(obj.get('radius', 30))} px{rot_str}"
         
@@ -582,7 +664,7 @@ class RenderCanvasMixin:
         pygame.draw.rect(surf, (*ACCENT, 50),  (0, 0, sw, sh))
         pygame.draw.rect(surf, (*ACCENT, 200), (0, 0, sw, sh), 2)
         self.screen.blit(surf, (int(sx1), int(sy1)))
-        dim = f"{round(abs(rx2-rx1))}×{round(abs(ry2-ry1))} px"
+        dim = f"{round(abs(rx2-rx1))}x{round(abs(ry2-ry1))} px"
         s = _txt(dim, "sm", TXT_HI)
         self.screen.blit(s, (int(sx2)+4, int((sy1+sy2)//2)))
 
@@ -650,6 +732,8 @@ class RenderCanvasMixin:
             tools.append((MODE_EFFECT_PLACE, self._TR("tb_effect_btn"), 80))
             
         tools.append((MODE_SCATTER, self._TR("tb_cluster_btn"), 80))
+        # Bottone "Auto-Scatter intelligente" (apre modal, non e' una mode)
+        tools.append(("__scatter_smart__", "AUTO-SCATTER", 110))
         toggles = [
             ("overlay", self.show_overlay, self._TR("tb_overlay_btn"), 80),
             ("grid",    self.show_grid,    self._TR("tb_grid_btn"), 80),
@@ -668,7 +752,10 @@ class RenderCanvasMixin:
     def _toolbar_click(self, mx, my_raw) -> bool:
         for item in self._get_toolbar_layout():
             if _in_rect((mx, my_raw), item['r']):
-                if item['type'] == 'mode':
+                if item['id'] == '__scatter_smart__':
+                    # Apre il modal di auto-scatter intelligente
+                    self._scatter_open()
+                elif item['type'] == 'mode':
                     self.mode = item['id']
                     self._cancel_rect()
                 elif item['id'] == 'overlay': self.show_overlay = not self.show_overlay

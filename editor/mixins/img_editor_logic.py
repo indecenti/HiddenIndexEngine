@@ -55,24 +55,23 @@ def evolved_trim(surf: pygame.Surface, noise_threshold: int = 2) -> pygame.Surfa
     if not np.any(clean_mask):
         return surf
         
-    # Calcolo bounding box della maschera pulita
+    # Calcolo bounding box della maschera pulita.
+    # pygame.surfarray usa shape (W, H), quindi argwhere ritorna coppie (x, y).
     coords = np.argwhere(clean_mask)
-    y0, x0 = coords.min(axis=0)
-    y1, x1 = coords.max(axis=0) + 1 # +1 perché slice è esclusivo
-    
+    x0, y0 = coords.min(axis=0)
+    x1, y1 = coords.max(axis=0) + 1  # +1 perché slice è esclusivo
+
     # Ritaglio
-    new_w = x1 - x0
-    new_h = y1 - y0
-    
-    # Opzionale: Puliamo anche l'immagine originale dai segni ignorati
-    # Se l'utente vuole ignorarli nel trim, probabilmente vuole che spariscano.
-    # Applichiamo la maschera pulita all'alpha
+    new_w = int(x1 - x0)
+    new_h = int(y1 - y0)
+
+    # Puliamo anche l'immagine originale dai segni ignorati (li trattiamo come trasparenti)
     arr_alpha = pygame.surfarray.pixels_alpha(surf)
     arr_alpha[~clean_mask] = 0
-    del arr_alpha # Sblocca superficie
-    
+    del arr_alpha  # Sblocca superficie
+
     final_surf = pygame.Surface((new_w, new_h), pygame.SRCALPHA)
-    final_surf.blit(surf, (0, 0), (x0, y0, new_w, new_h))
+    final_surf.blit(surf, (0, 0), (int(x0), int(y0), new_w, new_h))
     
     logging.info(f"[IMG_LOGIC] Trim evoluto: {w}x{h} -> {new_w}x{new_h} (Rimosse {num_features - np.sum(mask_valid)} impurità)")
     return final_surf

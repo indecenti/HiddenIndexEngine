@@ -1,0 +1,24 @@
+# ── HiddenEngine — dipendenze di RUNTIME (gioco + editor) ──────────────────
+#
+# Versioni pinned per build deterministico. Aggiorna QUI prima di toccare
+# qualsiasi cosa nel sistema di build.
+#
+# Compatibilità testata: Python 3.12 su Windows 10/11.
+#
+# Per installare:    pip install -r requirements.txt
+# Per dev/CI/build:  pip install -r requirements.txt -r requirements-dev.txt
+
+# Core gioco
+pygame==2.6.1
+
+# Numeric stack (warp prospettico, immagini)
+numpy==2.3.5
+scipy==1.15.3
+
+# Background video MP4 (menu + scene). Opzionale a runtime: se manca, il
+# motore disattiva i background video con log e prosegue.
+opencv-python==4.9.0.80
+
+# Validazione schema JSON (cataloghi, scene, level_config). Opzionale: se
+# non disponibile, json_validator.py salta la validazione con warning.
+jsonschema==4.26.0

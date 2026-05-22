@@ -64,6 +64,11 @@ export ANDROID_NDK_HOME=/root/android-sdk/ndk/28.2.13676358
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
 
+echo "=== 6b) Optimize assets (SOLO mobile — originali repo intatti) ==="
+python -m pip show pillow >/dev/null 2>&1 || python -m pip install --quiet pillow || true
+python "$SRC/scripts/optimize_assets_mobile.py" "$WORKSPACE/engine/assets" --max-dim 1280 || echo "WARN: asset optimize saltato"
+echo
+
 cd "$WORKSPACE"
 
 echo "=== 7) Launching buildozer android debug ==="

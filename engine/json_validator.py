@@ -31,6 +31,8 @@ _SCHEMA_FILES = {
     "scene":        "engine/schemas/scene_schema.json",
     "level_config": "engine/schemas/level_config_schema.json",
     "game_config":  "engine/schemas/game_config_schema.json",
+    "catalog":      "engine/schemas/catalog_schema.json",
+    "taxonomy":     "engine/schemas/taxonomy_schema.json",
 }
 
 

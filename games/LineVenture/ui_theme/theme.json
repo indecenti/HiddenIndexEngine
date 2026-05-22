@@ -1,151 +1,171 @@
 {
-    "id": "cyber_neon",
-    "display_name": "Cyber Neon",
-    "category": "desktop",
-    "colors": {
-        "background_overlay": [
-            10,
-            12,
-            25,
-            230
-        ],
-        "btn_normal": [
-            180,
-            0,
-            255
-        ],
-        "btn_hover": [
-            255,
-            0,
-            255
-        ],
-        "btn_locked": [
-            40,
-            45,
-            60
-        ],
-        "btn_border_normal": [
-            120,
-            0,
-            180
-        ],
-        "btn_border_hover": [
-            255,
-            100,
-            255
-        ],
-        "btn_border_locked": [
-            50,
-            55,
-            70
-        ],
-        "text_normal": [
-            255,
-            255,
-            255
-        ],
-        "text_hover": [
-            255,
-            255,
-            255
-        ],
-        "text_locked": [
-            140,
-            150,
-            170
-        ],
-        "text_label": [
-            0,
-            220,
-            255
-        ],
-        "slider_track_bg": [
-            15,
-            18,
-            35
-        ],
-        "slider_track_border": [
-            0,
-            150,
-            220
-        ],
-        "slider_fill": [
-            0,
-            255,
-            255
-        ],
-        "slider_handle": [
-            255,
-            255,
-            255
-        ],
-        "scene_border_normal": [
-            0,
-            120,
-            180
-        ],
-        "scene_border_hover": [
-            255,
-            0,
-            255
-        ],
-        "scene_overlay_hover": [
-            255,
-            0,
-            200,
-            120
-        ],
-        "scene_overlay_normal": [
-            80,
-            0,
-            120,
-            80
-        ],
-        "lock_text": [
-            255,
-            0,
-            80
-        ],
-        "btn_glow_color": [
-            255,
-            0,
-            255
-        ]
-    },
-    "layout": {
-        "btn_layout": "horizontal",
-        "btn_border_radius": 0,
-        "btn_width": 120,
-        "btn_height": 120,
-        "btn_center_x": 640,
-        "btn_y_start": 200,
-        "btn_y_step": 135,
-        "btn_border_width": 2,
-        "icons_only": true,
-        "icon_btn_size": 120,
-        "no_btn_bg": true,
-        "slider_height": 28,
-        "scene_grid_cols": 3,
-        "scene_thumb_w": 380,
-        "scene_thumb_h": 214
-    },
-    "font": {
-        "family": null,
-        "size_btn": 32,
-        "size_label": 24,
-        "size_scene": 28,
-        "size_lock": 48,
-        "bold": true
-    },
-    "effects": {
-        "btn_shadow": true,
-        "btn_glow": true,
-        "text_shadow": true,
-        "pulse_hover": true,
-        "floating_ui": true,
-        "flicker": true,
-        "no_tilt": true,
-        "glow_type": "square",
-        "magnifier_fx": true
-    }
+  "id": "cyber_neon",
+  "display_name": "Cyber Neon",
+  "category": "desktop",
+  "colors": {
+    "background_overlay": [
+      10,
+      12,
+      25,
+      230
+    ],
+    "btn_normal": [
+      180,
+      0,
+      255,
+      0
+    ],
+    "btn_hover": [
+      255,
+      0,
+      255,
+      0
+    ],
+    "btn_locked": [
+      40,
+      45,
+      60,
+      0
+    ],
+    "btn_border_normal": [
+      120,
+      0,
+      180
+    ],
+    "btn_border_hover": [
+      255,
+      100,
+      255
+    ],
+    "btn_border_locked": [
+      50,
+      55,
+      70
+    ],
+    "text_normal": [
+      255,
+      255,
+      255
+    ],
+    "text_hover": [
+      255,
+      255,
+      255
+    ],
+    "text_locked": [
+      140,
+      150,
+      170
+    ],
+    "icon_color": [
+      0,
+      255,
+      255
+    ],
+    "slider_bg": [
+      15,
+      18,
+      35
+    ],
+    "slider_fill": [
+      0,
+      255,
+      255
+    ],
+    "slider_handle": [
+      255,
+      255,
+      255
+    ],
+    "scene_border_normal": [
+      0,
+      120,
+      180
+    ],
+    "scene_border_hover": [
+      255,
+      0,
+      255
+    ],
+    "scene_overlay_hover": [
+      255,
+      0,
+      200,
+      120
+    ],
+    "scene_overlay_normal": [
+      80,
+      0,
+      120,
+      80
+    ],
+    "lock_text": [
+      255,
+      0,
+      80
+    ],
+    "btn_glow_color": [
+      255,
+      0,
+      255
+    ]
+  },
+  "layout": {
+    "btn_border_radius": 0,
+    "btn_width": 120,
+    "btn_height": 120,
+    "btn_center_x": 640,
+    "btn_y_start": 210,
+    "btn_y_step": 135,
+    "btn_border_width": 0,
+    "icons_only": true,
+    "icon_btn_size": 120,
+    "no_btn_bg": true,
+    "slider_height": 28,
+    "scene_grid_cols": 3,
+    "scene_thumb_w": 380,
+    "scene_thumb_h": 214,
+    "title_font_size": 48,
+    "title_y_offset": 100
+  },
+  "font": {
+    "family": null,
+    "size_btn": 36,
+    "size_label": 24,
+    "size_scene": 38,
+    "size_lock": 48,
+    "bold": true
+  },
+  "effects": {
+    "btn_shadow": true,
+    "btn_shadow_offset": [
+      0,
+      3
+    ],
+    "btn_shadow_color": [
+      0,
+      0,
+      0,
+      120
+    ],
+    "btn_glow": true,
+    "glow_type": "square",
+    "text_shadow": true,
+    "text_shadow_offset": [
+      0,
+      2
+    ],
+    "text_shadow_color": [
+      0,
+      0,
+      0,
+      150
+    ],
+    "pulse_hover": true,
+    "pulse_scale": 1.04,
+    "flicker": true,
+    "flicker_intensity": 0.08,
+    "flicker_speed": 14.0,
+    "magnifier_fx": true
+  }
 }

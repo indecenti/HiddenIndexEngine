@@ -7,7 +7,8 @@ from typing import List, Optional, Tuple
 
 from engine.minigames.minigame_base import BaseMinigame
 from engine.minigames.asteroids import asteroids_config as cfg
-from engine.utils import get_resource_path
+from engine.minigames.touch_controls import TouchControls
+from engine.utils import get_resource_path, is_android_runtime
 
 log = logging.getLogger(__name__)
 
@@ -264,7 +265,29 @@ class AsteroidsGame(BaseMinigame):
         self._spawn_level()
         self._prepare_fonts()
         self._setup_fx_surfaces()
-        pygame.mouse.set_visible(True)
+        # Su Android NON mostrare il cursore (nessun puntatore a schermo).
+        if not is_android_runtime():
+            pygame.mouse.set_visible(True)
+        # Controlli touch: bottone SPINTA (toggle). Mira e fuoco restano sul
+        # tocco nell'area di gioco (tocca per puntare e sparare).
+        self.touch = TouchControls(self.scaling_manager)
+        self.touch_thrust = False
+        self._setup_touch()
+
+    def _setup_touch(self) -> None:
+        if not hasattr(self, "touch"):
+            return
+        self.touch.clear()
+        if not self.touch.enabled:
+            return
+        sw, sh = self.screen.get_size()
+        b = max(56, int(min(sw, sh) * 0.16))
+        m = int(b * 0.3)
+        self.touch.add("thrust", pygame.Rect(m, sh - m - b, b, b),
+                       glyph="up", color=(120, 255, 170))
+
+    def on_resize(self) -> None:
+        self._setup_touch()
 
     def _prepare_fonts(self):
         # Carica un font monospazio o arcade se disponibile, altrimenti sistema
@@ -299,6 +322,9 @@ class AsteroidsGame(BaseMinigame):
             return
 
         if self.phase == "PLAY" and self.ship:
+            # Bottone touch SPINTA (toggle on/off)
+            if self.touch.handle_event(event) == "thrust":
+                self.touch_thrust = not self.touch_thrust
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     self._fire_bullet()
@@ -371,34 +397,37 @@ class AsteroidsGame(BaseMinigame):
         
         if not self.ship: return
 
+        # Tocco su un bottone touch (es. SPINTA) non deve puntare/sparare.
+        on_btn = self.touch.point_on_button(mouse_pos) if hasattr(self, "touch") else False
+
         # 1. Gestione Orientamento (Mouse vs Keyboard)
         # Attiviamo il mouse se si muove o se viene premuto un tasto del mouse
-        if mouse_pos != self.last_mouse_pos or any(mouse_buttons):
+        if not on_btn and (mouse_pos != self.last_mouse_pos or any(mouse_buttons)):
             self.using_mouse = True
             self.last_mouse_pos = mouse_pos
-            
-        if self.using_mouse:
+
+        if self.using_mouse and not on_btn:
             rx, ry = self.scaling_manager.screen_to_ref(*mouse_pos)
             dx = rx - self.ship.pos.x
             dy = ry - self.ship.pos.y
             if abs(dx) > 2 or abs(dy) > 2:
                 self.ship.angle = math.degrees(math.atan2(dy, dx))
-        
-        if keys[pygame.K_LEFT]: 
+
+        if keys[pygame.K_LEFT]:
             self.ship.rotate(-1, dt)
             self.using_mouse = False
-        if keys[pygame.K_RIGHT]: 
+        if keys[pygame.K_RIGHT]:
             self.ship.rotate(1, dt)
             self.using_mouse = False
 
-        # 2. Gestione Propulsione
-        self.ship.thrusting = keys[pygame.K_UP] or mouse_buttons[2] # Su o Click Destro
+        # 2. Gestione Propulsione (Su, Click Destro, o bottone touch SPINTA)
+        self.ship.thrusting = keys[pygame.K_UP] or mouse_buttons[2] or getattr(self, "touch_thrust", False)
         if self.ship.thrusting:
             self.ship.thrust(dt)
             self._update_thrust_sfx(dt)
-        
+
         # 3. Gestione Fuoco (Event-based per Space, Polling per Mouse con limite)
-        if mouse_buttons[0]:
+        if mouse_buttons[0] and not on_btn:
             if self.mouse_fire_timer <= 0:
                 self._fire_bullet(owner="ship")
                 self.mouse_fire_timer = 0.2 # Cooldown tra colpi col mouse
@@ -599,6 +628,10 @@ class AsteroidsGame(BaseMinigame):
 
         # UI
         self._draw_ui()
+
+        # Controlli touch (solo Android, solo in gioco)
+        if hasattr(self, "touch") and self.phase == "PLAY":
+            self.touch.draw(self.screen)
 
         # Applicazione Scanlines
         if self.scanline_surf:

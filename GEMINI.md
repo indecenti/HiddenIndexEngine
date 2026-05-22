@@ -51,6 +51,19 @@ def get_base_path() -> Path:
 - **Prevenzione Stuttering (LRU Cache)**: Implementa e mantieni `collections.OrderedDict` nelle cache rendering. Un flush di evict su `cache_max_bytes` va fatto con `popitem(last=False)` gradualmente. Svuotare un dict integralmente comporta lag spaventosi da ri-calcolo istantaneo delle Surface nel frame successivo.
 - **Sub-Pixel Jittering (Arrotondamento Geometrie)**: Il custom viewport impone cast verso int per il raster di pygame. Applica una pipe di `round()` su ogni float-offset `int(round(float))` nel posizionamento. Il banale float downcast a floor crea salti disallineati di 1 pixel nei resize e tremolio alla UI in panning.
 
+## Web Export — Sincronizzazione Engine ↔ Web (BLINDATA)
+- Esiste un export web (`editor/web_exporter.py` + `editor/web_template/runtime.js`) che
+  **replica** la logica dell'engine in JavaScript (NON la importa).
+- **Regola non negoziabile**: se modifichi `engine/{scaling_manager,click_detector,
+  level_manager,hint_system,scene_loader,effect_renderer,save_manager}` o un
+  `engine/minigames/*`, DEVI leggere e aggiornare **`WEB_EXPORT_SYNC.md`** e propagare
+  la modifica al runtime web nella stessa PR.
+- Le **costanti numeriche** condivise (scoring, hint, ref) hanno fonte unica:
+  `editor/web_rules.py::engine_rules()` (lette dall'engine, iniettate in `manifest.rules`).
+  I fallback in `runtime.js` (`RULES_DEFAULTS`) devono restare allineati.
+- **Verifica obbligatoria** dopo modifiche all'engine:
+  `pytest tests/test_web_sync.py` (fallisce se engine e web divergono).
+
 ## Workflow
 1. **Analisi**: Esamina i file necessari (non indovinare mai il contenuto).
 2. **Piano**: Proponi modifiche passo-passo e trade-off.

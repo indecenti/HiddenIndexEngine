@@ -1,30 +1,49 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_all
+#
+# Spec PyInstaller per HiddenEditor.
+#
+# NON modificare hiddenimports / excludes / collect_all qui: la single source
+# of truth è in editor/pyinstaller_common.py. Questo file delega a quel modulo.
+#
+# Riproducibilità: stessa versione di pyinstaller_common + stessa
+# requirements.txt → stesso EXE.
 
-datas = []
-binaries = []
-hiddenimports = ['cv2', 'numpy', 'scipy.ndimage', 'engine.minigames.arcade_eleven.arcade_eleven_game', 'engine.minigames.asteroids.asteroids_game', 'engine.minigames.centipede.centipede_game', 'engine.minigames.minipong.minipong_game', 'engine.minigames.slot_classic.slot_classic_game', 'engine.minigames.tetran.tetran_game', 'engine.minigames.tower.tower_game']
-tmp_ret = collect_all('jsonschema')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-tmp_ret = collect_all('jsonschema_specifications')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-tmp_ret = collect_all('rpds')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+from pathlib import Path
+import sys
 
+# Add project root al sys.path per importare editor.pyinstaller_common
+_PROJECT_ROOT = Path(SPECPATH).resolve()
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+from editor.pyinstaller_common import (  # noqa: E402
+    spec_analysis_kwargs,
+    read_version,
+    write_version_info,
+)
+
+_VERSION = read_version(_PROJECT_ROOT)
+print(f"[SPEC] Building HiddenEditor v{_VERSION}")
+
+_ENTRY = str(_PROJECT_ROOT / "run_editor.py")
+_ICON = _PROJECT_ROOT / "editor" / "assets" / "icon.ico"
+_VERSION_INFO = write_version_info(
+    _PROJECT_ROOT,
+    product_name="HiddenEditor",
+    file_description="HiddenEditor — level editor per giochi hidden object",
+)
 
 a = Analysis(
-    ['G:\\HIE git\\run_editor.py'],
-    pathex=[],
-    binaries=binaries,
-    datas=datas,
-    hiddenimports=hiddenimports,
+    [_ENTRY],
+    pathex=[str(_PROJECT_ROOT)],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['torch', 'torchvision', 'torchaudio', 'onnxruntime', 'sklearn', 'matplotlib', 'pandas', 'pyarrow', 'transformers', 'tokenizers', 'llvmlite', 'numba', 'lxml', 'IPython', 'notebook', 'jupyter'],
     noarchive=False,
     optimize=0,
+    **spec_analysis_kwargs(_PROJECT_ROOT),
 )
+
 pyz = PYZ(a.pure)
 
 exe = EXE(
@@ -32,7 +51,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='HiddenEditor',
+    name="HiddenEditor",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -43,7 +62,10 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=str(_ICON) if _ICON.exists() else None,
+    version=str(_VERSION_INFO),
 )
+
 coll = COLLECT(
     exe,
     a.binaries,
@@ -51,5 +73,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='HiddenEditor',
+    name="HiddenEditor",
 )

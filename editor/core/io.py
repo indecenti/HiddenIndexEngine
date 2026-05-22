@@ -25,33 +25,38 @@ def _load_json(path: Path) -> dict:
 
 
 def _save_json(path: Path, data: dict) -> bool:
-    try:
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        
-        # Invalida cache se salviamo una scena
-        if path.name == "scene.json":
-            p_res = path.parent.resolve()
-            p_str = str(p_res)
-            
-            # Invalida RAM
-            if str(path.parent) in _SCENE_DATA_CACHE:
-                _SCENE_DATA_CACHE.pop(str(path.parent))
-            
-            # Invalida RAM e DISCO delle miniature
-            thumb_dir = _CACHE_DIR / "thumbs"
-            for size in [(86, 48), (64, 36)]:
-                t_hash = hashlib.md5(f"{p_str}_{size[0]}x{size[1]}".encode()).hexdigest()
-                _THUMB_CACHE.pop(t_hash, None)
-                c_p = thumb_dir / f"{t_hash}.png"
-                if c_p.exists():
-                    try: c_p.unlink()
-                    except: pass
-                
-        return True
-    except Exception as e:
-        print(f"[ERROR] _save_json failed for {path}: {e}")
+    """
+    Scrittura JSON crash-safe: delega a engine.utils.safe_write_json che
+    scrive su tmp + os.replace atomico + fsync. In caso di crash a metà
+    write, il file originale resta intatto (non più corruzione silenziosa).
+    """
+    from engine.utils import safe_write_json
+    ok = safe_write_json(path, data, indent=2, ensure_ascii=False)
+    if not ok:
         return False
+
+    # Invalida cache se salviamo una scena
+    if path.name == "scene.json":
+        p_res = path.parent.resolve()
+        p_str = str(p_res)
+
+        # Invalida RAM
+        if str(path.parent) in _SCENE_DATA_CACHE:
+            _SCENE_DATA_CACHE.pop(str(path.parent))
+
+        # Invalida RAM e DISCO delle miniature
+        thumb_dir = _CACHE_DIR / "thumbs"
+        for size in [(86, 48), (64, 36)]:
+            t_hash = hashlib.md5(f"{p_str}_{size[0]}x{size[1]}".encode()).hexdigest()
+            _THUMB_CACHE.pop(t_hash, None)
+            c_p = thumb_dir / f"{t_hash}.png"
+            if c_p.exists():
+                try:
+                    c_p.unlink()
+                except OSError as e:
+                    logging.debug(f"_save_json: thumbnail cache invalidate failed for {c_p}: {e}")
+
+    return True
 
 
 # ─────────────────────────────────────────────────────────────────────────────

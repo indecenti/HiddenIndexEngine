@@ -1,22 +1,22 @@
 {
   "recent_scenes": [
     {
-      "name": "Pizza_King",
-      "path": "G:\\HIE git\\games\\Malonno_Survivors\\levels\\Welcome_To_Malonno\\Pizza_King",
-      "game": "Malonno_Survivors",
-      "time": 1778965173.1380527
-    },
-    {
       "name": "scene_nuova",
       "path": "G:\\HIE git\\games\\LineVenture\\levels\\One\\scene_nuova",
       "game": "LineVenture",
-      "time": 1778965053.4033685
+      "time": 1779392552.8888485
     },
     {
       "name": "scene_nuova_3",
       "path": "G:\\HIE git\\games\\LineVenture\\levels\\One\\scene_nuova_3",
       "game": "LineVenture",
-      "time": 1778898700.7021706
+      "time": 1779391845.936984
+    },
+    {
+      "name": "Pizza_King",
+      "path": "G:\\HIE git\\games\\Malonno_Survivors\\levels\\Welcome_To_Malonno\\Pizza_King",
+      "game": "Malonno_Survivors",
+      "time": 1778965173.1380527
     },
     {
       "name": "Welcome",
@@ -48,5 +48,15 @@
       "game": "Malonno_Survivors",
       "time": 1778249382.466988
     }
-  ]
+  ],
+  "panel_l_w": 501,
+  "panel_r_w": 564,
+  "scatter": {
+    "tier_choice": "ultra",
+    "layers": {
+      "objects_low": true,
+      "objects_mid": true,
+      "objects_high": true
+    }
+  }
 }

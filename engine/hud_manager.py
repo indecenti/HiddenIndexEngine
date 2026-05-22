@@ -16,7 +16,7 @@ from typing import Optional, TYPE_CHECKING
 import pygame
 
 from engine.scene_loader import SceneObject
-from engine.utils import get_resource_path
+from engine.utils import get_resource_path, is_android_runtime
 
 if TYPE_CHECKING:
     from engine.scaling_manager import ScalingManager
@@ -255,6 +255,16 @@ class HudManager:
         self._alpha: int = 255
         self._fade_timer: float = 0.0
         self._fading_out: bool = False
+
+        # ── Drawer Android ─────────────────────────────────────────────────
+        # Su touch l'HUD è un cassetto: nascosto di default (così la scena è
+        # completamente visibile), si apre con swipe dal bordo o toccando la
+        # maniglia, e si richiude da solo dopo qualche secondo.
+        self._android = is_android_runtime()
+        self._drawer = 0.0          # 0 = nascosto, 1 = completamente aperto
+        self._drawer_target = 0.0
+        self._drawer_auto = 0.0     # timer di auto-chiusura
+        self._handle_rect = pygame.Rect(0, 0, 0, 0)
         self._hovered_idx: int = -1  # Indice oggetto sotto mouse
         self._hint_button_hovered: bool = False  # Hover sul pulsante hint
         self._pause_button_hovered: bool = False # Hover sul pulsante pausa
@@ -296,6 +306,9 @@ class HudManager:
         abs_font = get_resource_path(font_path) if font_path else None
 
         sizes = {"label": 22, "timer": 38, "score": 28, "tooltip": 15, "stats": 18}
+        # Android: font un po' più grandi per leggibilità su mobile (desktop invariato).
+        if getattr(self, "_android", False):
+            sizes = {k: int(round(v * 1.22)) for k, v in sizes.items()}
         for name, size in sizes.items():
             if abs_font and os.path.exists(abs_font):
                 try:
@@ -334,6 +347,10 @@ class HudManager:
         self._reward_tracker = reward_tracker
 
         self._update_visible_pool()
+        # Su Android mostra il cassetto all'avvio scena (poi si chiude da solo),
+        # così il giocatore vede gli obiettivi e nota la maniglia.
+        if self._android:
+            self.open_drawer(5.0)
         log.debug("HUD Reset: %d obiettivi totali, finestra di %d",
                   len(self._objects), self._max_visible)
 
@@ -382,22 +399,30 @@ class HudManager:
         hud_rect = self._get_hud_rect()
         is_hovering_hud = hud_rect.collidepoint(mouse_pos)
 
-        # Gestione Fade per Inattività Globale o Hover
-        self._fade_timer += dt
-
-        if self._fade_timer > 1.2 or is_hovering_hud:
-            self._fading_out = True
-
-        # Velocità di fade calibrate per un feel più cinematografico
-        fade_out_spd = (400 if is_hovering_hud else 120) * dt
-        fade_in_spd = 500 * dt
-
-        if self._fading_out:
-            # Dissolvenza morbida e lunga fino a 40 (molto trasparente)
-            self._alpha = max(40, int(self._alpha - fade_out_spd))
+        if self._android:
+            # Su Android nessun fade: l'HUD è sempre opaco, ma scorre dentro/fuori
+            # come un cassetto. Animazione del drawer + auto-chiusura.
+            self._alpha = 255
+            spd = dt * 7.0
+            if self._drawer < self._drawer_target:
+                self._drawer = min(self._drawer_target, self._drawer + spd)
+            elif self._drawer > self._drawer_target:
+                self._drawer = max(self._drawer_target, self._drawer - spd)
+            if self._drawer_target > 0.0:
+                self._drawer_auto -= dt
+                if self._drawer_auto <= 0.0:
+                    self._drawer_target = 0.0
         else:
-            # Recupero rapido e scattante non appena si muove il mouse
-            self._alpha = min(255, int(self._alpha + fade_in_spd))
+            # Gestione Fade per Inattività Globale o Hover (desktop invariato)
+            self._fade_timer += dt
+            if self._fade_timer > 1.2 or is_hovering_hud:
+                self._fading_out = True
+            fade_out_spd = (400 if is_hovering_hud else 120) * dt
+            fade_in_spd = 500 * dt
+            if self._fading_out:
+                self._alpha = max(40, int(self._alpha - fade_out_spd))
+            else:
+                self._alpha = min(255, int(self._alpha + fade_in_spd))
 
         # Update Dialog
         self._hint_dialog.update(dt, mouse_pos)
@@ -412,6 +437,51 @@ class HudManager:
         """Reset immediato del fade su attività mouse (click/movimento)."""
         self._fade_timer = 0.0
         self._fading_out = False
+
+    # ── Drawer Android: API pubblica ───────────────────────────────────────
+    def open_drawer(self, seconds: float = 4.0) -> None:
+        """Apre il cassetto HUD e programma l'auto-chiusura."""
+        self._drawer_target = 1.0
+        self._drawer_auto = seconds
+
+    def close_drawer(self) -> None:
+        self._drawer_target = 0.0
+
+    def toggle_drawer(self) -> None:
+        if self._drawer_target > 0.0:
+            self.close_drawer()
+        else:
+            self.open_drawer()
+
+    def is_drawer_open(self) -> bool:
+        return self._drawer > 0.05
+
+    def get_handle_rect(self) -> pygame.Rect:
+        return self._handle_rect
+
+    def is_handle_clicked(self, pos) -> bool:
+        return self._android and self._handle_rect.collidepoint(pos)
+
+    def handle_swipe(self, start_pos, end_pos) -> bool:
+        """Gestisce uno swipe verticale dal bordo dove vive l'HUD.
+        Ritorna True se ha aperto/chiuso il cassetto."""
+        if not self._android:
+            return False
+        dy = end_pos[1] - start_pos[1]
+        thr = self._screen_h * 0.06
+        edge = self._screen_h * 0.12
+        if self._position == "bottom":
+            # swipe verso l'alto partendo dal bordo basso → apri
+            if start_pos[1] >= self._screen_h - edge and dy < -thr:
+                self.open_drawer(); return True
+            if dy > thr:  # swipe verso il basso → chiudi
+                self.close_drawer(); return True
+        else:
+            if start_pos[1] <= edge and dy > thr:
+                self.open_drawer(); return True
+            if dy < -thr:
+                self.close_drawer(); return True
+        return False
 
     def on_screen_resize(self, screen_w: int, screen_h: int) -> None:
         self._screen_w = screen_w
@@ -436,8 +506,13 @@ class HudManager:
 
         # Applica alpha e disegna a schermo
         self._hud_surf.set_alpha(self._alpha)
-        hud_pos = self._get_hud_rect().topleft
-        surface.blit(self._hud_surf, hud_pos)
+        hud_rect = self._get_hud_rect()
+        surface.blit(self._hud_surf, hud_rect.topleft)
+
+        # Maniglia del cassetto (solo Android): sempre visibile, indica dove
+        # fare swipe / si può toccare per aprire-chiudere l'HUD.
+        if self._android:
+            self._draw_handle(surface, hud_rect)
 
         # 5. Dialog (top-level overlay)
         self._hint_dialog.draw(surface, self._fonts["score"], self._fonts["stats"])
@@ -453,14 +528,46 @@ class HudManager:
     # Moduli di Disegno
     # ------------------------------------------------------------------
 
+    def _draw_handle(self, surface: pygame.Surface, hud_rect: pygame.Rect) -> None:
+        """Maniglia/linguetta del cassetto HUD (Android). Sempre visibile."""
+        s = self._scale
+        hw = int(74 * s)
+        hh = int(16 * s)
+        cx = self._screen_w // 2
+        if self._position == "bottom":
+            hy = min(hud_rect.top - hh, self._sm.safe_bottom - hh)
+        else:
+            hy = max(hud_rect.bottom, self._sm.safe_top)
+        pill = pygame.Rect(cx - hw // 2, hy, hw, hh)
+        # Area di tocco generosa
+        self._handle_rect = pill.inflate(hw, hh * 2)
+
+        pill_surf = pygame.Surface((hw, hh), pygame.SRCALPHA)
+        pygame.draw.rect(pill_surf, (15, 18, 28, 200), (0, 0, hw, hh), border_radius=hh // 2)
+        pygame.draw.rect(pill_surf, (*COLOR_BORDER[:3], 220), (0, 0, hw, hh), max(1, int(s)), border_radius=hh // 2)
+        # Grip + chevron: su=apri (chiuso), giù=chiudi (aperto)
+        gc = COLOR_ACCENT
+        midx = hw // 2
+        if self._drawer < 0.5:  # chiuso → freccia su
+            pygame.draw.polygon(pill_surf, gc, [(midx - int(8 * s), hh - int(5 * s)),
+                                                (midx + int(8 * s), hh - int(5 * s)),
+                                                (midx, int(5 * s))])
+        else:                    # aperto → freccia giù
+            pygame.draw.polygon(pill_surf, gc, [(midx - int(8 * s), int(5 * s)),
+                                                (midx + int(8 * s), int(5 * s)),
+                                                (midx, hh - int(5 * s))])
+        surface.blit(pill_surf, pill.topleft)
+
     def _draw_pause_button(self, surface: pygame.Surface) -> None:
         """Disegna il pulsante pausa in formato ultra-mini e quasi invisibile."""
         s = self._scale
         margin = int(8 * s)
         btn_w = int(28 * s)
         btn_h = int(28 * s)
-        
-        self._pause_button_rect = pygame.Rect(margin, margin, btn_w, btn_h)
+
+        self._pause_button_rect = pygame.Rect(
+            self._sm.safe_left + margin, self._sm.safe_top + margin, btn_w, btn_h
+        )
         
         # Background molto trasparente
         alpha = 180 if self._pause_button_hovered else 100
@@ -496,15 +603,24 @@ class HudManager:
 
     def _draw_glass_panel(self) -> None:
         """Disegna il contenitore principale con effetto vetro."""
-        rect = pygame.Rect(10, 5, self._screen_w - 20, self._hud_h - 10)
-        
-        # Sfondo con bordo soft glow
-        pygame.draw.rect(self._hud_surf, COLOR_BG, rect, border_radius=BORDER_RADIUS)
-        pygame.draw.rect(self._hud_surf, COLOR_BORDER, rect, 2, border_radius=BORDER_RADIUS)
-        
-        # Linea superiore sottile (accento)
-        accent_rect = pygame.Rect(rect.x + 20, rect.y, rect.width - 40, 2)
-        pygame.draw.rect(self._hud_surf, (*COLOR_BORDER[:3], 100), accent_rect)
+        if self._android:
+            # Android: barra a TUTTA LARGHEZZA, angoli squadrati (no arrotondamento),
+            # più opaca per leggibilità sopra la scena.
+            rect = pygame.Rect(0, 0, self._screen_w, self._hud_h)
+            bg = (12, 14, 22, 235)
+            pygame.draw.rect(self._hud_surf, bg, rect)
+            # Bordo sul lato interno (verso la scena) come accento netto
+            edge_y = rect.bottom - 3 if self._position == "top" else rect.y
+            pygame.draw.rect(self._hud_surf, COLOR_ACCENT, (0, edge_y, self._screen_w, 3))
+            pygame.draw.rect(self._hud_surf, (*COLOR_BORDER[:3], 160), rect, 2)
+        else:
+            left = max(10, self._sm.safe_left)
+            right = min(self._screen_w - 10, self._sm.safe_right)
+            rect = pygame.Rect(left, 5, right - left, self._hud_h - 10)
+            pygame.draw.rect(self._hud_surf, COLOR_BG, rect, border_radius=BORDER_RADIUS)
+            pygame.draw.rect(self._hud_surf, COLOR_BORDER, rect, 2, border_radius=BORDER_RADIUS)
+            accent_rect = pygame.Rect(rect.x + 20, rect.y, rect.width - 40, 2)
+            pygame.draw.rect(self._hud_surf, (*COLOR_BORDER[:3], 100), accent_rect)
 
     def _draw_objective_gallery(self) -> None:
         """Visualizza nomi distribuiti su 2 righe sfasate con Uniform Scaling globale per matchare destra/sinistra."""
@@ -512,14 +628,15 @@ class HudManager:
         cx = self._screen_w // 2
         base_y = self._hud_h // 2
         
-        timer_clearance = int(140 * s)  
+        timer_clearance = int(140 * s)
         dashboard_w = int(130 * s)
-        side_margin = int(25 * s)
+        side_margin = max(int(25 * s), self._sm.safe_left + int(8 * s))
+        right_limit = min(self._screen_w, self._sm.safe_right) - dashboard_w
         inner_margin = int(10 * s)
-        
+
         bounds = {
             "left":  (side_margin, cx - timer_clearance - inner_margin),
-            "right": (cx + timer_clearance + inner_margin, self._screen_w - dashboard_w),
+            "right": (cx + timer_clearance + inner_margin, right_limit),
         }
 
         # 1. Determinare il fattore di scala GLOBALE per parificare la grandezza font
@@ -637,8 +754,8 @@ class HudManager:
         """Dashboard punteggio e progresso ancorata al bordo destro con separatore."""
         s = self._scale
         dashboard_w = int(DASHBOARD_W_REF * s)
-        sep_x = self._screen_w - dashboard_w
-        right_edge = self._screen_w - int(18 * s)
+        right_edge = min(self._screen_w - int(18 * s), self._sm.safe_right)
+        sep_x = right_edge - dashboard_w
         center_y = self._hud_h // 2
 
         # — Label "SCORE" (piccola, sopra) —
@@ -899,7 +1016,16 @@ class HudManager:
     # ------------------------------------------------------------------
 
     def _get_hud_rect(self) -> pygame.Rect:
-        y = self._screen_h - self._hud_h if self._position == "bottom" else 0
+        # Posiziona la barra dentro la safe area verticale (notch/angoli).
+        if self._position == "bottom":
+            y = self._sm.safe_bottom - self._hud_h
+            if self._android:
+                # Scorre fuori dal bordo basso quando il cassetto è chiuso.
+                y += int((1.0 - self._drawer) * (self._hud_h + (self._screen_h - self._sm.safe_bottom)))
+        else:
+            y = self._sm.safe_top
+            if self._android:
+                y -= int((1.0 - self._drawer) * (self._hud_h + self._sm.safe_top))
         return pygame.Rect(0, y, self._screen_w, self._hud_h)
 
     @staticmethod

@@ -242,6 +242,11 @@ class SceneLoader:
                 else:
                     log.warning(f"Asset icona mancante: {icon_path} (cercato in local e engine)")
             
+            # Per-object layer_z override: se presente nel JSON, ha precedenza sul
+            # default del layer. Permette ordinamento intra-layer dall'editor.
+            _raw_lz = raw.get("layer_z")
+            _resolved_lz = int(_raw_lz) if _raw_lz is not None else self._get_layer_z(raw.get("layer", "objects_mid"))
+
             obj = SceneObject(
                 instance_id=iid, catalog_id=cid, label_key=cat.get("label_key", cid),
                 icon_path=str(icon_path),
@@ -250,7 +255,7 @@ class SceneLoader:
                 radius=float(raw.get("radius", 30)),
                 width=float(raw.get("width", 0)), height=float(raw.get("height", 0)),
                 layer=raw.get("layer", "objects_mid"),
-                layer_z=self._get_layer_z(raw.get("layer", "objects_mid")),
+                layer_z=_resolved_lz,
                 is_goal=_to_bool(raw.get("is_goal", True)),
                 always_show=_to_bool(raw.get("always_show", False)),
                 rotation=float(raw.get("rotation", 0.0)),

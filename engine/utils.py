@@ -9,15 +9,19 @@ Gestisce:
 - Path ai file scrivibili (salvataggi, config)
 - Logging centralizzato
 - Flag DEBUG per Developer Mode
+- Safe file operations (atomic JSON write, delete con cestino)
 """
 
 import os
 import sys
 import math
+import json
+import shutil
 import logging
+import datetime
 import pygame
 from pathlib import Path
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, Union, TYPE_CHECKING
 
 # ---------------------------------------------------------------------------
 # Flag globale Developer Mode
@@ -33,6 +37,37 @@ DEBUG: bool = not getattr(sys, "frozen", False)
 def is_android_runtime() -> bool:
     # python-for-android imposta queste env vars all'avvio dell'app
     return 'ANDROID_ARGUMENT' in os.environ or 'P4A_BOOTSTRAP' in os.environ
+
+
+def get_android_safe_insets() -> tuple[int, int, int, int]:
+    """Inset (left, top, right, bottom) in PIXEL FISICI del display cutout +
+    barre di sistema. Best-effort via pyjnius: (0,0,0,0) su desktop o se non
+    disponibile (API < 28, finestra non ancora attached, ecc.)."""
+    if not is_android_runtime():
+        return (0, 0, 0, 0)
+    try:
+        from jnius import autoclass
+        PythonActivity = autoclass('org.kivy.android.PythonActivity')
+        activity = PythonActivity.mActivity
+        if activity is None:
+            return (0, 0, 0, 0)
+        decor = activity.getWindow().getDecorView()
+        insets = decor.getRootWindowInsets()
+        if insets is None:
+            return (0, 0, 0, 0)
+        l = t = r = b = 0
+        try:
+            cutout = insets.getDisplayCutout()  # API 28+
+            if cutout is not None:
+                l = max(l, cutout.getSafeInsetLeft())
+                t = max(t, cutout.getSafeInsetTop())
+                r = max(r, cutout.getSafeInsetRight())
+                b = max(b, cutout.getSafeInsetBottom())
+        except Exception:
+            pass
+        return (int(l), int(t), int(r), int(b))
+    except Exception:
+        return (0, 0, 0, 0)
 
 
 # ---------------------------------------------------------------------------
@@ -117,6 +152,269 @@ def setup_logging() -> None:
 def get_logger(name: str) -> logging.Logger:
     """Restituisce un logger con il nome del modulo chiamante."""
     return logging.getLogger(name)
+
+
+# Tiene vivo il file di faulthandler per tutta la durata del processo.
+_FAULT_LOG_FH = None
+
+
+def install_crash_handlers() -> None:
+    """Cattura i crash che altrimenti non lascerebbero traccia in engine.log.
+
+    Due categorie distinte, entrambe invisibili senza questo hook quando l'app
+    gira windowed (pythonw / exe PyInstaller) ma anche da console se l'utente
+    la chiude subito:
+      1. Segfault nativi (torch/CLIP/numpy/pygame): faulthandler scrive lo stack
+         C/Python su 'crash_native.log'.
+      2. Eccezioni Python non gestite che sfuggono dal main loop: sys.excepthook
+         le logga su engine.log invece di mandarle solo su stderr.
+    Idempotente: chiamabile più volte senza effetti collaterali.
+    """
+    global _FAULT_LOG_FH
+    try:
+        import faulthandler
+        if _FAULT_LOG_FH is None:
+            fault_path = get_writable_path("crash_native.log")
+            _FAULT_LOG_FH = open(str(fault_path), "w", encoding="utf-8")
+            faulthandler.enable(file=_FAULT_LOG_FH, all_threads=True)
+    except Exception:
+        pass
+
+    prev_hook = sys.excepthook
+
+    def _log_uncaught(exc_type, exc_value, exc_tb):
+        if not issubclass(exc_type, KeyboardInterrupt):
+            logging.getLogger("crash").critical(
+                "Eccezione non gestita (crash)",
+                exc_info=(exc_type, exc_value, exc_tb),
+            )
+        prev_hook(exc_type, exc_value, exc_tb)
+
+    sys.excepthook = _log_uncaught
+
+
+# ---------------------------------------------------------------------------
+# Safe file operations — atomic write + soft-delete trash
+# ---------------------------------------------------------------------------
+#
+# Tutte le scritture JSON dell'editor passano per `safe_write_json`: scrive su
+# file `.tmp` siblings, fsync, poi os.replace atomico. Un crash a metà write
+# non corrompe più il catalogo / la scena / il save.
+#
+# Tutte le eliminazioni distruttive passano per `safe_delete`: il file viene
+# SPOSTATO in `.editor_trash/<sessione>/...` (preservando la struttura della
+# cartella sorgente) e ogni operazione è loggata in `.editor_audit.log`.
+# Niente cancellazioni silenziose: ogni delete è recuperabile dal cestino e
+# tracciato nell'audit log.
+#
+# Il cestino non viene mai svuotato automaticamente al boot. La pulizia
+# avviene SOLO via `cleanup_trash(max_age_days=...)` chiamata esplicitamente.
+
+# Timestamp di sessione: tutti i file cancellati nella stessa esecuzione
+# finiscono nella stessa sottocartella del cestino (raggruppamento naturale).
+_SESSION_TS: str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+_TRASH_DIRNAME: str = ".editor_trash"
+_AUDIT_LOG_NAME: str = ".editor_audit.log"
+
+
+def _get_trash_root() -> Path:
+    """Cartella radice del cestino: <base_path>/.editor_trash/"""
+    return get_base_path() / _TRASH_DIRNAME
+
+
+def _get_audit_log_path() -> Path:
+    """File di audit append-only delle operazioni distruttive."""
+    return get_base_path() / _AUDIT_LOG_NAME
+
+
+def _audit_log(action: str, path: Union[str, Path], detail: str = "") -> None:
+    """
+    Append-only di una riga nell'audit log. Non solleva mai eccezioni:
+    l'audit deve essere best-effort, mai bloccare l'operazione utente.
+    """
+    try:
+        ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        line = f"{ts}\t{action}\t{path}\t{detail}\n"
+        with open(_get_audit_log_path(), "a", encoding="utf-8") as f:
+            f.write(line)
+    except Exception:
+        # Audit silenzioso solo qui — è già un best-effort
+        logging.getLogger(__name__).debug("audit log write failed", exc_info=True)
+
+
+def safe_write_json(path: Union[str, Path], data, *, indent: int = 2,
+                    ensure_ascii: bool = False, sort_keys: bool = False) -> bool:
+    """
+    Scrive `data` come JSON in `path` in modo atomico e crash-safe.
+
+    Strategia:
+      1. Serializza i dati prima di toccare il filesystem (se la serializzazione
+         fallisce, il file originale rimane intatto).
+      2. Scrive su file temporaneo sibling (`<path>.tmp`).
+      3. flush + fsync per garantire che i bytes siano effettivamente su disco.
+      4. os.replace(tmp, path): rename atomico su POSIX e su Windows (Python ≥3.3).
+      5. Best-effort fsync della directory padre su POSIX (no-op su Windows).
+
+    Returns True se tutto è andato a buon fine, False altrimenti.
+    Errori loggati ma non sollevati (compatibile con l'API del vecchio _save_json).
+    """
+    p = Path(path)
+    log = logging.getLogger(__name__)
+    try:
+        # 1. Serializza PRIMA di aprire il file: se i dati non sono serializzabili,
+        #    il file originale resta intatto.
+        payload = json.dumps(data, indent=indent, ensure_ascii=ensure_ascii,
+                             sort_keys=sort_keys)
+    except (TypeError, ValueError) as e:
+        log.error(f"safe_write_json: serializzazione fallita per {p}: {e}")
+        return False
+
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_suffix(p.suffix + ".tmp")
+
+    try:
+        with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+            f.write(payload)
+            f.flush()
+            try:
+                os.fsync(f.fileno())
+            except OSError:
+                # Filesystem che non supporta fsync (es. alcuni mount di rete).
+                # Non fatale: il payload è già in cache OS.
+                pass
+        os.replace(tmp, p)
+
+        # Best-effort fsync della directory padre (POSIX). Su Windows os.open
+        # di una directory non è supportato — questo blocco è no-op silenzioso.
+        try:
+            dir_fd = os.open(str(p.parent), os.O_RDONLY)
+            try:
+                os.fsync(dir_fd)
+            finally:
+                os.close(dir_fd)
+        except (OSError, AttributeError):
+            pass
+
+        return True
+    except Exception as e:
+        log.error(f"safe_write_json: scrittura atomica fallita per {p}: {e}")
+        # Cleanup del tmp orfano se è rimasto
+        try:
+            if tmp.exists():
+                tmp.unlink()
+        except Exception:
+            pass
+        return False
+
+
+def safe_delete(path: Union[str, Path], reason: str = "", *,
+                also_remove_empty_parent: bool = False) -> bool:
+    """
+    Cancella `path` spostandolo nel cestino locale (`.editor_trash/<sessione>/`).
+
+    Caratteristiche:
+      - File O directory accettati (per directory usa shutil.move ricorsivo).
+      - Path NON esistente: ritorna True (nothing to do) senza warning.
+      - Conflict-safe: se nel cestino esiste già un file con lo stesso nome
+        (perché cancellato due volte nella stessa sessione), accoda un suffisso
+        numerico — non si sovrappone mai.
+      - Audit log: ogni delete loggata in `.editor_audit.log` (timestamp, path,
+        path nel cestino, reason).
+      - `also_remove_empty_parent`: se True, dopo la delete tenta di rmdir() la
+        cartella padre se rimane vuota (utile per cleanup ricorsivo). Mai
+        ricorsivo verso l'alto: una sola directory.
+
+    Returns True su successo (o se il file non esisteva), False su errore.
+    NON solleva eccezioni: chi chiama può ispezionare il return value.
+    """
+    log = logging.getLogger(__name__)
+    p = Path(path)
+
+    if not p.exists():
+        log.debug(f"safe_delete: path inesistente, nothing to do: {p}")
+        return True
+
+    try:
+        # Path assoluto per audit + per costruire la struttura del cestino
+        abs_p = p.resolve()
+        base = get_base_path().resolve()
+
+        # Costruisce il path di destinazione nel cestino preservando la
+        # struttura relativa al base_path quando possibile.
+        try:
+            rel = abs_p.relative_to(base)
+        except ValueError:
+            # File fuori dal base_path (es. cancellazione di un file utente
+            # selezionato altrove): usa solo il nome.
+            rel = Path(abs_p.name)
+
+        trash_dest = _get_trash_root() / _SESSION_TS / rel
+        trash_dest.parent.mkdir(parents=True, exist_ok=True)
+
+        # Conflict resolution: se esiste già (es. stesso file cancellato due
+        # volte), accoda suffisso numerico.
+        final_dest = trash_dest
+        n = 1
+        while final_dest.exists():
+            final_dest = trash_dest.with_name(f"{trash_dest.stem}__{n}{trash_dest.suffix}")
+            n += 1
+
+        shutil.move(str(abs_p), str(final_dest))
+        _audit_log("DELETE", str(abs_p), f"trash={final_dest} reason={reason}")
+        log.info(f"safe_delete: {abs_p} → trash ({reason or 'no reason'})")
+
+        # Opzionale: rimuovi la cartella padre se rimasta vuota
+        if also_remove_empty_parent:
+            try:
+                parent = abs_p.parent
+                if parent.exists() and parent != base and not any(parent.iterdir()):
+                    parent.rmdir()
+                    log.debug(f"safe_delete: rimossa cartella padre vuota {parent}")
+            except OSError:
+                # Non vuota o permessi: ignorato
+                pass
+
+        return True
+
+    except Exception as e:
+        log.error(f"safe_delete: fallita eliminazione di {p}: {e}", exc_info=DEBUG)
+        _audit_log("DELETE_FAILED", str(p), f"error={e} reason={reason}")
+        return False
+
+
+def cleanup_trash(max_age_days: int = 7) -> int:
+    """
+    Rimuove definitivamente le sessioni del cestino più vecchie di `max_age_days`.
+    Mai chiamata automaticamente: deve essere invocata esplicitamente (menu
+    'Manutenzione', tool CLI, ecc.). Returns il numero di sessioni rimosse.
+    """
+    log = logging.getLogger(__name__)
+    trash = _get_trash_root()
+    if not trash.exists():
+        return 0
+
+    cutoff = datetime.datetime.now() - datetime.timedelta(days=max_age_days)
+    removed = 0
+    for session_dir in trash.iterdir():
+        if not session_dir.is_dir():
+            continue
+        try:
+            # Il nome della sessione è "YYYYMMDD_HHMMSS"
+            ts = datetime.datetime.strptime(session_dir.name, "%Y%m%d_%H%M%S")
+        except ValueError:
+            # Cartella estranea — skip
+            continue
+        if ts < cutoff:
+            try:
+                shutil.rmtree(session_dir)
+                _audit_log("TRASH_PURGE", str(session_dir),
+                           f"age_days>{max_age_days}")
+                removed += 1
+            except Exception as e:
+                log.warning(f"cleanup_trash: impossibile rimuovere {session_dir}: {e}")
+    if removed:
+        log.info(f"cleanup_trash: rimosse {removed} sessioni > {max_age_days} giorni")
+    return removed
 
 
 # ---------------------------------------------------------------------------

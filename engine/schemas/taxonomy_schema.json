@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "tags_taxonomy.json",
+  "type": "object",
+  "required": ["version", "tags"],
+  "additionalProperties": true,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Versione schema della taxonomy. Bump in caso di breaking change."
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "Lista delle categorie ammesse per il campo 'cat' dei tag (es. Materiale, Taglia, Tema, Generale)."
+    },
+    "tags": {
+      "type": "object",
+      "description": "Dizionario tag_id -> definizione localizzata. Chiave deve essere in lowercase snake_case.",
+      "propertyNames": {
+        "pattern": "^[a-z0-9_]+$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["it"],
+        "additionalProperties": true,
+        "properties": {
+          "it": { "type": "string", "minLength": 1 },
+          "en": { "type": "string" },
+          "fr": { "type": "string" },
+          "es": { "type": "string" },
+          "de": { "type": "string" },
+          "cat": {
+            "type": "string",
+            "description": "Categoria del tag. Se presente, dovrebbe essere una di 'categories'."
+          }
+        }
+      }
+    }
+  }
+}

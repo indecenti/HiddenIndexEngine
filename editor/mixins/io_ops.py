@@ -117,8 +117,9 @@ class IoOpsMixin:
                 objects.append(cat_entry)
 
             game_cat["objects"] = sorted(objects, key=lambda o: o.get("id", ""))
-            with open(game_cat_path, "w", encoding="utf-8") as f:
-                json.dump(game_cat, f, indent=2, ensure_ascii=False)
+            if not _save_json(game_cat_path, game_cat):
+                logging.warning(f"[ASSET] Catalog JSON sync failed for '{cat_entry.get('id')}' "
+                                f"(safe_write_json returned False)")
 
         except Exception as e:
             logging.warning(f"[ASSET] Catalog JSON sync failed for '{cat_entry.get('id')}': {e}")
@@ -208,6 +209,13 @@ class IoOpsMixin:
         self._sanitize_effects()
         self.selected_idx = None
         self.sel_effect_idx = None
+        # Reset stati transitori del panel destro
+        self._layer_dropdown_open = False
+        self._confirm_clear = False
+        self._editing_prop = None
+        # Reset stato scatter (BG analysis cache invalida per nuova scena)
+        if hasattr(self, "_scatter_reset"):
+            self._scatter_reset()
         self.undo_stack.clear()
         self.redo_stack.clear()
         self.scene_dirty  = False
@@ -423,19 +431,20 @@ class IoOpsMixin:
 
         used_catalog_ids, used_icon_names = self._collect_used_assets(data)
 
+        from engine.utils import safe_delete
         removed_count = 0
         for f in game_objects_p.glob("*.png"):
             if f.name not in used_icon_names:
-                # Rimuove solo se il file esiste nel master engine (è recuperabile)
-                exists_in_engine = any((engine_assets_p / sub / f.name).exists() 
+                # Rimuove solo se il file esiste nel master engine (è recuperabile).
+                # Soft-delete tramite cestino .editor_trash/ — recuperabile per 7 giorni.
+                exists_in_engine = any((engine_assets_p / sub / f.name).exists()
                                      for sub in ["objects", "objects_lineart"])
                 if exists_in_engine:
-                    try:
-                        f.unlink()
+                    if safe_delete(f, reason="autoclean_orphan_png"):
                         removed_count += 1
                         logging.info(f"[ASSET] Rimosso PNG orfano dalla cartella di gioco: {f.name}")
-                    except Exception as e:
-                        logging.warning(f"[ASSET] Cleanup PNG fallito per '{f.name}': {e}")
+                    else:
+                        logging.warning(f"[ASSET] Cleanup PNG fallito per '{f.name}'")
 
         # Rimuove anche le entry orfane dal catalogo JSON di gioco
         game_cat_path = self.game_path / "objects_catalog.json"
@@ -449,10 +458,11 @@ class IoOpsMixin:
                     if o.get("id") in used_catalog_ids
                 ]
                 if len(game_cat["objects"]) < before:
-                    with open(game_cat_path, "w", encoding="utf-8") as f:
-                        json.dump(game_cat, f, indent=2, ensure_ascii=False)
-                    removed_json = before - len(game_cat["objects"])
-                    logging.info(f"[ASSET] Rimosse {removed_json} entry orfane da objects_catalog.json")
+                    if _save_json(game_cat_path, game_cat):
+                        removed_json = before - len(game_cat["objects"])
+                        logging.info(f"[ASSET] Rimosse {removed_json} entry orfane da objects_catalog.json")
+                    else:
+                        logging.warning("[ASSET] Cleanup catalog JSON fallito (atomic write)")
             except Exception as e:
                 logging.warning(f"[ASSET] Cleanup catalog JSON fallito: {e}")
 
@@ -495,23 +505,25 @@ class IoOpsMixin:
             if harvested_music > 0:
                 logging.info(f"[EDITOR] Harvested {harvested_music} musiche nella cartella di gioco.")
 
-        # Cleanup musiche orfane dal game folder (MAI dall'engine)
+        # Cleanup musiche orfane dal game folder (MAI dall'engine).
+        # Soft-delete tramite cestino — recuperabile, non distruttivo.
         if game_music_p.exists():
             audio_removed = 0
             for f in game_music_p.glob("*.mp3"):
                 if f.name not in used_music_names:
+                    # Rilascia il mixer prima di tentare l'eliminazione (Windows
+                    # tiene il file in lock se è ancora caricato)
+                    import pygame
                     try:
-                        # Rilascia il mixer prima di tentare l'eliminazione
-                        import pygame
-                        try:
-                            pygame.mixer.music.unload()
-                        except: pass
+                        pygame.mixer.music.unload()
+                    except (pygame.error, AttributeError) as e:
+                        logging.debug(f"[ASSET] mixer.unload pre-delete: {e}")
 
-                        f.unlink(missing_ok=True)
+                    if safe_delete(f, reason="autoclean_orphan_music"):
                         audio_removed += 1
                         logging.info(f"[ASSET] Rimossa musica orfana: {f.name}")
-                    except Exception as e:
-                        logging.warning(f"[ASSET] Music cleanup fallito per '{f.name}': {e}")
+                    else:
+                        logging.warning(f"[ASSET] Music cleanup fallito per '{f.name}'")
 
             if audio_removed > 0:
                 logging.info(f"[EDITOR] Music Cleanup: rimossi {audio_removed} brani non più usati nel gioco.")

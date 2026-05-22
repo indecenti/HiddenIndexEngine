@@ -2,9 +2,10 @@
   "id": "LineVenture",
   "game_id": "LineVenture",
   "title_key": "game_title",
-  "version": "1.0",
+  "version": "1.4",
   "menu": {
     "background": "assets/Cinematic_animation_based_on.mp4",
+    "background_static": "assets/menu_poster.jpg",
     "music": []
   },
   "ui_theme": "cyber_neon",

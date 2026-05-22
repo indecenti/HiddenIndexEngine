@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "objects_catalog.json (globale o specifico di gioco)",
+  "type": "object",
+  "required": ["objects"],
+  "additionalProperties": true,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Versione dello schema del catalogo. Aggiornare in caso di breaking change."
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Metadati liberi: last_updated, editor_version, autore, ecc."
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label_key", "icon", "style", "default_detection"],
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "description": "Identificatore univoco lowercase. Deve essere unico nel catalogo unificato (global + game)."
+          },
+          "label_key": {
+            "type": "string",
+            "pattern": "^obj_[a-z0-9_]+$",
+            "description": "Chiave nella strings/{lang}.json. Convenzione: obj_<id>."
+          },
+          "icon": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Path relativo del PNG, es. 'objects_cartoon/ca_apple.png'. Le immagini risiedono SEMPRE su filesystem."
+          },
+          "style": {
+            "type": "string",
+            "enum": ["cartoon", "line art", "real"],
+            "description": "Stile visivo. Mantenuto come stringa per backward-compat (tre stili attuali)."
+          },
+          "default_detection": {
+            "type": "string",
+            "enum": ["rect", "circle", "mask", "poly"],
+            "description": "Tipo di hit-test predefinito. 'poly' usa corners[]."
+          },
+          "default_width":      { "type": "number", "minimum": 1 },
+          "default_height":     { "type": "number", "minimum": 1 },
+          "default_radius":     { "type": "number", "minimum": 1 },
+          "default_hint_delay": { "type": "number", "minimum": 0 },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]+$",
+              "description": "Tag in lowercase snake_case. La taxonomy si occupa della traduzione localizzata."
+            },
+            "uniqueItems": true,
+            "description": "Tag normalizzati lowercase. Vedi tools/normalize_catalog.py per migrazione case-mista → normalizzata."
+          }
+        },
+        "allOf": [
+          {
+            "description": "Per detection=rect/poly servono width+height; per circle serve radius; per mask serve mask in scene.",
+            "if": { "properties": { "default_detection": { "const": "circle" } } },
+            "then": { "required": ["default_radius"] }
+          },
+          {
+            "if": { "properties": { "default_detection": { "const": "rect" } } },
+            "then": { "required": ["default_width", "default_height"] }
+          },
+          {
+            "if": { "properties": { "default_detection": { "const": "poly" } } },
+            "then": { "required": ["default_width", "default_height"] }
+          }
+        ]
+      }
+    }
+  }
+}

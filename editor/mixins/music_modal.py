@@ -96,10 +96,13 @@ class MusicModalMixin:
         cat_path = self._music_dir / "music_catalog.json"
         try:
             self._music_dir.mkdir(parents=True, exist_ok=True)
-            with open(cat_path, "w", encoding="utf-8") as f:
-                json.dump(self._music_catalog, f, indent=2)
-            self._music_refresh_library_tags()
-        except: pass
+            from engine.utils import safe_write_json
+            if safe_write_json(cat_path, self._music_catalog, indent=2):
+                self._music_refresh_library_tags()
+            else:
+                logging.warning(f"[MUSIC] Salvataggio catalogo musica fallito: {cat_path}")
+        except Exception as e:
+            logging.warning(f"[MUSIC] Salvataggio catalogo musica fallito: {e}")
 
     def _music_refresh_library_tags(self):
         tags = set()
@@ -410,15 +413,19 @@ class MusicModalMixin:
         self.scene_dirty = True
 
     def _music_delete_file(self, name):
-        if self._music_playing == name: pygame.mixer.music.stop(); self._music_playing = None
+        # Soft-delete: sposta nel cestino. Recuperabile, audit log.
+        if self._music_playing == name:
+            pygame.mixer.music.stop()
+            self._music_playing = None
         p = self._music_dir / name
         try:
-            if p.exists():
-                import os; os.remove(str(p))
+            from engine.utils import safe_delete
+            if p.exists() and safe_delete(p, reason="user_delete_music"):
                 if name in self._music_all_files: self._music_all_files.remove(name)
                 if name in self._music_catalog: del self._music_catalog[name]
                 self._music_save_catalog(); self._music_update_filter()
-        except: pass
+        except Exception as e:
+            logging.warning(f"[MUSIC] Delete fallita per '{name}': {e}")
         self._music_delete_pending = None
 
     def _music_handle_drop(self, path_str: str):

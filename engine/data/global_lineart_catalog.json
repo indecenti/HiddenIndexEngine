@@ -1,6 +1,39 @@
 {
   "objects": [
     {
+      "id": "la_accalappia_sogni",
+      "label_key": "obj_la_accalappia_sogni",
+      "icon": "objects_lineart/la_accalappia_sogni.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "stoffa",
+        "legno",
+        "grande",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_accetta_legno",
+      "label_key": "obj_la_accetta_legno",
+      "icon": "objects_lineart/la_accetta_legno.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "metallo",
+        "attrezzo",
+        "medio",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_aeroplanino",
       "label_key": "obj_la_aeroplanino",
       "icon": "objects_lineart/la_aeroplanino.png",
@@ -16,6 +49,112 @@
       "style": "line art"
     },
     {
+      "id": "la_aeroplano_carta",
+      "label_key": "obj_la_aeroplano_carta",
+      "icon": "objects_lineart/la_aeroplano_carta.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "carta",
+        "giocattolo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_agenda_retro",
+      "label_key": "obj_la_agenda_retro",
+      "icon": "objects_lineart/la_agenda_retro.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "carta",
+        "stoffa",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ago_cucito",
+      "label_key": "obj_la_ago_cucito",
+      "icon": "objects_lineart/la_ago_cucito.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 65,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_alambicco_vetro",
+      "label_key": "obj_la_alambicco_vetro",
+      "icon": "objects_lineart/la_alambicco_vetro.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "vetro",
+        "metallo",
+        "grande",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_alzatina_dolci",
+      "label_key": "obj_la_alzatina_dolci",
+      "icon": "objects_lineart/la_alzatina_dolci.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 60,
+      "default_hint_delay": 35,
+      "tags": [
+        "vetro",
+        "ceramica",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_amaca_retro",
+      "label_key": "obj_la_amaca_retro",
+      "icon": "objects_lineart/la_amaca_retro.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 50,
+      "default_hint_delay": 35,
+      "tags": [
+        "stoffa",
+        "grande",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_amuleto",
+      "label_key": "obj_la_amuleto",
+      "icon": "objects_lineart/la_amuleto.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "antico",
+        "metallo",
+        "piccolo",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_ancora",
       "label_key": "obj_la_ancora",
       "icon": "objects_lineart/la_ancora.png",
@@ -26,6 +165,84 @@
       "tags": [
         "mare",
         "metallo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_anello_sigillo",
+      "label_key": "obj_la_anello_sigillo",
+      "icon": "objects_lineart/la_anello_sigillo.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "default_hint_delay": 20,
+      "tags": [
+        "antico",
+        "metallo",
+        "piccolo",
+        "gioiello"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_anfora_greca",
+      "label_key": "obj_la_anfora_greca",
+      "icon": "objects_lineart/la_anfora_greca.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "pietra",
+        "antico",
+        "medio",
+        "contenitore"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_anguria",
+      "label_key": "obj_la_anguria",
+      "icon": "objects_lineart/la_anguria.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 45,
+      "default_hint_delay": 40,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ankh",
+      "label_key": "obj_la_ankh",
+      "icon": "objects_lineart/la_ankh.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 75,
+      "default_hint_delay": 25,
+      "tags": [
+        "antico",
+        "metallo",
+        "medio",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_annaffiatoio",
+      "label_key": "obj_la_annaffiatoio",
+      "icon": "objects_lineart/la_annaffiatoio.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "giardino",
+        "medio"
       ],
       "style": "line art"
     },
@@ -45,6 +262,36 @@
       "style": "line art"
     },
     {
+      "id": "la_arancia",
+      "label_key": "obj_la_arancia",
+      "icon": "objects_lineart/la_arancia.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_arcolaio_retro",
+      "label_key": "obj_la_arcolaio_retro",
+      "icon": "objects_lineart/la_arcolaio_retro.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "antico",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_arpa",
       "label_key": "obj_la_arpa",
       "icon": "objects_lineart/la_arpa.png",
@@ -54,6 +301,21 @@
       "default_hint_delay": 50,
       "tags": [
         "musica",
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_arpione",
+      "label_key": "obj_la_arpione",
+      "icon": "objects_lineart/la_arpione.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 105,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
         "legno",
         "grande"
       ],
@@ -75,6 +337,52 @@
       "style": "line art"
     },
     {
+      "id": "la_astrolabio",
+      "label_key": "obj_la_astrolabio",
+      "icon": "objects_lineart/la_astrolabio.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "metallo",
+        "medio",
+        "esplorazione",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_astronave",
+      "label_key": "obj_la_astronave",
+      "icon": "objects_lineart/la_astronave.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bacchetta_magica",
+      "label_key": "obj_la_bacchetta_magica",
+      "icon": "objects_lineart/la_bacchetta_magica.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 75,
+      "default_hint_delay": 20,
+      "tags": [
+        "legno",
+        "piccolo",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_bambola",
       "label_key": "obj_la_bambola",
       "icon": "objects_lineart/la_bambola.png",
@@ -86,6 +394,37 @@
         "giocattolo",
         "stoffa",
         "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_banana",
+      "label_key": "obj_la_banana",
+      "icon": "objects_lineart/la_banana.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 40,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_barattolo_vetro",
+      "label_key": "obj_la_barattolo_vetro",
+      "icon": "objects_lineart/la_barattolo_vetro.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "vetro",
+        "medio",
+        "cucina"
       ],
       "style": "line art"
     },
@@ -105,6 +444,83 @@
       "style": "line art"
     },
     {
+      "id": "la_barometro",
+      "label_key": "obj_la_barometro",
+      "icon": "objects_lineart/la_barometro.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "vetro",
+        "medio",
+        "misura"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_barometro_retro",
+      "label_key": "obj_la_barometro_retro",
+      "icon": "objects_lineart/la_barometro_retro.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "legno",
+        "medio",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bastone_passeggio",
+      "label_key": "obj_la_bastone_passeggio",
+      "icon": "objects_lineart/la_bastone_passeggio.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 95,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "attrezzo",
+        "grande",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_baule_illusione",
+      "label_key": "obj_la_baule_illusione",
+      "icon": "objects_lineart/la_baule_illusione.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 60,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "grande",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_becher_vetro",
+      "label_key": "obj_la_becher_vetro",
+      "icon": "objects_lineart/la_becher_vetro.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "vetro",
+        "medio",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_biglie",
       "label_key": "obj_la_biglie",
       "icon": "objects_lineart/la_biglie.png",
@@ -120,6 +536,65 @@
       "style": "line art"
     },
     {
+      "id": "la_biglie_vetro",
+      "label_key": "obj_la_biglie_vetro",
+      "icon": "objects_lineart/la_biglie_vetro.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 20,
+      "tags": [
+        "vetro",
+        "giocattolo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_biglietto_treno",
+      "label_key": "obj_la_biglietto_treno",
+      "icon": "objects_lineart/la_biglietto_treno.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 35,
+      "default_hint_delay": 20,
+      "tags": [
+        "carta",
+        "viaggio",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bilancia_precisione",
+      "label_key": "obj_la_bilancia_precisione",
+      "icon": "objects_lineart/la_bilancia_precisione.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "medio",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bilancia_retro",
+      "label_key": "obj_la_bilancia_retro",
+      "icon": "objects_lineart/la_bilancia_retro.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "medio",
+        "cucina"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_binocolo",
       "label_key": "obj_la_binocolo",
       "icon": "objects_lineart/la_binocolo.png",
@@ -129,6 +604,22 @@
       "default_hint_delay": 40,
       "tags": [
         "ottica",
+        "esplorazione"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_binocolo_retro",
+      "label_key": "obj_la_binocolo_retro",
+      "icon": "objects_lineart/la_binocolo_retro.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "medio",
+        "viaggio",
         "esplorazione"
       ],
       "style": "line art"
@@ -149,6 +640,167 @@
       "style": "line art"
     },
     {
+      "id": "la_birilli_giocoliere",
+      "label_key": "obj_la_birilli_giocoliere",
+      "icon": "objects_lineart/la_birilli_giocoliere.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bobina_pellicola",
+      "label_key": "obj_la_bobina_pellicola",
+      "icon": "objects_lineart/la_bobina_pellicola.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_boccetta_inchiostro_china",
+      "label_key": "obj_la_boccetta_inchiostro_china",
+      "icon": "objects_lineart/la_boccetta_inchiostro_china.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 50,
+      "default_hint_delay": 20,
+      "tags": [
+        "vetro",
+        "piccolo",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_boccetta_pozione",
+      "label_key": "obj_la_boccetta_pozione",
+      "icon": "objects_lineart/la_boccetta_pozione.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "vetro",
+        "piccolo",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_boccetta_sviluppo",
+      "label_key": "obj_la_boccetta_sviluppo",
+      "icon": "objects_lineart/la_boccetta_sviluppo.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "vetro",
+        "medio",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_boccetta_veleno",
+      "label_key": "obj_la_boccetta_veleno",
+      "icon": "objects_lineart/la_boccetta_veleno.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "vetro",
+        "piccolo",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bonsai",
+      "label_key": "obj_la_bonsai",
+      "icon": "objects_lineart/la_bonsai.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "legno",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_borraccia_metallo",
+      "label_key": "obj_la_borraccia_metallo",
+      "icon": "objects_lineart/la_borraccia_metallo.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "medio",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_borraccia_pelle",
+      "label_key": "obj_la_borraccia_pelle",
+      "icon": "objects_lineart/la_borraccia_pelle.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "cuoio",
+        "medio",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bottone_retro",
+      "label_key": "obj_la_bottone_retro",
+      "icon": "objects_lineart/la_bottone_retro.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "default_hint_delay": 20,
+      "tags": [
+        "plastica",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bruciatore_bunsen",
+      "label_key": "obj_la_bruciatore_bunsen",
+      "icon": "objects_lineart/la_bruciatore_bunsen.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "luce",
+        "medio",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_bussola",
       "label_key": "obj_la_bussola",
       "icon": "objects_lineart/la_bussola.png",
@@ -158,6 +810,64 @@
       "tags": [
         "esplorazione",
         "metallo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bussola_esploratore",
+      "label_key": "obj_la_bussola_esploratore",
+      "icon": "objects_lineart/la_bussola_esploratore.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_busta_lettera",
+      "label_key": "obj_la_busta_lettera",
+      "icon": "objects_lineart/la_busta_lettera.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "carta",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bustina_semi",
+      "label_key": "obj_la_bustina_semi",
+      "icon": "objects_lineart/la_bustina_semi.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 60,
+      "default_hint_delay": 20,
+      "tags": [
+        "carta",
+        "seme",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_busto_scultura",
+      "label_key": "obj_la_busto_scultura",
+      "icon": "objects_lineart/la_busto_scultura.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "pietra",
+        "grande",
+        "arte"
       ],
       "style": "line art"
     },
@@ -176,6 +886,20 @@
       "style": "line art"
     },
     {
+      "id": "la_cactus",
+      "label_key": "obj_la_cactus",
+      "icon": "objects_lineart/la_cactus.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 75,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_calamaio",
       "label_key": "obj_la_calamaio",
       "icon": "objects_lineart/la_calamaio.png",
@@ -186,6 +910,50 @@
       "tags": [
         "scrittura",
         "ufficio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_calamaio_piuma",
+      "label_key": "obj_la_calamaio_piuma",
+      "icon": "objects_lineart/la_calamaio_piuma.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 80,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_calamaio_vetro",
+      "label_key": "obj_la_calamaio_vetro",
+      "icon": "objects_lineart/la_calamaio_vetro.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "vetro",
+        "scrittura",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_calamita_ferro",
+      "label_key": "obj_la_calamita_ferro",
+      "icon": "objects_lineart/la_calamita_ferro.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "scienza"
       ],
       "style": "line art"
     },
@@ -219,6 +987,82 @@
       "style": "line art"
     },
     {
+      "id": "la_calibro_scultore",
+      "label_key": "obj_la_calibro_scultore",
+      "icon": "objects_lineart/la_calibro_scultore.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "misura",
+        "medio",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_calice",
+      "label_key": "obj_la_calice",
+      "icon": "objects_lineart/la_calice.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "antico",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_calumet",
+      "label_key": "obj_la_calumet",
+      "icon": "objects_lineart/la_calumet.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 35,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "medio",
+        "antico"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_campana_nave",
+      "label_key": "obj_la_campana_nave",
+      "icon": "objects_lineart/la_campana_nave.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "medio",
+        "antico"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_campanella",
+      "label_key": "obj_la_campanella",
+      "icon": "objects_lineart/la_campanella.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "antico",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_candela",
       "label_key": "obj_la_candela",
       "icon": "objects_lineart/la_candela.png",
@@ -247,6 +1091,250 @@
       "style": "line art"
     },
     {
+      "id": "la_cannocchiale_ottone",
+      "label_key": "obj_la_cannocchiale_ottone",
+      "icon": "objects_lineart/la_cannocchiale_ottone.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 80,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "metallo",
+        "vetro",
+        "medio",
+        "esplorazione"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cappello_capitano",
+      "label_key": "obj_la_cappello_capitano",
+      "icon": "objects_lineart/la_cappello_capitano.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "stoffa",
+        "cappello",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cappello_cilindro",
+      "label_key": "obj_la_cappello_cilindro",
+      "icon": "objects_lineart/la_cappello_cilindro.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "stoffa",
+        "cappello",
+        "grande",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cappello_cowboy",
+      "label_key": "obj_la_cappello_cowboy",
+      "icon": "objects_lineart/la_cappello_cowboy.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "stoffa",
+        "cappello",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cappello_cuoco",
+      "label_key": "obj_la_cappello_cuoco",
+      "icon": "objects_lineart/la_cappello_cuoco.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "stoffa",
+        "cappello",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cappello_detective",
+      "label_key": "obj_la_cappello_detective",
+      "icon": "objects_lineart/la_cappello_detective.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 50,
+      "default_hint_delay": 25,
+      "tags": [
+        "stoffa",
+        "cappello",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cappello_mago",
+      "label_key": "obj_la_cappello_mago",
+      "icon": "objects_lineart/la_cappello_mago.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "cappello",
+        "stoffa",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_carboncino_disegno",
+      "label_key": "obj_la_carboncino_disegno",
+      "icon": "objects_lineart/la_carboncino_disegno.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 65,
+      "default_hint_delay": 20,
+      "tags": [
+        "legno",
+        "piccolo",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_carriola_legno",
+      "label_key": "obj_la_carriola_legno",
+      "icon": "objects_lineart/la_carriola_legno.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 55,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "metallo",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_carro_guerra",
+      "label_key": "obj_la_carro_guerra",
+      "icon": "objects_lineart/la_carro_guerra.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 55,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "metallo",
+        "grande",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_carte_trucco",
+      "label_key": "obj_la_carte_trucco",
+      "icon": "objects_lineart/la_carte_trucco.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 50,
+      "default_hint_delay": 25,
+      "tags": [
+        "carta",
+        "gioco",
+        "medio",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_casa_bambole",
+      "label_key": "obj_la_casa_bambole",
+      "icon": "objects_lineart/la_casa_bambole.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 75,
+      "default_hint_delay": 40,
+      "tags": [
+        "legno",
+        "giocattolo",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_casco_astronauta",
+      "label_key": "obj_la_casco_astronauta",
+      "icon": "objects_lineart/la_casco_astronauta.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "casco",
+        "metallo",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cassaforte",
+      "label_key": "obj_la_cassaforte",
+      "icon": "objects_lineart/la_cassaforte.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "sicurezza",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cassetta_audio",
+      "label_key": "obj_la_cassetta_audio",
+      "icon": "objects_lineart/la_cassetta_audio.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 35,
+      "default_hint_delay": 20,
+      "tags": [
+        "tecnologia",
+        "plastica",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cavalletto_pittore",
+      "label_key": "obj_la_cavalletto_pittore",
+      "icon": "objects_lineart/la_cavalletto_pittore.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "grande",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_cavallo_dondolo",
       "label_key": "obj_la_cavallo_dondolo",
       "icon": "objects_lineart/la_cavallo_dondolo.png",
@@ -257,6 +1345,21 @@
       "tags": [
         "giocattolo",
         "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cavalluccio_dondolo",
+      "label_key": "obj_la_cavalluccio_dondolo",
+      "icon": "objects_lineart/la_cavalluccio_dondolo.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 65,
+      "default_hint_delay": 40,
+      "tags": [
+        "legno",
+        "giocattolo",
         "grande"
       ],
       "style": "line art"
@@ -291,6 +1394,66 @@
       "style": "line art"
     },
     {
+      "id": "la_cercapersone",
+      "label_key": "obj_la_cercapersone",
+      "icon": "objects_lineart/la_cercapersone.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 40,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "comunicazione",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cerchio_fuoco",
+      "label_key": "obj_la_cerchio_fuoco",
+      "icon": "objects_lineart/la_cerchio_fuoco.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "medio",
+        "luce"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cerniera_lampo",
+      "label_key": "obj_la_cerniera_lampo",
+      "icon": "objects_lineart/la_cerniera_lampo.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 75,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "stoffa",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cesoie_giardino",
+      "label_key": "obj_la_cesoie_giardino",
+      "icon": "objects_lineart/la_cesoie_giardino.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 75,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "attrezzo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_chiave",
       "label_key": "obj_la_chiave",
       "icon": "objects_lineart/la_chiave.png",
@@ -301,6 +1464,37 @@
       "tags": [
         "metallo",
         "sicurezza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_chiave_antica",
+      "label_key": "obj_la_chiave_antica",
+      "icon": "objects_lineart/la_chiave_antica.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 75,
+      "default_hint_delay": 20,
+      "tags": [
+        "antico",
+        "metallo",
+        "piccolo",
+        "chiave"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_chiave_giocattolo",
+      "label_key": "obj_la_chiave_giocattolo",
+      "icon": "objects_lineart/la_chiave_giocattolo.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "giocattolo",
+        "piccolo"
       ],
       "style": "line art"
     },
@@ -319,6 +1513,21 @@
       "style": "line art"
     },
     {
+      "id": "la_chiave_sol",
+      "label_key": "obj_la_chiave_sol",
+      "icon": "objects_lineart/la_chiave_sol.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 75,
+      "default_hint_delay": 20,
+      "tags": [
+        "musica",
+        "carta",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_chitarra",
       "label_key": "obj_la_chitarra",
       "icon": "objects_lineart/la_chitarra.png",
@@ -328,6 +1537,81 @@
       "default_hint_delay": 45,
       "tags": [
         "musica",
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ciac_cinema",
+      "label_key": "obj_la_ciac_cinema",
+      "icon": "objects_lineart/la_ciac_cinema.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "medio",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ciliegie",
+      "label_key": "obj_la_ciliegie",
+      "icon": "objects_lineart/la_ciliegie.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cinepresa_super8",
+      "label_key": "obj_la_cinepresa_super8",
+      "icon": "objects_lineart/la_cinepresa_super8.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cinturone_fondina",
+      "label_key": "obj_la_cinturone_fondina",
+      "icon": "objects_lineart/la_cinturone_fondina.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "cuoio",
+        "medio",
+        "sicurezza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_clava",
+      "label_key": "obj_la_clava",
+      "icon": "objects_lineart/la_clava.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
         "legno",
         "grande"
       ],
@@ -348,6 +1632,80 @@
       "style": "line art"
     },
     {
+      "id": "la_clessidra_ottone",
+      "label_key": "obj_la_clessidra_ottone",
+      "icon": "objects_lineart/la_clessidra_ottone.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "vetro",
+        "medio",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_clown_molla",
+      "label_key": "obj_la_clown_molla",
+      "icon": "objects_lineart/la_clown_molla.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 85,
+      "default_hint_delay": 45,
+      "tags": [
+        "metallo",
+        "giocattolo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_clown_naso",
+      "label_key": "obj_la_clown_naso",
+      "icon": "objects_lineart/la_clown_naso.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "default_hint_delay": 20,
+      "tags": [
+        "stoffa",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_colino_cucina",
+      "label_key": "obj_la_colino_cucina",
+      "icon": "objects_lineart/la_colino_cucina.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "cucina",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_colonna_ionica",
+      "label_key": "obj_la_colonna_ionica",
+      "icon": "objects_lineart/la_colonna_ionica.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "pietra",
+        "antico",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_coltello",
       "label_key": "obj_la_coltello",
       "icon": "objects_lineart/la_coltello.png",
@@ -358,6 +1716,39 @@
       "tags": [
         "cucina",
         "acciaio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_coltello_sopravvivenza",
+      "label_key": "obj_la_coltello_sopravvivenza",
+      "icon": "objects_lineart/la_coltello_sopravvivenza.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 70,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "attrezzo",
+        "piccolo",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_compasso",
+      "label_key": "obj_la_compasso",
+      "icon": "objects_lineart/la_compasso.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 75,
+      "default_hint_delay": 25,
+      "tags": [
+        "attrezzo",
+        "metallo",
+        "piccolo",
+        "scienza",
+        "misura"
       ],
       "style": "line art"
     },
@@ -390,6 +1781,97 @@
       "style": "line art"
     },
     {
+      "id": "la_controller_90s",
+      "label_key": "obj_la_controller_90s",
+      "icon": "objects_lineart/la_controller_90s.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 50,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "gioco",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_corno_bufalo",
+      "label_key": "obj_la_corno_bufalo",
+      "icon": "objects_lineart/la_corno_bufalo.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_corno_polvere",
+      "label_key": "obj_la_corno_polvere",
+      "icon": "objects_lineart/la_corno_polvere.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_corona",
+      "label_key": "obj_la_corona",
+      "icon": "objects_lineart/la_corona.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 50,
+      "default_hint_delay": 25,
+      "tags": [
+        "antico",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_costellazione",
+      "label_key": "obj_la_costellazione",
+      "icon": "objects_lineart/la_costellazione.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "esplorazione",
+        "medio",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cristallo",
+      "label_key": "obj_la_cristallo",
+      "icon": "objects_lineart/la_cristallo.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "cristallo",
+        "vetro",
+        "piccolo",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_cubetti",
       "label_key": "obj_la_cubetti",
       "icon": "objects_lineart/la_cubetti.png",
@@ -400,6 +1882,21 @@
       "tags": [
         "giocattolo",
         "legno",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cubi_legno",
+      "label_key": "obj_la_cubi_legno",
+      "icon": "objects_lineart/la_cubi_legno.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "giocattolo",
         "medio"
       ],
       "style": "line art"
@@ -434,6 +1931,36 @@
       "style": "line art"
     },
     {
+      "id": "la_cuffie_retro",
+      "label_key": "obj_la_cuffie_retro",
+      "icon": "objects_lineart/la_cuffie_retro.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_custodia_chitarra",
+      "label_key": "obj_la_custodia_chitarra",
+      "icon": "objects_lineart/la_custodia_chitarra.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 105,
+      "default_hint_delay": 35,
+      "tags": [
+        "musica",
+        "grande",
+        "scatola"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_dadi",
       "label_key": "obj_la_dadi",
       "icon": "objects_lineart/la_dadi.png",
@@ -445,6 +1972,229 @@
         "giocattolo",
         "plastica",
         "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_dente_capodoglio",
+      "label_key": "obj_la_dente_capodoglio",
+      "icon": "objects_lineart/la_dente_capodoglio.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "antico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_dente_drago",
+      "label_key": "obj_la_dente_drago",
+      "icon": "objects_lineart/la_dente_drago.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 65,
+      "default_hint_delay": 20,
+      "tags": [
+        "antico",
+        "mistero",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_diapason",
+      "label_key": "obj_la_diapason",
+      "icon": "objects_lineart/la_diapason.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 60,
+      "default_hint_delay": 20,
+      "tags": [
+        "musica",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_diario_bordo",
+      "label_key": "obj_la_diario_bordo",
+      "icon": "objects_lineart/la_diario_bordo.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "esplorazione",
+        "carta",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_dinamite",
+      "label_key": "obj_la_dinamite",
+      "icon": "objects_lineart/la_dinamite.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 60,
+      "default_hint_delay": 20,
+      "tags": [
+        "mistero",
+        "piccolo",
+        "pericolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_discman",
+      "label_key": "obj_la_discman",
+      "icon": "objects_lineart/la_discman.png",
+      "default_detection": "circle",
+      "default_radius": 45,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "audio",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_disco_vinile",
+      "label_key": "obj_la_disco_vinile",
+      "icon": "objects_lineart/la_disco_vinile.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 20,
+      "tags": [
+        "musica",
+        "plastica",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_distintivo",
+      "label_key": "obj_la_distintivo",
+      "icon": "objects_lineart/la_distintivo.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "sicurezza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ditale",
+      "label_key": "obj_la_ditale",
+      "icon": "objects_lineart/la_ditale.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_dittafono",
+      "label_key": "obj_la_dittafono",
+      "icon": "objects_lineart/la_dittafono.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "elettronica",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_dossier",
+      "label_key": "obj_la_dossier",
+      "icon": "objects_lineart/la_dossier.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "mistero",
+        "carta",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_eclissi",
+      "label_key": "obj_la_eclissi",
+      "icon": "objects_lineart/la_eclissi.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_elmo",
+      "label_key": "obj_la_elmo",
+      "icon": "objects_lineart/la_elmo.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_elmo_gladiatore",
+      "label_key": "obj_la_elmo_gladiatore",
+      "icon": "objects_lineart/la_elmo_gladiatore.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "antico",
+        "grande",
+        "cappello"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_esposimetro",
+      "label_key": "obj_la_esposimetro",
+      "icon": "objects_lineart/la_esposimetro.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "medio",
+        "misura"
       ],
       "style": "line art"
     },
@@ -463,6 +2213,49 @@
       "style": "line art"
     },
     {
+      "id": "la_faro",
+      "label_key": "obj_la_faro",
+      "icon": "objects_lineart/la_faro.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 95,
+      "default_hint_delay": 35,
+      "tags": [
+        "pietra",
+        "grande",
+        "luce"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fasi_lunari",
+      "label_key": "obj_la_fasi_lunari",
+      "icon": "objects_lineart/la_fasi_lunari.png",
+      "default_detection": "rect",
+      "default_width": 95,
+      "default_height": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fermacarte_cristallo",
+      "label_key": "obj_la_fermacarte_cristallo",
+      "icon": "objects_lineart/la_fermacarte_cristallo.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "vetro",
+        "pietra",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_ferro_cavallo",
       "label_key": "obj_la_ferro_cavallo",
       "icon": "objects_lineart/la_ferro_cavallo.png",
@@ -473,6 +2266,52 @@
       "tags": [
         "metallo",
         "vintage"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ferro_stiro_retro",
+      "label_key": "obj_la_ferro_stiro_retro",
+      "icon": "objects_lineart/la_ferro_stiro_retro.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 55,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "antico",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fiala_alchimista",
+      "label_key": "obj_la_fiala_alchimista",
+      "icon": "objects_lineart/la_fiala_alchimista.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 65,
+      "default_hint_delay": 20,
+      "tags": [
+        "vetro",
+        "piccolo",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fibula",
+      "label_key": "obj_la_fibula",
+      "icon": "objects_lineart/la_fibula.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 30,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "antico",
+        "piccolo",
+        "gioiello"
       ],
       "style": "line art"
     },
@@ -507,6 +2346,52 @@
       "style": "line art"
     },
     {
+      "id": "la_fischietto_soccorso",
+      "label_key": "obj_la_fischietto_soccorso",
+      "icon": "objects_lineart/la_fischietto_soccorso.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_flauto",
+      "label_key": "obj_la_flauto",
+      "icon": "objects_lineart/la_flauto.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 85,
+      "default_hint_delay": 25,
+      "tags": [
+        "musica",
+        "legno",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_floppy",
+      "label_key": "obj_la_floppy",
+      "icon": "objects_lineart/la_floppy.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "dati",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_foglia_acero",
       "label_key": "obj_la_foglia_acero",
       "icon": "objects_lineart/la_foglia_acero.png",
@@ -535,6 +2420,36 @@
       "style": "line art"
     },
     {
+      "id": "la_forbici_asole",
+      "label_key": "obj_la_forbici_asole",
+      "icon": "objects_lineart/la_forbici_asole.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "attrezzo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_forbici_sarto",
+      "label_key": "obj_la_forbici_sarto",
+      "icon": "objects_lineart/la_forbici_sarto.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 75,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "attrezzo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_forchetta",
       "label_key": "obj_la_forchetta",
       "icon": "objects_lineart/la_forchetta.png",
@@ -545,6 +2460,84 @@
       "tags": [
         "cucina",
         "posata"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fornelletto_campeggio",
+      "label_key": "obj_la_fornelletto_campeggio",
+      "icon": "objects_lineart/la_fornelletto_campeggio.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "attrezzo",
+        "medio",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_forziere",
+      "label_key": "obj_la_forziere",
+      "icon": "objects_lineart/la_forziere.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 65,
+      "default_hint_delay": 35,
+      "tags": [
+        "antico",
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fotocamera_soffietto",
+      "label_key": "obj_la_fotocamera_soffietto",
+      "icon": "objects_lineart/la_fotocamera_soffietto.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "metallo",
+        "cuoio",
+        "medio",
+        "tecnologia"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fragola",
+      "label_key": "obj_la_fragola",
+      "icon": "objects_lineart/la_fragola.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_francobollo",
+      "label_key": "obj_la_francobollo",
+      "icon": "objects_lineart/la_francobollo.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "carta",
+        "piccolo"
       ],
       "style": "line art"
     },
@@ -563,6 +2556,22 @@
       "style": "line art"
     },
     {
+      "id": "la_frusta_cucina",
+      "label_key": "obj_la_frusta_cucina",
+      "icon": "objects_lineart/la_frusta_cucina.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 75,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "attrezzo",
+        "medio",
+        "cucina"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_fungo",
       "label_key": "obj_la_fungo",
       "icon": "objects_lineart/la_fungo.png",
@@ -573,6 +2582,122 @@
       "tags": [
         "bosco",
         "natura"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fungo_bosco",
+      "label_key": "obj_la_fungo_bosco",
+      "icon": "objects_lineart/la_fungo_bosco.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 50,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_galassia",
+      "label_key": "obj_la_galassia",
+      "icon": "objects_lineart/la_galassia.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_gameboy",
+      "label_key": "obj_la_gameboy",
+      "icon": "objects_lineart/la_gameboy.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "gioco",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_gancio_pirata",
+      "label_key": "obj_la_gancio_pirata",
+      "icon": "objects_lineart/la_gancio_pirata.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 65,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_germoglio",
+      "label_key": "obj_la_germoglio",
+      "icon": "objects_lineart/la_germoglio.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 50,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_giradischi_valigetta",
+      "label_key": "obj_la_giradischi_valigetta",
+      "icon": "objects_lineart/la_giradischi_valigetta.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_globo_celeste",
+      "label_key": "obj_la_globo_celeste",
+      "icon": "objects_lineart/la_globo_celeste.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "legno",
+        "grande",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_gomitolo_lana",
+      "label_key": "obj_la_gomitolo_lana",
+      "icon": "objects_lineart/la_gomitolo_lana.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "stoffa",
+        "medio"
       ],
       "style": "line art"
     },
@@ -605,6 +2730,125 @@
       "style": "line art"
     },
     {
+      "id": "la_grembiule_cucina",
+      "label_key": "obj_la_grembiule_cucina",
+      "icon": "objects_lineart/la_grembiule_cucina.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "stoffa",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_grifone",
+      "label_key": "obj_la_grifone",
+      "icon": "objects_lineart/la_grifone.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "antico",
+        "pietra",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_guanti_giardinaggio",
+      "label_key": "obj_la_guanti_giardinaggio",
+      "icon": "objects_lineart/la_guanti_giardinaggio.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "stoffa",
+        "cuoio",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_guanto_forno",
+      "label_key": "obj_la_guanto_forno",
+      "icon": "objects_lineart/la_guanto_forno.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 60,
+      "default_hint_delay": 20,
+      "tags": [
+        "stoffa",
+        "guanto",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_impermeabile",
+      "label_key": "obj_la_impermeabile",
+      "icon": "objects_lineart/la_impermeabile.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 110,
+      "default_hint_delay": 35,
+      "tags": [
+        "stoffa",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_inchiostro_boccetta",
+      "label_key": "obj_la_inchiostro_boccetta",
+      "icon": "objects_lineart/la_inchiostro_boccetta.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 60,
+      "default_hint_delay": 20,
+      "tags": [
+        "vetro",
+        "scrittura",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lampada_camera_oscura",
+      "label_key": "obj_la_lampada_camera_oscura",
+      "icon": "objects_lineart/la_lampada_camera_oscura.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "medio",
+        "luce"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lampada_ministeriale",
+      "label_key": "obj_la_lampada_ministeriale",
+      "icon": "objects_lineart/la_lampada_ministeriale.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "medio",
+        "luce",
+        "casa"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_lampada_olio",
       "label_key": "obj_la_lampada_olio",
       "icon": "objects_lineart/la_lampada_olio.png",
@@ -632,6 +2876,82 @@
       "style": "line art"
     },
     {
+      "id": "la_lanterna",
+      "label_key": "obj_la_lanterna",
+      "icon": "objects_lineart/la_lanterna.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "lanterna",
+        "luce",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lanterna_carta",
+      "label_key": "obj_la_lanterna_carta",
+      "icon": "objects_lineart/la_lanterna_carta.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "carta",
+        "luce",
+        "giocattolo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lanterna_gas",
+      "label_key": "obj_la_lanterna_gas",
+      "icon": "objects_lineart/la_lanterna_gas.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "luce",
+        "medio",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lanterna_magica",
+      "label_key": "obj_la_lanterna_magica",
+      "icon": "objects_lineart/la_lanterna_magica.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "antico",
+        "metallo",
+        "grande",
+        "luce"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lazo",
+      "label_key": "obj_la_lazo",
+      "icon": "objects_lineart/la_lazo.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "stoffa",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_lente_ingrandimento",
       "label_key": "obj_la_lente_ingrandimento",
       "icon": "objects_lineart/la_lente_ingrandimento.png",
@@ -641,6 +2961,37 @@
       "tags": [
         "esplorazione",
         "vetro"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lente_ingrandimento_retro",
+      "label_key": "obj_la_lente_ingrandimento_retro",
+      "icon": "objects_lineart/la_lente_ingrandimento_retro.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "vetro",
+        "metallo",
+        "medio",
+        "esplorazione"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lente_ingrandimento_tavolo",
+      "label_key": "obj_la_lente_ingrandimento_tavolo",
+      "icon": "objects_lineart/la_lente_ingrandimento_tavolo.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "vetro",
+        "grande",
+        "arte"
       ],
       "style": "line art"
     },
@@ -655,6 +3006,22 @@
       "tags": [
         "carta",
         "studio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_limone",
+      "label_key": "obj_la_limone",
+      "icon": "objects_lineart/la_limone.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
       ],
       "style": "line art"
     },
@@ -688,6 +3055,38 @@
       "style": "line art"
     },
     {
+      "id": "la_macchina_cucire",
+      "label_key": "obj_la_macchina_cucire",
+      "icon": "objects_lineart/la_macchina_cucire.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 60,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "tecnologia",
+        "grande",
+        "antico"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_macchina_elettrostatica",
+      "label_key": "obj_la_macchina_elettrostatica",
+      "icon": "objects_lineart/la_macchina_elettrostatica.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 80,
+      "default_hint_delay": 40,
+      "tags": [
+        "metallo",
+        "legno",
+        "grande",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_macchina_fotografica",
       "label_key": "obj_la_macchina_fotografica",
       "icon": "objects_lineart/la_macchina_fotografica.png",
@@ -716,6 +3115,21 @@
       "style": "line art"
     },
     {
+      "id": "la_macchina_scrivere_vintage",
+      "label_key": "obj_la_macchina_scrivere_vintage",
+      "icon": "objects_lineart/la_macchina_scrivere_vintage.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 55,
+      "default_hint_delay": 45,
+      "tags": [
+        "metallo",
+        "tecnologia",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_macchinina",
       "label_key": "obj_la_macchinina",
       "icon": "objects_lineart/la_macchinina.png",
@@ -731,6 +3145,128 @@
       "style": "line art"
     },
     {
+      "id": "la_macinacaffe_retro",
+      "label_key": "obj_la_macinacaffe_retro",
+      "icon": "objects_lineart/la_macinacaffe_retro.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "metallo",
+        "medio",
+        "antico",
+        "cucina"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_manette",
+      "label_key": "obj_la_manette",
+      "icon": "objects_lineart/la_manette.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "medio",
+        "sicurezza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_manichino_legno",
+      "label_key": "obj_la_manichino_legno",
+      "icon": "objects_lineart/la_manichino_legno.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 80,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "medio",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_manichino_sarta",
+      "label_key": "obj_la_manichino_sarta",
+      "icon": "objects_lineart/la_manichino_sarta.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "stoffa",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mappa_luna",
+      "label_key": "obj_la_mappa_luna",
+      "icon": "objects_lineart/la_mappa_luna.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "esplorazione",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mappa_stellare",
+      "label_key": "obj_la_mappa_stellare",
+      "icon": "objects_lineart/la_mappa_stellare.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "esplorazione",
+        "carta",
+        "medio",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mappa_tesoro",
+      "label_key": "obj_la_mappa_tesoro",
+      "icon": "objects_lineart/la_mappa_tesoro.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "esplorazione",
+        "carta",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mappa_topografica",
+      "label_key": "obj_la_mappa_topografica",
+      "icon": "objects_lineart/la_mappa_topografica.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "medio",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_mappamondo",
       "label_key": "obj_la_mappamondo",
       "icon": "objects_lineart/la_mappamondo.png",
@@ -740,6 +3276,21 @@
       "tags": [
         "studio",
         "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_marionetta",
+      "label_key": "obj_la_marionetta",
+      "icon": "objects_lineart/la_marionetta.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "giocattolo",
+        "grande"
       ],
       "style": "line art"
     },
@@ -758,6 +3309,21 @@
       "style": "line art"
     },
     {
+      "id": "la_maschera_teatro",
+      "label_key": "obj_la_maschera_teatro",
+      "icon": "objects_lineart/la_maschera_teatro.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "plastica",
+        "medio",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_mattarello",
       "label_key": "obj_la_mattarello",
       "icon": "objects_lineart/la_mattarello.png",
@@ -768,6 +3334,82 @@
       "tags": [
         "cucina",
         "legno"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mattarello_legno",
+      "label_key": "obj_la_mattarello_legno",
+      "icon": "objects_lineart/la_mattarello_legno.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 25,
+      "default_hint_delay": 20,
+      "tags": [
+        "legno",
+        "medio",
+        "cucina"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_megafono_retro",
+      "label_key": "obj_la_megafono_retro",
+      "icon": "objects_lineart/la_megafono_retro.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mela",
+      "label_key": "obj_la_mela",
+      "icon": "objects_lineart/la_mela.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_meridiana",
+      "label_key": "obj_la_meridiana",
+      "icon": "objects_lineart/la_meridiana.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "pietra",
+        "medio",
+        "tempo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_messaggio_bottiglia",
+      "label_key": "obj_la_messaggio_bottiglia",
+      "icon": "objects_lineart/la_messaggio_bottiglia.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 75,
+      "default_hint_delay": 25,
+      "tags": [
+        "vetro",
+        "carta",
+        "medio",
+        "mistero"
       ],
       "style": "line art"
     },
@@ -786,6 +3428,21 @@
       "style": "line art"
     },
     {
+      "id": "la_meteorite",
+      "label_key": "obj_la_meteorite",
+      "icon": "objects_lineart/la_meteorite.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "pietra",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_metro",
       "label_key": "obj_la_metro",
       "icon": "objects_lineart/la_metro.png",
@@ -796,6 +3453,20 @@
       "tags": [
         "attrezzo",
         "officina"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_metro_sarto",
+      "label_key": "obj_la_metro_sarto",
+      "icon": "objects_lineart/la_metro_sarto.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "stoffa",
+        "misura",
+        "medio"
       ],
       "style": "line art"
     },
@@ -815,6 +3486,21 @@
       "style": "line art"
     },
     {
+      "id": "la_microfono_vintage",
+      "label_key": "obj_la_microfono_vintage",
+      "icon": "objects_lineart/la_microfono_vintage.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 75,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_microscopio",
       "label_key": "obj_la_microscopio",
       "icon": "objects_lineart/la_microscopio.png",
@@ -825,6 +3511,52 @@
       "tags": [
         "scienza",
         "ottica"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_microscopio_retro",
+      "label_key": "obj_la_microscopio_retro",
+      "icon": "objects_lineart/la_microscopio_retro.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "grande",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mirino_ottico",
+      "label_key": "obj_la_mirino_ottico",
+      "icon": "objects_lineart/la_mirino_ottico.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "vetro",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_modulo_lunare",
+      "label_key": "obj_la_modulo_lunare",
+      "icon": "objects_lineart/la_modulo_lunare.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "grande"
       ],
       "style": "line art"
     },
@@ -843,6 +3575,123 @@
       "style": "line art"
     },
     {
+      "id": "la_moneta_oro",
+      "label_key": "obj_la_moneta_oro",
+      "icon": "objects_lineart/la_moneta_oro.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "default_hint_delay": 15,
+      "tags": [
+        "antico",
+        "metallo",
+        "piccolo",
+        "moneta"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_moneta_romana",
+      "label_key": "obj_la_moneta_romana",
+      "icon": "objects_lineart/la_moneta_romana.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "antico",
+        "piccolo",
+        "moneta"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_monociclo_circo",
+      "label_key": "obj_la_monociclo_circo",
+      "icon": "objects_lineart/la_monociclo_circo.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mortaio_pigmenti",
+      "label_key": "obj_la_mortaio_pigmenti",
+      "icon": "objects_lineart/la_mortaio_pigmenti.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "pietra",
+        "medio",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_nastro_magnetico",
+      "label_key": "obj_la_nastro_magnetico",
+      "icon": "objects_lineart/la_nastro_magnetico.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "plastica",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_nastro_pizzo",
+      "label_key": "obj_la_nastro_pizzo",
+      "icon": "objects_lineart/la_nastro_pizzo.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "stoffa",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_obelisco",
+      "label_key": "obj_la_obelisco",
+      "icon": "objects_lineart/la_obelisco.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 90,
+      "default_hint_delay": 30,
+      "tags": [
+        "pietra",
+        "antico",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_obiettivo_fotocamera",
+      "label_key": "obj_la_obiettivo_fotocamera",
+      "icon": "objects_lineart/la_obiettivo_fotocamera.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "vetro",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_occhiali",
       "label_key": "obj_la_occhiali",
       "icon": "objects_lineart/la_occhiali.png",
@@ -857,6 +3706,38 @@
       "style": "line art"
     },
     {
+      "id": "la_occhiali_3d_retro",
+      "label_key": "obj_la_occhiali_3d_retro",
+      "icon": "objects_lineart/la_occhiali_3d_retro.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 30,
+      "default_hint_delay": 20,
+      "tags": [
+        "carta",
+        "plastica",
+        "piccolo",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_occhio_horus",
+      "label_key": "obj_la_occhio_horus",
+      "icon": "objects_lineart/la_occhio_horus.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "antico",
+        "mistero",
+        "piccolo",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_ombrello",
       "label_key": "obj_la_ombrello",
       "icon": "objects_lineart/la_ombrello.png",
@@ -867,6 +3748,22 @@
       "tags": [
         "accessorio",
         "pioggia"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_orologio_astronomico",
+      "label_key": "obj_la_orologio_astronomico",
+      "icon": "objects_lineart/la_orologio_astronomico.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "antico",
+        "metallo",
+        "grande",
+        "tempo"
       ],
       "style": "line art"
     },
@@ -1001,6 +3898,38 @@
       "style": "line art"
     },
     {
+      "id": "la_orsetto_peluche",
+      "label_key": "obj_la_orsetto_peluche",
+      "icon": "objects_lineart/la_orsetto_peluche.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "stoffa",
+        "giocattolo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ottante",
+      "label_key": "obj_la_ottante",
+      "icon": "objects_lineart/la_ottante.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "metallo",
+        "medio",
+        "esplorazione",
+        "misura"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_pala",
       "label_key": "obj_la_pala",
       "icon": "objects_lineart/la_pala.png",
@@ -1012,6 +3941,22 @@
         "attrezzo",
         "giardino",
         "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_paletta_giardino",
+      "label_key": "obj_la_paletta_giardino",
+      "icon": "objects_lineart/la_paletta_giardino.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "legno",
+        "attrezzo",
+        "medio"
       ],
       "style": "line art"
     },
@@ -1030,6 +3975,19 @@
       "style": "line art"
     },
     {
+      "id": "la_pannello_riflettore",
+      "label_key": "obj_la_pannello_riflettore",
+      "icon": "objects_lineart/la_pannello_riflettore.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 25,
+      "tags": [
+        "stoffa",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_papera_gomma",
       "label_key": "obj_la_papera_gomma",
       "icon": "objects_lineart/la_papera_gomma.png",
@@ -1040,6 +3998,67 @@
       "tags": [
         "giocattolo",
         "gomma",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_papiro",
+      "label_key": "obj_la_papiro",
+      "icon": "objects_lineart/la_papiro.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "antico",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pattino_rotelle",
+      "label_key": "obj_la_pattino_rotelle",
+      "icon": "objects_lineart/la_pattino_rotelle.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "giocattolo",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pc_desktop",
+      "label_key": "obj_la_pc_desktop",
+      "icon": "objects_lineart/la_pc_desktop.png",
+      "default_detection": "rect",
+      "default_width": 90,
+      "default_height": 85,
+      "default_hint_delay": 50,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "ufficio",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pellicola_35mm",
+      "label_key": "obj_la_pellicola_35mm",
+      "icon": "objects_lineart/la_pellicola_35mm.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 60,
+      "default_hint_delay": 20,
+      "tags": [
+        "tecnologia",
+        "plastica",
         "piccolo"
       ],
       "style": "line art"
@@ -1060,6 +4079,37 @@
       "style": "line art"
     },
     {
+      "id": "la_pendolo_divinatorio",
+      "label_key": "obj_la_pendolo_divinatorio",
+      "icon": "objects_lineart/la_pendolo_divinatorio.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 65,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "magia",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_penna_stilografica",
+      "label_key": "obj_la_penna_stilografica",
+      "icon": "objects_lineart/la_penna_stilografica.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 75,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "attrezzo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_pennello",
       "label_key": "obj_la_pennello",
       "icon": "objects_lineart/la_pennello.png",
@@ -1069,6 +4119,22 @@
       "default_hint_delay": 35,
       "tags": [
         "attrezzo",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pennello_artista",
+      "label_key": "obj_la_pennello_artista",
+      "icon": "objects_lineart/la_pennello_artista.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 80,
+      "default_hint_delay": 20,
+      "tags": [
+        "legno",
+        "attrezzo",
+        "piccolo",
         "arte"
       ],
       "style": "line art"
@@ -1084,6 +4150,127 @@
       "tags": [
         "scrittura",
         "ufficio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pennino_giradischi",
+      "label_key": "obj_la_pennino_giradischi",
+      "icon": "objects_lineart/la_pennino_giradischi.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pepitas_oro",
+      "label_key": "obj_la_pepitas_oro",
+      "icon": "objects_lineart/la_pepitas_oro.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 30,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "piccolo",
+        "moneta"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pera",
+      "label_key": "obj_la_pera",
+      "icon": "objects_lineart/la_pera.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pergamena",
+      "label_key": "obj_la_pergamena",
+      "icon": "objects_lineart/la_pergamena.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "antico",
+        "carta",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pianeta_anelli",
+      "label_key": "obj_la_pianeta_anelli",
+      "icon": "objects_lineart/la_pianeta_anelli.png",
+      "default_detection": "rect",
+      "default_width": 90,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pianeta_mano",
+      "label_key": "obj_la_pianeta_mano",
+      "icon": "objects_lineart/la_pianeta_mano.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "ceramica",
+        "medio",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pianoforte",
+      "label_key": "obj_la_pianoforte",
+      "icon": "objects_lineart/la_pianoforte.png",
+      "default_detection": "rect",
+      "default_width": 90,
+      "default_height": 80,
+      "default_hint_delay": 50,
+      "tags": [
+        "musica",
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_piccone",
+      "label_key": "obj_la_piccone",
+      "icon": "objects_lineart/la_piccone.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "attrezzo",
+        "metallo",
+        "legno",
+        "grande"
       ],
       "style": "line art"
     },
@@ -1130,6 +4317,21 @@
       "style": "line art"
     },
     {
+      "id": "la_piramide",
+      "label_key": "obj_la_piramide",
+      "icon": "objects_lineart/la_piramide.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "pietra",
+        "antico",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_piuma",
       "label_key": "obj_la_piuma",
       "icon": "objects_lineart/la_piuma.png",
@@ -1139,6 +4341,200 @@
       "default_hint_delay": 25,
       "tags": [
         "natura"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_polena",
+      "label_key": "obj_la_polena",
+      "icon": "objects_lineart/la_polena.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 95,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "grande",
+        "antico"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_polipo_statua",
+      "label_key": "obj_la_polipo_statua",
+      "icon": "objects_lineart/la_polipo_statua.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "pietra",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_porta_lettere",
+      "label_key": "obj_la_porta_lettere",
+      "icon": "objects_lineart/la_porta_lettere.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_portacenere",
+      "label_key": "obj_la_portacenere",
+      "icon": "objects_lineart/la_portacenere.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 30,
+      "default_hint_delay": 20,
+      "tags": [
+        "vetro",
+        "piccolo",
+        "casa"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_portafoglio_detective",
+      "label_key": "obj_la_portafoglio_detective",
+      "icon": "objects_lineart/la_portafoglio_detective.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "cuoio",
+        "piccolo",
+        "sicurezza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_prisma",
+      "label_key": "obj_la_prisma",
+      "icon": "objects_lineart/la_prisma.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "vetro",
+        "piccolo",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_prisma_ottico",
+      "label_key": "obj_la_prisma_ottico",
+      "icon": "objects_lineart/la_prisma_ottico.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "vetro",
+        "piccolo",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_proiettore_cinema",
+      "label_key": "obj_la_proiettore_cinema",
+      "icon": "objects_lineart/la_proiettore_cinema.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "grande",
+        "luce"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_proiettore_diapositive",
+      "label_key": "obj_la_proiettore_diapositive",
+      "icon": "objects_lineart/la_proiettore_diapositive.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 65,
+      "default_hint_delay": 35,
+      "tags": [
+        "plastica",
+        "giocattolo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_provette_supporto",
+      "label_key": "obj_la_provette_supporto",
+      "icon": "objects_lineart/la_provette_supporto.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "vetro",
+        "medio",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_puntaspilli",
+      "label_key": "obj_la_puntaspilli",
+      "icon": "objects_lineart/la_puntaspilli.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 20,
+      "tags": [
+        "stoffa",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_quadrante_solare",
+      "label_key": "obj_la_quadrante_solare",
+      "icon": "objects_lineart/la_quadrante_solare.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "misura",
+        "piccolo",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_radar",
+      "label_key": "obj_la_radar",
+      "icon": "objects_lineart/la_radar.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "grande"
       ],
       "style": "line art"
     },
@@ -1153,6 +4549,20 @@
       "tags": [
         "elettronica",
         "vintage"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ramo_edera",
+      "label_key": "obj_la_ramo_edera",
+      "icon": "objects_lineart/la_ramo_edera.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 75,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "piccolo"
       ],
       "style": "line art"
     },
@@ -1187,6 +4597,52 @@
       "style": "line art"
     },
     {
+      "id": "la_registratore_bobine",
+      "label_key": "obj_la_registratore_bobine",
+      "icon": "objects_lineart/la_registratore_bobine.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_registro_contabile",
+      "label_key": "obj_la_registro_contabile",
+      "icon": "objects_lineart/la_registro_contabile.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "antico",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_regolo_calcolatore",
+      "label_key": "obj_la_regolo_calcolatore",
+      "icon": "objects_lineart/la_regolo_calcolatore.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 20,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "misura",
+        "medio",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_robot_giocattolo",
       "label_key": "obj_la_robot_giocattolo",
       "icon": "objects_lineart/la_robot_giocattolo.png",
@@ -1202,17 +4658,200 @@
       "style": "line art"
     },
     {
+      "id": "la_robot_latta",
+      "label_key": "obj_la_robot_latta",
+      "icon": "objects_lineart/la_robot_latta.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "giocattolo",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_rocchetto_filo",
+      "label_key": "obj_la_rocchetto_filo",
+      "icon": "objects_lineart/la_rocchetto_filo.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "stoffa",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_rosa_fiore",
+      "label_key": "obj_la_rosa_fiore",
+      "icon": "objects_lineart/la_rosa_fiore.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 75,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ruota_carro",
+      "label_key": "obj_la_ruota_carro",
+      "icon": "objects_lineart/la_ruota_carro.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ruota_vasaio",
+      "label_key": "obj_la_ruota_vasaio",
+      "icon": "objects_lineart/la_ruota_vasaio.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "legno",
+        "grande",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sacco_a_pelo_retro",
+      "label_key": "obj_la_sacco_a_pelo_retro",
+      "icon": "objects_lineart/la_sacco_a_pelo_retro.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 75,
+      "default_hint_delay": 25,
+      "tags": [
+        "stoffa",
+        "medio",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_saliera_retro",
+      "label_key": "obj_la_saliera_retro",
+      "icon": "objects_lineart/la_saliera_retro.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "vetro",
+        "metallo",
+        "piccolo",
+        "cucina"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_salvagente",
+      "label_key": "obj_la_salvagente",
+      "icon": "objects_lineart/la_salvagente.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "stoffa",
+        "medio",
+        "sicurezza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sarcofago",
+      "label_key": "obj_la_sarcofago",
+      "icon": "objects_lineart/la_sarcofago.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "pietra",
+        "antico",
+        "grande",
+        "metallo"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_sassofono",
       "label_key": "obj_la_sassofono",
       "icon": "objects_lineart/la_sassofono.png",
       "default_detection": "rect",
       "default_width": 50,
       "default_height": 85,
-      "default_hint_delay": 40,
+      "default_hint_delay": 42,
       "tags": [
         "musica",
         "metallo",
-        "medio"
+        "medio",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_scarabeo",
+      "label_key": "obj_la_scarabeo",
+      "icon": "objects_lineart/la_scarabeo.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "antico",
+        "pietra",
+        "piccolo",
+        "gioiello"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_scatola_fiammiferi",
+      "label_key": "obj_la_scatola_fiammiferi",
+      "icon": "objects_lineart/la_scatola_fiammiferi.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "carta",
+        "legno",
+        "luce",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_scatola_scrittura",
+      "label_key": "obj_la_scatola_scrittura",
+      "icon": "objects_lineart/la_scatola_scrittura.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 55,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "scatola",
+        "grande",
+        "scrittura"
       ],
       "style": "line art"
     },
@@ -1232,6 +4871,21 @@
       "style": "line art"
     },
     {
+      "id": "la_schedario",
+      "label_key": "obj_la_schedario",
+      "icon": "objects_lineart/la_schedario.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 95,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "ufficio",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_schiaccianoci",
       "label_key": "obj_la_schiaccianoci",
       "icon": "objects_lineart/la_schiaccianoci.png",
@@ -1242,6 +4896,20 @@
       "tags": [
         "giocattolo",
         "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_scudo",
+      "label_key": "obj_la_scudo",
+      "icon": "objects_lineart/la_scudo.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "metallo",
         "grande"
       ],
       "style": "line art"
@@ -1262,6 +4930,111 @@
       "style": "line art"
     },
     {
+      "id": "la_sella_cavallo",
+      "label_key": "obj_la_sella_cavallo",
+      "icon": "objects_lineart/la_sella_cavallo.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 65,
+      "default_hint_delay": 35,
+      "tags": [
+        "cuoio",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sestante",
+      "label_key": "obj_la_sestante",
+      "icon": "objects_lineart/la_sestante.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "metallo",
+        "medio",
+        "esplorazione",
+        "misura"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_setaccio_oro",
+      "label_key": "obj_la_setaccio_oro",
+      "icon": "objects_lineart/la_setaccio_oro.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "medio",
+        "esplorazione"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sfera_veggente",
+      "label_key": "obj_la_sfera_veggente",
+      "icon": "objects_lineart/la_sfera_veggente.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "vetro",
+        "medio",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sfinge",
+      "label_key": "obj_la_sfinge",
+      "icon": "objects_lineart/la_sfinge.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 60,
+      "default_hint_delay": 35,
+      "tags": [
+        "pietra",
+        "antico",
+        "grande",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sigillo_cera",
+      "label_key": "obj_la_sigillo_cera",
+      "icon": "objects_lineart/la_sigillo_cera.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "antico",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sintetizzatore",
+      "label_key": "obj_la_sintetizzatore",
+      "icon": "objects_lineart/la_sintetizzatore.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 45,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "elettronica",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_soldatino",
       "label_key": "obj_la_soldatino",
       "icon": "objects_lineart/la_soldatino.png",
@@ -1273,6 +5046,184 @@
         "giocattolo",
         "metallo",
         "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_soldatino_piombo",
+      "label_key": "obj_la_soldatino_piombo",
+      "icon": "objects_lineart/la_soldatino_piombo.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "giocattolo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_spada",
+      "label_key": "obj_la_spada",
+      "icon": "objects_lineart/la_spada.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "antico",
+        "metallo",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_spartito_musicale",
+      "label_key": "obj_la_spartito_musicale",
+      "icon": "objects_lineart/la_spartito_musicale.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "musica",
+        "carta",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_spatola_pittura",
+      "label_key": "obj_la_spatola_pittura",
+      "icon": "objects_lineart/la_spatola_pittura.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 75,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "legno",
+        "attrezzo",
+        "piccolo",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_specchio_magico",
+      "label_key": "obj_la_specchio_magico",
+      "icon": "objects_lineart/la_specchio_magico.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "vetro",
+        "metallo",
+        "grande",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sperone",
+      "label_key": "obj_la_sperone",
+      "icon": "objects_lineart/la_sperone.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_spilla_balia",
+      "label_key": "obj_la_spilla_balia",
+      "icon": "objects_lineart/la_spilla_balia.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 60,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_spruzzatore_retro",
+      "label_key": "obj_la_spruzzatore_retro",
+      "icon": "objects_lineart/la_spruzzatore_retro.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "vetro",
+        "metallo",
+        "giardino",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sputnik",
+      "label_key": "obj_la_sputnik",
+      "icon": "objects_lineart/la_sputnik.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_stampo_budino",
+      "label_key": "obj_la_stampo_budino",
+      "icon": "objects_lineart/la_stampo_budino.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "medio",
+        "cucina"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_stella_sceriffo",
+      "label_key": "obj_la_stella_sceriffo",
+      "icon": "objects_lineart/la_stella_sceriffo.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "sicurezza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_stivale",
+      "label_key": "obj_la_stivale",
+      "icon": "objects_lineart/la_stivale.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "calzatura",
+        "medio"
       ],
       "style": "line art"
     },
@@ -1290,6 +5241,65 @@
       "style": "line art"
     },
     {
+      "id": "la_taccuino_appunti",
+      "label_key": "obj_la_taccuino_appunti",
+      "icon": "objects_lineart/la_taccuino_appunti.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 60,
+      "default_hint_delay": 20,
+      "tags": [
+        "carta",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_taccuino_pelle",
+      "label_key": "obj_la_taccuino_pelle",
+      "icon": "objects_lineart/la_taccuino_pelle.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 70,
+      "default_hint_delay": 25,
+      "tags": [
+        "carta",
+        "cuoio",
+        "medio",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_taccuino_schizzi",
+      "label_key": "obj_la_taccuino_schizzi",
+      "icon": "objects_lineart/la_taccuino_schizzi.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "carta",
+        "medio",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tagliacarte",
+      "label_key": "obj_la_tagliacarte",
+      "icon": "objects_lineart/la_tagliacarte.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 75,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_tagliere",
       "label_key": "obj_la_tagliere",
       "icon": "objects_lineart/la_tagliere.png",
@@ -1300,6 +5310,36 @@
       "tags": [
         "cucina",
         "legno"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tagliere_legno",
+      "label_key": "obj_la_tagliere_legno",
+      "icon": "objects_lineart/la_tagliere_legno.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "medio",
+        "cucina"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tamagotchi",
+      "label_key": "obj_la_tamagotchi",
+      "icon": "objects_lineart/la_tamagotchi.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "gioco",
+        "piccolo"
       ],
       "style": "line art"
     },
@@ -1323,11 +5363,88 @@
       "icon": "objects_lineart/la_tamburo.png",
       "default_detection": "circle",
       "default_radius": 40,
-      "default_hint_delay": 35,
+      "default_hint_delay": 32,
       "tags": [
         "musica",
         "metallo",
+        "medio",
+        "legno"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tarocchi_carte",
+      "label_key": "obj_la_tarocchi_carte",
+      "icon": "objects_lineart/la_tarocchi_carte.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "carta",
+        "medio",
+        "magia",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tavola_ouija",
+      "label_key": "obj_la_tavola_ouija",
+      "icon": "objects_lineart/la_tavola_ouija.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 55,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "grande",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tavoletta_argilla",
+      "label_key": "obj_la_tavoletta_argilla",
+      "icon": "objects_lineart/la_tavoletta_argilla.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "pietra",
+        "antico",
         "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tavolozza",
+      "label_key": "obj_la_tavolozza",
+      "icon": "objects_lineart/la_tavolozza.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "arte",
+        "legno",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tavolozza_legno",
+      "label_key": "obj_la_tavolozza_legno",
+      "icon": "objects_lineart/la_tavolozza_legno.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "medio",
+        "arte"
       ],
       "style": "line art"
     },
@@ -1341,6 +5458,35 @@
       "tags": [
         "cucina",
         "ceramica"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tazza_smaltata",
+      "label_key": "obj_la_tazza_smaltata",
+      "icon": "objects_lineart/la_tazza_smaltata.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "medio",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tazza_te",
+      "label_key": "obj_la_tazza_te",
+      "icon": "objects_lineart/la_tazza_te.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "ceramica",
+        "cucina",
+        "medio"
       ],
       "style": "line art"
     },
@@ -1360,6 +5506,52 @@
       "style": "line art"
     },
     {
+      "id": "la_teiera_porcellana",
+      "label_key": "obj_la_teiera_porcellana",
+      "icon": "objects_lineart/la_teiera_porcellana.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 60,
+      "default_hint_delay": 35,
+      "tags": [
+        "ceramica",
+        "cucina",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tela_pittura",
+      "label_key": "obj_la_tela_pittura",
+      "icon": "objects_lineart/la_tela_pittura.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 55,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "stoffa",
+        "grande",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_telefono_cabina",
+      "label_key": "obj_la_telefono_cabina",
+      "icon": "objects_lineart/la_telefono_cabina.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 120,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_telefono_fisso",
       "label_key": "obj_la_telefono_fisso",
       "icon": "objects_lineart/la_telefono_fisso.png",
@@ -1370,6 +5562,143 @@
       "tags": [
         "elettronica",
         "vintage"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_telescopio",
+      "label_key": "obj_la_telescopio",
+      "icon": "objects_lineart/la_telescopio.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "esplorazione",
+        "scienza",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tenda_campeggio",
+      "label_key": "obj_la_tenda_campeggio",
+      "icon": "objects_lineart/la_tenda_campeggio.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 60,
+      "default_hint_delay": 35,
+      "tags": [
+        "stoffa",
+        "grande",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_termometro_vetro",
+      "label_key": "obj_la_termometro_vetro",
+      "icon": "objects_lineart/la_termometro_vetro.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 75,
+      "default_hint_delay": 20,
+      "tags": [
+        "vetro",
+        "misura",
+        "piccolo",
+        "scienza"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_terrario_vetro",
+      "label_key": "obj_la_terrario_vetro",
+      "icon": "objects_lineart/la_terrario_vetro.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "vetro",
+        "natura",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_teschio",
+      "label_key": "obj_la_teschio",
+      "icon": "objects_lineart/la_teschio.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "antico",
+        "mistero",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_timbro_ceralacca",
+      "label_key": "obj_la_timbro_ceralacca",
+      "icon": "objects_lineart/la_timbro_ceralacca.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_timbro_ufficio",
+      "label_key": "obj_la_timbro_ufficio",
+      "icon": "objects_lineart/la_timbro_ufficio.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 55,
+      "default_hint_delay": 20,
+      "tags": [
+        "legno",
+        "metallo",
+        "piccolo",
+        "ufficio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_timone",
+      "label_key": "obj_la_timone",
+      "icon": "objects_lineart/la_timone.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "esplorazione",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tomo_magico",
+      "label_key": "obj_la_tomo_magico",
+      "icon": "objects_lineart/la_tomo_magico.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 80,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "carta",
+        "medio",
+        "magia"
       ],
       "style": "line art"
     },
@@ -1389,6 +5718,21 @@
       "style": "line art"
     },
     {
+      "id": "la_totem",
+      "label_key": "obj_la_totem",
+      "icon": "objects_lineart/la_totem.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "medio",
+        "antico"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_trenino",
       "label_key": "obj_la_trenino",
       "icon": "objects_lineart/la_trenino.png",
@@ -1404,12 +5748,55 @@
       "style": "line art"
     },
     {
+      "id": "la_treppiede_legno",
+      "label_key": "obj_la_treppiede_legno",
+      "icon": "objects_lineart/la_treppiede_legno.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 100,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_triangolo",
+      "label_key": "obj_la_triangolo",
+      "icon": "objects_lineart/la_triangolo.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "musica",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tridente",
+      "label_key": "obj_la_tridente",
+      "icon": "objects_lineart/la_tridente.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 100,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_tromba",
       "label_key": "obj_la_tromba",
       "icon": "objects_lineart/la_tromba.png",
       "default_detection": "rect",
-      "default_width": 65,
-      "default_height": 30,
+      "default_width": 62,
+      "default_height": 35,
       "default_hint_delay": 35,
       "tags": [
         "musica",
@@ -1433,6 +5820,66 @@
       "style": "line art"
     },
     {
+      "id": "la_trottola_latta",
+      "label_key": "obj_la_trottola_latta",
+      "icon": "objects_lineart/la_trottola_latta.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "giocattolo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_trottola_legno",
+      "label_key": "obj_la_trottola_legno",
+      "icon": "objects_lineart/la_trottola_legno.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "giocattolo",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tubetto_colore",
+      "label_key": "obj_la_tubetto_colore",
+      "icon": "objects_lineart/la_tubetto_colore.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 65,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_uva",
+      "label_key": "obj_la_uva",
+      "icon": "objects_lineart/la_uva.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "natura",
+        "cibo",
+        "biologico",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_vanga",
       "label_key": "obj_la_vanga",
       "icon": "objects_lineart/la_vanga.png",
@@ -1444,6 +5891,81 @@
         "attrezzo",
         "giardino",
         "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_vasetto_miele",
+      "label_key": "obj_la_vasetto_miele",
+      "icon": "objects_lineart/la_vasetto_miele.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "vetro",
+        "medio",
+        "cibo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_vaso_argilla",
+      "label_key": "obj_la_vaso_argilla",
+      "icon": "objects_lineart/la_vaso_argilla.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "pietra",
+        "medio",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_vaso_canopo",
+      "label_key": "obj_la_vaso_canopo",
+      "icon": "objects_lineart/la_vaso_canopo.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "pietra",
+        "antico",
+        "medio",
+        "contenitore"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_vaso_sospeso",
+      "label_key": "obj_la_vaso_sospeso",
+      "icon": "objects_lineart/la_vaso_sospeso.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "giardino",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_vaso_terracotta",
+      "label_key": "obj_la_vaso_terracotta",
+      "icon": "objects_lineart/la_vaso_terracotta.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "pietra",
+        "giardino",
+        "medio"
       ],
       "style": "line art"
     },
@@ -1462,16 +5984,65 @@
       "style": "line art"
     },
     {
+      "id": "la_vetrino_diapositiva",
+      "label_key": "obj_la_vetrino_diapositiva",
+      "icon": "objects_lineart/la_vetrino_diapositiva.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "default_hint_delay": 20,
+      "tags": [
+        "carta",
+        "plastica",
+        "piccolo",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_vhs",
+      "label_key": "obj_la_vhs",
+      "icon": "objects_lineart/la_vhs.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "video",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
       "id": "la_violino",
       "label_key": "obj_la_violino",
       "icon": "objects_lineart/la_violino.png",
       "default_detection": "rect",
-      "default_width": 35,
+      "default_width": 38,
       "default_height": 90,
       "default_hint_delay": 40,
       "tags": [
         "musica",
         "legno",
+        "medio",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_walkman",
+      "label_key": "obj_la_walkman",
+      "icon": "objects_lineart/la_walkman.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "tecnologia",
+        "retro",
+        "audio",
         "medio"
       ],
       "style": "line art"
@@ -1520,376 +6091,1513 @@
       "style": "line art"
     },
     {
-      "id": "la_violino",
-      "label_key": "obj_la_violino",
-      "icon": "objects_lineart/la_violino.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 90,
-      "default_hint_delay": 40,
-      "tags": [
-        "musica",
-        "legno",
-        "grande"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_tromba",
-      "label_key": "obj_la_tromba",
-      "icon": "objects_lineart/la_tromba.png",
+      "id": "la_zaino_escursionismo",
+      "label_key": "obj_la_zaino_escursionismo",
+      "icon": "objects_lineart/la_zaino_escursionismo.png",
       "default_detection": "rect",
       "default_width": 60,
-      "default_height": 40,
-      "default_hint_delay": 35,
-      "tags": [
-        "musica",
-        "metallo",
-        "medio"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_tamburo",
-      "label_key": "obj_la_tamburo",
-      "icon": "objects_lineart/la_tamburo.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 50,
-      "default_hint_delay": 30,
-      "tags": [
-        "musica",
-        "legno",
-        "medio"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_flauto",
-      "label_key": "obj_la_flauto",
-      "icon": "objects_lineart/la_flauto.png",
-      "default_detection": "rect",
-      "default_width": 15,
-      "default_height": 85,
-      "default_hint_delay": 25,
-      "tags": [
-        "musica",
-        "legno",
-        "piccolo"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_pianoforte",
-      "label_key": "obj_la_pianoforte",
-      "icon": "objects_lineart/la_pianoforte.png",
-      "default_detection": "rect",
-      "default_width": 90,
-      "default_height": 80,
-      "default_hint_delay": 50,
-      "tags": [
-        "musica",
-        "legno",
-        "grande"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_sassofono",
-      "label_key": "obj_la_sassofono",
-      "icon": "objects_lineart/la_sassofono.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 85,
-      "default_hint_delay": 45,
-      "tags": [
-        "musica",
-        "metallo",
-        "grande"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_uva",
-      "label_key": "obj_la_uva",
-      "icon": "objects_lineart/la_uva.png",
-      "default_detection": "rect",
-      "default_width": 55,
       "default_height": 70,
       "default_hint_delay": 35,
       "tags": [
-        "natura",
-        "cibo",
-        "biologico",
-        "medio"
+        "stoffa",
+        "grande",
+        "viaggio"
       ],
       "style": "line art"
     },
     {
-      "id": "la_banana",
-      "label_key": "obj_la_banana",
-      "icon": "objects_lineart/la_banana.png",
+      "id": "la_katana",
+      "label_key": "obj_la_katana",
+      "icon": "objects_lineart/la_katana.png",
       "default_detection": "rect",
-      "default_width": 65,
-      "default_height": 40,
-      "default_hint_delay": 25,
+      "default_width": 30,
+      "default_height": 95,
+      "default_hint_delay": 35,
       "tags": [
-        "natura",
-        "cibo",
-        "biologico",
-        "piccolo"
+        "metallo",
+        "antico",
+        "grande",
+        "arma"
       ],
       "style": "line art"
     },
     {
-      "id": "la_mela",
-      "label_key": "obj_la_mela",
-      "icon": "objects_lineart/la_mela.png",
-      "default_detection": "circle",
-      "default_radius": 30,
-      "default_hint_delay": 25,
-      "tags": [
-        "natura",
-        "cibo",
-        "biologico",
-        "piccolo"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_pera",
-      "label_key": "obj_la_pera",
-      "icon": "objects_lineart/la_pera.png",
+      "id": "la_elmo_samurai",
+      "label_key": "obj_la_elmo_samurai",
+      "icon": "objects_lineart/la_elmo_samurai.png",
       "default_detection": "rect",
-      "default_width": 45,
+      "default_width": 70,
       "default_height": 65,
       "default_hint_delay": 30,
       "tags": [
-        "natura",
-        "cibo",
-        "biologico",
-        "piccolo"
+        "metallo",
+        "antico",
+        "grande",
+        "cappello"
       ],
       "style": "line art"
     },
     {
-      "id": "la_ciliegie",
-      "label_key": "obj_la_ciliegie",
-      "icon": "objects_lineart/la_ciliegie.png",
+      "id": "la_lanterna_toro",
+      "label_key": "obj_la_lanterna_toro",
+      "icon": "objects_lineart/la_lanterna_toro.png",
       "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 55,
-      "default_hint_delay": 25,
-      "tags": [
-        "natura",
-        "cibo",
-        "biologico",
-        "piccolo"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_arancia",
-      "label_key": "obj_la_arancia",
-      "icon": "objects_lineart/la_arancia.png",
-      "default_detection": "circle",
-      "default_radius": 35,
+      "default_width": 45,
+      "default_height": 80,
       "default_hint_delay": 30,
       "tags": [
-        "natura",
-        "cibo",
-        "biologico",
-        "piccolo"
+        "pietra",
+        "antico",
+        "grande",
+        "luce"
       ],
       "style": "line art"
     },
     {
-      "id": "la_limone",
-      "label_key": "obj_la_limone",
-      "icon": "objects_lineart/la_limone.png",
+      "id": "la_ventaglio_giapponese",
+      "label_key": "obj_la_ventaglio_giapponese",
+      "icon": "objects_lineart/la_ventaglio_giapponese.png",
       "default_detection": "rect",
-      "default_width": 60,
+      "default_width": 65,
       "default_height": 45,
       "default_hint_delay": 25,
       "tags": [
-        "natura",
-        "cibo",
-        "biologico",
-        "piccolo"
+        "carta",
+        "legno",
+        "medio",
+        "accessorio"
       ],
       "style": "line art"
     },
     {
-      "id": "la_anguria",
-      "label_key": "obj_la_anguria",
-      "icon": "objects_lineart/la_anguria.png",
+      "id": "la_torii",
+      "label_key": "obj_la_torii",
+      "icon": "objects_lineart/la_torii.png",
       "default_detection": "rect",
       "default_width": 80,
-      "default_height": 45,
-      "default_hint_delay": 40,
+      "default_height": 70,
+      "default_hint_delay": 35,
       "tags": [
-        "natura",
-        "cibo",
-        "biologico",
+        "legno",
+        "antico",
         "grande"
       ],
       "style": "line art"
     },
     {
-      "id": "la_fragola",
-      "label_key": "obj_la_fragola",
-      "icon": "objects_lineart/la_fragola.png",
+      "id": "la_pagoda",
+      "label_key": "obj_la_pagoda",
+      "icon": "objects_lineart/la_pagoda.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 90,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "antico",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_kimono",
+      "label_key": "obj_la_kimono",
+      "icon": "objects_lineart/la_kimono.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "stoffa",
+        "antico",
+        "grande",
+        "abbigliamento"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_teiera_ghisa",
+      "label_key": "obj_la_teiera_ghisa",
+      "icon": "objects_lineart/la_teiera_ghisa.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "medio",
+        "cucina",
+        "contenitore"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_maschera_oni",
+      "label_key": "obj_la_maschera_oni",
+      "icon": "objects_lineart/la_maschera_oni.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "antico",
+        "medio",
+        "maschera"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ombrello_carta",
+      "label_key": "obj_la_ombrello_carta",
+      "icon": "objects_lineart/la_ombrello_carta.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "legno",
+        "grande",
+        "ombrello"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_netsuke",
+      "label_key": "obj_la_netsuke",
+      "icon": "objects_lineart/la_netsuke.png",
       "default_detection": "rect",
       "default_width": 35,
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
+        "legno",
+        "antico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_tamburo_taiko",
+      "label_key": "obj_la_tamburo_taiko",
+      "icon": "objects_lineart/la_tamburo_taiko.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "antico",
+        "grande",
+        "musica"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sandalo_geta",
+      "label_key": "obj_la_sandalo_geta",
+      "icon": "objects_lineart/la_sandalo_geta.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "antico",
+        "piccolo",
+        "calzatura"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_shuriken",
+      "label_key": "obj_la_shuriken",
+      "icon": "objects_lineart/la_shuriken.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "antico",
+        "piccolo",
+        "arma"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_rotolo_scrittura",
+      "label_key": "obj_la_rotolo_scrittura",
+      "icon": "objects_lineart/la_rotolo_scrittura.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "legno",
+        "medio",
+        "antico"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_campana_tempio",
+      "label_key": "obj_la_campana_tempio",
+      "icon": "objects_lineart/la_campana_tempio.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "antico",
+        "grande",
+        "musica"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mammut",
+      "label_key": "obj_la_mammut",
+      "icon": "objects_lineart/la_mammut.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "antico",
+        "grande",
+        "natura"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_dente_sciabola",
+      "label_key": "obj_la_dente_sciabola",
+      "icon": "objects_lineart/la_dente_sciabola.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 50,
+      "default_hint_delay": 25,
+      "tags": [
+        "antico",
+        "piccolo",
+        "natura"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fossile_trilobite",
+      "label_key": "obj_la_fossile_trilobite",
+      "icon": "objects_lineart/la_fossile_trilobite.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "pietra",
+        "antico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pittura_rupestre",
+      "label_key": "obj_la_pittura_rupestre",
+      "icon": "objects_lineart/la_pittura_rupestre.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "pietra",
+        "antico",
+        "medio",
+        "arte"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ammonite",
+      "label_key": "obj_la_ammonite",
+      "icon": "objects_lineart/la_ammonite.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "pietra",
+        "antico",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ascia_pietra",
+      "label_key": "obj_la_ascia_pietra",
+      "icon": "objects_lineart/la_ascia_pietra.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "pietra",
+        "medio",
+        "attrezzo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lancia_selce",
+      "label_key": "obj_la_lancia_selce",
+      "icon": "objects_lineart/la_lancia_selce.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 95,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "pietra",
+        "grande",
+        "attrezzo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fuoco_rupestre",
+      "label_key": "obj_la_fuoco_rupestre",
+      "icon": "objects_lineart/la_fuoco_rupestre.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "grande",
+        "luce"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_venere_pietra",
+      "label_key": "obj_la_venere_pietra",
+      "icon": "objects_lineart/la_venere_pietra.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "pietra",
+        "antico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_artiglio_dinosauro",
+      "label_key": "obj_la_artiglio_dinosauro",
+      "icon": "objects_lineart/la_artiglio_dinosauro.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "antico",
+        "piccolo",
+        "natura"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_arpione_osso",
+      "label_key": "obj_la_arpione_osso",
+      "icon": "objects_lineart/la_arpione_osso.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 80,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "medio",
+        "attrezzo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_collana_zanne",
+      "label_key": "obj_la_collana_zanne",
+      "icon": "objects_lineart/la_collana_zanne.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "antico",
+        "piccolo",
+        "gioiello"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_monolito",
+      "label_key": "obj_la_monolito",
+      "icon": "objects_lineart/la_monolito.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "pietra",
+        "antico",
+        "grande"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ago_osso",
+      "label_key": "obj_la_ago_osso",
+      "icon": "objects_lineart/la_ago_osso.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 65,
+      "default_hint_delay": 20,
+      "tags": [
+        "antico",
+        "piccolo",
+        "attrezzo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pelle_orso",
+      "label_key": "obj_la_pelle_orso",
+      "icon": "objects_lineart/la_pelle_orso.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "antico",
+        "grande",
+        "stoffa"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_scheletro_dinosauro",
+      "label_key": "obj_la_scheletro_dinosauro",
+      "icon": "objects_lineart/la_scheletro_dinosauro.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 60,
+      "default_hint_delay": 35,
+      "tags": [
+        "antico",
+        "grande",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_calderone",
+      "label_key": "obj_la_calderone",
+      "icon": "objects_lineart/la_calderone.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 80,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "grande",
+        "attrezzo",
+        "occulto",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mortaio_pestello",
+      "label_key": "obj_la_mortaio_pestello",
+      "icon": "objects_lineart/la_mortaio_pestello.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "pietra",
+        "medio",
+        "attrezzo",
+        "cucina",
+        "medico"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_grimorio",
+      "label_key": "obj_la_grimorio",
+      "icon": "objects_lineart/la_grimorio.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "medio",
+        "studio",
+        "occulto",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_storta_alchemica",
+      "label_key": "obj_la_storta_alchemica",
+      "icon": "objects_lineart/la_storta_alchemica.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "vetro",
+        "medio",
+        "attrezzo",
+        "mistero",
+        "occulto"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_candelabro_cera",
+      "label_key": "obj_la_candelabro_cera",
+      "icon": "objects_lineart/la_candelabro_cera.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "cera",
+        "medio",
+        "luce",
+        "occulto"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_teschio_corvo",
+      "label_key": "obj_la_teschio_corvo",
+      "icon": "objects_lineart/la_teschio_corvo.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "osso",
+        "piccolo",
+        "decorazione",
+        "occulto",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ampolla_pozione",
+      "label_key": "obj_la_ampolla_pozione",
+      "icon": "objects_lineart/la_ampolla_pozione.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 50,
+      "default_hint_delay": 25,
+      "tags": [
+        "vetro",
+        "piccolo",
+        "decorazione",
+        "magia",
+        "occulto"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bilancia_speziale",
+      "label_key": "obj_la_bilancia_speziale",
+      "icon": "objects_lineart/la_bilancia_speziale.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "medio",
+        "attrezzo",
+        "studio",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cristallo_esoterico",
+      "label_key": "obj_la_cristallo_esoterico",
+      "icon": "objects_lineart/la_cristallo_esoterico.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 55,
+      "default_hint_delay": 25,
+      "tags": [
+        "cristallo",
+        "piccolo",
+        "prezioso",
+        "magia",
+        "occulto"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_clessidra_sabbia",
+      "label_key": "obj_la_clessidra_sabbia",
+      "icon": "objects_lineart/la_clessidra_sabbia.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "vetro",
+        "legno",
+        "medio",
+        "orologio",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pergamena_pentacolo",
+      "label_key": "obj_la_pergamena_pentacolo",
+      "icon": "objects_lineart/la_pergamena_pentacolo.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "carta",
+        "piccolo",
+        "simbolo",
+        "occulto",
+        "magia"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_erbario_antico",
+      "label_key": "obj_la_erbario_antico",
+      "icon": "objects_lineart/la_erbario_antico.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "biologico",
+        "medio",
+        "studio",
+        "natura"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_amuletto_lunare",
+      "label_key": "obj_la_amuletto_lunare",
+      "icon": "objects_lineart/la_amuletto_lunare.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 45,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "gioiello",
+        "magia",
+        "occulto"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_astrolabio_alchemico",
+      "label_key": "obj_la_astrolabio_alchemico",
+      "icon": "objects_lineart/la_astrolabio_alchemico.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "medio",
+        "attrezzo",
+        "studio",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_dadi_astrologici",
+      "label_key": "obj_la_dadi_astrologici",
+      "icon": "objects_lineart/la_dadi_astrologici.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 40,
+      "default_hint_delay": 25,
+      "tags": [
+        "osso",
+        "piccolo",
+        "gioco",
+        "occulto",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mano_gloria",
+      "label_key": "obj_la_mano_gloria",
+      "icon": "objects_lineart/la_mano_gloria.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "cera",
+        "medio",
+        "luce",
+        "occulto",
+        "macabro"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_forziere_tesoro",
+      "label_key": "obj_la_forziere_tesoro",
+      "icon": "objects_lineart/la_forziere_tesoro.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 70,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "metallo",
+        "grande",
+        "prezioso",
+        "mistero"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cannocchiale_pirata",
+      "label_key": "obj_la_cannocchiale_pirata",
+      "icon": "objects_lineart/la_cannocchiale_pirata.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "vetro",
+        "medio",
+        "attrezzo",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bussola_marina",
+      "label_key": "obj_la_bussola_marina",
+      "icon": "objects_lineart/la_bussola_marina.png",
+      "default_detection": "circle",
+      "default_radius": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "vetro",
+        "piccolo",
+        "attrezzo",
+        "viaggio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sciabola_pirata",
+      "label_key": "obj_la_sciabola_pirata",
+      "icon": "objects_lineart/la_sciabola_pirata.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "legno",
+        "medio",
+        "arma",
+        "pericolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pistola_focaia",
+      "label_key": "obj_la_pistola_focaia",
+      "icon": "objects_lineart/la_pistola_focaia.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "legno",
+        "medio",
+        "arma",
+        "pericolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cappello_tricorno",
+      "label_key": "obj_la_cappello_tricorno",
+      "icon": "objects_lineart/la_cappello_tricorno.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "stoffa",
+        "medio",
+        "cappello",
+        "decorazione"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ancora_antica",
+      "label_key": "obj_la_ancora_antica",
+      "icon": "objects_lineart/la_ancora_antica.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "metallo",
+        "grande",
+        "decorazione",
+        "oceano"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bottiglia_rum",
+      "label_key": "obj_la_bottiglia_rum",
+      "icon": "objects_lineart/la_bottiglia_rum.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "vetro",
+        "medio",
+        "bevanda",
+        "casa"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_timone_legno",
+      "label_key": "obj_la_timone_legno",
+      "icon": "objects_lineart/la_timone_legno.png",
+      "default_detection": "circle",
+      "default_radius": 40,
+      "default_hint_delay": 35,
+      "tags": [
+        "legno",
+        "grande",
+        "attrezzo",
+        "oceano"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_sestante_ottone",
+      "label_key": "obj_la_sestante_ottone",
+      "icon": "objects_lineart/la_sestante_ottone.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "medio",
+        "attrezzo",
+        "studio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_benda_occhio",
+      "label_key": "obj_la_benda_occhio",
+      "icon": "objects_lineart/la_benda_occhio.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 30,
+      "default_hint_delay": 20,
+      "tags": [
+        "stoffa",
+        "cuoio",
+        "piccolo",
+        "accessorio",
+        "abbigliamento"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bandiera_pirata",
+      "label_key": "obj_la_bandiera_pirata",
+      "icon": "objects_lineart/la_bandiera_pirata.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 55,
+      "default_hint_delay": 35,
+      "tags": [
+        "stoffa",
+        "grande",
+        "bandiera",
+        "pericolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lanterna_bordo",
+      "label_key": "obj_la_lanterna_bordo",
+      "icon": "objects_lineart/la_lanterna_bordo.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "vetro",
+        "medio",
+        "luce",
+        "oceano"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_doblone_oro",
+      "label_key": "obj_la_doblone_oro",
+      "icon": "objects_lineart/la_doblone_oro.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "denaro",
+        "prezioso"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_libellula",
+      "label_key": "obj_la_libellula",
+      "icon": "objects_lineart/la_libellula.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
         "natura",
-        "cibo",
+        "biologico",
+        "piccolo",
+        "vola"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_mantide_religiosa",
+      "label_key": "obj_la_mantide_religiosa",
+      "icon": "objects_lineart/la_mantide_religiosa.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "biologico",
+        "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_cicala",
+      "label_key": "obj_la_cicala",
+      "icon": "objects_lineart/la_cicala.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
         "biologico",
         "piccolo"
       ],
       "style": "line art"
     },
     {
-      "id": "la_walkman",
-      "label_key": "obj_la_walkman",
-      "icon": "objects_lineart/la_walkman.png",
+      "id": "la_cervo_volante_insetto",
+      "label_key": "obj_la_cervo_volante_insetto",
+      "icon": "objects_lineart/la_cervo_volante_insetto.png",
       "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 75,
-      "default_hint_delay": 35,
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 25,
       "tags": [
-        "tecnologia",
-        "retro",
-        "audio",
-        "medio"
+        "natura",
+        "biologico",
+        "medio",
+        "vola"
       ],
       "style": "line art"
     },
     {
-      "id": "la_gameboy",
-      "label_key": "obj_la_gameboy",
-      "icon": "objects_lineart/la_gameboy.png",
+      "id": "la_scorpione_imperatore",
+      "label_key": "obj_la_scorpione_imperatore",
+      "icon": "objects_lineart/la_scorpione_imperatore.png",
       "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 75,
-      "default_hint_delay": 35,
-      "tags": [
-        "tecnologia",
-        "retro",
-        "gioco",
-        "medio"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_floppy",
-      "label_key": "obj_la_floppy",
-      "icon": "objects_lineart/la_floppy.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 55,
+      "default_width": 40,
+      "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "tecnologia",
-        "retro",
-        "dati",
-        "piccolo"
+        "natura",
+        "biologico",
+        "piccolo",
+        "pericolo"
       ],
       "style": "line art"
     },
     {
-      "id": "la_pc_desktop",
-      "label_key": "obj_la_pc_desktop",
-      "icon": "objects_lineart/la_pc_desktop.png",
+      "id": "la_lucciola_luminosa",
+      "label_key": "obj_la_lucciola_luminosa",
+      "icon": "objects_lineart/la_lucciola_luminosa.png",
       "default_detection": "rect",
-      "default_width": 90,
-      "default_height": 85,
-      "default_hint_delay": 50,
-      "tags": [
-        "tecnologia",
-        "retro",
-        "ufficio",
-        "grande"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_tamagotchi",
-      "label_key": "obj_la_tamagotchi",
-      "icon": "objects_lineart/la_tamagotchi.png",
-      "default_detection": "circle",
-      "default_radius": 30,
-      "default_hint_delay": 25,
-      "tags": [
-        "tecnologia",
-        "retro",
-        "gioco",
-        "piccolo"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_vhs",
-      "label_key": "obj_la_vhs",
-      "icon": "objects_lineart/la_vhs.png",
-      "default_detection": "rect",
-      "default_width": 80,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "tecnologia",
-        "retro",
-        "video",
-        "grande"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_cercapersone",
-      "label_key": "obj_la_cercapersone",
-      "icon": "objects_lineart/la_cercapersone.png",
-      "default_detection": "rect",
-      "default_width": 55,
+      "default_width": 40,
       "default_height": 40,
-      "default_hint_delay": 25,
+      "default_hint_delay": 20,
       "tags": [
-        "tecnologia",
-        "retro",
-        "comunicazione",
+        "natura",
+        "biologico",
+        "piccolo",
+        "luce"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ape_regina",
+      "label_key": "obj_la_ape_regina",
+      "icon": "objects_lineart/la_ape_regina.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "biologico",
+        "piccolo",
+        "vola"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ragno_tessitore",
+      "label_key": "obj_la_ragno_tessitore",
+      "icon": "objects_lineart/la_ragno_tessitore.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "biologico",
+        "piccolo",
+        "pericolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bruco_variopinto",
+      "label_key": "obj_la_bruco_variopinto",
+      "icon": "objects_lineart/la_bruco_variopinto.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "biologico",
         "piccolo"
       ],
       "style": "line art"
     },
     {
-      "id": "la_discman",
-      "label_key": "obj_la_discman",
-      "icon": "objects_lineart/la_discman.png",
-      "default_detection": "circle",
-      "default_radius": 45,
+      "id": "la_formica_mietitrice",
+      "label_key": "obj_la_formica_mietitrice",
+      "icon": "objects_lineart/la_formica_mietitrice.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_farfalla_morpho",
+      "label_key": "obj_la_farfalla_morpho",
+      "icon": "objects_lineart/la_farfalla_morpho.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "biologico",
+        "medio",
+        "vola"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_coleottero_dorato",
+      "label_key": "obj_la_coleottero_dorato",
+      "icon": "objects_lineart/la_coleottero_dorato.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "biologico",
+        "piccolo",
+        "prezioso"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bacheca_entomologica",
+      "label_key": "obj_la_bacheca_entomologica",
+      "icon": "objects_lineart/la_bacheca_entomologica.png",
+      "default_detection": "rect",
+      "default_width": 85,
+      "default_height": 85,
       "default_hint_delay": 35,
       "tags": [
-        "tecnologia",
-        "retro",
-        "audio",
+        "legno",
+        "grande",
+        "studio",
+        "decorazione"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_lente_entomologica",
+      "label_key": "obj_la_lente_entomologica",
+      "icon": "objects_lineart/la_lente_entomologica.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "vetro",
+        "medio",
+        "attrezzo",
+        "studio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_spillo_entomologico",
+      "label_key": "obj_la_spillo_entomologico",
+      "icon": "objects_lineart/la_spillo_entomologico.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 45,
+      "default_hint_delay": 20,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "attrezzo",
+        "studio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_etichetta_classificazione",
+      "label_key": "obj_la_etichetta_classificazione",
+      "icon": "objects_lineart/la_etichetta_classificazione.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 30,
+      "default_hint_delay": 20,
+      "tags": [
+        "carta",
+        "piccolo",
+        "studio",
+        "decorazione"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_radice_mandragora",
+      "label_key": "obj_la_radice_mandragora",
+      "icon": "objects_lineart/la_radice_mandragora.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "biologico",
+        "medio",
+        "pericolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_foglia_felce",
+      "label_key": "obj_la_foglia_felce",
+      "icon": "objects_lineart/la_foglia_felce.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_ramo_agrifoglio",
+      "label_key": "obj_la_ramo_agrifoglio",
+      "icon": "objects_lineart/la_ramo_agrifoglio.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "biologico",
+        "medio",
+        "decorazione"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fiore_lavanda",
+      "label_key": "obj_la_fiore_lavanda",
+      "icon": "objects_lineart/la_fiore_lavanda.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "biologico",
+        "piccolo",
+        "decorazione"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fungo_amanita",
+      "label_key": "obj_la_fungo_amanita",
+      "icon": "objects_lineart/la_fungo_amanita.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "biologico",
+        "piccolo",
+        "pericolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_foglia_gingko",
+      "label_key": "obj_la_foglia_gingko",
+      "icon": "objects_lineart/la_foglia_gingko.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_bacche_ginepro",
+      "label_key": "obj_la_bacche_ginepro",
+      "icon": "objects_lineart/la_bacche_ginepro.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_foglia_quercia",
+      "label_key": "obj_la_foglia_quercia",
+      "icon": "objects_lineart/la_foglia_quercia.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "biologico",
         "medio"
       ],
       "style": "line art"
     },
     {
-      "id": "la_controller_90s",
-      "label_key": "obj_la_controller_90s",
-      "icon": "objects_lineart/la_controller_90s.png",
+      "id": "la_quadrifoglio_fortuna",
+      "label_key": "obj_la_quadrifoglio_fortuna",
+      "icon": "objects_lineart/la_quadrifoglio_fortuna.png",
       "default_detection": "rect",
-      "default_width": 75,
-      "default_height": 50,
-      "default_hint_delay": 35,
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
       "tags": [
-        "tecnologia",
-        "retro",
-        "gioco",
+        "natura",
+        "biologico",
+        "piccolo",
+        "prezioso"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_fiore_dente_leone",
+      "label_key": "obj_la_fiore_dente_leone",
+      "icon": "objects_lineart/la_fiore_dente_leone.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "biologico",
+        "piccolo",
+        "vola"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_rametto_vischio",
+      "label_key": "obj_la_rametto_vischio",
+      "icon": "objects_lineart/la_rametto_vischio.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "natura",
+        "biologico",
+        "piccolo",
+        "decorazione"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_radice_ginseng",
+      "label_key": "obj_la_radice_ginseng",
+      "icon": "objects_lineart/la_radice_ginseng.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "natura",
+        "biologico",
         "medio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_flacone_essenza",
+      "label_key": "obj_la_flacone_essenza",
+      "icon": "objects_lineart/la_flacone_essenza.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 40,
+      "default_hint_delay": 20,
+      "tags": [
+        "vetro",
+        "piccolo",
+        "studio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_pressa_erbario",
+      "label_key": "obj_la_pressa_erbario",
+      "icon": "objects_lineart/la_pressa_erbario.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "legno",
+        "medio",
+        "attrezzo",
+        "studio"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_falce_erborista",
+      "label_key": "obj_la_falce_erborista",
+      "icon": "objects_lineart/la_falce_erborista.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 60,
+      "default_hint_delay": 25,
+      "tags": [
+        "metallo",
+        "legno",
+        "medio",
+        "attrezzo"
+      ],
+      "style": "line art"
+    },
+    {
+      "id": "la_etichetta_botanica",
+      "label_key": "obj_la_etichetta_botanica",
+      "icon": "objects_lineart/la_etichetta_botanica.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 30,
+      "default_hint_delay": 20,
+      "tags": [
+        "carta",
+        "piccolo",
+        "studio",
+        "decorazione"
       ],
       "style": "line art"
     }

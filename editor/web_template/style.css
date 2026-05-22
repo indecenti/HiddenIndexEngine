@@ -1,0 +1,54 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #07090f;
+  overscroll-behavior: none;
+}
+
+#game {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  touch-action: none;
+  cursor: pointer;
+}
+
+/* ── Loading screen ──────────────────────────────────────────────────────── */
+.loader {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 40%, #16233f 0%, #07090f 70%);
+  z-index: 10;
+  transition: opacity 0.4s ease;
+}
+.loader.hidden { opacity: 0; pointer-events: none; }
+.loader-box { text-align: center; max-width: 80vw; }
+.loader-icon {
+  width: 96px; height: 96px; border-radius: 22px; object-fit: cover;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6); animation: loaderPulse 1.6s ease-in-out infinite;
+}
+.loader-title {
+  margin-top: 18px; color: #eef2fb; font: 600 26px/1.2 Georgia, serif;
+  letter-spacing: 0.5px; text-shadow: 0 2px 18px rgba(0,0,0,0.6);
+}
+.loader-bar {
+  margin: 22px auto 0; width: 220px; height: 6px; border-radius: 4px;
+  background: rgba(255,255,255,0.12); overflow: hidden;
+}
+#loader-fill {
+  width: 0%; height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, #7fa8ff, #b388ff);
+  transition: width 0.2s ease;
+}
+@keyframes loaderPulse {
+  0%, 100% { transform: scale(1); opacity: 0.92; }
+  50% { transform: scale(1.06); opacity: 1; }
+}

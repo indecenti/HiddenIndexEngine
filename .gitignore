@@ -29,4 +29,26 @@ saves/
 *.bak
 *.tmp
 *.log
+
+# Safe delete: cestino locale + audit log delle operazioni distruttive
+.editor_trash/
+.editor_audit.log
 # saves/ # Decommenta se vuoi ignorare i salvataggi locali
+
+# Web export — output dei build web (pesanti, rigenerabili con editor.web_exporter)
+build_web/
+
+# Web platform — dati locali (NON committare: credenziali, giochi caricati, catalogo)
+web_platform/games/
+web_platform/config.json
+web_platform/catalog.json
+
+# Android build artifacts (gli APK sotto build/ sono gia' ignorati; questi per sicurezza)
+.buildozer/
+*.apk
+*.aab
+*.keystore
+*.keystore.jks
+
+# Editor cache (rigenerabile)
+.editor_cache/

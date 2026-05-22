@@ -29,12 +29,20 @@
       "it": "Ago",
       "cat": "Generale"
     },
+    "alchimia": {
+      "it": "Alchimia",
+      "cat": "Generale"
+    },
     "alimentari": {
       "it": "Alimentari",
       "cat": "Generale"
     },
     "america": {
       "it": "America",
+      "cat": "Generale"
+    },
+    "anatomia": {
+      "it": "Anatomia",
       "cat": "Generale"
     },
     "anni_60": {
@@ -69,12 +77,20 @@
       "it": "Arredamento",
       "cat": "Generale"
     },
+    "arredo": {
+      "it": "Arredo",
+      "cat": "Generale"
+    },
     "arte": {
       "it": "Arte",
       "cat": "Generale"
     },
     "asia": {
       "it": "Asia",
+      "cat": "Generale"
+    },
+    "attrezzatura": {
+      "it": "Attrezzatura",
       "cat": "Generale"
     },
     "attrezzo": {
@@ -157,6 +173,10 @@
       "it": "Bosco",
       "cat": "Generale"
     },
+    "caccia": {
+      "it": "Caccia",
+      "cat": "Generale"
+    },
     "calcolatrice": {
       "it": "Calcolatrice",
       "cat": "Generale"
@@ -205,7 +225,7 @@
       "it": "Casco",
       "cat": "Generale"
     },
-    "casinò": {
+    "casin": {
       "it": "Casinò",
       "cat": "Generale"
     },
@@ -241,7 +261,7 @@
       "it": "Circo",
       "cat": "Generale"
     },
-    "città": {
+    "citt": {
       "it": "Città",
       "cat": "Generale"
     },
@@ -317,6 +337,10 @@
       "it": "Denaro",
       "cat": "Generale"
     },
+    "difesa": {
+      "it": "Difesa",
+      "cat": "Generale"
+    },
     "disegno": {
       "it": "Disegno",
       "cat": "Generale"
@@ -367,6 +391,10 @@
     },
     "fantasy": {
       "it": "Fantasy",
+      "cat": "Generale"
+    },
+    "ferro": {
+      "it": "Ferro",
       "cat": "Generale"
     },
     "ferro_stiro": {
@@ -465,8 +493,20 @@
       "it": "Gruppo_oggetti",
       "cat": "Generale"
     },
+    "guanto": {
+      "it": "Guanto",
+      "cat": "Generale"
+    },
     "horror": {
       "it": "Horror",
+      "cat": "Generale"
+    },
+    "igiene": {
+      "it": "Igiene",
+      "cat": "Generale"
+    },
+    "informazione": {
+      "it": "Informazione",
       "cat": "Generale"
     },
     "insetto": {
@@ -555,6 +595,10 @@
     },
     "meccanico": {
       "it": "Meccanico",
+      "cat": "Generale"
+    },
+    "meccanismo": {
+      "it": "Meccanismo",
       "cat": "Generale"
     },
     "medicina": {
@@ -717,6 +761,10 @@
       "it": "Ottica",
       "cat": "Generale"
     },
+    "ottone": {
+      "it": "Ottone",
+      "cat": "Generale"
+    },
     "palla": {
       "it": "Palla",
       "cat": "Generale"
@@ -825,6 +873,10 @@
       "it": "Prezioso",
       "cat": "Generale"
     },
+    "prigione": {
+      "it": "Prigione",
+      "cat": "Generale"
+    },
     "profumo": {
       "it": "Profumo",
       "cat": "Generale"
@@ -843,6 +895,10 @@
     },
     "retro": {
       "it": "Retro",
+      "cat": "Generale"
+    },
+    "rifiuto": {
+      "it": "Rifiuto",
       "cat": "Generale"
     },
     "riposo": {
@@ -885,6 +941,10 @@
       "it": "Salute",
       "cat": "Generale"
     },
+    "scatola": {
+      "it": "Scatola",
+      "cat": "Generale"
+    },
     "schiaccianoci": {
       "it": "Schiaccianoci",
       "cat": "Generale"
@@ -907,6 +967,10 @@
     },
     "sella": {
       "it": "Sella",
+      "cat": "Generale"
+    },
+    "seme": {
+      "it": "Seme",
       "cat": "Generale"
     },
     "sicurezza": {
@@ -985,12 +1049,20 @@
       "it": "Teatro",
       "cat": "Generale"
     },
+    "tech": {
+      "it": "Tech",
+      "cat": "Generale"
+    },
     "tecnologia": {
       "it": "Tecnologia",
       "cat": "Generale"
     },
     "tempo": {
       "it": "Tempo",
+      "cat": "Generale"
+    },
+    "tessuto": {
+      "it": "Tessuto",
       "cat": "Generale"
     },
     "tetris": {
@@ -1017,7 +1089,7 @@
       "it": "Uovo",
       "cat": "Generale"
     },
-    "valle camonica": {
+    "valle_camonica": {
       "it": "Valle camonica",
       "cat": "Generale"
     },
@@ -1081,68 +1153,16 @@
       "it": "Vola",
       "cat": "Generale"
     },
-    "alchimia": {
-      "it": "Alchimia",
-      "cat": "Generale"
-    },
-    "arredo": {
-      "it": "Arredo",
-      "cat": "Generale"
-    },
-    "caccia": {
-      "it": "Caccia",
-      "cat": "Generale"
-    },
-    "difesa": {
-      "it": "Difesa",
-      "cat": "Generale"
-    },
-    "informazione": {
-      "it": "Informazione",
-      "cat": "Generale"
-    },
-    "igiene": {
-      "it": "Igiene",
-      "cat": "Generale"
-    },
-    "tech": {
-      "it": "Tech",
-      "cat": "Generale"
-    },
-    "anatomia": {
-      "it": "Anatomia",
-      "cat": "Generale"
-    },
-    "attrezzatura": {
-      "it": "Attrezzatura",
-      "cat": "Generale"
-    },
-    "prigione": {
-      "it": "Prigione",
-      "cat": "Generale"
-    },
-    "meccanismo": {
-      "it": "Meccanismo",
-      "cat": "Generale"
-    },
     "zavorra": {
       "it": "Zavorra",
       "cat": "Generale"
     },
-    "ferro": {
-      "it": "Ferro",
+    "città": {
+      "it": "Città",
       "cat": "Generale"
     },
-    "ottone": {
-      "it": "Ottone",
-      "cat": "Generale"
-    },
-    "rifiuto": {
-      "it": "Rifiuto",
-      "cat": "Generale"
-    },
-    "tessuto": {
-      "it": "Tessuto",
+    "valle camonica": {
+      "it": "Valle camonica",
       "cat": "Generale"
     }
   }

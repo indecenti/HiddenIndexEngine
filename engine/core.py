@@ -97,27 +97,27 @@ class EngineCore:
         # al ratio del dispositivo, evitando letterbox laterali (i Pixel 9+/10
         # sono ultra-wide 2.24:1, non 16:9). Pixel count interno ~0.6 MP (vs
         # 2.6 MP del device) → 4.3x meno lavoro per frame. SDL fa upscale GPU.
+        self._android_internal_h = 540
         if is_android_runtime():
+            self._device_w, self._device_h = 0, 0
             try:
                 info = pygame.display.Info()
                 if info.current_w > 0 and info.current_h > 0:
-                    device_aspect = info.current_w / info.current_h
-                else:
-                    device_aspect = 16.0 / 9.0
+                    self._device_w, self._device_h = info.current_w, info.current_h
             except Exception:
-                device_aspect = 16.0 / 9.0
-            INTERNAL_H = 540
-            internal_w = int(round(INTERNAL_H * device_aspect))
-            # Allinea a multiplo di 4 per ottimizzazioni SIMD/SDL_blit
-            internal_w = (internal_w + 3) & ~3
-            self.res_w, self.res_h = internal_w, INTERNAL_H
+                pass
+            self.res_w, self.res_h = self._compute_android_internal_size(
+                self._device_w, self._device_h
+            )
             flags |= pygame.SCALED | pygame.FULLSCREEN
             self.logger.info(
                 f"Android: pygame.SCALED rendering interno {self.res_w}x{self.res_h} "
-                f"(aspect {device_aspect:.3f}) → GPU upscale al device"
+                f"→ GPU upscale al device {self._device_w}x{self._device_h}"
             )
         elif self.is_fullscreen:
             flags |= pygame.FULLSCREEN
+
+        self._display_flags = flags
 
         # vsync=0 su Android: la pipeline SDL hardware-accelerata gestisce
         # il presentation senza bloccare il rendering. Vsync=1 capava a refresh
@@ -153,12 +153,21 @@ class EngineCore:
                 pygame.display.set_allow_screensaver(False)
             except Exception:
                 pass
+            # Nasconde il cursore di sistema: su touch non deve MAI comparire
+            # alcun puntatore (cerchio bianco semitrasparente di SDL).
+            try:
+                pygame.mouse.set_visible(False)
+            except Exception:
+                pass
         self.clock = pygame.time.Clock()
         
         # Inizializzo Sistemi
         self.scaling_manager = ScalingManager()
         self.scaling_manager.update_screen_size(self.res_w, self.res_h)
-        
+
+        # Safe area (solo Android): cutout + padding minimo.
+        self._reconfigure_safe_area()
+
         self.save_manager = SaveManager(self.game_id)
         
         reduced = config.getboolean("engine", "reduced_animations", fallback=False)
@@ -193,6 +202,17 @@ class EngineCore:
         # Priorità lingua: CLI > game_config > default(it)
         lang_to_load = getattr(cli_args, "lang", None) or self.game_config.get("default_language", "it")
         self.lang.load_for_game(self.game_id, lang_to_load)
+
+        # Audit completezza lingue al boot (solo dev/DEBUG — niente overhead in EXE).
+        # Stampa nel log un report compatto delle traduzioni mancanti per ciascuna
+        # lingua disponibile. Aiuta a catturare drift di chiavi tra lingue PRIMA
+        # che il giocatore lo veda come "obj_xyz" letterale a video.
+        from engine.utils import DEBUG as _DEBUG
+        if _DEBUG:
+            try:
+                self.lang.audit_completeness(self.game_id, log_warnings=True)
+            except Exception as e:
+                self.logger.warning(f"[i18n] audit_completeness fallito: {e}")
         self.effects = EffectsEngine(self.scaling_manager)
         self.hint = HintSystem(self.scaling_manager, self.effects)
 
@@ -219,6 +239,10 @@ class EngineCore:
         # Cache layer_hint_intensity per evitare .get() ogni frame
         self._cached_layer_intensity = self.game_config.get("layer_hint_intensity", {})
         self.click_detector = ClickDetector(self.scaling_manager)
+
+        # Cache font HUD: SysFont enumera tutti i font di sistema ad ogni chiamata
+        # (costosissimo su Android). Riusiamo le istanze tra i frame.
+        self._hud_font_cache: dict[tuple, pygame.font.Font] = {}
 
         # ── Performance overlay (Android only) ────────────────────────────
         # Su Windows EXE _is_android = False → tutto disabilitato, niente
@@ -289,6 +313,9 @@ class EngineCore:
         self._menu_video_cap = None
         self._menu_video_surface = None
         self._menu_video_path = None
+
+        # Inizio gesto touch (per swipe del cassetto HUD su Android)
+        self._touch_start = None
         
         if getattr(cli_args, "minigame", None):
             self.logger.info(f"MODALITÀ TEST: Avvio istantaneo minigioco {cli_args.minigame}")
@@ -310,6 +337,72 @@ class EngineCore:
                 base_dur_out=1.0, # Splash rimane visibile un secondo
                 on_midpoint=self._switch_to_menu
             )
+
+    def _compute_android_internal_size(self, phys_w: int, phys_h: int) -> tuple[int, int]:
+        """Risoluzione interna adattiva all'aspect del device (altezza fissa 540,
+        larghezza proporzionale, allineata a multipli di 4). Fallback 16:9."""
+        h = self._android_internal_h
+        aspect = (phys_w / phys_h) if (phys_w and phys_h) else (16.0 / 9.0)
+        # Clamp difensivo per evitare surface assurde in split-screen estremo
+        aspect = max(1.0, min(aspect, 3.0))
+        w = int(round(h * aspect))
+        w = (w + 3) & ~3  # multiplo di 4
+        return w, h
+
+    def _reconfigure_safe_area(self) -> None:
+        """(Ri)configura la safe area dello ScalingManager dagli inset del cutout
+        Android (px fisici → px interni). Solo Android; su desktop è no-op."""
+        if not is_android_runtime():
+            return
+        try:
+            from engine.utils import get_android_safe_insets
+            cl, ct, cr, cb = get_android_safe_insets()
+            dw = getattr(self, "_device_w", 0) or self.res_w
+            dh = getattr(self, "_device_h", 0) or self.res_h
+            sx = self.res_w / dw if dw else 1.0
+            sy = self.res_h / dh if dh else 1.0
+            self.scaling_manager.configure_safe_area(
+                True, int(cl * sx), int(ct * sy), int(cr * sx), int(cb * sy)
+            )
+            self.logger.info(
+                f"Safe area: cutout fisico (l={cl},t={ct},r={cr},b={cb}) "
+                f"-> interno (l={int(cl*sx)},t={int(ct*sy)},r={int(cr*sx)},b={int(cb*sy)})"
+            )
+        except Exception as exc:
+            self.logger.warning(f"Safe area non configurata: {exc}")
+
+    def _handle_android_resize(self, phys_w: int, phys_h: int) -> None:
+        """Adatta dinamicamente la risoluzione interna al nuovo display (Android).
+        Ricalcola l'aspect, ricrea la surface SCALED solo se la dimensione interna
+        cambia, poi riallinea safe area e tutti i sistemi."""
+        # Dimensione fisica autoritativa: in SCALED l'evento può riportare la
+        # dimensione logica, mentre Info() riflette il display reale.
+        try:
+            info = pygame.display.Info()
+            if info.current_w > 0 and info.current_h > 0:
+                phys_w, phys_h = info.current_w, info.current_h
+        except Exception:
+            pass
+
+        new_w, new_h = self._compute_android_internal_size(phys_w, phys_h)
+        self._device_w, self._device_h = phys_w, phys_h
+        if (new_w, new_h) == (self.res_w, self.res_h):
+            # Aspect invariato: aggiorna comunque la safe area (cutout può cambiare
+            # in multi-window) senza ricreare la surface.
+            self._reconfigure_safe_area()
+            return
+        self.logger.info(
+            f"Android resize dinamico: interno {self.res_w}x{self.res_h} -> {new_w}x{new_h} "
+            f"(device {phys_w}x{phys_h})"
+        )
+        self.screen = pygame.display.set_mode(
+            (new_w, new_h), self._display_flags, vsync=0
+        )
+        self._handle_resize(new_w, new_h)
+        self._reconfigure_safe_area()
+        # Invalida cache dipendenti dalla risoluzione
+        self._base_bg_params = None
+        self._flashlight_mask = None
 
     def _handle_resize(self, w: int, h: int) -> None:
         """Centralizza l'aggiornamento dei sistemi dopo un cambio di risoluzione."""
@@ -403,7 +496,31 @@ class EngineCore:
                 self._draw()
 
         self._quit()
-        
+
+    def _handle_back_navigation(self) -> None:
+        """Navigazione 'Indietro' contestuale, condivisa da ESC (desktop) e dal
+        tasto/gesto Indietro di Android (K_AC_BACK). Comportamento da vera app:
+        nei sotto-menu torna al menu precedente, in gioco apre la pausa, nel
+        menu principale esce."""
+        if self.state == EngineState.MENU:
+            ms = getattr(self.menu_system, "state", "main")
+            if ms == "scenes":
+                self.menu_system.change_state("levels")
+            elif ms in ("settings", "levels", "confirm_new"):
+                self.menu_system.change_state("main", has_save=self._has_progress())
+            else:  # main
+                self.running = False
+        elif self.state == EngineState.PAUSE:
+            ms = getattr(self.menu_system, "state", "pause")
+            if ms == "settings":
+                self.menu_system.change_state("pause", has_save=self._has_progress())
+            else:
+                self._toggle_pause()  # riprendi
+        elif self.state in (EngineState.SCENE, EngineState.MINIGAME):
+            self._toggle_pause()
+        elif self.state == EngineState.BOOT:
+            self.running = False
+
     def _handle_events(self) -> None:
         """Smista gli input di Pygame."""
         for event in pygame.event.get():
@@ -433,9 +550,12 @@ class EngineCore:
                 continue
 
             elif event.type == pygame.VIDEORESIZE:
-                # In modalità SCALED non serve ricalcolare tutto,
-                # ma aggiorniamo i buffer interni se necessario.
                 self.logger.debug(f"Video Resize rilevato: {event.w}x{event.h}")
+                # Android: adatta dinamicamente la risoluzione interna al nuovo
+                # display (rotazione bloccata, ma split-screen/foldable/cutout
+                # possono cambiare dimensione e aspect a runtime).
+                if self._is_android:
+                    self._handle_android_resize(event.w, event.h)
 
             elif event.type == pygame.MOUSEWHEEL:
                 if self.state in [EngineState.MENU, EngineState.PAUSE]:
@@ -589,6 +709,14 @@ class EngineCore:
                                 self.logger.warning("Tentativo di usare hint ma quantità disponibile è 0!")
                             continue
 
+                        # Maniglia del cassetto HUD (Android): tocco = apri/chiudi
+                        if self.hud.is_handle_clicked(event.pos):
+                            self.hud.toggle_drawer()
+                            self.audio.play_sfx("engine/assets/sounds/click_Low.wav")
+                            continue
+                        # Memorizza inizio gesto per rilevare lo swipe al rilascio
+                        self._touch_start = event.pos
+
                         # Controlla click su pulsante PAUSE in alto a sinistra
                         if self.hud.is_pause_button_clicked(event.pos):
                             self.audio.play_sfx("engine/assets/sounds/click_Low.wav")
@@ -700,6 +828,10 @@ class EngineCore:
                             self.transition_manager.start_transition(TransitionType.FADE_TO_BLACK, on_midpoint=self._advance_scene)
             
             elif event.type == pygame.MOUSEBUTTONUP:
+                # Swipe verticale dal bordo per aprire/chiudere il cassetto HUD (Android)
+                if event.button == 1 and self.state == EngineState.SCENE and self._touch_start:
+                    self.hud.handle_swipe(self._touch_start, event.pos)
+                    self._touch_start = None
                 if event.button == 1: # Left click
                     if self.state in [EngineState.MENU, EngineState.PAUSE]:
                         # Salva volume se siamo usciti dal trascinamento
@@ -771,14 +903,11 @@ class EngineCore:
                 if self.level_manager.is_any_bubble_visible():
                     continue
 
-                if event.key == pygame.K_ESCAPE:
-                    self.logger.debug("Tasto ESC premuto")
-                    # Se siamo nel menu o nel boot, ESC chiude l'app. 
-                    # Altrimenti (Scene o Minigame), attiva/disattiva la pausa.
-                    if self.state in [EngineState.BOOT, EngineState.MENU]:
-                        self.running = False
-                    else:
-                        self._toggle_pause()
+                if event.key in (pygame.K_ESCAPE, pygame.K_AC_BACK):
+                    # ESC (desktop) e tasto/gesto Indietro Android (K_AC_BACK):
+                    # navigazione contestuale unificata.
+                    self.logger.debug("Indietro/ESC premuto")
+                    self._handle_back_navigation()
 
                 elif event.key == pygame.K_h and self.state == EngineState.SCENE:
                     # Tasto H: Richiedi hint manuale
@@ -1225,6 +1354,15 @@ class EngineCore:
             sh_x, sh_y = self.effects.shake_offset
             self.screen.blit(glow_surf, (pos[0] + sh_x, pos[1] + sh_y))
 
+    def _hud_font(self, family: str, size: int, bold: bool = False, italic: bool = False) -> pygame.font.Font:
+        """Restituisce un SysFont cacheato per evitare di ricrearlo ogni frame."""
+        key = (family, size, bold, italic)
+        font = self._hud_font_cache.get(key)
+        if font is None:
+            font = pygame.font.SysFont(family, size, bold=bold, italic=italic)
+            self._hud_font_cache[key] = font
+        return font
+
     def _draw_hint_count(self) -> None:
         """Disegna conteggio hint con design glassmorphism premium."""
         if self.state != EngineState.SCENE or not self.level_manager:
@@ -1241,8 +1379,8 @@ class EngineCore:
         # Panel dimensioni (ancora più piccoli)
         panel_w = sm.scale_value(90)
         panel_h = sm.scale_value(55)
-        panel_x = self.res_w - panel_w - sm.scale_value(20)
-        panel_y = sm.scale_value(10)
+        panel_x = sm.safe_right - panel_w
+        panel_y = sm.safe_top
 
         # Salva rettangolo per click detection (serve se il panel diventa clikkabile)
         self._hint_panel_rect = pygame.Rect(panel_x, panel_y, panel_w, panel_h)
@@ -1255,13 +1393,13 @@ class EngineCore:
         pygame.draw.rect(panel_surf, COLOR_BORDER, (0, 0, panel_w, panel_h), max(1, sm.scale_value(1)), border_radius=sm.scale_value(8))
 
         # Disegna il numero hint con Gold accent
-        font_number = pygame.font.SysFont("segoeui", sm.scale_value(30), bold=True)
+        font_number = self._hud_font("segoeui", sm.scale_value(30), bold=True)
         hint_surf = font_number.render(str(available_hints), True, COLOR_ACCENT)
         hint_rect = hint_surf.get_rect(center=(panel_w // 2, sm.scale_value(22)))
         panel_surf.blit(hint_surf, hint_rect)
 
         # Disegna label "HINTS" in Off-white
-        font_label = pygame.font.SysFont("segoeui", sm.scale_value(9), bold=False)
+        font_label = self._hud_font("segoeui", sm.scale_value(9), bold=False)
         label_surf = font_label.render("HINTS AVAILABLE", True, COLOR_TEXT)
         label_rect = label_surf.get_rect(center=(panel_w // 2, sm.scale_value(44)))
         panel_surf.blit(label_surf, label_rect)
@@ -1288,8 +1426,8 @@ class EngineCore:
         # Panel dimensioni e posizione (ancora più compatto)
         panel_w = sm.scale_value(90)
         panel_h = sm.scale_value(80)
-        panel_x = self.res_w - panel_w - sm.scale_value(20)
-        panel_y = sm.scale_value(73)   # 10 (top) + 55 (h_count) + 8 (gap)
+        panel_x = sm.safe_right - panel_w
+        panel_y = sm.safe_top + sm.scale_value(63)   # 55 (h_count) + 8 (gap)
 
         # Salva rettangolo per click detection
         btn_y_off = sm.scale_value(8)
@@ -1335,7 +1473,7 @@ class EngineCore:
         pygame.draw.rect(panel_surf, COLOR_BORDER, btn_rect, max(1, sm.scale_value(1)), border_radius=sm.scale_value(6))
 
         # Testo sul bottone
-        font_btn = pygame.font.SysFont("segoeui", sm.scale_value(11), bold=True)
+        font_btn = self._hud_font("segoeui", sm.scale_value(11), bold=True)
         btn_label = font_btn.render(btn_text, True, btn_text_color)
         btn_label_rect = btn_label.get_rect(center=(panel_w // 2, btn_y_off + btn_h // 2))
         panel_surf.blit(btn_label, btn_label_rect)
@@ -1359,7 +1497,7 @@ class EngineCore:
 
         # Testo informativo sotto progress bar
         info_y = progress_y + progress_h + sm.scale_value(10)
-        font_info = pygame.font.SysFont("segoeui", sm.scale_value(10), bold=True)
+        font_info = self._hud_font("segoeui", sm.scale_value(10), bold=True)
 
         if is_max_used:
             info_text = "Max used"
@@ -1408,7 +1546,7 @@ class EngineCore:
             return
 
         # Crea testo con nome oggetto
-        font = pygame.font.SysFont("segoeui", sm.scale_value(20), italic=True)
+        font = self._hud_font("segoeui", sm.scale_value(20), italic=True)
         label_text = self.lang(target_obj.label_key).upper()
         hint_text = f"{self.lang('hud_hint_seek')}: {label_text}"
 
@@ -1417,8 +1555,8 @@ class EngineCore:
         hint_surf.set_alpha(alpha)
 
         # Posiziona in alto a destra, SOTTO il conteggio hint
-        x = self.res_w - hint_surf.get_width() - sm.scale_value(20)
-        self.screen.blit(hint_surf, (x, sm.scale_value(240)))
+        x = sm.safe_right - hint_surf.get_width()
+        self.screen.blit(hint_surf, (x, sm.safe_top + sm.scale_value(230)))
 
     def show_hint_indicator(self, obj_instance_id: str) -> None:
         """Mostra l'indicatore hint per l'oggetto specificato per mezzo secondo."""
@@ -1437,10 +1575,29 @@ class EngineCore:
             
             menu_cfg = self.game_config.get("menu", {})
             bg_path = menu_cfg.get("background")
-            
+
             if bg_path:
                 abs_bg = str(get_resource_path("games", self.game_id, bg_path))
-                
+
+                # --- Fallback statico per il video ---
+                # Se lo sfondo è un video ma non possiamo riprodurlo (Android: niente
+                # cv2, e gli .mp4 non sono nemmeno nell'APK), cerchiamo un'immagine
+                # statica così il menu non resta nero. Ordine: background_static in
+                # config -> menu_poster.jpg accanto -> stesso nome con .jpg/.png.
+                if abs_bg.lower().endswith((".mp4", ".mov", ".mkv")) and not HAS_CV2:
+                    candidates = []
+                    static_cfg = menu_cfg.get("background_static")
+                    if static_cfg:
+                        candidates.append(str(get_resource_path("games", self.game_id, static_cfg)))
+                    base_dir = os.path.dirname(abs_bg)
+                    base_noext = os.path.splitext(abs_bg)[0]
+                    candidates.append(os.path.join(base_dir, "menu_poster.jpg"))
+                    candidates.extend([base_noext + ".jpg", base_noext + ".png"])
+                    for cand in candidates:
+                        if os.path.exists(cand):
+                            abs_bg = cand
+                            break
+
                 # --- Gestione VIDEO MP4/MOV/MKV ---
                 # HAS_CV2 guard: su Android cv2 non è disponibile e il video
                 # viene silenziosamente skippato (rimane solo lo sfondo scuro
@@ -1479,17 +1636,34 @@ class EngineCore:
                 elif not abs_bg.lower().endswith((".mp4", ".mov", ".mkv")):
                     if not hasattr(self, '_menu_bg_surface') or self._menu_video_path:
                         self._menu_video_path = None # Reset se passiamo da video a immagine
+                        self._menu_bg_cover_key = None  # invalida cover cache
                         if os.path.exists(abs_bg):
                             self._menu_bg_surface = pygame.image.load(abs_bg).convert()
                         else:
                             self._menu_bg_surface = None
                     
                     if hasattr(self, '_menu_bg_surface') and self._menu_bg_surface:
-                        target_w, target_h = 1280.0, 720.0
-                        scaled_menu_bg = self.scaling_manager.scale_surface_to_ref(
-                            self._menu_bg_surface, target_w, target_h, cache_key="menu_bg"
-                        )
-                        self.screen.blit(scaled_menu_bg, (self.scaling_manager.offset_x, self.scaling_manager.offset_y))
+                        # Cover-fill: copre l'intero schermo (no barre nere ai lati
+                        # su display ultrawide), centrando ed eventualmente ritagliando.
+                        if getattr(self, "_menu_bg_cover_key", None) != (self.res_w, self.res_h):
+                            iw, ih = self._menu_bg_surface.get_size()
+                            cover = max(self.res_w / iw, self.res_h / ih)
+                            cw, ch = max(1, int(iw * cover)), max(1, int(ih * cover))
+                            self._menu_bg_cover = pygame.transform.smoothscale(self._menu_bg_surface, (cw, ch))
+                            self._menu_bg_cover_pos = ((self.res_w - cw) // 2, (self.res_h - ch) // 2)
+                            self._menu_bg_cover_key = (self.res_w, self.res_h)
+                        self.screen.blit(self._menu_bg_cover, self._menu_bg_cover_pos)
+
+            # Scrim di leggibilità: scurisce lo sfondo dietro la UI così i testi
+            # e le icone neon restano leggibili. Più marcato nei sotto-menu
+            # (settings/levels/scenes) ricchi di contenuto.
+            menu_state = getattr(self.menu_system, "state", "main")
+            scrim_alpha = 96 if menu_state == "main" else 172
+            if getattr(self, "_menu_scrim_key", None) != (self.res_w, self.res_h, scrim_alpha):
+                self._menu_scrim = pygame.Surface((self.res_w, self.res_h), pygame.SRCALPHA)
+                self._menu_scrim.fill((8, 10, 18, scrim_alpha))
+                self._menu_scrim_key = (self.res_w, self.res_h, scrim_alpha)
+            self.screen.blit(self._menu_scrim, (0, 0))
 
             self.menu_system.draw(self.screen)
             
@@ -1676,11 +1850,20 @@ class EngineCore:
             # Glow overlay rimosso — feedback visuale dato dalle particelle soltanto
             # self._draw_hint_glow_overlays()
 
-            self.effects.draw(self.screen)
-            # 1. Rendering Effetti Ambientali (Sotto la maschera torcia)
             env_fx = [f for f in self._current_scene_effects if getattr(f, "type", "") != "bubble_tip"]
-            self.fx_renderer.draw(self.screen, env_fx, sm, self.lang, scenic_factor)
-            
+
+            # Quando c'è la torcia (e non l'hint-flash) gli effetti vanno disegnati
+            # DOPO la maschera d'oscuramento, altrimenti li disegniamo subito qui
+            # (così vengono catturati nello zoom intro). Evitiamo il doppio rendering.
+            flashlight_active = bool(
+                self._current_scene_data
+                and getattr(self._current_scene_data, 'flashlight', False)
+                and self._hint_flash_timer <= 0
+            )
+            if not flashlight_active:
+                self.effects.draw(self.screen)
+                self.fx_renderer.draw(self.screen, env_fx, sm, self.lang, scenic_factor)
+
             if is_intro_zooming:
                 self.screen = original_screen
                 # Trasforma l'intero render_target come un'unica immagine unita e centralo!
@@ -1705,10 +1888,10 @@ class EngineCore:
                 else:
                     self._draw_flashlight_effect()
 
-            # --- EFFETTI E PARTICELLE (Sempre visibili sopra la torcia) ---
-            self.effects.draw(self.screen)
-            env_fx = [f for f in self._current_scene_effects if getattr(f, "type", "") != "bubble_tip"]
-            self.fx_renderer.draw(self.screen, env_fx, sm, self.lang, scenic_factor=zoom_factor if is_intro_zooming else 1.0)
+            # --- EFFETTI E PARTICELLE (sopra la torcia, solo per scene flashlight) ---
+            if flashlight_active:
+                self.effects.draw(self.screen)
+                self.fx_renderer.draw(self.screen, env_fx, sm, self.lang, scenic_factor=zoom_factor if is_intro_zooming else 1.0)
 
             # --- UI E FUMETTI (Sempre in primo piano) ---
             ui_fx = [f for f in self._current_scene_effects if getattr(f, "type", "") == "bubble_tip"]
@@ -1761,8 +1944,9 @@ class EngineCore:
                 txt = self._perf_font.render(f"{fps:.0f} FPS", True, (255, 255, 0))
                 bg = pygame.Surface((txt.get_width() + 12, txt.get_height() + 6), pygame.SRCALPHA)
                 bg.fill((0, 0, 0, 170))
-                self.screen.blit(bg, (10, 10))
-                self.screen.blit(txt, (16, 13))
+                ox, oy = self.scaling_manager.safe_left, self.scaling_manager.safe_top
+                self.screen.blit(bg, (ox, oy))
+                self.screen.blit(txt, (ox + 6, oy + 3))
             except Exception:
                 pass
 
@@ -1841,9 +2025,9 @@ class EngineCore:
         # Uso font Segoe UI Black o Impact per un look premium
         font_size = int(self.scaling_manager.scale_value(120))
         try:
-            font = pygame.font.SysFont("segoe ui black", font_size)
-        except:
-            font = pygame.font.SysFont("impact", font_size)
+            font = self._hud_font("segoe ui black", font_size)
+        except Exception:
+            font = self._hud_font("impact", font_size)
             
         text = str(timer_val)
         cx, cy = self.screen.get_width() // 2, self.screen.get_height() // 2

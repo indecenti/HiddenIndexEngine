@@ -16,6 +16,11 @@ from engine.utils import get_resource_path, get_logger
 
 log = get_logger(__name__)
 
+# Lingue ufficialmente supportate dal motore. Se non vengono trovati file di
+# stringhe (es. boot anomalo) la audit_completeness usa questa lista come
+# fallback per dire almeno "queste 5 sono attese".
+SUPPORTED_LANGS_DEFAULT: tuple[str, ...] = ("it", "en", "fr", "es", "de")
+
 
 class LanguageManager:
     def __init__(self) -> None:
@@ -188,6 +193,83 @@ class LanguageManager:
             len(self._missing_keys),
             "\n  ".join(sorted(self._missing_keys))
         )
+
+    # ------------------------------------------------------------------
+    # Audit completezza tra lingue (eseguito al boot del gioco)
+    # ------------------------------------------------------------------
+
+    def audit_completeness(self, game_id: str | None = None,
+                           *, log_warnings: bool = True) -> dict[str, dict]:
+        """
+        Confronta TUTTE le chiavi disponibili nelle 5 lingue (engine + gioco)
+        e segnala chi è disallineato.
+
+        Per ogni lingua produce:
+          {
+            "lang": "fr",
+            "missing_keys": [...],   # chiavi presenti in altre lingue ma non qui
+            "empty_keys": [...],     # chiavi presenti ma con valore vuoto
+            "extra_keys": [...],     # chiavi qui ma non altrove (di solito 0)
+            "total": int,
+          }
+
+        Returns dict {lang: stats}. Logga warning se `log_warnings=True`.
+        Chiamabile al boot del gioco PRIMA di entrare nella scena, così
+        eventuali traduzioni mancanti vengono diagnosticate subito.
+        """
+        gid = game_id or self._game_id
+        langs = list(self._available_langs) or list(SUPPORTED_LANGS_DEFAULT)
+
+        # Raccogli tutte le chiavi per lingua (engine + gioco), tutte da disco
+        per_lang_keys: dict[str, dict[str, str]] = {}
+        for lang in langs:
+            data: dict[str, str] = {}
+            # Engine strings
+            eng_p = get_resource_path("engine", "assets", "strings", f"{lang}.json")
+            data.update(self._read_json(str(eng_p)))
+            # Game strings
+            if gid and gid != "engine":
+                game_p = get_resource_path("games", gid, "strings", f"{lang}.json")
+                data.update(self._read_json(str(game_p)))
+            per_lang_keys[lang] = data
+
+        all_keys: set[str] = set()
+        for d in per_lang_keys.values():
+            all_keys.update(d.keys())
+
+        report: dict[str, dict] = {}
+        for lang, d in per_lang_keys.items():
+            present = set(d.keys())
+            missing = sorted(all_keys - present)
+            empty = sorted(k for k in present if not (d.get(k) or "").strip())
+            extra = sorted(present - all_keys)  # quasi sempre vuoto
+            report[lang] = {
+                "lang": lang,
+                "missing_keys": missing,
+                "empty_keys": empty,
+                "extra_keys": extra,
+                "total": len(present),
+            }
+
+        if log_warnings:
+            total_keys_union = len(all_keys)
+            log.info(
+                "[i18n] Audit completezza (game='%s', %d lingue, %d chiavi union):",
+                gid or "engine", len(langs), total_keys_union,
+            )
+            for lang, st in report.items():
+                missing_n = len(st["missing_keys"])
+                empty_n = len(st["empty_keys"])
+                pct = (1 - missing_n / max(total_keys_union, 1)) * 100
+                if missing_n or empty_n:
+                    log.warning(
+                        "[i18n]   %s: %d/%d chiavi (%.1f%%)  missing=%d  empty=%d",
+                        lang, st["total"], total_keys_union, pct, missing_n, empty_n,
+                    )
+                else:
+                    log.info("[i18n]   %s: completa (%d chiavi)", lang, st["total"])
+
+        return report
 
     @property
     def current_language(self) -> str:

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from engine.minigames.minigame_base import BaseMinigame
+from engine.minigames.touch_controls import TouchControls
 from engine.utils import get_resource_path, get_logger
 
 # Logger per conformità GEMINI.md
@@ -67,6 +68,16 @@ class TetranGame(BaseMinigame):
         self.assets = {}
         self._load_assets()
 
+        # Cache font (evita SysFont ogni frame: lento su Android)
+        self._font_cache: dict[int, pygame.font.Font] = {}
+
+    def _font(self, size: int) -> pygame.font.Font:
+        f = self._font_cache.get(size)
+        if f is None:
+            f = pygame.font.SysFont("Arial", max(8, size), bold=True)
+            self._font_cache[size] = f
+        return f
+
     def _load_assets(self) -> None:
         base_path = Path(get_resource_path("engine", "minigames", "tetran", "assets"))
         blocks_path = base_path / "blocks"
@@ -115,7 +126,27 @@ class TetranGame(BaseMinigame):
                 if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                     self.finish({"success": self.score > 5000, "score": self.score})
             return
-            
+
+        # --- Controlli touch (Android) ---
+        if hasattr(self, "touch"):
+            bid = self.touch.handle_event(event)
+            if bid == "left":
+                self.das_direction = -1; self.das_timer = 0.0; self._move_horizontal(-1)
+            elif bid == "right":
+                self.das_direction = 1; self.das_timer = 0.0; self._move_horizontal(1)
+            elif bid == "rotate":
+                self.rotate_piece()
+            elif bid == "drop":
+                self.hard_drop()
+            elif bid == "hold":
+                self.hold_piece()
+            # Rilascio: ferma il movimento continuo (DAS) quando il bottone
+            # direzionale non è più tenuto premuto.
+            if self.das_direction == -1 and not self.touch.is_held("left"):
+                self.das_direction = 0
+            elif self.das_direction == 1 and not self.touch.is_held("right"):
+                self.das_direction = 0
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 self.das_direction = -1
@@ -263,7 +294,8 @@ class TetranGame(BaseMinigame):
         
         # Soft Drop se il tasto GIÙ è premuto
         keys = pygame.key.get_pressed()
-        is_soft_dropping = not self.game_over and keys[pygame.K_DOWN]
+        touch_down = hasattr(self, "touch") and self.touch.is_held("down")
+        is_soft_dropping = not self.game_over and (keys[pygame.K_DOWN] or touch_down)
         if is_soft_dropping:
             current_tick = min(current_tick, 0.05) # Velocità fissa molto alta per soft drop
         
@@ -325,7 +357,7 @@ class TetranGame(BaseMinigame):
                              special=self.current_piece['special'])
 
         # Floating Texts
-        font_ft = pygame.font.SysFont("Arial", int(round(20 * scale)), bold=True)
+        font_ft = self._font(int(round(20 * scale)))
         for ft in self.floating_texts:
             alpha = int(255 * (ft['life'] / 1.5))
             text_surf = font_ft.render(ft['text'], True, ft['color'])
@@ -336,6 +368,10 @@ class TetranGame(BaseMinigame):
             self.screen.blit(text_surf, (tx, ty))
 
         self._draw_ui_overlay(ox, oy, gw, bs, scale)
+
+        # Controlli touch (solo Android)
+        if hasattr(self, "touch"):
+            self.touch.draw(self.screen)
 
         # Game Over Overlay
         if self.game_over:
@@ -348,9 +384,9 @@ class TetranGame(BaseMinigame):
         self.screen.blit(overlay, (0, 0))
         
         # Font
-        font_big = pygame.font.SysFont("Arial", int(round(60 * scale)), bold=True)
-        font_mid = pygame.font.SysFont("Arial", int(round(32 * scale)), bold=True)
-        font_small = pygame.font.SysFont("Arial", int(round(20 * scale)), bold=True)
+        font_big = self._font(int(round(60 * scale)))
+        font_mid = self._font(int(round(32 * scale)))
+        font_small = self._font(int(round(20 * scale)))
         
         # Testi
         title = font_big.render("GAME OVER", True, (255, 50, 50))
@@ -390,8 +426,8 @@ class TetranGame(BaseMinigame):
 
     def _draw_ui_overlay(self, ox, oy, gw, bs, scale):
         # Font e Dimensioni dinamiche
-        font_main = pygame.font.SysFont("Arial", int(round(28 * scale)), bold=True)
-        font_small = pygame.font.SysFont("Arial", int(round(18 * scale)), bold=True)
+        font_main = self._font(int(round(28 * scale)))
+        font_small = self._font(int(round(18 * scale)))
         panel_alpha = 190
         
         # Buffer orizzontale (distanza dashboard dalla griglia)
@@ -420,7 +456,7 @@ class TetranGame(BaseMinigame):
             # Pulsazione: ingrandimento dinamico
             pulse = 1.0 + 0.15 * math.sin(time.time() * 10)
             p_size = int(round(28 * scale * pulse))
-            current_font = pygame.font.SysFont("Arial", p_size, bold=True)
+            current_font = self._font(p_size)
             if int(time.time() * 5) % 2 == 0: # Flicker
                 time_color = (255, 200, 200)
 
@@ -497,7 +533,37 @@ class TetranGame(BaseMinigame):
             'life': 1.5 # Secondi di durata
         })
 
-    def start(self) -> None: self.spawn_piece()
+    def start(self) -> None:
+        self.spawn_piece()
+        self.touch = TouchControls(self.scaling_manager)
+        self._setup_touch()
+
+    def on_resize(self) -> None:
+        self._setup_touch()
+
+    def _setup_touch(self) -> None:
+        """Dispone i bottoni touch nei due spazi laterali liberi attorno alla
+        griglia (sinistra = movimento/rotazione, destra = drop/hold)."""
+        if not hasattr(self, "touch"):
+            return
+        self.touch.clear()
+        if not self.touch.enabled:
+            return
+        sw, sh = self.screen.get_size()
+        b = max(54, int(min(sw, sh) * 0.13))    # lato bottone
+        m = int(b * 0.22)                        # margine dai bordi
+
+        def R(cx, cy):
+            return pygame.Rect(int(cx - b / 2), int(cy - b / 2), b, b)
+
+        # Angolo in basso a SINISTRA: movimento + rotazione + hold
+        self.touch.add("left",   R(m + b * 0.5,  sh - m - b * 0.5), glyph="left",  color=(120, 200, 255))
+        self.touch.add("right",  R(m + b * 1.6,  sh - m - b * 0.5), glyph="right", color=(120, 200, 255))
+        self.touch.add("rotate", R(m + b * 0.5,  sh - m - b * 1.6), glyph="rotate", color=(120, 200, 255))
+        self.touch.add("hold",   R(m + b * 1.6,  sh - m - b * 1.6), glyph="up",     color=(200, 180, 120))
+        # Angolo in basso a DESTRA: soft-drop + hard-drop
+        self.touch.add("down",   R(sw - m - b * 1.6, sh - m - b * 0.5), glyph="down", color=(120, 255, 170))
+        self.touch.add("drop",   R(sw - m - b * 0.5, sh - m - b * 0.5), glyph="drop", color=(255, 150, 90))
 
     def finish(self, result: dict) -> None:
         self.is_running = False

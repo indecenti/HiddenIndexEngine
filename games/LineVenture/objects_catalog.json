@@ -1,92 +1,6 @@
 {
   "objects": [
     {
-      "id": "ca_amulet_eye_golden_v1",
-      "label_key": "obj_ca_amulet_eye_golden",
-      "icon": "objects_cartoon/ca_amulet_eye_golden_v1.png",
-      "default_detection": "circle",
-      "default_radius": 22,
-      "default_hint_delay": 45,
-      "tags": [
-        "MAGIA",
-        "PREZIOSO",
-        "MISTERO"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_amulet_eye_golden_v1_v1",
-      "label_key": "obj_ca_amulet_eye_golden",
-      "icon": "objects_cartoon/ca_amulet_eye_golden_v1_v1.png",
-      "default_detection": "circle",
-      "default_radius": 22,
-      "default_hint_delay": 45,
-      "tags": [
-        "MAGIA",
-        "PREZIOSO",
-        "MISTERO"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_amulet_eye_golden_v2",
-      "label_key": "obj_ca_amulet_eye_golden",
-      "icon": "objects_cartoon/ca_amulet_eye_golden_v2.png",
-      "default_detection": "circle",
-      "default_radius": 22,
-      "default_hint_delay": 45,
-      "tags": [
-        "MAGIA",
-        "PREZIOSO",
-        "MISTERO"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_amulet_eye_golden_v3",
-      "label_key": "obj_ca_amulet_eye_golden",
-      "icon": "objects_cartoon/ca_amulet_eye_golden_v3.png",
-      "default_detection": "circle",
-      "default_radius": 22,
-      "default_hint_delay": 45,
-      "tags": [
-        "MAGIA",
-        "PREZIOSO",
-        "MISTERO"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_anvil_heavy_workshop",
-      "label_key": "obj_ca_anvil_heavy_workshop",
-      "icon": "objects_cartoon/ca_anvil_heavy_workshop.png",
-      "default_detection": "rect",
-      "default_width": 80,
-      "default_height": 60,
-      "default_hint_delay": 35,
-      "tags": [
-        "grande",
-        "metallo",
-        "officina"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_beach_ball",
-      "label_key": "obj_ca_beach_ball",
-      "icon": "objects_cartoon/ca_beach_ball.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 45,
-      "default_hint_delay": 20,
-      "tags": [
-        "ESTATE",
-        "PLASTICA",
-        "GIOCO"
-      ],
-      "style": "cartoon"
-    },
-    {
       "id": "ca_book_stack_adv",
       "label_key": "obj_ca_book_stack_adv",
       "icon": "objects_cartoon/ca_book_stack_adv.png",
@@ -95,8 +9,8 @@
       "default_height": 45,
       "default_hint_delay": 30,
       "tags": [
-        "CARTA",
-        "CULTURA"
+        "carta",
+        "cultura"
       ],
       "style": "cartoon"
     },
@@ -108,9 +22,9 @@
       "default_radius": 30,
       "default_hint_delay": 25,
       "tags": [
-        "STRUMENTO",
-        "METALLO",
-        "VIAGGIO"
+        "strumento",
+        "metallo",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -123,9 +37,9 @@
       "default_height": 22,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO",
-        "CARTA",
-        "VIAGGIO"
+        "strumento",
+        "carta",
+        "viaggio"
       ],
       "style": "cartoon"
     },
@@ -138,8 +52,8 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "CARTA"
+        "strumento",
+        "carta"
       ],
       "style": "cartoon"
     },
@@ -152,8 +66,8 @@
       "default_height": 30,
       "default_hint_delay": 25,
       "tags": [
-        "EQUIPAGGIAMENTO",
-        "SPORT"
+        "equipaggiamento",
+        "sport"
       ],
       "style": "cartoon"
     },
@@ -165,7 +79,7 @@
       "default_radius": 12,
       "default_hint_delay": 35,
       "tags": [
-        "NATURA"
+        "natura"
       ],
       "style": "cartoon"
     },
@@ -178,9 +92,9 @@
       "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
-        "EQUIPAGGIAMENTO",
-        "RIPOSO",
-        "STOFFA"
+        "equipaggiamento",
+        "riposo",
+        "stoffa"
       ],
       "style": "cartoon"
     },
@@ -193,8 +107,8 @@
       "default_height": 12,
       "default_hint_delay": 35,
       "tags": [
-        "STRUMENTO",
-        "METALLO"
+        "strumento",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -207,8 +121,8 @@
       "default_height": 45,
       "default_hint_delay": 20,
       "tags": [
-        "CURA",
-        "PLASTICA"
+        "cura",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -221,8 +135,8 @@
       "default_height": 80,
       "default_hint_delay": 40,
       "tags": [
-        "OGGETTO",
-        "METALLO"
+        "oggetto",
+        "metallo"
       ],
       "style": "line art"
     },
@@ -235,8 +149,8 @@
       "default_height": 85,
       "default_hint_delay": 35,
       "tags": [
-        "GIOCO",
-        "CARTA"
+        "gioco",
+        "carta"
       ],
       "style": "line art"
     },
@@ -248,24 +162,9 @@
       "default_radius": 35,
       "default_hint_delay": 30,
       "tags": [
-        "NATURA",
-        "CIBO",
-        "FRUTTA"
-      ],
-      "style": "line art"
-    },
-    {
-      "id": "la_arpa",
-      "label_key": "obj_la_arpa",
-      "icon": "objects_lineart/la_arpa.png",
-      "default_detection": "rect",
-      "default_width": 70,
-      "default_height": 95,
-      "default_hint_delay": 50,
-      "tags": [
-        "musica",
-        "legno",
-        "grande"
+        "natura",
+        "cibo",
+        "frutta"
       ],
       "style": "line art"
     },
@@ -278,8 +177,8 @@
       "default_height": 40,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "VETRO"
+        "gioco",
+        "vetro"
       ],
       "style": "line art"
     },
@@ -292,8 +191,8 @@
       "default_height": 50,
       "default_hint_delay": 40,
       "tags": [
-        "OTTICA",
-        "VIAGGIO"
+        "ottica",
+        "viaggio"
       ],
       "style": "line art"
     },
@@ -306,8 +205,8 @@
       "default_height": 70,
       "default_hint_delay": 35,
       "tags": [
-        "GIOCO",
-        "LEGNO"
+        "gioco",
+        "legno"
       ],
       "style": "line art"
     },
@@ -319,9 +218,9 @@
       "default_radius": 35,
       "default_hint_delay": 30,
       "tags": [
-        "VIAGGIO",
-        "METALLO",
-        "STRUMENTO"
+        "viaggio",
+        "metallo",
+        "strumento"
       ],
       "style": "line art"
     },
@@ -334,9 +233,9 @@
       "default_height": 55,
       "default_hint_delay": 25,
       "tags": [
-        "NATURA",
-        "CIBO",
-        "FRUTTA"
+        "natura",
+        "cibo",
+        "frutta"
       ],
       "style": "line art"
     },
@@ -349,8 +248,8 @@
       "default_height": 55,
       "default_hint_delay": 30,
       "tags": [
-        "METALLO",
-        "OGGETTO"
+        "metallo",
+        "oggetto"
       ],
       "style": "line art"
     },
@@ -363,8 +262,8 @@
       "default_height": 85,
       "default_hint_delay": 25,
       "tags": [
-        "STRUMENTO",
-        "LEGNO"
+        "strumento",
+        "legno"
       ],
       "style": "line art"
     },
@@ -377,8 +276,8 @@
       "default_height": 85,
       "default_hint_delay": 20,
       "tags": [
-        "METALLO",
-        "STRUMENTO"
+        "metallo",
+        "strumento"
       ],
       "style": "line art"
     },
@@ -390,9 +289,9 @@
       "default_radius": 30,
       "default_hint_delay": 25,
       "tags": [
-        "OTTICA",
-        "VETRO",
-        "STRUMENTO"
+        "ottica",
+        "vetro",
+        "strumento"
       ],
       "style": "line art"
     },
@@ -405,8 +304,8 @@
       "default_height": 35,
       "default_hint_delay": 25,
       "tags": [
-        "GIOCO",
-        "PLASTICA"
+        "gioco",
+        "plastica"
       ],
       "style": "line art"
     },
@@ -418,8 +317,8 @@
       "default_radius": 40,
       "default_hint_delay": 35,
       "tags": [
-        "CULTURA",
-        "VIAGGIO"
+        "cultura",
+        "viaggio"
       ],
       "style": "line art"
     },
@@ -432,8 +331,8 @@
       "default_height": 60,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "METALLO"
+        "strumento",
+        "metallo"
       ],
       "style": "line art"
     },
@@ -446,8 +345,8 @@
       "default_height": 25,
       "default_hint_delay": 20,
       "tags": [
-        "ACCESSORIO",
-        "OTTICA"
+        "accessorio",
+        "ottica"
       ],
       "style": "line art"
     },
@@ -460,8 +359,8 @@
       "default_height": 35,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "tecnologia",
+        "elettronica"
       ],
       "style": "line art"
     },
@@ -474,8 +373,8 @@
       "default_height": 70,
       "default_hint_delay": 40,
       "tags": [
-        "METALLO",
-        "TECNOLOGIA"
+        "metallo",
+        "tecnologia"
       ],
       "style": "line art"
     },
@@ -487,8 +386,8 @@
       "default_radius": 30,
       "default_hint_delay": 20,
       "tags": [
-        "GIOCO",
-        "PLASTICA"
+        "gioco",
+        "plastica"
       ],
       "style": "line art"
     },
@@ -501,8 +400,8 @@
       "default_height": 50,
       "default_hint_delay": 25,
       "tags": [
-        "GIOCO",
-        "PLASTICA"
+        "gioco",
+        "plastica"
       ],
       "style": "line art"
     },
@@ -515,8 +414,8 @@
       "default_height": 85,
       "default_hint_delay": 50,
       "tags": [
-        "TECNOLOGIA",
-        "ELETTRONICA"
+        "tecnologia",
+        "elettronica"
       ],
       "style": "line art"
     },
@@ -529,8 +428,8 @@
       "default_height": 80,
       "default_hint_delay": 20,
       "tags": [
-        "STRUMENTO",
-        "CARTA"
+        "strumento",
+        "carta"
       ],
       "style": "line art"
     },
@@ -543,8 +442,8 @@
       "default_height": 30,
       "default_hint_delay": 30,
       "tags": [
-        "ACCESSORIO",
-        "LEGNO"
+        "accessorio",
+        "legno"
       ],
       "style": "line art"
     },
@@ -557,7 +456,7 @@
       "default_height": 90,
       "default_hint_delay": 25,
       "tags": [
-        "NATURA"
+        "natura"
       ],
       "style": "line art"
     },
@@ -570,8 +469,8 @@
       "default_height": 90,
       "default_hint_delay": 45,
       "tags": [
-        "GIOCO",
-        "PLASTICA"
+        "gioco",
+        "plastica"
       ],
       "style": "line art"
     },
@@ -584,9 +483,9 @@
       "default_height": 85,
       "default_hint_delay": 40,
       "tags": [
-        "GIOCO",
-        "PLASTICA",
-        "TECNOLOGIA"
+        "gioco",
+        "plastica",
+        "tecnologia"
       ],
       "style": "line art"
     },
@@ -599,8 +498,8 @@
       "default_height": 50,
       "default_hint_delay": 30,
       "tags": [
-        "STRUMENTO",
-        "LEGNO"
+        "strumento",
+        "legno"
       ],
       "style": "line art"
     },
@@ -613,9 +512,9 @@
       "default_height": 70,
       "default_hint_delay": 35,
       "tags": [
-        "GIOCO",
-        "STOFFA",
-        "PELUCHE"
+        "gioco",
+        "stoffa",
+        "peluche"
       ],
       "style": "line art"
     },
@@ -628,8 +527,8 @@
       "default_height": 50,
       "default_hint_delay": 40,
       "tags": [
-        "ELETTRONICA",
-        "TECNOLOGIA"
+        "elettronica",
+        "tecnologia"
       ],
       "style": "line art"
     },
@@ -642,8 +541,8 @@
       "default_height": 30,
       "default_hint_delay": 25,
       "tags": [
-        "GIOCO",
-        "METALLO"
+        "gioco",
+        "metallo"
       ],
       "style": "line art"
     },
@@ -655,8 +554,8 @@
       "default_radius": 30,
       "default_hint_delay": 30,
       "tags": [
-        "GIOCO",
-        "METALLO"
+        "gioco",
+        "metallo"
       ],
       "style": "line art"
     },
@@ -669,8 +568,8 @@
       "default_height": 95,
       "default_hint_delay": 35,
       "tags": [
-        "STRUMENTO",
-        "LEGNO"
+        "strumento",
+        "legno"
       ],
       "style": "line art"
     },
@@ -683,8 +582,8 @@
       "default_height": 70,
       "default_hint_delay": 35,
       "tags": [
-        "TECNOLOGIA",
-        "METALLO"
+        "tecnologia",
+        "metallo"
       ],
       "style": "line art"
     },
@@ -697,9 +596,9 @@
       "default_height": 45,
       "default_hint_delay": 40,
       "tags": [
-        "GIOCO",
-        "LEGNO",
-        "STRUMENTO"
+        "gioco",
+        "legno",
+        "strumento"
       ],
       "style": "line art"
     },
@@ -712,8 +611,8 @@
       "default_height": 75,
       "default_hint_delay": 40,
       "tags": [
-        "VIAGGIO",
-        "STOFFA"
+        "viaggio",
+        "stoffa"
       ],
       "style": "line art"
     }

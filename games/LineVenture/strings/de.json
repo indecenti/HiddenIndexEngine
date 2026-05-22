@@ -68,9 +68,5 @@
   "obj_la_xilofono": "Xylophon",
   "obj_la_zaino": "Rucksack",
   "pause_title": "Pause Title",
-  "scene_nuova_name": "scene_nuova",
-  "obj_ca_beach_ball": "",
-  "obj_la_arpa": "",
-  "obj_ca_amulet_eye_golden": "",
-  "obj_ca_anvil_heavy_workshop": ""
+  "scene_nuova_name": "scene_nuova"
 }

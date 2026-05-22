@@ -420,16 +420,19 @@ class BackgroundModalMixin:
         self._bg_modal_close()
 
     def _bg_delete_file(self, name):
+        # Soft-delete: sposta nel cestino .editor_trash/ invece di unlink diretto.
+        # Recuperabile per 7 giorni e tracciato in .editor_audit.log.
         try:
+            from engine.utils import safe_delete
             p = self._bg_dir / name
-            if p.exists():
-                import os; os.remove(str(p))
+            if p.exists() and safe_delete(p, reason="user_delete_background"):
                 if name in self._bg_all_files: self._bg_all_files.remove(name)
                 with self._bg_thumb_lock:
                     if name in self._bg_thumbnails: del self._bg_thumbnails[name]
                 if name in self._bg_catalog: del self._bg_catalog[name]
                 self._bg_save_catalog(); self._bg_update_filter()
-        except: pass
+        except Exception as e:
+            logging.warning(f"[BG] Delete fallita per '{name}': {e}")
         self._bg_delete_pending = None
 
     def _bg_handle_drop(self, path_str: str):

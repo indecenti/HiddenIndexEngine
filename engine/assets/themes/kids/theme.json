@@ -1,48 +1,48 @@
 {
   "id": "kids",
   "display_name": "Playground",
+  "category": "desktop",
 
   "colors": {
-    "background_overlay":   [ 50,  70,  90, 160],
-    "btn_normal":           [174, 198, 207],
-    "btn_hover":            [255, 253, 208],
-    "btn_locked":           [211, 211, 211],
-    "btn_border_normal":    [130, 150, 160],
-    "btn_border_hover":     [220, 210, 150],
-    "btn_border_locked":    [180, 180, 180],
-    "text_normal":          [ 50,  65,  75],
-    "text_hover":           [ 90,  85,  40],
-    "text_locked":          [140, 140, 140],
-    "text_label":           [220, 230, 235],
-    "divider_color":        [160, 180, 190],
-    "slider_track_bg":      [120, 140, 150],
-    "slider_track_border":  [100, 120, 130],
-    "slider_fill":          [255, 240, 150],
+    "background_overlay":   [ 70, 150, 200, 150],
+    "btn_normal":           [255, 255, 255,   0],
+    "btn_hover":            [255, 255, 255,   0],
+    "btn_locked":           [200, 210, 215,   0],
+    "btn_border_normal":    [255, 255, 255, 120],
+    "btn_border_hover":     [255, 235, 120, 255],
+    "btn_border_locked":    [180, 190, 195, 120],
+    "text_normal":          [ 40,  55,  70],
+    "text_hover":           [ 30,  40,  55],
+    "text_locked":          [140, 150, 155],
+    "icon_color":           [255, 250, 235],
+    "slider_bg":            [120, 150, 170],
+    "slider_fill":          [255, 205,  80],
     "slider_handle":        [255, 255, 255],
-    "scene_border_normal":  [160, 180, 190],
-    "scene_border_hover":   [255, 250, 200],
-    "scene_overlay_hover":  [ 80, 100, 120, 100],
-    "scene_overlay_normal": [ 60,  80, 100,  80],
-    "lock_text":            [180, 100, 100]
+    "scene_border_normal":  [255, 255, 255, 120],
+    "scene_border_hover":   [255, 235, 120, 255],
+    "scene_overlay_hover":  [ 80, 120, 150, 110],
+    "scene_overlay_normal": [ 60, 100, 130,  80],
+    "lock_text":            [220, 110, 110],
+    "btn_glow_color":       [255, 225, 120]
   },
 
   "layout": {
-    "btn_layout":           "centered",
-    "btn_indent_step":      0,
-    "btn_border_radius":    24,
+    "btn_border_radius":    28,
     "btn_width":            160,
     "btn_height":           160,
     "btn_center_x":         640,
-    "btn_y_start":          180,
+    "btn_y_start":          200,
     "btn_y_step":           190,
     "btn_border_width":     0,
     "icons_only":           true,
-    "icon_btn_size":        160,
+    "icon_btn_size":        150,
     "no_btn_bg":            true,
     "slider_height":        28,
     "scene_grid_cols":      3,
     "scene_thumb_w":        320,
-    "scene_thumb_h":        180
+    "scene_thumb_h":        180,
+    "title_font_size":      46,
+    "title_y_offset":       100
   },
 
   "font": {
@@ -51,19 +51,19 @@
     "size_label":           20,
     "size_scene":           22,
     "size_lock":            38,
-    "bold":                 false
+    "bold":                 true
   },
 
   "effects": {
     "btn_shadow":           true,
     "btn_shadow_offset":    [3, 4],
-    "btn_shadow_color":     [155,  78,   0, 115],
-    "btn_glow":             false,
+    "btn_shadow_color":     [40, 80, 120, 120],
+    "btn_glow":             true,
+    "btn_glow_radius":      10,
     "text_shadow":          true,
     "text_shadow_offset":   [1, 2],
-    "text_shadow_color":    [145,  55,   0,  85],
+    "text_shadow_color":    [255, 255, 255, 120],
     "pulse_hover":          true,
-    "pulse_scale":          1.04,
-    "flicker":              false
+    "pulse_scale":          1.06
   }
 }

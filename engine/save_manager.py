@@ -9,7 +9,7 @@ import json
 from typing import Any
 from pathlib import Path
 
-from engine.utils import get_writable_path, get_logger
+from engine.utils import get_writable_path, get_logger, safe_write_json
 
 class SaveManager:
     """Implementa i requisiti di read/write progressi basati sul Game ID."""
@@ -55,12 +55,13 @@ class SaveManager:
             self.save()
 
     def save(self) -> None:
-        """Flush su disco."""
-        try:
-            with open(self.save_path, "w", encoding="utf-8") as f:
-                json.dump(self.data, f, indent=4)
-        except Exception as e:
-            self.logger.error(f"Errore scrittura JSON progressi su disco: {e}")
+        """
+        Flush su disco — atomic write per non corrompere mai i progressi.
+        Un crash a metà write (chiusura forzata del gioco) non lascia più il
+        save in stato semi-scritto: il file originale resta valido.
+        """
+        if not safe_write_json(self.save_path, self.data, indent=4):
+            self.logger.error(f"Errore scrittura JSON progressi su disco: {self.save_path}")
 
     def get_progress(self, key_name: str, default: Any = None) -> Any:
         return self.data.get(key_name, default)

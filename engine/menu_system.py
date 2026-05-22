@@ -10,7 +10,7 @@ import json
 import pygame
 import math
 
-from engine.utils import get_logger, get_resource_path
+from engine.utils import get_logger, get_resource_path, is_android_runtime
 from engine.menu_theme import MenuTheme, load_theme_for_game
 
 
@@ -34,7 +34,11 @@ class MenuButton:
         self.hover_time = 0.0  # 0.0 -> 1.0 per transizioni fluide
         self.image = image
         self.icon_surf = None # Icona tematica (opzionale)
-        
+
+        # Cache dell'immagine scalata (evita smoothscale ad ogni frame)
+        self._scaled_img = None
+        self._scaled_img_size = None
+
         # Effetti Premium
         self.ripple_pos = None
         self.ripple_time = 0.0
@@ -145,7 +149,32 @@ class MenuSystem:
         # Se abbiamo un'anteprima immagine (scene/level), evitiamo l'icona sovrapposta
         if not image:
             btn.icon_surf = self.theme.get_icon(action)
+        self._set_tooltip(btn, action)
         return btn
+
+    # Mappa azione -> chiave tooltip localizzata (engine/assets/strings)
+    _ACTION_TIPS = {
+        "goto_levels":  "tip_play",
+        "goto_scenes":  "tip_play",
+        "play_scene":   "tip_play",
+        "goto_settings": "tip_settings",
+        "confirm_new":  "tip_new_game",
+        "do_new_game":  "tip_new_game",
+        "resume_game":  "tip_resume",
+        "quit_to_main": "tip_quit_to_main",
+        "quit":         "tip_quit",
+        "toggle_lang":  "tip_language",
+        "toggle_res":   "tip_resolution",
+        "toggle_fs":    "tip_fullscreen",
+    }
+
+    def _set_tooltip(self, btn: MenuButton, action: str, tip_key: str = None) -> None:
+        """Assegna un tooltip localizzato al bottone in base all'azione."""
+        key = tip_key or self._ACTION_TIPS.get(action.split(":")[0])
+        if key:
+            tip = self.lang.get(key, "")
+            if tip:
+                btn.tooltip_text = tip
 
     def _quit_btn(self) -> MenuButton:
         """Crea il pulsante di uscita speciale, piccolo e nell'angolo in basso a destra."""
@@ -160,6 +189,7 @@ class MenuSystem:
         lbl = self.lang.get("btn_quit", "QUIT")
         btn = MenuButton(lbl, "quit", rx, ry, bw, bh)
         btn.icon_surf = self.theme.get_icon("quit")
+        self._set_tooltip(btn, "quit")
         return btn
 
     def _back_btn(self, target_state: str) -> MenuButton:
@@ -167,7 +197,7 @@ class MenuSystem:
         size = 64 if self.theme.is_icons_only() else 48
         # Riposizionato a 60, 60 per evitare crop su schermi con bordi arrotondati
         btn = MenuButton("", f"goto_{target_state}", 60, 60, size, size)
-        btn.tooltip_text = self.lang.get("btn_back", "Indietro")
+        btn.tooltip_text = self.lang.get("tip_back", self.lang.get("btn_back", "Indietro"))
         
         icon = self.theme.get_icon("goto_main") # Usa freccia standard
         if icon:
@@ -218,7 +248,11 @@ class MenuSystem:
             main_actions = [(l, a) for l, a in labels_actions if a != "quit"]
             total = len(main_actions)
             for i, (lbl, act) in enumerate(main_actions):
-                self.buttons.append(self._std_btn(lbl, act, i, total))
+                btn = self._std_btn(lbl, act, i, total)
+                # Con salvataggio il primo pulsante è "Continua": tooltip dedicato
+                if has_save and i == 0 and act == "goto_levels":
+                    self._set_tooltip(btn, act, tip_key="tip_continue")
+                self.buttons.append(btn)
             
             # Aggiunta del pulsante QUIT in posizione dedicata (basso a destra)
             self.buttons.append(self._quit_btn())
@@ -353,7 +387,7 @@ class MenuSystem:
                 ("label_fullscreen", "toggle_fs", "ON" if self.is_fullscreen else "OFF"),
             ]
             
-            y_start = 80 # Ulteriormente alzato per bilanciamento perfetto
+            y_start = 180 # Sotto il titolo di stato per evitare sovrapposizioni
             y_step = 100
             
             # Larghezza riga unificata per centraggio perfetto
@@ -369,15 +403,17 @@ class MenuSystem:
                 
                 if "slider" in val:
                     s_val = self.music_volume if "music" in val else self.sfx_volume
-                    # Lo slider occupa la parte destra della riga (row_w - icon_col_w)
-                    s_w = row_w - icon_col_w
+                    # Slider più compatto: lascia un margine a destra così non
+                    # risulta troppo largo (richiesta mobile). 140px di margine.
+                    s_w = row_w - icon_col_w - 140
                     s_x = rx + icon_col_w
                     self.sliders.append(MenuSlider(lbl, act, s_x, ry + 30, s_w, 20, s_val))
                 else:
                     # Riga pulsante per valori testuali
                     btn = MenuButton(val, act, rx, ry, row_w, 80)
                     btn.icon_surf = icon_surf
-                    btn.tooltip_text = f"{lbl}: {val}"
+                    tip = self.lang.get(self._ACTION_TIPS.get(act, ""), "")
+                    btn.tooltip_text = f"{tip} ({val})" if tip else f"{lbl}: {val}"
                     self.buttons.append(btn)
 
         elif self.state == "pause":
@@ -557,45 +593,6 @@ class MenuSystem:
                     self.music_volume = s.value
                 elif s.action == "set_sfx_volume":
                     self.sfx_volume = s.value
-            if b.hovered:
-                b.hover_time = min(1.0, b.hover_time + dt * trans_speed)
-            else:
-                b.hover_time = max(0.0, b.hover_time - dt * trans_speed)
-            
-            # 2. Ripple Update
-            if b.ripple_time > 0:
-                b.ripple_time = max(0.0, b.ripple_time - dt * 2.0)
-            
-            # 3. Floating Animation (Disattivata come richiesto)
-            b.float_offset = 0.0
-            
-            # 4. Tilt & Magnetic Effect (Tilt disattivato come richiesto)
-            target_angle = 0.0
-            if not hasattr(b, "angle"): b.angle = 0.0
-            b.angle += (target_angle - b.angle) * dt * 10.0
-            
-            if not hasattr(b, "mag_offset"): b.mag_offset = [0.0, 0.0]
-            # Magnetic Offset disattivato per stabilitÃ  totale
-            b.mag_offset[0] = 0.0
-            b.mag_offset[1] = 0.0
-
-        for s in self.sliders:
-            hitbox = self._get_hitbox(s, is_slider=True)
-            s.hovered = hitbox.collidepoint(rx, ry)
-            
-            if s.hovered:
-                s.hover_time = min(1.0, s.hover_time + dt * trans_speed)
-            else:
-                s.hover_time = max(0.0, s.hover_time - dt * trans_speed)
-
-            if s.dragging:
-                # Applichiamo lo scroll Y alla coordinata mouse relativa
-                rel_x = max(0, min(rx - s.ref_rect.x, s.ref_rect.w))
-                s.value = rel_x / s.ref_rect.w
-                if s.action == "set_music_volume":
-                    self.music_volume = s.value
-                elif s.action == "set_sfx_volume":
-                    self.sfx_volume = s.value
 
     # âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     # Draw
@@ -663,8 +660,12 @@ class MenuSystem:
                 draw_rect.y += int(sm.scale_value(b.mag_offset[1]))
 
             if b.image:
-                # Bottone Scena/Anteprima
-                img_scaled = pygame.transform.smoothscale(b.image, (draw_rect.w, draw_rect.h))
+                # Bottone Scena/Anteprima — smoothscale cacheato per dimensione
+                size = (draw_rect.w, draw_rect.h)
+                if b._scaled_img is None or b._scaled_img_size != size:
+                    b._scaled_img = pygame.transform.smoothscale(b.image, size)
+                    b._scaled_img_size = size
+                img_scaled = b._scaled_img
                 screen.blit(img_scaled, draw_rect)
                 ov_col = theme.color("scene_overlay_hover") if b.hovered else theme.color("scene_overlay_normal")
                 ov = pygame.Surface((draw_rect.w, draw_rect.h), pygame.SRCALPHA)
@@ -735,22 +736,31 @@ class MenuSystem:
                         if theme.is_icons_only():
                             # Effetti Professionali per Pure Icons
                             if b.hover_time > 0:
-                                # Breathing Glow
+                                # Alone morbido (falloff radiale) coerente con la forma dell'icona.
+                                # Cerchi/rette concentrici con alpha crescente verso il centro,
+                                # fusi in blending normale: bagliore translucido, niente disco pieno.
                                 gc = theme.color3("btn_glow_color") if "btn_glow_color" in theme._colors else (255, 235, 180)
                                 breath = (math.sin(theme._tick * 5.0) + 1.0) * 0.5
-                                alpha = int((90 + 50 * breath) * b.hover_time)
-                                g_size = int(draw_rect.w * (1.1 + 0.1 * breath))
+                                peak = (110 + 35 * breath) * b.hover_time   # alpha max al centro
+                                g_size = int(draw_rect.w * (1.32 + 0.1 * breath))
                                 glow_surf = pygame.Surface((g_size, g_size), pygame.SRCALPHA)
-                                
-                                if theme.fx("glow_type") == "square":
-                                    # Glow quadrato piÃ¹ compatto
-                                    pygame.draw.rect(glow_surf, (*gc, alpha), (0, 0, g_size, g_size), 
-                                                     border_radius=theme.border_radius() + 4)
-                                else:
-                                    # Glow tondo standard
-                                    pygame.draw.circle(glow_surf, (*gc, alpha), (g_size // 2, g_size // 2), g_size // 2)
-                                
-                                screen.blit(glow_surf, glow_surf.get_rect(center=draw_rect.center), special_flags=pygame.BLEND_RGBA_ADD)
+                                cx = cy = g_size // 2
+                                is_square = theme.fx("glow_type") == "square"
+                                radius = theme.border_radius() + 6
+                                layers = 9
+                                for li in range(layers):
+                                    t = li / (layers - 1)         # 0 esterno .. 1 centro
+                                    half = (g_size / 2) * (1.0 - 0.78 * t)
+                                    a = int(peak * (0.10 + 0.90 * (t ** 1.6)))
+                                    col = (*gc, max(0, min(255, a)))
+                                    if is_square:
+                                        pygame.draw.rect(
+                                            glow_surf, col,
+                                            (cx - half, cy - half, half * 2, half * 2),
+                                            border_radius=int(radius * (1.0 - 0.55 * t)))
+                                    else:
+                                        pygame.draw.circle(glow_surf, col, (cx, cy), int(half))
+                                screen.blit(glow_surf, glow_surf.get_rect(center=draw_rect.center))
                             
                             # Scale + Rotate (Tilt) - Disabilitati in settings per stabilitÃ 
                             s = 1.0
@@ -858,10 +868,13 @@ class MenuSystem:
             # Ottimizzazione Culling
             if rect.bottom < 0 or rect.top > sh: continue
 
-            # Icona a sinistra dello slider (Perfettamente allineata alla colonna icone)
+            # Icona a sinistra dello slider (allineata alla colonna icone).
+            # NB: usare scale_value (non un 80 fisso) così su Android l'icona
+            # si rimpicciolisce in proporzione come quelle dei bottoni settings,
+            # evitando icone sproporzionate. Su desktop (scale 1.0) resta ~uguale.
             ico_surf = theme.get_icon(s.action)
             if ico_surf:
-                ih = 80 if theme.is_icons_only() else int(rect.h * 1.5)
+                ih = sm.scale_value(72) if theme.is_icons_only() else int(rect.h * 1.5)
                 ico_scaled = pygame.transform.smoothscale(ico_surf, (ih, ih))
                 # Allineamento dell'icona all'interno della prima colonna (offset 100px rispetto allo slider)
                 screen.blit(ico_scaled, ico_scaled.get_rect(midleft=(rect.left - sm.scale_value(100), rect.centery)))
@@ -905,8 +918,10 @@ class MenuSystem:
 
         
         # --- EFFETTO LENTE D'INGRANDIMENTO (Mystery HUD) ---
-        # Posizionata qui per ingrandire anche i bottoni e le voci di menu
-        if theme.has_magnifier():
+        # Posizionata qui per ingrandire anche i bottoni e le voci di menu.
+        # Su Android (touch) NON va mostrata: seguirebbe il punto di tocco
+        # lasciando un cerchio fisso a schermo (nessun puntatore deve comparire).
+        if theme.has_magnifier() and not is_android_runtime():
             self._draw_magnifier(screen)
         # ── 4. Render Tooltips differiti (Massima prioritÃ  Z-Index)
         for tt_text, tt_rect, tt_time in tooltip_queue:

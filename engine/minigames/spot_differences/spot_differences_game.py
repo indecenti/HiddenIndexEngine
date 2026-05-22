@@ -540,6 +540,17 @@ class SpotDifferencesGame(BaseMinigame):
         # Gli oggetti non vengono riposizionati per evitare di rompere la partita in corso,
         # ma i nuovi limiti verranno usati al prossimo update/draw.
 
+    def _font(self, name: str, size, bold: bool = False) -> pygame.font.Font:
+        """Font cacheato (evita SysFont ogni frame: lento su Android)."""
+        if not hasattr(self, "_font_cache"):
+            self._font_cache = {}
+        key = (name, int(size), bold)
+        f = self._font_cache.get(key)
+        if f is None:
+            f = pygame.font.SysFont(name, max(8, int(size)), bold=bold)
+            self._font_cache[key] = f
+        return f
+
     def draw(self) -> None:
         # Screen Shake (Cura UX)
         draw_offset_x = 0
@@ -607,8 +618,8 @@ class SpotDifferencesGame(BaseMinigame):
 
     def _draw_gameover_overlay(self) -> None:
         """Disegna la schermata di Game Over in stile fumetto con il punteggio finale."""
-        font_v = pygame.font.SysFont("Impact", int(110 * self.scaling_manager.scale))
-        font_sub = pygame.font.SysFont("Impact", int(40 * self.scaling_manager.scale))
+        font_v = self._font("Impact", 110*self.scaling_manager.scale)
+        font_sub = self._font("Impact", 40*self.scaling_manager.scale)
         
         # Sfondo semitrasparente per far risaltare il popup
         dark = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
@@ -643,7 +654,7 @@ class SpotDifferencesGame(BaseMinigame):
 
     def _draw_victory_overlay(self) -> None:
         """Disegna un banner animato stile fumetto per celebrare il successo."""
-        font_v = pygame.font.SysFont("Impact", int(100 * self.scaling_manager.scale))
+        font_v = self._font("Impact", 100*self.scaling_manager.scale)
         t = max(0, 2.0 - self.victory_timer)
         # Effetto bounce comic
         scale = min(1.0, math.sin(t * 3) * 1.2) if t < 0.5 else 1.0
@@ -655,7 +666,7 @@ class SpotDifferencesGame(BaseMinigame):
         
         if self.last_hit_timer > 0:
             alpha = int(min(1.0, self.last_hit_timer) * 255)
-            font_combo = pygame.font.SysFont("Arial", int(38 * self.scaling_manager.scale), bold=True)
+            font_combo = self._font("Arial", 38*self.scaling_manager.scale, bold=True)
             combo_surf = font_combo.render(self.last_hit_msg, True, (255, 255, 0))
             combo_surf.set_alpha(alpha)
             self.screen.blit(combo_surf, (self.screen.get_width()//2 - combo_surf.get_width()//2, 80))
@@ -739,8 +750,8 @@ class SpotDifferencesGame(BaseMinigame):
             pygame.draw.line(self.screen, color, (cx-30, cy-30), (cx+30, cy+30), 4)
             pygame.draw.line(self.screen, color, (cx+30, cy-30), (cx-30, cy+30), 4)
         
-        font_main = pygame.font.SysFont("Impact", int(28 * self.scaling_manager.scale))
-        font_time = pygame.font.SysFont("Impact", int(32 * self.scaling_manager.scale))
+        font_main = self._font("Impact", 28*self.scaling_manager.scale)
+        font_time = self._font("Impact", 32*self.scaling_manager.scale)
         
         # Parametri di posizionamento simmetrici e ultra-sicuri
         # Usiamo un margine fisso di 220px dagli estremi della safe area

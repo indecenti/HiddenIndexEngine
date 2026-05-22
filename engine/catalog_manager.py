@@ -211,11 +211,29 @@ def _load_global_catalog() -> dict:
     if not catalog_files:
         raise FileNotFoundError(f"Nessun catalogo globale trovato in: {data_dir}")
 
+    # Validazione opzionale (non-fatal): registra problemi nel log senza
+    # bloccare il boot. Una taglio drastico in produzione causerebbe regressioni
+    # difficili da diagnosticare; preferiamo continuare con un log esplicito.
+    try:
+        from engine.json_validator import validate as _validate_json
+    except ImportError:
+        _validate_json = None  # type: ignore
+
     for path in catalog_files:
         try:
             with open(path, "r", encoding="utf-8") as f:
                 catalog = json.load(f)
             if isinstance(catalog, dict) and "objects" in catalog:
+                # Schema-validate il catalogo. Le violazioni vengono loggate
+                # ma il caricamento continua: catalogo "best-effort" finché
+                # il refactor della Fase 2 non introduce errori bloccanti.
+                if _validate_json is not None:
+                    errors = _validate_json(catalog, "catalog", source_path=str(path))
+                    if errors:
+                        logger.warning(
+                            "Catalogo '%s': %d violazioni schema (vedi log per dettagli)",
+                            path.name, len(errors)
+                        )
                 merged_objects.extend(catalog["objects"])
                 logger.debug("Catalogo '%s' caricato: %d oggetti", path.name, len(catalog["objects"]))
         except json.JSONDecodeError as e:
@@ -225,6 +243,21 @@ def _load_global_catalog() -> dict:
                  raise
         except Exception as e:
             logger.error("Errore caricamento catalogo globale '%s': %s", path.name, e)
+
+    # Verifica ID duplicati cross-file (es. stesso id in global_cartoon + global_lineart):
+    # è una violazione di integrità del catalogo unificato, ma non blocca il boot.
+    seen_ids: dict[str, int] = {}
+    for obj in merged_objects:
+        oid = obj.get("id")
+        if oid:
+            seen_ids[oid] = seen_ids.get(oid, 0) + 1
+    dups = [k for k, v in seen_ids.items() if v > 1]
+    if dups:
+        logger.warning(
+            "Catalogo globale: %d ID duplicati (le ultime occorrenze hanno priorità). "
+            "Esegui `python tools/audit_catalog.py` per la lista completa.",
+            len(dups),
+        )
 
     logger.info("Totale oggetti globali caricati: %d (da %d file)", len(merged_objects), len(catalog_files))
     return {"objects": merged_objects}
