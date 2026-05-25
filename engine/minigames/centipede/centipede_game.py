@@ -226,6 +226,10 @@ class CentipedeGame(BaseMinigame):
         self.segments = [CentipedeSegment((cfg.COLS//2 - i) * cfg.GRID_SIZE, 0, i==0) for i in range(length)]
 
     def _create_scanlines(self):
+        # Su Android niente scanline (blit full-screen SRCALPHA per frame troppo lento).
+        if self._android:
+            self.scanline_surf = None
+            return
         sw, sh = self.screen.get_size()
         self.scanline_surf = pygame.Surface((sw, sh), pygame.SRCALPHA)
         for y in range(0, sh, 3): pygame.draw.line(self.scanline_surf, (0, 0, 0, 50), (0, y), (sw, y))

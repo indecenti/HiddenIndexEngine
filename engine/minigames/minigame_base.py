@@ -10,6 +10,8 @@ from typing import Any, Callable, Optional
 from pathlib import Path
 import pygame
 
+from engine.utils import is_android_runtime
+
 class BaseMinigame(ABC):
     def __init__(self, screen: pygame.Surface, scaling_manager: Any, 
                  audio_manager: Any = None,
@@ -34,6 +36,9 @@ class BaseMinigame(ABC):
         self.on_complete = on_complete
         self.params = params or {}
         self.is_running = True
+        # Su Android i blit SRCALPHA a tutto schermo (es. scanline CRT) costano
+        # ~10x e affondano gli FPS: i minigiochi usano questo flag per saltarli.
+        self._android = is_android_runtime()
 
     def load_local_strings(self, strings_path: Path) -> None:
         """Carica e registra una sorgente di stringhe locali nel LanguageManager."""

@@ -181,6 +181,12 @@ class HintSystem:
         """Restituisce intensità glow per oggetto [0-1]."""
         return self.per_object_hint_active.get(obj_id, 0.0)
 
+    def get_manual_glow(self, obj: "SceneObject") -> float:
+        """Glow del SOLO hint manuale (pressione bottone): evidenzia UN oggetto
+        alla volta per ~1.2s. Esclude l'auto-hint, così non sembra che il gioco
+        suggerisca tutti gli oggetti a catena."""
+        return self._manual_glow_intensity(obj)
+
     def use_manual_hint(self, remaining_objects: list["SceneObject"], suppress_fx: bool = False) -> tuple[bool, int]:
         """
         Hint manuale: evidenzia il primo oggetto non trovato.
@@ -218,8 +224,8 @@ class HintSystem:
         self.per_object_glow_timeout[obj.instance_id] = 0.0
 
         if not suppress_fx:
-            # Glow manuale: 1.2 secondi tramite timer separato (sincronizzato con durata particelle hint)
-            self.per_object_manual_hint_timer[obj.instance_id] = 1.2
+            # Glow manuale: 2.5 secondi (ben visibile) tramite timer separato
+            self.per_object_manual_hint_timer[obj.instance_id] = 2.5
 
             # Effetto particelle CENTRATO sull'oggetto
             if obj.detection_type == "rect":

@@ -64,6 +64,10 @@ class MiniPongGame(BaseMinigame):
             self.digit_surfaces[val] = surf
 
     def _create_scanlines(self):
+        # Su Android niente scanline (blit full-screen SRCALPHA per frame troppo lento).
+        if self._android:
+            self.scanline_surf = None
+            return
         sw, sh = self.screen.get_size()
         self.scanline_surf = pygame.Surface((sw, sh), pygame.SRCALPHA)
         for y in range(0, sh, 3):

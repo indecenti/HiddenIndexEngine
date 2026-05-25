@@ -92,22 +92,42 @@ def draw_radial_glow(dest: pygame.Surface, cx: int, cy: int,
 def draw_glint_effect(screen: pygame.Surface, sx: float, sy: float, sr: float,
                       color: list | tuple, intensity: float, t_accum: float, phase: float,
                       pulse_min: float, cache: dict | None = None):
-    """Glint pooling logic."""
+    """Glint additivo ottimizzato per ARM: invece di fill+blit-alpha+blit-ADD
+    (3 op da ~diam²/frame), pre-cuociamo il bagliore OPACO su nero per livello
+    di intensità (cache) e facciamo UNA sola ADD-blit dimensionata al raggio.
+    BLEND_RGB_ADD ignora l'alpha per-superficie, quindi l'intensità va cotta."""
     t = t_accum + phase
-    pulse = pulse_min + ( (math.sin(2.0 * math.pi * t) + 1.0) * 0.5 ) * (1.0 - pulse_min)
+    pulse = pulse_min + ((math.sin(2.0 * math.pi * t) + 1.0) * 0.5) * (1.0 - pulse_min)
     eff_intensity = intensity * pulse
-    
+    if eff_intensity <= 0.02:
+        return
+
     sr_i = max(6, int(sr))
-    diam = int(sr_i * 2.8) + 20
-    
-    work = cache.get(("work_glint", diam)) if cache is not None else None
-    if work is None:
-        work = pygame.Surface((diam, diam))
-        if cache is not None: cache[("work_glint", diam)] = work
-    
-    work.fill((0, 0, 0))
-    draw_radial_glow(work, diam // 2, diam // 2, sr_i, color, eff_intensity, cache)
-    screen.blit(work, (int(sx) - diam // 2, int(sy) - diam // 2), special_flags=pygame.BLEND_RGB_ADD)
+    diam = sr_i * 2
+    lvl = max(1, min(12, int(eff_intensity * 12 + 0.5)))  # quantizza a 12 livelli
+    r0, g0, b0 = int(color[0]), int(color[1]), int(color[2])
+    key = ("glint_baked", sr_i, r0, g0, b0, lvl)
+    glow = cache.get(key) if cache is not None else None
+    if glow is None:
+        glow = pygame.Surface((diam, diam))   # OPACA (nero = additivo neutro)
+        glow.fill((0, 0, 0))
+        scale = (lvl / 12.0) * 2.4            # boost coerente con la versione originale
+        steps = 40
+        for s in range(steps, 0, -1):
+            ratio = s / steps
+            cr = max(1, int(sr_i * ratio))
+            factor = (1.0 - ratio) ** 2.4
+            v = factor * scale
+            col = (min(255, int(r0 * v)), min(255, int(g0 * v)), min(255, int(b0 * v)))
+            if col[0] or col[1] or col[2]:
+                pygame.draw.circle(glow, col, (sr_i, sr_i), cr)
+        if cache is not None:
+            cache[key] = glow
+    screen.blit(glow, (int(sx) - sr_i, int(sy) - sr_i), special_flags=pygame.BLEND_RGB_ADD)
+    if eff_intensity > 0.3:
+        core_r = max(1, sr_i // 8)
+        cv = min(255, int(230 * eff_intensity * 0.9))
+        pygame.draw.circle(screen, (cv, cv, cv), (int(sx), int(sy)), core_r)
 
 def draw_smoke_effect(screen: pygame.Surface, sx: float, sy: float, sr: float, 
                       color: list | tuple, intensity: float, t_accum: float, phase: float = 0.0,

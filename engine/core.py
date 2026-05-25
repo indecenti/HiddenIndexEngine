@@ -249,6 +249,7 @@ class EngineCore:
         # rendering extra, niente overhead. Su Android renderizziamo FPS
         # in top-left e logghiamo medie events/update/draw ogni ~60 frame.
         self._is_android = is_android_runtime()
+        self._perf_sec: dict[str, float] = {}  # accumulo tempi per-sezione (profiling)
         if self._is_android:
             try:
                 self._perf_font = pygame.font.Font(None, 28)
@@ -483,6 +484,10 @@ class EngineCore:
                         flip_ms,
                         self.state,
                     )
+                    if self._perf_sec:
+                        secs = " ".join(f"{k}={v/n*1000.0:.1f}ms" for k, v in sorted(self._perf_sec.items()))
+                        self.logger.info("[PERF2] %s", secs)
+                        self._perf_sec.clear()
                     self._perf_frame_count = 0
                     self._perf_acc_events_ms = 0.0
                     self._perf_acc_update_ms = 0.0
@@ -520,6 +525,85 @@ class EngineCore:
             self._toggle_pause()
         elif self.state == EngineState.BOOT:
             self.running = False
+
+    def _process_scene_click(self, pos) -> None:
+        """Gestisce un click/tap nella scena (anti-spam, hit detection, oggetto
+        trovato/mancato). `pos` è in coordinate schermo. Su Android viene chiamato
+        al rilascio solo per i tap (non per gli swipe del cassetto HUD)."""
+        now = pygame.time.get_ticks() / 1000.0
+        if self._spam_lock_timer > 0:
+            self.logger.debug("Click ignorato: Sistema in LOCKDOWN")
+            return
+        self._click_history = [t for t in self._click_history if now - t < 1.0]
+        self._click_history.append(now)
+        if len(self._click_history) > 5:
+            self.logger.warning("SPAM DETECTED! Avvio lockdown per 3 secondi.")
+            self._spam_lock_timer = 3.0
+            return
+
+        z_fact = 1.0
+        if self._scene_intro_timer > 0:
+            t = self._scene_intro_timer / self._scene_intro_dur
+            z_fact = 1.0 + (t ** 3 * 0.25)
+
+        hit = self.click_detector.detect(pos[0], pos[1], self._current_scene_objects, scenic_factor=z_fact)
+        if hit:
+            trigger = getattr(hit, "minigame_trigger", None)
+            self.logger.debug(f"[CLICK] Hit: {hit.instance_id} (trigger: {trigger is not None})")
+            if trigger:
+                mg_id = trigger.get("minigame_id")
+                if mg_id:
+                    cx, cy = pos[0], pos[1]
+
+                    def _on_burst_midpoint(mid_mg_id=mg_id, mid_hit=hit):
+                        success = self.minigame_manager.start_minigame(
+                            mid_mg_id,
+                            on_complete=lambda res, h=mid_hit: self._on_minigame_complete(res, h)
+                        )
+                        if success:
+                            self.state = EngineState.MINIGAME
+                            self.logger.info(f">>> AVVIO MINIGIOCO: {mid_mg_id} via {mid_hit.instance_id}")
+                        else:
+                            self.logger.error(f"MANAGER: Fallito avvio minigioco {mid_mg_id}")
+                            self.state = EngineState.SCENE
+
+                    self.transition_manager.start_transition(
+                        TransitionType.CIRCLE_BURST,
+                        base_dur_out=0.8, base_dur_in=0.6, cx=cx, cy=cy,
+                        on_midpoint=_on_burst_midpoint
+                    )
+                    self.effects.shake_screen(duration=0.8, intensity=8.0)
+                    return
+
+            if hit.is_goal:
+                if self.hud.is_target_active(hit.instance_id):
+                    self.level_manager.register_found(hit.instance_id)
+                    if hit.detection_type == "rect":
+                        cx = hit.x + hit.width / 2
+                        cy = hit.y + hit.height / 2
+                    else:
+                        cx = hit.x
+                        cy = hit.y
+                    is_last_object = self.level_manager._found_count() == self.level_manager._total_count()
+                    if is_last_object:
+                        self.audio.play_sfx("engine/assets/sounds/victory.mp3")
+                        self.effects.spawn_final_found_effect(cx, cy)
+                        self.effects.shake_screen(duration=1.2, intensity=10.0)
+                    else:
+                        self.audio.play_sfx("engine/assets/sounds/bling1.mp3")
+                        self.effects.spawn_found_effect(cx, cy)
+                else:
+                    self.audio.play_sfx("engine/assets/sounds/error4.mp3")
+                    self.logger.debug("Mancato: oggetto non in HUD")
+                    penalty = self.level_manager.register_miss()
+                    bx, by = self.scaling_manager.screen_to_bg(*pos)
+                    self.effects.spawn_score_popup(bx, by, penalty)
+        else:
+            self.audio.play_sfx("engine/assets/sounds/error4.mp3")
+            penalty = self.level_manager.register_miss()
+            bx, by = self.scaling_manager.screen_to_bg(*pos)
+            self.effects.spawn_score_popup(bx, by, penalty)
+            self.logger.debug("Mancato / Click a vuoto")
 
     def _handle_events(self) -> None:
         """Smista gli input di Pygame."""
@@ -679,8 +763,14 @@ class EngineCore:
                             # Se una bubble è visibile o sta per apparire, ignoriamo ogni altro input di gioco
                             continue
 
-                        # Controlla click su pulsante hint in alto a destra (bypass spam-lock)
-                        if hasattr(self, '_hint_button_rect') and self._hint_button_rect.collidepoint(event.pos):
+                        # Controlla click su pulsante hint. Su Android il pulsante
+                        # vive dentro la barra HUD (rettangolo fornito dall'HUD);
+                        # su desktop è il box in alto a destra (_hint_button_rect).
+                        if self._is_android:
+                            _hint_rect = self.hud.get_mobile_hint_rect()
+                        else:
+                            _hint_rect = getattr(self, '_hint_button_rect', None)
+                        if _hint_rect and _hint_rect.collidepoint(event.pos):
                             # [FIX] Controllo disponibilità hint prima dell'uso
                             if self.level_manager.get_available_hints() > 0:
                                 # Nuova Logica: Hint Flash per scene con torcia
@@ -723,103 +813,11 @@ class EngineCore:
                             self._toggle_pause()
                             continue
 
-                        # 1. Controllo Anti-Spam
-                        now = pygame.time.get_ticks() / 1000.0
-                        if self._spam_lock_timer > 0:
-                            self.logger.debug("Click ignorato: Sistema in LOCKDOWN")
-                            continue
-                            
-                        # Aggiorna cronologia (ultimi 2 secondi)
-                        self._click_history = [t for t in self._click_history if now - t < 1.0]
-                        self._click_history.append(now)
-                        
-                        if len(self._click_history) > 5: # Più di 5 click al secondo
-                            self.logger.warning("SPAM DETECTED! Avvio lockdown per 3 secondi.")
-                            self._spam_lock_timer = 3.0
-                            continue
-
-                        # 2. Rilevamento Hit (compensando lo zoom intro se presente)
-                        z_fact = 1.0
-                        if self._scene_intro_timer > 0:
-                            t = self._scene_intro_timer / self._scene_intro_dur
-                            z_fact = 1.0 + (t ** 3 * 0.25)
-
-                        hit = self.click_detector.detect(
-                            event.pos[0], event.pos[1], 
-                            self._current_scene_objects,
-                            scenic_factor=z_fact
-                        )
-                        if hit:
-                            trigger = getattr(hit, "minigame_trigger", None)
-                            self.logger.debug(f"[CLICK] Hit: {hit.instance_id} (trigger: {trigger is not None})")
-                            
-                            # --- INTERCETTAZIONE MINIGIOCO ---
-                            if trigger:
-                                mg_id = trigger.get("minigame_id")
-                                if mg_id:
-                                    # --- EFFETTO BURST PROFESSIONALE ---
-                                    # Prendi posizione schermo del click per l'origine del burst
-                                    cx, cy = event.pos[0], event.pos[1]
-                                    
-                                    def _on_burst_midpoint(mid_mg_id=mg_id, mid_hit=hit):
-                                        success = self.minigame_manager.start_minigame(
-                                            mid_mg_id, 
-                                            on_complete=lambda res, h=mid_hit: self._on_minigame_complete(res, h)
-                                        )
-                                        if success:
-                                            self.state = EngineState.MINIGAME
-                                            self.logger.info(f">>> AVVIO MINIGIOCO: {mid_mg_id} via {mid_hit.instance_id}")
-                                        else:
-                                            self.logger.error(f"MANAGER: Fallito avvio minigioco {mid_mg_id}")
-                                            self.state = EngineState.SCENE  # Fallback a scena se fallisce
-
-                                    self.transition_manager.start_transition(
-                                        TransitionType.CIRCLE_BURST,
-                                        base_dur_out=0.8, # Esplosione cinematografica lenta e potente
-                                        base_dur_in=0.6,   # Sfumatura di ingresso al minigioco
-                                        cx=cx, cy=cy,
-                                        on_midpoint=_on_burst_midpoint
-                                    )
-                                    # Aggiungiamo uno screen shake per dare "peso" all'esplosione
-                                    self.effects.shake_screen(duration=0.8, intensity=8.0)
-                                    continue
-
-                            if hit.is_goal:
-                                if self.hud.is_target_active(hit.instance_id):
-                                    self.level_manager.register_found(hit.instance_id)
-                                    
-                                    # Calcola il CENTRO dell'oggetto per l'effetto
-                                    if hit.detection_type == "rect":
-                                        cx = hit.x + hit.width / 2
-                                        cy = hit.y + hit.height / 2
-                                    else:
-                                        cx = hit.x
-                                        cy = hit.y
-                                        
-                                    is_last_object = self.level_manager._found_count() == self.level_manager._total_count()
-                                    if is_last_object:
-                                        # Mega animazione epica per la fine del livello
-                                        self.audio.play_sfx("engine/assets/sounds/victory.mp3")
-                                        self.effects.spawn_final_found_effect(cx, cy)
-                                        self.effects.shake_screen(duration=1.2, intensity=10.0)
-                                    else:
-                                        # Animazione standard
-                                        self.audio.play_sfx("engine/assets/sounds/bling1.mp3")
-                                        self.effects.spawn_found_effect(cx, cy)
-                                else:
-                                    self.audio.play_sfx("engine/assets/sounds/error4.mp3")
-                                    self.logger.debug("Mancato: oggetto non in HUD")
-                                    penalty = self.level_manager.register_miss()
-                                    bx, by = self.scaling_manager.screen_to_bg(*event.pos)
-                                    self.effects.spawn_score_popup(bx, by, penalty)
-                        else:
-                            # Click nel vuoto assoluto
-                            self.audio.play_sfx("engine/assets/sounds/error4.mp3")
-                            penalty = self.level_manager.register_miss()
-                            # Trasforma click schermo in coordinate scena per le particelle
-                            bx, by = self.scaling_manager.screen_to_bg(*event.pos)
-                            self.effects.spawn_score_popup(bx, by, penalty)
-                            self.logger.debug("Mancato / Click a vuoto")
+                        # Click sull'oggetto: su desktop scatta subito (DOWN); su
+                        # Android lo gestiamo al RILASCIO, per distinguere un TAP da
+                        # uno SWIPE del cassetto HUD e NON penalizzare lo swipe.
+                        if not self._is_android:
+                            self._process_scene_click(event.pos)
                                 
                     elif self.state == EngineState.RESULTS:
                         # Delega al ResultsScreen il controllo del click (gestisce layout e animazione)
@@ -828,10 +826,23 @@ class EngineCore:
                             self.transition_manager.start_transition(TransitionType.FADE_TO_BLACK, on_midpoint=self._advance_scene)
             
             elif event.type == pygame.MOUSEBUTTONUP:
-                # Swipe verticale dal bordo per aprire/chiudere il cassetto HUD (Android)
-                if event.button == 1 and self.state == EngineState.SCENE and self._touch_start:
-                    self.hud.handle_swipe(self._touch_start, event.pos)
+                # Android: al rilascio distinguiamo SWIPE (cassetto HUD) da TAP
+                # (click oggetto). Lo swipe NON penalizza; il tap fa il click.
+                if event.button == 1 and self.state == EngineState.SCENE and self._touch_start is not None:
+                    sp = self._touch_start
                     self._touch_start = None
+                    dx = event.pos[0] - sp[0]
+                    dy = event.pos[1] - sp[1]
+                    moved = (dx * dx + dy * dy) ** 0.5
+                    swiped = self.hud.handle_swipe(sp, event.pos)
+                    if not swiped and moved < self.res_h * 0.045:
+                        # È un tap. L'HUD si apre SOLO con la maniglia (freccia) o con
+                        # lo swipe verso l'alto dal bordo: un tap normale, anche nella
+                        # fascia bassa, deve colpire gli oggetti (che la HUD coprirebbe).
+                        # Un tap sulla barra HUD aperta è ignorato (non penalizza).
+                        on_open_bar = self.hud.is_drawer_open() and self.hud.get_hud_rect().collidepoint(sp)
+                        if not on_open_bar:
+                            self._process_scene_click(sp)
                 if event.button == 1: # Left click
                     if self.state in [EngineState.MENU, EngineState.PAUSE]:
                         # Salva volume se siamo usciti dal trascinamento
@@ -1367,6 +1378,9 @@ class EngineCore:
         """Disegna conteggio hint con design glassmorphism premium."""
         if self.state != EngineState.SCENE or not self.level_manager:
             return
+        # Su Android il conteggio hint è mostrato dentro la barra HUD.
+        if self._is_android:
+            return
 
         available_hints = self.level_manager.get_available_hints()
         sm = self.scaling_manager
@@ -1376,9 +1390,12 @@ class EngineCore:
         COLOR_BORDER = (80, 80, 110, 200)
         COLOR_ACCENT = (255, 215, 0)  # Gold
         COLOR_TEXT = (230, 235, 245)  # Off-white
-        # Panel dimensioni (ancora più piccoli)
-        panel_w = sm.scale_value(90)
-        panel_h = sm.scale_value(55)
+        # Box hint più grande e leggibile su mobile.
+        hs = 1.5 if self._is_android else 1.0
+        def _sv(v):
+            return sm.scale_value(v * hs)
+        panel_w = _sv(90)
+        panel_h = _sv(55)
         panel_x = sm.safe_right - panel_w
         panel_y = sm.safe_top
 
@@ -1389,19 +1406,19 @@ class EngineCore:
         panel_surf = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
 
         # Disegna background con border radius
-        pygame.draw.rect(panel_surf, COLOR_BG, (0, 0, panel_w, panel_h), border_radius=sm.scale_value(8))
-        pygame.draw.rect(panel_surf, COLOR_BORDER, (0, 0, panel_w, panel_h), max(1, sm.scale_value(1)), border_radius=sm.scale_value(8))
+        pygame.draw.rect(panel_surf, COLOR_BG, (0, 0, panel_w, panel_h), border_radius=_sv(8))
+        pygame.draw.rect(panel_surf, COLOR_BORDER, (0, 0, panel_w, panel_h), max(1, sm.scale_value(1)), border_radius=_sv(8))
 
         # Disegna il numero hint con Gold accent
-        font_number = self._hud_font("segoeui", sm.scale_value(30), bold=True)
+        font_number = self._hud_font("segoeui", _sv(30), bold=True)
         hint_surf = font_number.render(str(available_hints), True, COLOR_ACCENT)
-        hint_rect = hint_surf.get_rect(center=(panel_w // 2, sm.scale_value(22)))
+        hint_rect = hint_surf.get_rect(center=(panel_w // 2, _sv(22)))
         panel_surf.blit(hint_surf, hint_rect)
 
         # Disegna label "HINTS" in Off-white
-        font_label = self._hud_font("segoeui", sm.scale_value(9), bold=False)
+        font_label = self._hud_font("segoeui", _sv(9), bold=False)
         label_surf = font_label.render("HINTS AVAILABLE", True, COLOR_TEXT)
-        label_rect = label_surf.get_rect(center=(panel_w // 2, sm.scale_value(44)))
+        label_rect = label_surf.get_rect(center=(panel_w // 2, _sv(44)))
         panel_surf.blit(label_surf, label_rect)
 
         # Blit panel sulla schermata
@@ -1410,6 +1427,9 @@ class EngineCore:
     def _draw_hint_button(self) -> None:
         """Disegna bottone hint con design glassmorphism premium e progress bar integrato."""
         if self.state != EngineState.SCENE:
+            return
+        # Su Android il pulsante hint è integrato nella barra HUD (HudManager).
+        if self._is_android:
             return
 
         sm = self.scaling_manager
@@ -1421,25 +1441,28 @@ class EngineCore:
         COLOR_TEXT = (230, 235, 245)  # Off-white
         COLOR_SUCCESS = (60, 240, 120)  # Emerald
         COLOR_DANGER = (220, 40, 40)  # Crimson
-        BORDER_RADIUS = sm.scale_value(10)
+        hs = 1.5 if self._is_android else 1.0
+        def _sv(v):
+            return sm.scale_value(v * hs)
+        BORDER_RADIUS = _sv(10)
 
-        # Panel dimensioni e posizione (ancora più compatto)
-        panel_w = sm.scale_value(90)
-        panel_h = sm.scale_value(80)
+        # Panel dimensioni e posizione (box più grande su mobile)
+        panel_w = _sv(90)
+        panel_h = _sv(80)
         panel_x = sm.safe_right - panel_w
-        panel_y = sm.safe_top + sm.scale_value(63)   # 55 (h_count) + 8 (gap)
+        panel_y = sm.safe_top + _sv(63)   # 55 (h_count) + 8 (gap)
 
         # Salva rettangolo per click detection
-        btn_y_off = sm.scale_value(8)
-        btn_h = sm.scale_value(30)
-        self._hint_button_rect = pygame.Rect(panel_x + sm.scale_value(5), panel_y + btn_y_off, panel_w - sm.scale_value(10), btn_h)
+        btn_y_off = _sv(8)
+        btn_h = _sv(30)
+        self._hint_button_rect = pygame.Rect(panel_x + _sv(5), panel_y + btn_y_off, panel_w - _sv(10), btn_h)
 
         # Crea superficie trasparente
         panel_surf = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
 
         # Disegna background con border radius
-        pygame.draw.rect(panel_surf, COLOR_BG, (0, 0, panel_w, panel_h), border_radius=sm.scale_value(8))
-        pygame.draw.rect(panel_surf, COLOR_BORDER, (0, 0, panel_w, panel_h), max(1, sm.scale_value(1)), border_radius=sm.scale_value(8))
+        pygame.draw.rect(panel_surf, COLOR_BG, (0, 0, panel_w, panel_h), border_radius=_sv(8))
+        pygame.draw.rect(panel_surf, COLOR_BORDER, (0, 0, panel_w, panel_h), max(1, sm.scale_value(1)), border_radius=_sv(8))
 
         is_max_used = self.hint.hints_used_total >= self.hint.max_hints_before_disable
         cooldown_time = self.hint.manual_hint_cooldown
@@ -1468,24 +1491,24 @@ class EngineCore:
             progress_color = (100, 255, 180)
 
         # Disegna pulsante (rettangolo arrotondato)
-        btn_rect = pygame.Rect(sm.scale_value(5), btn_y_off, panel_w - sm.scale_value(10), btn_h)
-        pygame.draw.rect(panel_surf, btn_bg_color, btn_rect, border_radius=sm.scale_value(6))
-        pygame.draw.rect(panel_surf, COLOR_BORDER, btn_rect, max(1, sm.scale_value(1)), border_radius=sm.scale_value(6))
+        btn_rect = pygame.Rect(_sv(5), btn_y_off, panel_w - _sv(10), btn_h)
+        pygame.draw.rect(panel_surf, btn_bg_color, btn_rect, border_radius=_sv(6))
+        pygame.draw.rect(panel_surf, COLOR_BORDER, btn_rect, max(1, sm.scale_value(1)), border_radius=_sv(6))
 
         # Testo sul bottone
-        font_btn = self._hud_font("segoeui", sm.scale_value(11), bold=True)
+        font_btn = self._hud_font("segoeui", _sv(11), bold=True)
         btn_label = font_btn.render(btn_text, True, btn_text_color)
         btn_label_rect = btn_label.get_rect(center=(panel_w // 2, btn_y_off + btn_h // 2))
         panel_surf.blit(btn_label, btn_label_rect)
 
         # Progress bar per hint earning
-        progress_y = btn_y_off + btn_h + sm.scale_value(6)
-        progress_w = panel_w - sm.scale_value(10)
-        progress_h = max(2, sm.scale_value(3))
-        progress_x = sm.scale_value(5)
+        progress_y = btn_y_off + btn_h + _sv(6)
+        progress_w = panel_w - _sv(10)
+        progress_h = max(2, _sv(3))
+        progress_x = _sv(5)
 
         # Background della progress bar
-        pygame.draw.rect(panel_surf, (40, 40, 50, 130), (progress_x, progress_y, progress_w, progress_h), border_radius=sm.scale_value(1))
+        pygame.draw.rect(panel_surf, (40, 40, 50, 130), (progress_x, progress_y, progress_w, progress_h), border_radius=_sv(1))
 
         # Fill della progress bar
         reward_tracker = self.level_manager.get_reward_tracker()
@@ -1493,11 +1516,11 @@ class EngineCore:
             progress = reward_tracker.get_earn_progress()
             if progress > 0:
                 fill_w = int(progress_w * progress)
-                pygame.draw.rect(panel_surf, (*progress_color[:3], 140), (progress_x, progress_y, fill_w, progress_h), border_radius=sm.scale_value(1))
+                pygame.draw.rect(panel_surf, (*progress_color[:3], 140), (progress_x, progress_y, fill_w, progress_h), border_radius=_sv(1))
 
         # Testo informativo sotto progress bar
-        info_y = progress_y + progress_h + sm.scale_value(10)
-        font_info = self._hud_font("segoeui", sm.scale_value(10), bold=True)
+        info_y = progress_y + progress_h + _sv(10)
+        font_info = self._hud_font("segoeui", _sv(10), bold=True)
 
         if is_max_used:
             info_text = "Max used"
@@ -1564,6 +1587,12 @@ class EngineCore:
             self._hint_indicator_target_obj = obj_instance_id
             self._hint_indicator_timer = 0.0
 
+    def _psec(self, name: str, t0: float) -> None:
+        """Accumula il tempo di una sezione di rendering (profiling Android)."""
+        if self._is_android:
+            import time as _t
+            self._perf_sec[name] = self._perf_sec.get(name, 0.0) + (_t.perf_counter() - t0)
+
     def _draw(self) -> None:
         """Renderizza la logica corrente (delegate to state)."""
         if self.state == EngineState.MINIGAME:
@@ -1571,8 +1600,10 @@ class EngineCore:
         elif self.state == EngineState.BOOT:
             self.screen.fill((10, 10, 15)) # Colore splash
         elif self.state == EngineState.MENU:
+            import time as _tb
+            _tbg = _tb.perf_counter()
             self.screen.fill((20, 20, 25)) # Sfondo base scuro
-            
+
             menu_cfg = self.game_config.get("menu", {})
             bg_path = menu_cfg.get("background")
 
@@ -1642,30 +1673,36 @@ class EngineCore:
                         else:
                             self._menu_bg_surface = None
                     
+                    # Scrim di leggibilità INCORPORATO nello sfondo (scurito UNA
+                    # volta in cache): evita il blit SRCALPHA a schermo intero per
+                    # frame, che su pygame ARM è lentissimo (~130ms!).
+                    menu_state = getattr(self.menu_system, "state", "main")
+                    scrim_alpha = 96 if menu_state == "main" else 172
                     if hasattr(self, '_menu_bg_surface') and self._menu_bg_surface:
-                        # Cover-fill: copre l'intero schermo (no barre nere ai lati
-                        # su display ultrawide), centrando ed eventualmente ritagliando.
-                        if getattr(self, "_menu_bg_cover_key", None) != (self.res_w, self.res_h):
+                        # Cover-fill + scrim bakeato. Cache per (res, alpha).
+                        if getattr(self, "_menu_bg_cover_key", None) != (self.res_w, self.res_h, scrim_alpha):
                             iw, ih = self._menu_bg_surface.get_size()
                             cover = max(self.res_w / iw, self.res_h / ih)
                             cw, ch = max(1, int(iw * cover)), max(1, int(ih * cover))
-                            self._menu_bg_cover = pygame.transform.smoothscale(self._menu_bg_surface, (cw, ch))
+                            base = pygame.transform.smoothscale(self._menu_bg_surface, (cw, ch))
+                            # Scurisci una sola volta (alpha a livello di superficie, opaco dopo)
+                            dark = pygame.Surface((cw, ch))
+                            dark.fill((8, 10, 18))
+                            dark.set_alpha(scrim_alpha)
+                            base.blit(dark, (0, 0))
+                            self._menu_bg_cover = base
                             self._menu_bg_cover_pos = ((self.res_w - cw) // 2, (self.res_h - ch) // 2)
-                            self._menu_bg_cover_key = (self.res_w, self.res_h)
+                            self._menu_bg_cover_key = (self.res_w, self.res_h, scrim_alpha)
                         self.screen.blit(self._menu_bg_cover, self._menu_bg_cover_pos)
+                    else:
+                        # Nessuno sfondo: riempi scuro (nessun blit alpha).
+                        self.screen.fill((10, 12, 18))
 
-            # Scrim di leggibilità: scurisce lo sfondo dietro la UI così i testi
-            # e le icone neon restano leggibili. Più marcato nei sotto-menu
-            # (settings/levels/scenes) ricchi di contenuto.
-            menu_state = getattr(self.menu_system, "state", "main")
-            scrim_alpha = 96 if menu_state == "main" else 172
-            if getattr(self, "_menu_scrim_key", None) != (self.res_w, self.res_h, scrim_alpha):
-                self._menu_scrim = pygame.Surface((self.res_w, self.res_h), pygame.SRCALPHA)
-                self._menu_scrim.fill((8, 10, 18, scrim_alpha))
-                self._menu_scrim_key = (self.res_w, self.res_h, scrim_alpha)
-            self.screen.blit(self._menu_scrim, (0, 0))
-
+            self._psec("menu_bg", _tbg)
+            import time as _t
+            _ts = _t.perf_counter()
             self.menu_system.draw(self.screen)
+            self._psec("menu_sys", _ts)
             
         elif self.state == EngineState.SCENE:
             sm = self.scaling_manager
@@ -1691,6 +1728,8 @@ class EngineCore:
                 self.screen.fill((0, 0, 0))  # Sfondo nero (letterbox)
 
             # ── Background ─────────────────────────────────────────────────────
+            import time as _tsc_m
+            _tsc = _tsc_m.perf_counter()
             # Priorità 1: Video Background (Scene)
             bg_v_path = getattr(self._current_scene_data, "background_path", "")
             is_scene_vid = bg_v_path.lower().endswith((".mp4", ".mov", ".mkv"))
@@ -1735,6 +1774,7 @@ class EngineCore:
                 self.screen.blit(scaled_bg, (bx + sh_x, by + sh_y))
 
             # ── Oggetti ────────────────────────────────────────────────────────
+            self._psec("scn_bg", _tsc); _tsc = _tsc_m.perf_counter()
             if not hasattr(self, '_debug_logged_objects'):
                 self.logger.info(f"[GAME] Rendering {len([o for o in self._current_scene_objects if not o.found])} active objects")
                 self._debug_logged_objects = True
@@ -1847,8 +1887,41 @@ class EngineCore:
                 
                 self.screen.blit(final_surf, pos)
 
-            # Glow overlay rimosso — feedback visuale dato dalle particelle soltanto
-            # self._draw_hint_glow_overlays()
+            # --- Evidenziazione HINT MANUALE: alone pulsante attorno all'oggetto
+            # suggerito. Passaggio dedicato (non nel loop icone) perché molti
+            # oggetti fanno parte dello sfondo e non hanno icona: vanno evidenziati
+            # comunque, in base alla loro AREA DI HIT. Solo hint manuale (un
+            # oggetto alla volta), niente auto-hint a catena.
+            if self.hint:
+                for _ho in self._current_scene_objects:
+                    if _ho.found:
+                        continue
+                    _gi = self.hint.get_manual_glow(_ho)
+                    if _gi <= 0.01:
+                        continue
+                    if _ho.detection_type == "rect":
+                        _cxb = _ho.x + _ho.width / 2
+                        _cyb = _ho.y + _ho.height / 2
+                        _rb = max(_ho.width, _ho.height) / 2
+                    else:
+                        _cxb = _ho.x
+                        _cyb = _ho.y
+                        _rb = _ho.radius if _ho.radius > 0 else max(_ho.width, _ho.height) / 2
+                    _scx, _scy = sm.bg_to_screen_scenic(_cxb, _cyb, scenic_factor)
+                    _shk = self.effects.shake_offset
+                    _base = int(_rb * sm._bg_display_scale * scenic_factor) + sm.scale_value(18)
+                    if _base > 3:
+                        _pulse = 0.5 + 0.5 * math.sin(pygame.time.get_ticks() * 0.010)
+                        _rad = int(_base * (1.0 + 0.25 * _pulse))
+                        _aa = min(1.0, _gi)
+                        _gs = pygame.Surface((_rad * 2, _rad * 2), pygame.SRCALPHA)
+                        # Disco translucido + anello spesso luminoso (oro)
+                        pygame.draw.circle(_gs, (255, 220, 60, int(70 * _aa * (0.6 + 0.4 * _pulse))), (_rad, _rad), _rad)
+                        _rw = max(4, _rad // 6)
+                        pygame.draw.circle(_gs, (255, 230, 80, int(235 * _aa)), (_rad, _rad), _rad, width=_rw)
+                        pygame.draw.circle(_gs, (255, 250, 200, int(180 * _aa)), (_rad, _rad), max(1, _rad - _rw), width=max(2, _rw // 2))
+                        self.screen.blit(_gs, (int(_scx + _shk[0]) - _rad, int(_scy + _shk[1]) - _rad))
+            self._psec("scn_obj", _tsc); _tsc = _tsc_m.perf_counter()
 
             env_fx = [f for f in self._current_scene_effects if getattr(f, "type", "") != "bubble_tip"]
 
@@ -1893,11 +1966,13 @@ class EngineCore:
                 self.effects.draw(self.screen)
                 self.fx_renderer.draw(self.screen, env_fx, sm, self.lang, scenic_factor=zoom_factor if is_intro_zooming else 1.0)
 
+            self._psec("scn_fx", _tsc); _tsc = _tsc_m.perf_counter()
             # --- UI E FUMETTI (Sempre in primo piano) ---
             ui_fx = [f for f in self._current_scene_effects if getattr(f, "type", "") == "bubble_tip"]
             self._last_bubble_btns = self.fx_renderer.draw(self.screen, ui_fx, sm, self.lang, scenic_factor)
-            
+
             self.hud.draw(self.screen, pygame.time.get_ticks() / 1000.0)
+            self._psec("scn_hud", _tsc)
 
             # Disegna conteggio hint in alto a destra (sempre visibile)
             self._draw_hint_count()

@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Costanti layout (coordinate di riferimento 1280×720)
 # ---------------------------------------------------------------------------
-HUD_H_REF = 110           # Altezza aumentata per icone più grandi
+HUD_H_REF = 140           # Altezza maggiorata per leggibilità (mobile)
 ICON_MARGIN_REF = 12      # Spazio tra nomi
 BORDER_RADIUS = 15        # Arrotondamento pannelli
 ANIM_SPEED = 8.0          # Velocità generale animazioni (lerp)
@@ -279,6 +279,7 @@ class HudManager:
         self._hint_cooldown_pct: float = 0.0
         self._hint_can_use: bool = True
         self._hint_button_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
+        self._mobile_hint_rect_local: pygame.Rect = pygame.Rect(0, 0, 0, 0)
         self._reward_tracker = None
 
         # Tooltip
@@ -306,9 +307,9 @@ class HudManager:
         abs_font = get_resource_path(font_path) if font_path else None
 
         sizes = {"label": 22, "timer": 38, "score": 28, "tooltip": 15, "stats": 18}
-        # Android: font un po' più grandi per leggibilità su mobile (desktop invariato).
+        # Android: font più grandi per leggibilità su mobile (desktop invariato).
         if getattr(self, "_android", False):
-            sizes = {k: int(round(v * 1.22)) for k, v in sizes.items()}
+            sizes = {k: int(round(v * 1.5)) for k, v in sizes.items()}
         for name, size in sizes.items():
             if abs_font and os.path.exists(abs_font):
                 try:
@@ -324,13 +325,32 @@ class HudManager:
             else:
                 self._fonts[name] = pygame.font.SysFont("segoeui", size, bold=(name in ["timer", "score"]))
 
+        # Font dedicati alla HUD mobile (chip oggetti + pulsante hint): sans
+        # leggibile e grande, indipendenti dal tema serif del desktop.
+        if getattr(self, "_android", False):
+            self._fonts["chip"] = pygame.font.SysFont("segoeui", int(round(22 * 1.5)), bold=True)
+            self._fonts["hint"] = pygame.font.SysFont("segoeui", int(round(20 * 1.5)), bold=True)
+            self._fonts["hint_badge"] = pygame.font.SysFont("segoeui", int(round(26 * 1.5)), bold=True)
+
         self._rebuild_surface()
 
     def _rebuild_surface(self) -> None:
         """Rigenera le superfici scalate."""
         self._scale = self._sm.scale
-        self._hud_h = int(HUD_H_REF * self._scale)
-        self._hud_surf = pygame.Surface((self._screen_w, self._hud_h), pygame.SRCALPHA)
+        if getattr(self, "_android", False):
+            # Su mobile la barra è un cassetto che si apre a richiesta: la
+            # rendiamo più alta per ospitare le "chip" grandi degli oggetti a
+            # font fisso leggibile (niente più testo rimpicciolito).
+            self._hud_h = max(int(HUD_H_REF * self._scale), int(self._screen_h * 0.36))
+        else:
+            self._hud_h = int(HUD_H_REF * self._scale)
+        # Android: barra OPACA (full-width, squadrata) → blit veloce. I blit
+        # SRCALPHA full-width sono lentissimi su pygame ARM. Su desktop resta
+        # SRCALPHA (glass/fade trasparente).
+        if getattr(self, "_android", False):
+            self._hud_surf = pygame.Surface((self._screen_w, self._hud_h))
+        else:
+            self._hud_surf = pygame.Surface((self._screen_w, self._hud_h), pygame.SRCALPHA)
 
     # ------------------------------------------------------------------
     # API Pubblica
@@ -470,18 +490,18 @@ class HudManager:
         dy = end_pos[1] - start_pos[1]
         thr = self._screen_h * 0.06
         edge = self._screen_h * 0.12
+        opened = False
         if self._position == "bottom":
-            # swipe verso l'alto partendo dal bordo basso → apri
             if start_pos[1] >= self._screen_h - edge and dy < -thr:
-                self.open_drawer(); return True
-            if dy > thr:  # swipe verso il basso → chiudi
-                self.close_drawer(); return True
+                self.open_drawer(); opened = True
+            elif dy > thr:
+                self.close_drawer(); opened = True
         else:
             if start_pos[1] <= edge and dy > thr:
-                self.open_drawer(); return True
-            if dy < -thr:
-                self.close_drawer(); return True
-        return False
+                self.open_drawer(); opened = True
+            elif dy < -thr:
+                self.close_drawer(); opened = True
+        return opened
 
     def on_screen_resize(self, screen_w: int, screen_h: int) -> None:
         self._screen_w = screen_w
@@ -490,19 +510,34 @@ class HudManager:
 
     def draw(self, surface: pygame.Surface, elapsed_s: float) -> None:
         """Disegna la HUD completa."""
+        # Android: se il cassetto è chiuso (fuori schermo) NON disegniamo la barra
+        # (build + blit SRCALPHA full-width = costoso su pygame ARM). Solo maniglia
+        # e pulsante pausa, sempre accessibili.
+        if self._android and self._drawer <= 0.01:
+            self._draw_handle(surface, self._get_hud_rect())
+            self._draw_pause_button(surface)
+            if self._tooltip_visible:
+                self._draw_tooltip(surface)
+            return
+
         self._hud_surf.fill((0, 0, 0, 0))
-        
+
         # 1. Pannello di Sfondo (Glassmorphism)
         self._draw_glass_panel()
 
-        # 2. Modulo Sinistra: Galleria Obiettivi
-        self._draw_objective_gallery()
+        if self._android:
+            # HUD mobile dedicata: chip oggetti grandi a griglia + pulsante hint
+            # integrato nella barra. Niente layout serrato del desktop.
+            self._draw_mobile_hud(elapsed_s)
+        else:
+            # 2. Modulo Sinistra: Galleria Obiettivi
+            self._draw_objective_gallery()
 
-        # 3. Modulo Centro: Timer Premium
-        self._draw_central_timer(elapsed_s)
+            # 3. Modulo Centro: Timer Premium
+            self._draw_central_timer(elapsed_s)
 
-        # 4. Modulo Destra: Dashboard Punti/Stats
-        self._draw_right_dashboard()
+            # 4. Modulo Destra: Dashboard Punti/Stats
+            self._draw_right_dashboard()
 
         # Applica alpha e disegna a schermo
         self._hud_surf.set_alpha(self._alpha)
@@ -781,6 +816,181 @@ class HudManager:
         found_surf = self._fonts["stats"].render(found_str, True, found_color)
         self._hud_surf.blit(found_surf, (right_edge - found_surf.get_width(), center_y + int(18 * s)))
 
+    # ------------------------------------------------------------------
+    # HUD Mobile (Android): chip oggetti + pulsante hint nella barra
+    # ------------------------------------------------------------------
+
+    def _draw_mobile_hud(self, elapsed_s: float) -> None:
+        """Layout HUD ottimizzato per touch: una barra con riga info in alto
+        (tempo / punti / trovati), una griglia di 'chip' grandi e leggibili per
+        gli oggetti da trovare, e il pulsante HINT integrato a destra."""
+        s = self._scale
+        surf = self._hud_surf
+        W = self._screen_w
+        H = self._hud_h
+
+        pad = int(14 * s)
+        left = max(pad, self._sm.safe_left + pad)
+        right = min(W - pad, self._sm.safe_right - pad)
+
+        # ── Colonna destra: pulsante HINT (grande, integrato nella barra) ──────
+        hint_w = max(int(150 * s), int(W * 0.16))
+        hint_x = right - hint_w
+        hint_y = pad
+        hint_h = H - pad * 2
+        self._draw_mobile_hint(hint_x, hint_y, hint_w, hint_h, s)
+
+        # Separatore verticale tra chip e hint
+        sep_x = hint_x - pad
+        pygame.draw.line(surf, (*COLOR_BORDER[:3], 120), (sep_x, pad), (sep_x, H - pad), max(1, int(s)))
+
+        content_left = left
+        content_right = sep_x - pad
+
+        # ── Riga info in alto: TEMPO | PUNTI | TROVATI ─────────────────────────
+        info_h = int(H * 0.30)
+        info_cy = pad + info_h // 2
+        f_timer = self._fonts["timer"]
+        f_score = self._fonts["score"]
+        f_stats = self._fonts["stats"]
+
+        mins, secs = divmod(int(max(0, self._time_elapsed)), 60)
+        timer_str = f"{mins:02d}:{secs:02d}"
+        t_surf = f_timer.render(timer_str, True, COLOR_TEXT)
+        surf.blit(t_surf, (content_left, info_cy - t_surf.get_height() // 2))
+
+        score_str = f"{int(self._score_display):05d}"
+        sc_surf = f_score.render(score_str, True, COLOR_ACCENT)
+        surf.blit(sc_surf, ((content_left + content_right) // 2 - sc_surf.get_width() // 2,
+                            info_cy - sc_surf.get_height() // 2))
+
+        total = len(self._objects)
+        is_all = self._found_count == total and total > 0
+        found_str = (self._lang("hud_found_all").upper() if is_all
+                     else f"{self._found_count}/{total}")
+        fcol = COLOR_SUCCESS if is_all else COLOR_TEXT
+        fnd_surf = f_stats.render(found_str, True, fcol)
+        surf.blit(fnd_surf, (content_right - fnd_surf.get_width(),
+                             info_cy - fnd_surf.get_height() // 2))
+
+        # ── Griglia chip oggetti (font fisso leggibile, va a capo) ─────────────
+        self._draw_mobile_chips(content_left, pad + info_h, content_right, H - pad, s)
+
+    def _draw_mobile_chips(self, x0: int, y0: int, x1: int, y1: int, s: float) -> None:
+        """Dispone gli oggetti come pillole grandi a font fisso che vanno a capo
+        e si centrano riga per riga nell'area indicata."""
+        surf = self._hud_surf
+        font = self._fonts["chip"]
+        area_w = max(10, x1 - x0)
+
+        cpx = int(16 * s)   # padding orizzontale chip
+        cpy = int(8 * s)    # padding verticale chip
+        gap = int(10 * s)
+        row_gap = int(10 * s)
+
+        # Pre-calcola le chip (testo + dimensioni)
+        chips = []
+        for i, obj in enumerate(self._visible_objects):
+            txt = self._lang(obj.label_key)
+            if not txt:
+                txt = str(obj.label_key)
+            tw, th = font.size(txt)
+            chips.append((txt, tw, th, i))
+
+        if not chips:
+            return
+
+        chip_h = chips[0][2] + cpy * 2
+        # Suddividi in righe rispettando la larghezza disponibile
+        rows = []
+        cur, cur_w = [], 0
+        for txt, tw, th, i in chips:
+            cw = tw + cpx * 2
+            add = cw if not cur else cw + gap
+            if cur and cur_w + add > area_w:
+                rows.append(cur)
+                cur, cur_w = [], 0
+                add = cw
+            cur.append((txt, cw, i))
+            cur_w += add
+        if cur:
+            rows.append(cur)
+
+        total_h = len(rows) * chip_h + (len(rows) - 1) * row_gap
+        cy = y0 + max(0, ((y1 - y0) - total_h) // 2)
+
+        for row in rows:
+            row_w = sum(cw for _, cw, _ in row) + gap * (len(row) - 1)
+            cx = x0 + max(0, (area_w - row_w) // 2)
+            for txt, cw, i in row:
+                color = COLOR_PALETTE[i % len(COLOR_PALETTE)]
+                rect = pygame.Rect(cx, cy, cw, chip_h)
+                pygame.draw.rect(surf, (18, 22, 32), rect, border_radius=int(chip_h // 2))
+                pygame.draw.rect(surf, (*color, 220), rect, max(2, int(2 * s)), border_radius=int(chip_h // 2))
+                tsurf = font.render(txt, True, color)
+                surf.blit(tsurf, (cx + (cw - tsurf.get_width()) // 2,
+                                  cy + (chip_h - tsurf.get_height()) // 2))
+                cx += cw + gap
+            cy += chip_h + row_gap
+            if cy > y1:
+                break
+
+    def _draw_mobile_hint(self, x: int, y: int, w: int, h: int, s: float) -> None:
+        """Pulsante HINT grande integrato nella barra (touch friendly)."""
+        surf = self._hud_surf
+        can_use = self._hint_can_use
+        available = self._reward_tracker.get_available_hints() if self._reward_tracker else 0
+
+        if can_use:
+            bg = (30, 90, 55)
+            border = COLOR_SUCCESS
+            qcol = COLOR_SUCCESS
+            lblcol = (210, 255, 225)
+        else:
+            bg = (60, 60, 72)
+            border = (110, 110, 130)
+            qcol = (150, 150, 165)
+            lblcol = (170, 170, 185)
+
+        rect = pygame.Rect(x, y, w, h)
+        radius = int(18 * s)
+        pygame.draw.rect(surf, bg, rect, border_radius=radius)
+        pygame.draw.rect(surf, border, rect, max(2, int(2 * s)), border_radius=radius)
+
+        # "?" grande
+        q_surf = self._fonts["hint_badge"].render("?", True, qcol)
+        q_y = y + int(h * 0.16)
+        surf.blit(q_surf, (x + (w - q_surf.get_width()) // 2, q_y))
+
+        # Etichetta HINT
+        lbl = self._fonts["hint"].render(self._lang("hud_hint", "HINT").upper(), True, lblcol)
+        surf.blit(lbl, (x + (w - lbl.get_width()) // 2, y + int(h * 0.46)))
+
+        # Conteggio hint disponibili
+        cnt = self._fonts["hint"].render(f"x{available}", True, lblcol)
+        surf.blit(cnt, (x + (w - cnt.get_width()) // 2, y + int(h * 0.70)))
+
+        # Overlay cooldown (riempie dal basso mentre si attende)
+        if self._hint_cooldown_pct > 0 and not can_use:
+            cov_h = int(h * self._hint_cooldown_pct)
+            cov = pygame.Surface((w, cov_h), pygame.SRCALPHA)
+            cov.fill((10, 10, 16, 150))
+            surf.blit(cov, (x, y + h - cov_h))
+
+        # Memorizza il rettangolo LOCALE (verrà convertito in schermo dal getter)
+        self._mobile_hint_rect_local = rect
+
+    def get_mobile_hint_rect(self) -> pygame.Rect:
+        """Rettangolo del pulsante hint mobile in coordinate SCHERMO.
+        Vuoto se non Android o se il cassetto è chiuso (hint non disponibile)."""
+        if not self._android or not self.is_drawer_open():
+            return pygame.Rect(0, 0, 0, 0)
+        local = getattr(self, "_mobile_hint_rect_local", None)
+        if not local:
+            return pygame.Rect(0, 0, 0, 0)
+        hud_rect = self._get_hud_rect()
+        return local.move(hud_rect.x, hud_rect.y)
+
     def _draw_hint_button(self, right_edge: int, center_y: int, s: float) -> None:
         """Disegna il pulsante hint con stato cooldown."""
         if not self._hint_system:
@@ -878,6 +1088,11 @@ class HudManager:
         self._hovered_idx = -1
         self._tooltip_visible = False
         self._hint_button_hovered = False
+
+        # Su touch non c'è hover persistente: nessun tooltip e nessun calcolo
+        # di layout per l'hover (la HUD mobile è gestita da _draw_mobile_hud).
+        if self._android:
+            return
 
         if not hud_rect.collidepoint(mouse_pos): return
 

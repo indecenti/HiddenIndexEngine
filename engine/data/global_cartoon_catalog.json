@@ -354,6 +354,35 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_axolotl_pink",
+      "label_key": "obj_ca_axolotl_pink",
+      "icon": "objects_cartoon/ca_axolotl_pink.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 22,
+      "tags": [
+        "natura",
+        "acqua",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_baby_dolphin",
+      "label_key": "obj_ca_baby_dolphin",
+      "icon": "objects_cartoon/ca_baby_dolphin.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 20,
+      "tags": [
+        "natura",
+        "acqua",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_backpack_camera_pro",
       "label_key": "obj_ca_backpack_camera_pro",
       "icon": "objects_cartoon/ca_backpack_camera_pro.png",
@@ -458,6 +487,33 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_badger_cub",
+      "label_key": "obj_ca_badger_cub",
+      "icon": "objects_cartoon/ca_badger_cub.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "bosco",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_badger_forest",
+      "label_key": "obj_ca_badger_forest",
+      "icon": "objects_cartoon/ca_badger_forest.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 28,
+      "tags": [
+        "natura",
+        "bosco",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_badminton_racket_blue",
       "label_key": "obj_ca_badminton_racket_blue",
       "icon": "objects_cartoon/ca_badminton_racket_blue.png",
@@ -524,20 +580,6 @@
         "sport",
         "tecnologia",
         "plastica"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_baseball_mitt",
-      "label_key": "obj_ca_baseball_mitt",
-      "icon": "objects_cartoon/ca_baseball_mitt.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "sport",
-        "pelle"
       ],
       "style": "cartoon"
     },
@@ -638,6 +680,20 @@
       "tags": [
         "vestiario",
         "stoffa"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_beaver_wood",
+      "label_key": "obj_ca_beaver_wood",
+      "icon": "objects_cartoon/ca_beaver_wood.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 30,
+      "tags": [
+        "natura",
+        "acqua",
+        "medio"
       ],
       "style": "cartoon"
     },
@@ -784,7 +840,8 @@
         "arredamento",
         "metallo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_birdhouse_wood",
@@ -885,6 +942,20 @@
         "audio",
         "musica",
         "tecnologia"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_boomerang_wood",
+      "label_key": "obj_ca_boomerang_wood",
+      "icon": "objects_cartoon/ca_boomerang_wood.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 45,
+      "tags": [
+        "legno",
+        "gioco",
+        "medio"
       ],
       "style": "cartoon"
     },
@@ -1104,6 +1175,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_budgie_parrot",
+      "label_key": "obj_ca_budgie_parrot",
+      "icon": "objects_cartoon/ca_budgie_parrot.png",
+      "default_detection": "circle",
+      "default_radius": 14,
+      "tags": [
+        "natura",
+        "casa",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_bug_spray",
       "label_key": "obj_ca_bug_spray",
       "icon": "objects_cartoon/ca_bug_spray.png",
@@ -1114,6 +1199,19 @@
       "tags": [
         "plastica",
         "strumento",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_bumblebee_fluffy",
+      "label_key": "obj_ca_bumblebee_fluffy",
+      "icon": "objects_cartoon/ca_bumblebee_fluffy.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "tags": [
+        "natura",
+        "insetto",
         "piccolo"
       ],
       "style": "cartoon"
@@ -1278,7 +1376,8 @@
         "grande",
         "metallo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_canteen_metal",
@@ -1608,7 +1707,8 @@
         "legno",
         "lavoro"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_carpenter_square",
@@ -1683,7 +1783,8 @@
         "strumento",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_caving_helmet",
@@ -1699,7 +1800,8 @@
         "luce",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_cd_rom_silver_disc",
@@ -1726,6 +1828,20 @@
         "cibo",
         "carta",
         "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_chameleon_jungle",
+      "label_key": "obj_ca_chameleon_jungle",
+      "icon": "objects_cartoon/ca_chameleon_jungle.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 25,
+      "tags": [
+        "natura",
+        "esplorazione",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -1857,6 +1973,32 @@
         "natura",
         "autunno",
         "pianta",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_chinchilla_soft",
+      "label_key": "obj_ca_chinchilla_soft",
+      "icon": "objects_cartoon/ca_chinchilla_soft.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "casa",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_chipmunk_striped",
+      "label_key": "obj_ca_chipmunk_striped",
+      "icon": "objects_cartoon/ca_chipmunk_striped.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "bosco",
         "piccolo"
       ],
       "style": "cartoon"
@@ -2006,7 +2148,8 @@
         "strumento",
         "grande"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_climbing_rope",
@@ -2021,7 +2164,8 @@
         "strumento",
         "grande"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_clinometer_handheld",
@@ -2105,7 +2249,8 @@
         "bevanda",
         "piccolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_comb_blue",
@@ -2249,6 +2394,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_cork_flask",
+      "label_key": "obj_ca_cork_flask",
+      "icon": "objects_cartoon/ca_cork_flask.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 45,
+      "tags": [
+        "vetro",
+        "cucina",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_corn_cob",
       "label_key": "obj_ca_corn_cob",
       "icon": "objects_cartoon/ca_corn_cob.png",
@@ -2275,6 +2434,20 @@
         "elettronica"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_crab_red",
+      "label_key": "obj_ca_crab_red",
+      "icon": "objects_cartoon/ca_crab_red.png",
+      "default_detection": "circle",
+      "default_radius": 18,
+      "tags": [
+        "natura",
+        "mare",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_cricket_bat_wood",
@@ -2420,6 +2593,33 @@
         "grande",
         "minerale",
         "natura"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_crystal_goblet_red",
+      "label_key": "obj_ca_crystal_goblet_red",
+      "icon": "objects_cartoon/ca_crystal_goblet_red.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "tags": [
+        "cristallo",
+        "prezioso",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_crystal_key",
+      "label_key": "obj_ca_crystal_key",
+      "icon": "objects_cartoon/ca_crystal_key.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 45,
+      "tags": [
+        "cristallo",
+        "strumento",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -2703,6 +2903,33 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_dinosaur_egg",
+      "label_key": "obj_ca_dinosaur_egg",
+      "icon": "objects_cartoon/ca_dinosaur_egg.png",
+      "default_detection": "circle",
+      "default_radius": 22,
+      "tags": [
+        "natura",
+        "uovo",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_dinosaur_fossil",
+      "label_key": "obj_ca_dinosaur_fossil",
+      "icon": "objects_cartoon/ca_dinosaur_fossil.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 40,
+      "tags": [
+        "pietra",
+        "antico",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_disposable_syringe",
       "label_key": "obj_ca_disposable_syringe",
       "icon": "objects_cartoon/ca_disposable_syringe.png",
@@ -2731,7 +2958,8 @@
         "plastica",
         "vestiario"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_diving_suit_vintage",
@@ -2747,7 +2975,8 @@
         "oceano",
         "vintage"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_domino_tile",
@@ -2789,7 +3018,8 @@
         "cibo",
         "dolce"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_donuts_box_pink",
@@ -2816,6 +3046,20 @@
         "fantasy",
         "biologico",
         "medio"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_dragon_scale",
+      "label_key": "obj_ca_dragon_scale",
+      "icon": "objects_cartoon/ca_dragon_scale.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "tags": [
+        "minerale",
+        "magia",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -2858,6 +3102,20 @@
         "contenitore",
         "plastica",
         "viaggio"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_duckling_yellow",
+      "label_key": "obj_ca_duckling_yellow",
+      "icon": "objects_cartoon/ca_duckling_yellow.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "acqua",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -2904,6 +3162,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_dwarf_hammer",
+      "label_key": "obj_ca_dwarf_hammer",
+      "icon": "objects_cartoon/ca_dwarf_hammer.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "tags": [
+        "metallo",
+        "attrezzo",
+        "grande"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_dynamite",
       "label_key": "obj_ca_dynamite",
       "icon": "objects_cartoon/ca_dynamite.png",
@@ -2917,7 +3189,8 @@
         "rosso",
         "piccolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_dynamite_stick",
@@ -3002,7 +3275,8 @@
         "strumento",
         "piccolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_elastic_bandage",
@@ -3063,7 +3337,8 @@
         "abbigliamento",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_emergency_whistle",
@@ -3078,7 +3353,8 @@
         "strumento",
         "piccolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_enamel_mug",
@@ -3122,7 +3398,8 @@
         "cibo",
         "piccolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_energy_orb_blue_glowing",
@@ -3308,6 +3585,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_fawn_spotted",
+      "label_key": "obj_ca_fawn_spotted",
+      "icon": "objects_cartoon/ca_fawn_spotted.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 55,
+      "tags": [
+        "natura",
+        "bosco",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_feather_pen_ink",
       "label_key": "obj_ca_feather_pen_ink",
       "icon": "objects_cartoon/ca_feather_pen_ink.png",
@@ -3365,6 +3656,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_ferret_fluffy",
+      "label_key": "obj_ca_ferret_fluffy",
+      "icon": "objects_cartoon/ca_ferret_fluffy.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 20,
+      "tags": [
+        "natura",
+        "casa",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_ferro_rod",
       "label_key": "obj_ca_ferro_rod",
       "icon": "objects_cartoon/ca_ferro_rod.png",
@@ -3378,7 +3683,8 @@
         "strumento",
         "piccolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_film_roll_35mm",
@@ -4660,7 +4966,8 @@
         "oceano",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_floppy_disk_35",
@@ -4716,6 +5023,19 @@
       "tags": [
         "natura",
         "pianta"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_flying_squirrel",
+      "label_key": "obj_ca_flying_squirrel",
+      "icon": "objects_cartoon/ca_flying_squirrel.png",
+      "default_detection": "circle",
+      "default_radius": 18,
+      "tags": [
+        "natura",
+        "bosco",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -5101,7 +5421,8 @@
         "elettronico",
         "plastica"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_gamepad_retro_8bit",
@@ -5161,7 +5482,8 @@
         "metallo",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_gas_canister_small",
@@ -5177,7 +5499,8 @@
         "cucina",
         "piccolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_gas_mask_vintage",
@@ -5206,6 +5529,21 @@
         "strumento",
         "cucina",
         "medio"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_gecko_spotted",
+      "label_key": "obj_ca_gecko_spotted",
+      "icon": "objects_cartoon/ca_gecko_spotted.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 18,
+      "tags": [
+        "natura",
+        "giardino",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -5251,7 +5589,8 @@
         "strumento",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_gingerbread_house",
@@ -5298,6 +5637,33 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_glowing_firefly_bug",
+      "label_key": "obj_ca_glowing_firefly_bug",
+      "icon": "objects_cartoon/ca_glowing_firefly_bug.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "tags": [
+        "natura",
+        "insetto",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_glowing_mushrooms",
+      "label_key": "obj_ca_glowing_mushrooms",
+      "icon": "objects_cartoon/ca_glowing_mushrooms.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 35,
+      "tags": [
+        "natura",
+        "magia",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_glue_tube",
       "label_key": "obj_ca_glue_tube",
       "icon": "objects_cartoon/ca_glue_tube.png",
@@ -5307,6 +5673,46 @@
       "default_hint_delay": 20,
       "tags": [
         "strumento"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_golden_goblet",
+      "label_key": "obj_ca_golden_goblet",
+      "icon": "objects_cartoon/ca_golden_goblet.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "tags": [
+        "metallo",
+        "prezioso",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_golden_key_winged",
+      "label_key": "obj_ca_golden_key_winged",
+      "icon": "objects_cartoon/ca_golden_key_winged.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 45,
+      "tags": [
+        "metallo",
+        "magia",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_golden_scarab",
+      "label_key": "obj_ca_golden_scarab",
+      "icon": "objects_cartoon/ca_golden_scarab.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "metallo",
+        "prezioso",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -5425,7 +5831,8 @@
         "legno",
         "musica"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_grandfather_clock_antique",
@@ -5442,7 +5849,8 @@
         "orologio",
         "vintage"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_graphics_tablet_stylus",
@@ -5458,6 +5866,22 @@
         "ufficio"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_green_caterpillar",
+      "label_key": "obj_ca_green_caterpillar",
+      "icon": "objects_cartoon/ca_green_caterpillar.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 15,
+      "tags": [
+        "natura",
+        "giardino",
+        "insetto",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_grimoire_ancient",
@@ -5502,7 +5926,8 @@
         "plastica",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_hamburger_cheese",
@@ -5531,6 +5956,20 @@
         "viaggio",
         "riposo",
         "medio"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_hamster",
+      "label_key": "obj_ca_hamster",
+      "icon": "objects_cartoon/ca_hamster.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "casa",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -5578,7 +6017,8 @@
         "metallo",
         "lavoro"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_hard_drive_external_silver",
@@ -5843,21 +6283,6 @@
       "style": "cartoon"
     },
     {
-      "id": "ca_head_mosquito_net",
-      "label_key": "obj_ca_head_mosquito_net",
-      "icon": "objects_cartoon/ca_head_mosquito_net.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 45,
-      "default_hint_delay": 35,
-      "tags": [
-        "stoffa",
-        "abbigliamento",
-        "medio"
-      ],
-      "style": "cartoon"
-    },
-    {
       "id": "ca_headphones_wireless_white",
       "label_key": "obj_ca_headphones_wireless_white",
       "icon": "objects_cartoon/ca_headphones_wireless_white.png",
@@ -5885,6 +6310,33 @@
         "elettronica",
         "audio"
       ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_hedgehog",
+      "label_key": "obj_ca_hedgehog",
+      "icon": "objects_cartoon/ca_hedgehog.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "bosco",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_hedgehog_baby",
+      "label_key": "obj_ca_hedgehog_baby",
+      "icon": "objects_cartoon/ca_hedgehog_baby.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "tags": [
+        "natura",
+        "bosco",
+        "piccolo"
+      ],
       "style": "cartoon"
     },
     {
@@ -5902,6 +6354,19 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_hermit_crab",
+      "label_key": "obj_ca_hermit_crab",
+      "icon": "objects_cartoon/ca_hermit_crab.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "mare",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_high_heel_red",
       "label_key": "obj_ca_high_heel_red",
       "icon": "objects_cartoon/ca_high_heel_red.png",
@@ -5913,7 +6378,8 @@
         "pelle",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_hiking_gaiters",
@@ -5928,7 +6394,8 @@
         "abbigliamento",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_hockey_puck_black",
@@ -6131,6 +6598,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_hourglass_sand",
+      "label_key": "obj_ca_hourglass_sand",
+      "icon": "objects_cartoon/ca_hourglass_sand.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 45,
+      "tags": [
+        "vetro",
+        "strumento",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_hourglass_wood",
       "label_key": "obj_ca_hourglass_wood",
       "icon": "objects_cartoon/ca_hourglass_wood.png",
@@ -6158,7 +6639,8 @@
         "viaggio",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_ice_candle",
@@ -6321,7 +6803,8 @@
         "riposo",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_instant_camera",
@@ -6509,7 +6992,8 @@
         "abbigliamento",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_knife_sharpener",
@@ -6523,6 +7007,33 @@
         "metallo",
         "strumento",
         "medio"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_koala_tree",
+      "label_key": "obj_ca_koala_tree",
+      "icon": "objects_cartoon/ca_koala_tree.png",
+      "default_detection": "circle",
+      "default_radius": 22,
+      "tags": [
+        "natura",
+        "pianta",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_ladybug_red",
+      "label_key": "obj_ca_ladybug_red",
+      "icon": "objects_cartoon/ca_ladybug_red.png",
+      "default_detection": "circle",
+      "default_radius": 10,
+      "tags": [
+        "natura",
+        "insetto",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -6658,7 +7169,8 @@
         "strumento",
         "piccolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_lego_bricks",
@@ -6672,6 +7184,19 @@
         "gioco",
         "plastica",
         "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_lemur_tail",
+      "label_key": "obj_ca_lemur_tail",
+      "icon": "objects_cartoon/ca_lemur_tail.png",
+      "default_detection": "circle",
+      "default_radius": 18,
+      "tags": [
+        "natura",
+        "esplorazione",
+        "medio"
       ],
       "style": "cartoon"
     },
@@ -6745,6 +7270,117 @@
         "plastica",
         "piccolo"
       ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_little_baby_seal",
+      "label_key": "obj_ca_little_baby_seal",
+      "icon": "objects_cartoon/ca_little_baby_seal.png",
+      "default_detection": "circle",
+      "default_radius": 16,
+      "tags": [
+        "natura",
+        "acqua",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_little_bat",
+      "label_key": "obj_ca_little_bat",
+      "icon": "objects_cartoon/ca_little_bat.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 22,
+      "tags": [
+        "natura",
+        "notte",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_little_bunny",
+      "label_key": "obj_ca_little_bunny",
+      "icon": "objects_cartoon/ca_little_bunny.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "bosco",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_little_cricket",
+      "label_key": "obj_ca_little_cricket",
+      "icon": "objects_cartoon/ca_little_cricket.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "tags": [
+        "natura",
+        "giardino",
+        "insetto",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_little_honeybee",
+      "label_key": "obj_ca_little_honeybee",
+      "icon": "objects_cartoon/ca_little_honeybee.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "tags": [
+        "natura",
+        "giardino",
+        "insetto",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_little_koala",
+      "label_key": "obj_ca_little_koala",
+      "icon": "objects_cartoon/ca_little_koala.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "pianta",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_little_mouse",
+      "label_key": "obj_ca_little_mouse",
+      "icon": "objects_cartoon/ca_little_mouse.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "tags": [
+        "natura",
+        "casa",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_little_panda",
+      "label_key": "obj_ca_little_panda",
+      "icon": "objects_cartoon/ca_little_panda.png",
+      "default_detection": "circle",
+      "default_radius": 22,
+      "tags": [
+        "natura",
+        "pianta",
+        "medio"
+      ],
       "style": "cartoon"
     },
     {
@@ -6760,7 +7396,8 @@
         "strumento",
         "piccolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_lollipop_rainbow_swirl",
@@ -6819,6 +7456,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_magic_feather",
+      "label_key": "obj_ca_magic_feather",
+      "icon": "objects_cartoon/ca_magic_feather.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 45,
+      "tags": [
+        "natura",
+        "magia",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_magic_feather_glowing",
       "label_key": "obj_ca_magic_feather_glowing",
       "icon": "objects_cartoon/ca_magic_feather_glowing.png",
@@ -6858,6 +7509,34 @@
         "magia",
         "metallo",
         "vetro"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_magic_quill",
+      "label_key": "obj_ca_magic_quill",
+      "icon": "objects_cartoon/ca_magic_quill.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 45,
+      "tags": [
+        "legno",
+        "magia",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_magic_scroll_lightning",
+      "label_key": "obj_ca_magic_scroll_lightning",
+      "icon": "objects_cartoon/ca_magic_scroll_lightning.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 45,
+      "tags": [
+        "carta",
+        "magia",
+        "medio"
       ],
       "style": "cartoon"
     },
@@ -7034,6 +7713,19 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_meerkats_group",
+      "label_key": "obj_ca_meerkats_group",
+      "icon": "objects_cartoon/ca_meerkats_group.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "esplorazione",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_megaphone_vintage",
       "label_key": "obj_ca_megaphone_vintage",
       "icon": "objects_cartoon/ca_megaphone_vintage.png",
@@ -7060,6 +7752,20 @@
         "audio",
         "tecnologia",
         "sicurezza"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_message_bottle",
+      "label_key": "obj_ca_message_bottle",
+      "icon": "objects_cartoon/ca_message_bottle.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 50,
+      "tags": [
+        "vetro",
+        "mistero",
+        "medio"
       ],
       "style": "cartoon"
     },
@@ -7092,7 +7798,8 @@
         "attrezzo",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_microchip_electronic",
@@ -7121,7 +7828,8 @@
         "igiene",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_micrometer_precision_metal",
@@ -7252,7 +7960,8 @@
         "viaggio",
         "piccolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_moka_pot_silver",
@@ -7265,6 +7974,33 @@
         "cucina",
         "metallo",
         "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_mole_dirt",
+      "label_key": "obj_ca_mole_dirt",
+      "icon": "objects_cartoon/ca_mole_dirt.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "giardino",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_monarch_butterfly",
+      "label_key": "obj_ca_monarch_butterfly",
+      "icon": "objects_cartoon/ca_monarch_butterfly.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 25,
+      "tags": [
+        "natura",
+        "insetto",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -7352,7 +8088,8 @@
         "cucina",
         "piccolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_mummy_sleeping_bag",
@@ -7367,7 +8104,8 @@
         "riposo",
         "grande"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_mushroom_amanita",
@@ -7516,7 +8254,8 @@
         "tech",
         "medio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_oil_bottle",
@@ -7543,6 +8282,59 @@
       "tags": [
         "inverno",
         "decorazione",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_old_keyring",
+      "label_key": "obj_ca_old_keyring",
+      "icon": "objects_cartoon/ca_old_keyring.png",
+      "default_detection": "circle",
+      "default_radius": 22,
+      "tags": [
+        "metallo",
+        "strumento",
+        "antico"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_opossum_hanging",
+      "label_key": "obj_ca_opossum_hanging",
+      "icon": "objects_cartoon/ca_opossum_hanging.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "bosco",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_otter_river",
+      "label_key": "obj_ca_otter_river",
+      "icon": "objects_cartoon/ca_otter_river.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 22,
+      "tags": [
+        "natura",
+        "acqua",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_owl_wood",
+      "label_key": "obj_ca_owl_wood",
+      "icon": "objects_cartoon/ca_owl_wood.png",
+      "default_detection": "circle",
+      "default_radius": 18,
+      "tags": [
+        "natura",
+        "bosco",
         "piccolo"
       ],
       "style": "cartoon"
@@ -7678,6 +8470,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_pegasus_feather",
+      "label_key": "obj_ca_pegasus_feather",
+      "icon": "objects_cartoon/ca_pegasus_feather.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 50,
+      "tags": [
+        "natura",
+        "magia",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_pencil_short",
       "label_key": "obj_ca_pencil_short",
       "icon": "objects_cartoon/ca_pencil_short.png",
@@ -7717,6 +8523,20 @@
       "tags": [
         "bellezza",
         "vetro",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_phoenix_tear",
+      "label_key": "obj_ca_phoenix_tear",
+      "icon": "objects_cartoon/ca_phoenix_tear.png",
+      "default_detection": "rect",
+      "default_width": 22,
+      "default_height": 40,
+      "tags": [
+        "vetro",
+        "magia",
         "piccolo"
       ],
       "style": "cartoon"
@@ -7838,6 +8658,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_pirate_hook",
+      "label_key": "obj_ca_pirate_hook",
+      "icon": "objects_cartoon/ca_pirate_hook.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "tags": [
+        "metallo",
+        "antico",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_pizza_slice",
       "label_key": "obj_ca_pizza_slice",
       "icon": "objects_cartoon/ca_pizza_slice.png",
@@ -7883,6 +8717,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_platypus_water",
+      "label_key": "obj_ca_platypus_water",
+      "icon": "objects_cartoon/ca_platypus_water.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 20,
+      "tags": [
+        "natura",
+        "acqua",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_plb_beacon",
       "label_key": "obj_ca_plb_beacon",
       "icon": "objects_cartoon/ca_plb_beacon.png",
@@ -7896,7 +8744,8 @@
         "tech",
         "piccolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_pliers_red",
@@ -7911,7 +8760,8 @@
         "metallo",
         "lavoro"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_plumb_bob_brass",
@@ -7944,6 +8794,19 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_pocket_watch",
+      "label_key": "obj_ca_pocket_watch",
+      "icon": "objects_cartoon/ca_pocket_watch.png",
+      "default_detection": "circle",
+      "default_radius": 18,
+      "tags": [
+        "metallo",
+        "prezioso",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_pocket_watch_gold",
       "label_key": "obj_ca_pocket_watch_gold",
       "icon": "objects_cartoon/ca_pocket_watch_gold.png",
@@ -7954,6 +8817,20 @@
         "strumento",
         "metallo",
         "prezioso"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_poison_dagger",
+      "label_key": "obj_ca_poison_dagger",
+      "icon": "objects_cartoon/ca_poison_dagger.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 55,
+      "tags": [
+        "metallo",
+        "arma",
+        "medio"
       ],
       "style": "cartoon"
     },
@@ -8117,7 +8994,8 @@
         "tecnologia",
         "vintage"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_projector_film_vintage",
@@ -8165,6 +9043,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_puppy_dog",
+      "label_key": "obj_ca_puppy_dog",
+      "icon": "objects_cartoon/ca_puppy_dog.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "casa",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_puzzle_piece",
       "label_key": "obj_ca_puzzle_piece",
       "icon": "objects_cartoon/ca_puzzle_piece.png",
@@ -8180,6 +9072,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_pygmy_goat_baby",
+      "label_key": "obj_ca_pygmy_goat_baby",
+      "icon": "objects_cartoon/ca_pygmy_goat_baby.png",
+      "default_detection": "circle",
+      "default_radius": 16,
+      "tags": [
+        "natura",
+        "giardino",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_quiver_arrows",
       "label_key": "obj_ca_quiver_arrows",
       "icon": "objects_cartoon/ca_quiver_arrows.png",
@@ -8191,6 +9097,20 @@
         "equipaggiamento",
         "cuoio",
         "caccia"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_raccoon_masked",
+      "label_key": "obj_ca_raccoon_masked",
+      "icon": "objects_cartoon/ca_raccoon_masked.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 30,
+      "tags": [
+        "natura",
+        "bosco",
+        "medio"
       ],
       "style": "cartoon"
     },
@@ -8340,6 +9260,19 @@
         "plastica",
         "veicolo",
         "tech",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_red_panda_cub",
+      "label_key": "obj_ca_red_panda_cub",
+      "icon": "objects_cartoon/ca_red_panda_cub.png",
+      "default_detection": "circle",
+      "default_radius": 18,
+      "tags": [
+        "natura",
+        "pianta",
         "medio"
       ],
       "style": "cartoon"
@@ -8551,6 +9484,19 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_runic_compass",
+      "label_key": "obj_ca_runic_compass",
+      "icon": "objects_cartoon/ca_runic_compass.png",
+      "default_detection": "circle",
+      "default_radius": 22,
+      "tags": [
+        "metallo",
+        "magia",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_safe_iron_large",
       "label_key": "obj_ca_safe_iron_large",
       "icon": "objects_cartoon/ca_safe_iron_large.png",
@@ -8726,7 +9672,8 @@
         "metallo",
         "lavoro"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_screws_pile",
@@ -8741,7 +9688,8 @@
         "piccolo",
         "lavoro"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_scroll_magic_fire",
@@ -8769,6 +9717,34 @@
       "tags": [
         "estate",
         "natura",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_sea_snail",
+      "label_key": "obj_ca_sea_snail",
+      "icon": "objects_cartoon/ca_sea_snail.png",
+      "default_detection": "circle",
+      "default_radius": 14,
+      "tags": [
+        "natura",
+        "acqua",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_seahorse_small",
+      "label_key": "obj_ca_seahorse_small",
+      "icon": "objects_cartoon/ca_seahorse_small.png",
+      "default_detection": "rect",
+      "default_width": 18,
+      "default_height": 35,
+      "tags": [
+        "natura",
+        "mare",
         "piccolo"
       ],
       "style": "cartoon"
@@ -8812,7 +9788,8 @@
         "metallo",
         "grande"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_sextant_brass",
@@ -9064,6 +10041,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_skunk_striped",
+      "label_key": "obj_ca_skunk_striped",
+      "icon": "objects_cartoon/ca_skunk_striped.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 28,
+      "tags": [
+        "natura",
+        "bosco",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_sleeping_bag_rolled",
       "label_key": "obj_ca_sleeping_bag_rolled",
       "icon": "objects_cartoon/ca_sleeping_bag_rolled.png",
@@ -9075,6 +10066,19 @@
         "equipaggiamento",
         "riposo",
         "stoffa"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_sloth_baby",
+      "label_key": "obj_ca_sloth_baby",
+      "icon": "objects_cartoon/ca_sloth_baby.png",
+      "default_detection": "circle",
+      "default_radius": 18,
+      "tags": [
+        "natura",
+        "pianta",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -9104,6 +10108,19 @@
         "tecnologia",
         "strumento",
         "elettronica"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_snail_shell",
+      "label_key": "obj_ca_snail_shell",
+      "icon": "objects_cartoon/ca_snail_shell.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "tags": [
+        "natura",
+        "giardino",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -9272,6 +10289,19 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_sparrow_little",
+      "label_key": "obj_ca_sparrow_little",
+      "icon": "objects_cartoon/ca_sparrow_little.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "tags": [
+        "natura",
+        "giardino",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_spear_tribal",
       "label_key": "obj_ca_spear_tribal",
       "icon": "objects_cartoon/ca_spear_tribal.png",
@@ -9376,6 +10406,34 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_spyglass_brass",
+      "label_key": "obj_ca_spyglass_brass",
+      "icon": "objects_cartoon/ca_spyglass_brass.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 55,
+      "tags": [
+        "metallo",
+        "ottica",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_spyglass_gold",
+      "label_key": "obj_ca_spyglass_gold",
+      "icon": "objects_cartoon/ca_spyglass_gold.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 55,
+      "tags": [
+        "metallo",
+        "prezioso",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_squash_racket_modern",
       "label_key": "obj_ca_squash_racket_modern",
       "icon": "objects_cartoon/ca_squash_racket_modern.png",
@@ -9386,6 +10444,19 @@
       "tags": [
         "sport",
         "tecnologia"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_squirrel",
+      "label_key": "obj_ca_squirrel",
+      "icon": "objects_cartoon/ca_squirrel.png",
+      "default_detection": "circle",
+      "default_radius": 18,
+      "tags": [
+        "natura",
+        "bosco",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -9495,6 +10566,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_stone_tablet",
+      "label_key": "obj_ca_stone_tablet",
+      "icon": "objects_cartoon/ca_stone_tablet.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 50,
+      "tags": [
+        "pietra",
+        "antico",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_stopwatch_analog_silver",
       "label_key": "obj_ca_stopwatch_analog_silver",
       "icon": "objects_cartoon/ca_stopwatch_analog_silver.png",
@@ -9562,6 +10647,19 @@
       "default_hint_delay": 10,
       "tags": [
         "cibo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_sugar_glider",
+      "label_key": "obj_ca_sugar_glider",
+      "icon": "objects_cartoon/ca_sugar_glider.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "bosco",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -10061,7 +11159,8 @@
         "metallo",
         "studio"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_telescope_pocket_brass",
@@ -10195,6 +11294,75 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_tiny_chick",
+      "label_key": "obj_ca_tiny_chick",
+      "icon": "objects_cartoon/ca_tiny_chick.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "tags": [
+        "natura",
+        "giardino",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_tiny_goldfish",
+      "label_key": "obj_ca_tiny_goldfish",
+      "icon": "objects_cartoon/ca_tiny_goldfish.png",
+      "default_detection": "circle",
+      "default_radius": 12,
+      "tags": [
+        "natura",
+        "acqua",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_tiny_monkey",
+      "label_key": "obj_ca_tiny_monkey",
+      "icon": "objects_cartoon/ca_tiny_monkey.png",
+      "default_detection": "circle",
+      "default_radius": 18,
+      "tags": [
+        "natura",
+        "esplorazione",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_tiny_octopus",
+      "label_key": "obj_ca_tiny_octopus",
+      "label_key_comment": "obj_ca_tiny_octopus",
+      "icon": "objects_cartoon/ca_tiny_octopus.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "acqua",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_tiny_turtle",
+      "label_key": "obj_ca_tiny_turtle",
+      "icon": "objects_cartoon/ca_tiny_turtle.png",
+      "default_detection": "circle",
+      "default_radius": 14,
+      "tags": [
+        "natura",
+        "acqua",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_toaster_retro_silver_1950",
       "label_key": "obj_ca_toaster_retro_silver_1950",
       "icon": "objects_cartoon/ca_toaster_retro_silver_1950.png",
@@ -10279,6 +11447,19 @@
         "magia",
         "legno",
         "antico"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_toucan_bird",
+      "label_key": "obj_ca_toucan_bird",
+      "icon": "objects_cartoon/ca_toucan_bird.png",
+      "default_detection": "circle",
+      "default_radius": 20,
+      "tags": [
+        "natura",
+        "esplorazione",
+        "medio"
       ],
       "style": "cartoon"
     },
@@ -10414,6 +11595,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_trash_banana_peel",
+      "label_key": "obj_ca_trash_banana_peel",
+      "icon": "objects_cartoon/ca_trash_banana_peel.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 20,
+      "tags": [
+        "rifiuto",
+        "biologico",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_trash_battery_corroded",
       "label_key": "obj_ca_trash_battery_corroded",
       "icon": "objects_cartoon/ca_trash_battery_corroded.png",
@@ -10424,6 +11619,34 @@
         "rifiuto",
         "metallo",
         "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_trash_bike_frame_rusty",
+      "label_key": "obj_ca_trash_bike_frame_rusty",
+      "icon": "objects_cartoon/ca_trash_bike_frame_rusty.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 45,
+      "tags": [
+        "rifiuto",
+        "metallo",
+        "grande"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_trash_boot_muddy",
+      "label_key": "obj_ca_trash_boot_muddy",
+      "icon": "objects_cartoon/ca_trash_boot_muddy.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 35,
+      "tags": [
+        "rifiuto",
+        "pelle",
+        "medio"
       ],
       "style": "cartoon"
     },
@@ -10512,6 +11735,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_trash_detergent_bottle",
+      "label_key": "obj_ca_trash_detergent_bottle",
+      "icon": "objects_cartoon/ca_trash_detergent_bottle.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 45,
+      "tags": [
+        "rifiuto",
+        "plastica",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_trash_fish_bone",
       "label_key": "obj_ca_trash_fish_bone",
       "icon": "objects_cartoon/ca_trash_fish_bone.png",
@@ -10522,6 +11759,62 @@
         "rifiuto",
         "biologico",
         "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_trash_frying_pan_dirty",
+      "label_key": "obj_ca_trash_frying_pan_dirty",
+      "icon": "objects_cartoon/ca_trash_frying_pan_dirty.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 30,
+      "tags": [
+        "rifiuto",
+        "metallo",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_trash_keyboard_smashed",
+      "label_key": "obj_ca_trash_keyboard_smashed",
+      "icon": "objects_cartoon/ca_trash_keyboard_smashed.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 20,
+      "tags": [
+        "rifiuto",
+        "elettronica",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_trash_newspaper_stack",
+      "label_key": "obj_ca_trash_newspaper_stack",
+      "icon": "objects_cartoon/ca_trash_newspaper_stack.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 25,
+      "tags": [
+        "rifiuto",
+        "carta",
+        "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_trash_oil_can_rusty",
+      "label_key": "obj_ca_trash_oil_can_rusty",
+      "icon": "objects_cartoon/ca_trash_oil_can_rusty.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 45,
+      "tags": [
+        "rifiuto",
+        "metallo",
+        "medio"
       ],
       "style": "cartoon"
     },
@@ -10540,6 +11833,34 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_trash_paint_bucket_empty",
+      "label_key": "obj_ca_trash_paint_bucket_empty",
+      "icon": "objects_cartoon/ca_trash_paint_bucket_empty.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "tags": [
+        "rifiuto",
+        "plastica",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_trash_pallet_broken",
+      "label_key": "obj_ca_trash_pallet_broken",
+      "icon": "objects_cartoon/ca_trash_pallet_broken.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 35,
+      "tags": [
+        "rifiuto",
+        "legno",
+        "grande"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_trash_paper_ball",
       "label_key": "obj_ca_trash_paper_ball",
       "icon": "objects_cartoon/ca_trash_paper_ball.png",
@@ -10549,6 +11870,34 @@
         "rifiuto",
         "carta",
         "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_trash_pipe_rusty",
+      "label_key": "obj_ca_trash_pipe_rusty",
+      "icon": "objects_cartoon/ca_trash_pipe_rusty.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 15,
+      "tags": [
+        "rifiuto",
+        "metallo",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_trash_pizza_box_dirty",
+      "label_key": "obj_ca_trash_pizza_box_dirty",
+      "icon": "objects_cartoon/ca_trash_pizza_box_dirty.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 55,
+      "tags": [
+        "rifiuto",
+        "carta",
+        "medio"
       ],
       "style": "cartoon"
     },
@@ -10595,6 +11944,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_trash_teddy_bear_torn",
+      "label_key": "obj_ca_trash_teddy_bear_torn",
+      "icon": "objects_cartoon/ca_trash_teddy_bear_torn.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 40,
+      "tags": [
+        "rifiuto",
+        "tessuto",
+        "piccolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_trash_tire_worn",
       "label_key": "obj_ca_trash_tire_worn",
       "icon": "objects_cartoon/ca_trash_tire_worn.png",
@@ -10604,6 +11968,48 @@
         "rifiuto",
         "gomma",
         "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_trash_tv_tube_broken",
+      "label_key": "obj_ca_trash_tv_tube_broken",
+      "icon": "objects_cartoon/ca_trash_tv_tube_broken.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 40,
+      "tags": [
+        "rifiuto",
+        "vetro",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_trash_umbrella_broken",
+      "label_key": "obj_ca_trash_umbrella_broken",
+      "icon": "objects_cartoon/ca_trash_umbrella_broken.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 65,
+      "tags": [
+        "rifiuto",
+        "tessuto",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_trash_water_bottle_crushed",
+      "label_key": "obj_ca_trash_water_bottle_crushed",
+      "icon": "objects_cartoon/ca_trash_water_bottle_crushed.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 40,
+      "tags": [
+        "rifiuto",
+        "plastica",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -10911,6 +12317,33 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_viking_horn",
+      "label_key": "obj_ca_viking_horn",
+      "icon": "objects_cartoon/ca_viking_horn.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 25,
+      "tags": [
+        "strumento",
+        "musica",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_viking_shield",
+      "label_key": "obj_ca_viking_shield",
+      "icon": "objects_cartoon/ca_viking_shield.png",
+      "default_detection": "circle",
+      "default_radius": 30,
+      "tags": [
+        "legno",
+        "difesa",
+        "grande"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_violin_instrument",
       "label_key": "obj_ca_violin_instrument",
       "icon": "objects_cartoon/ca_violin_instrument.png",
@@ -10965,6 +12398,20 @@
       "tags": [
         "sport",
         "palla"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_voodoo_doll",
+      "label_key": "obj_ca_voodoo_doll",
+      "icon": "objects_cartoon/ca_voodoo_doll.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 45,
+      "tags": [
+        "tessuto",
+        "occulto",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -11440,6 +12887,19 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_wooden_shield",
+      "label_key": "obj_ca_wooden_shield",
+      "icon": "objects_cartoon/ca_wooden_shield.png",
+      "default_detection": "circle",
+      "default_radius": 32,
+      "tags": [
+        "legno",
+        "difesa",
+        "grande"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_wooden_sledge",
       "label_key": "obj_ca_wooden_sledge",
       "icon": "objects_cartoon/ca_wooden_sledge.png",
@@ -11451,6 +12911,33 @@
         "inverno",
         "legno",
         "gioco"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_wooden_totem_fox",
+      "label_key": "obj_ca_wooden_totem_fox",
+      "icon": "objects_cartoon/ca_wooden_totem_fox.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 55,
+      "tags": [
+        "legno",
+        "decorazione",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_woodpecker_bird",
+      "label_key": "obj_ca_woodpecker_bird",
+      "icon": "objects_cartoon/ca_woodpecker_bird.png",
+      "default_detection": "circle",
+      "default_radius": 15,
+      "tags": [
+        "natura",
+        "bosco",
+        "piccolo"
       ],
       "style": "cartoon"
     },
@@ -12641,230 +14128,6 @@
         "gomma",
         "stoffa",
         "oceano"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_oil_can_rusty",
-      "label_key": "obj_ca_trash_oil_can_rusty",
-      "icon": "objects_cartoon/ca_trash_oil_can_rusty.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 45,
-      "tags": [
-        "rifiuto",
-        "metallo",
-        "medio"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_water_bottle_crushed",
-      "label_key": "obj_ca_trash_water_bottle_crushed",
-      "icon": "objects_cartoon/ca_trash_water_bottle_crushed.png",
-      "default_detection": "rect",
-      "default_width": 15,
-      "default_height": 40,
-      "tags": [
-        "rifiuto",
-        "plastica",
-        "piccolo"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_banana_peel",
-      "label_key": "obj_ca_trash_banana_peel",
-      "icon": "objects_cartoon/ca_trash_banana_peel.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 20,
-      "tags": [
-        "rifiuto",
-        "biologico",
-        "piccolo"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_boot_muddy",
-      "label_key": "obj_ca_trash_boot_muddy",
-      "icon": "objects_cartoon/ca_trash_boot_muddy.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 35,
-      "tags": [
-        "rifiuto",
-        "pelle",
-        "medio"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_pallet_broken",
-      "label_key": "obj_ca_trash_pallet_broken",
-      "icon": "objects_cartoon/ca_trash_pallet_broken.png",
-      "default_detection": "rect",
-      "default_width": 65,
-      "default_height": 35,
-      "tags": [
-        "rifiuto",
-        "legno",
-        "grande"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_paint_bucket_empty",
-      "label_key": "obj_ca_trash_paint_bucket_empty",
-      "icon": "objects_cartoon/ca_trash_paint_bucket_empty.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 40,
-      "tags": [
-        "rifiuto",
-        "plastica",
-        "medio"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_newspaper_stack",
-      "label_key": "obj_ca_trash_newspaper_stack",
-      "icon": "objects_cartoon/ca_trash_newspaper_stack.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 25,
-      "tags": [
-        "rifiuto",
-        "carta",
-        "piccolo"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_keyboard_smashed",
-      "label_key": "obj_ca_trash_keyboard_smashed",
-      "icon": "objects_cartoon/ca_trash_keyboard_smashed.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 20,
-      "tags": [
-        "rifiuto",
-        "elettronica",
-        "medio"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_bike_frame_rusty",
-      "label_key": "obj_ca_trash_bike_frame_rusty",
-      "icon": "objects_cartoon/ca_trash_bike_frame_rusty.png",
-      "default_detection": "rect",
-      "default_width": 70,
-      "default_height": 45,
-      "tags": [
-        "rifiuto",
-        "metallo",
-        "grande"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_umbrella_broken",
-      "label_key": "obj_ca_trash_umbrella_broken",
-      "icon": "objects_cartoon/ca_trash_umbrella_broken.png",
-      "default_detection": "rect",
-      "default_width": 25,
-      "default_height": 65,
-      "tags": [
-        "rifiuto",
-        "tessuto",
-        "medio"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_detergent_bottle",
-      "label_key": "obj_ca_trash_detergent_bottle",
-      "icon": "objects_cartoon/ca_trash_detergent_bottle.png",
-      "default_detection": "rect",
-      "default_width": 25,
-      "default_height": 45,
-      "tags": [
-        "rifiuto",
-        "plastica",
-        "piccolo"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_tv_tube_broken",
-      "label_key": "obj_ca_trash_tv_tube_broken",
-      "icon": "objects_cartoon/ca_trash_tv_tube_broken.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 40,
-      "tags": [
-        "rifiuto",
-        "vetro",
-        "medio"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_pipe_rusty",
-      "label_key": "obj_ca_trash_pipe_rusty",
-      "icon": "objects_cartoon/ca_trash_pipe_rusty.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 15,
-      "tags": [
-        "rifiuto",
-        "metallo",
-        "medio"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_pizza_box_dirty",
-      "label_key": "obj_ca_trash_pizza_box_dirty",
-      "icon": "objects_cartoon/ca_trash_pizza_box_dirty.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 55,
-      "tags": [
-        "rifiuto",
-        "carta",
-        "medio"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_teddy_bear_torn",
-      "label_key": "obj_ca_trash_teddy_bear_torn",
-      "icon": "objects_cartoon/ca_trash_teddy_bear_torn.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 40,
-      "tags": [
-        "rifiuto",
-        "tessuto",
-        "piccolo"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_trash_frying_pan_dirty",
-      "label_key": "obj_ca_trash_frying_pan_dirty",
-      "icon": "objects_cartoon/ca_trash_frying_pan_dirty.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 30,
-      "tags": [
-        "rifiuto",
-        "metallo",
-        "medio"
       ],
       "style": "cartoon"
     }

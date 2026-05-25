@@ -576,11 +576,16 @@ class AsteroidsGame(BaseMinigame):
         """Inizializza o rigenera le superfici per gli effetti CRT."""
         sw, sh = self.screen.get_size()
         
-        # 1. Scanlines (SRCALPHA necessarie per le righe nere trasparenti)
-        self.scanline_surf = pygame.Surface((sw, sh), pygame.SRCALPHA)
-        for y in range(0, sh, 3):
-            pygame.draw.line(self.scanline_surf, (0, 0, 0, 40), (0, y), (sw, y))
-            
+        # 1. Scanlines (SRCALPHA necessarie per le righe nere trasparenti).
+        # Su Android il blit full-screen SRCALPHA per frame è lentissimo: niente
+        # scanline su mobile (effetto puramente estetico).
+        if self._android:
+            self.scanline_surf = None
+        else:
+            self.scanline_surf = pygame.Surface((sw, sh), pygame.SRCALPHA)
+            for y in range(0, sh, 3):
+                pygame.draw.line(self.scanline_surf, (0, 0, 0, 40), (0, y), (sw, y))
+
         log.debug(f"Asteroids FX surfaces initialized: {sw}x{sh}")
 
     def _update_thrust_sfx(self, dt: float):

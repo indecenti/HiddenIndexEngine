@@ -16,9 +16,9 @@ Documento operativo per generare, processare e integrare oggetti in stile
 
 ### 1.1 Sfondo e composizione
 - **Sfondo**: **Pure Neon Green** `#00FF00`
-- **Griglia**: 3×3 standard (9 oggetti) o 4×4 (16 oggetti)
+- **Griglia**: 3×3 standard (9 oggetti) o 4×4 (16 oggetti) disposti ordinatamente nello spazio
 - **Margine**: ≥ 150 px di spazio verde tra oggetti e bordi
-- **Vietato**: griglie grafiche, linee di divisione, cornici, separatori, ombre proiettate (drop shadows) sul verde
+- **TASSATIVAMENTE VIETATO**: griglie grafiche disegnate, linee di divisione (righe orizzontali o verticali di separazione), cornici, riquadri, separatori, ombre proiettate (drop shadows) sul verde.
 
 ### 1.2 Strategia di prompting
 - **Stile visivo**: "Adventure book illustration style, clean black outlines, cell shaded, vibrant but natural colors, flat shading with sharp shadows"
@@ -28,7 +28,7 @@ Documento operativo per generare, processare e integrare oggetti in stile
 
 ### 1.3 Vincoli universali
 - Niente figure umane (se non esplicitamente richieste)
-- Niente testo o watermark sull'immagine
+- **DIVIETO ASSOLUTO DI TESTO**: nessuna parola, lettera, numero, etichetta, didascalia, sottotitolo o watermark sull'immagine (nemmeno finto testo AI / gibberish sotto gli oggetti)
 - Outline neri costanti, riempimenti a colori piatti
 - Risoluzione consigliata griglia 3×3: 2048×2048; 4×4: 2560×2560
 
@@ -39,14 +39,15 @@ Documento operativo per generare, processare e integrare oggetti in stile
 ### 2.1 Algoritmo
 **Chroma Key** + **Hard Spill Suppression** + **Alpha Clipping** + **Auto-Trim**.
 
-Lo stile cartoon ha colori piatti, quindi:
+Lo stile cartoon ha colori piatti e outline neri spessi, quindi:
 1. **Chroma Key**: isola lo sfondo verde puro `#00FF00`.
-2. **Spill Suppression (Hard)**: neutralizza ogni alone verde sui contorni neri, dato che lo stile non tollera sfumature.
-3. **Alpha Clipping**: la trasparenza è **decisa**, non sfumata (niente AA morbido), per mantenere l'estetica "tagliata a mano".
+2. **Spill Suppression (Hard)**: neutralizza ogni alone verde sui contorni neri esterni, preservando integralmente il colore nero dell'outline.
+3. **Preservazione dell'Outline (TASSATIVA)**: il ritaglio dell'alpha deve avvenire **esattamente lungo il contorno nero esterno dell'oggetto**. È severamente vietato erodere o assottigliare l'outline nero (no outline erosion), l'immagine dell'oggetto deve rimanere grafica ed esteticamente inalterata al 100%.
+4. **Alpha Clipping**: la trasparenza è **decisa**, non sfumata (niente AA morbido che crea aloni), per mantenere l'estetica "tagliata a mano" lungo l'outline esterno.
 
 ### 2.2 Output
-- Formato: **PNG RGBA 32-bit** con alpha binaria
-- Auto-trim: ogni oggetto ritagliato ai pixel effettivi via `getbbox()`
+- Formato: **PNG RGBA 32-bit** con alpha binaria pulita sul contorno esterno
+- Auto-trim: ogni oggetto ritagliato ai pixel effettivi del bordo esterno via `getbbox()`
 - File salvati in: `engine/assets/objects_cartoon/`
 
 ---

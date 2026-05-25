@@ -38,6 +38,9 @@ class MenuButton:
         # Cache dell'immagine scalata (evita smoothscale ad ogni frame)
         self._scaled_img = None
         self._scaled_img_size = None
+        # Cache dell'icona scalata (evita smoothscale ad ogni frame su mobile)
+        self._scaled_icon = None
+        self._scaled_icon_key = None
 
         # Effetti Premium
         self.ripple_pos = None
@@ -81,6 +84,10 @@ class MenuSystem:
         self.game_id = game_id
         self.save_manager = save_manager
 
+        self._android = is_android_runtime()
+        # Cache delle immagini di anteprima decodificate (path -> Surface), così
+        # navigare avanti/indietro tra le pagine del menu non ridecodifica i JPG.
+        self._preview_raw_cache: dict = {}
         self.state = "main"
         self.current_res = "1280x720"
         self.is_fullscreen = False
@@ -204,6 +211,19 @@ class MenuSystem:
             btn.icon_surf = icon # Punta giÃ  a sinistra nel file sorgente
         return btn
 
+    def _load_raw_cached(self, path) -> "pygame.Surface | None":
+        """Carica e decodifica un'immagine una sola volta (cache per path).
+        Lo smoothscale alla dimensione richiesta resta a carico del chiamante."""
+        key = str(path)
+        surf = self._preview_raw_cache.get(key)
+        if surf is None:
+            try:
+                surf = pygame.image.load(key).convert()
+            except Exception:
+                return None
+            self._preview_raw_cache[key] = surf
+        return surf
+
     def change_state(self, new_state: str, **kwargs) -> None:
         """Cambia lo stato del menu e rigenera i componenti (bottoni/slider)."""
         self.state = new_state
@@ -309,8 +329,8 @@ class MenuSystem:
                             if scenes:
                                 first_scene_id = scenes[0].get("id")
                                 bg_p = ld / first_scene_id / "background.png"
-                                if bg_p.exists():
-                                    raw = pygame.image.load(str(bg_p))
+                                raw = self._load_raw_cached(bg_p) if bg_p.exists() else None
+                                if raw is not None:
                                     preview = pygame.transform.smoothscale(raw, (bw, bh))
                         except Exception: pass
 
@@ -383,9 +403,12 @@ class MenuSystem:
                 ("label_music_volume", "set_music_volume", "slider_music"),
                 ("label_sfx_volume", "set_sfx_volume", "slider_sfx"),
                 ("label_language", "toggle_lang", self.lang.current_language.upper()),
-                ("label_resolution", "toggle_res", self.current_res),
-                ("label_fullscreen", "toggle_fs", "ON" if self.is_fullscreen else "OFF"),
             ]
+            # Su Android la risoluzione NON è modificabile: si adatta sempre al
+            # dispositivo. Niente toggle risoluzione/fullscreen (sempre fullscreen).
+            if not is_android_runtime():
+                items.append(("label_resolution", "toggle_res", self.current_res))
+                items.append(("label_fullscreen", "toggle_fs", "ON" if self.is_fullscreen else "OFF"))
             
             y_start = 180 # Sotto il titolo di stato per evitare sovrapposizioni
             y_step = 100
@@ -660,18 +683,25 @@ class MenuSystem:
                 draw_rect.y += int(sm.scale_value(b.mag_offset[1]))
 
             if b.image:
-                # Bottone Scena/Anteprima — smoothscale cacheato per dimensione
+                # Bottone Scena/Anteprima. PERF: smoothscale + overlay seppia/scurente
+                # vengono BAKED una volta nell'immagine cacheata (opaca), così per
+                # frame si fa un solo blit OPACO (i blit SRCALPHA per-card erano
+                # lentissimi su pygame ARM e rallentavano la selezione scena).
                 size = (draw_rect.w, draw_rect.h)
                 if b._scaled_img is None or b._scaled_img_size != size:
-                    b._scaled_img = pygame.transform.smoothscale(b.image, size)
+                    base = pygame.transform.smoothscale(b.image, size).convert()
+                    ov_col = theme.color("scene_overlay_normal")
+                    ov = pygame.Surface(size, pygame.SRCALPHA)
+                    ov.fill(ov_col[:4] if len(ov_col) == 4 else (*ov_col, 120))
+                    base.blit(ov, (0, 0))
+                    if theme.has_sepia():
+                        sa = int(theme._effects.get("sepia_alpha", 30))
+                        sp = pygame.Surface(size, pygame.SRCALPHA)
+                        sp.fill((120, 80, 20, sa))
+                        base.blit(sp, (0, 0))
+                    b._scaled_img = base
                     b._scaled_img_size = size
-                img_scaled = b._scaled_img
-                screen.blit(img_scaled, draw_rect)
-                ov_col = theme.color("scene_overlay_hover") if b.hovered else theme.color("scene_overlay_normal")
-                ov = pygame.Surface((draw_rect.w, draw_rect.h), pygame.SRCALPHA)
-                ov.fill(ov_col[:4] if len(ov_col) == 4 else (*ov_col, 120))
-                screen.blit(ov, draw_rect)
-                theme.draw_sepia_overlay(screen, draw_rect)
+                screen.blit(b._scaled_img, draw_rect)
                 bc = theme.color3("scene_border_hover") if b.hovered else theme.color3("scene_border_normal")
                 pygame.draw.rect(screen, bc, draw_rect, width=2, border_radius=theme.border_radius())
                 
@@ -681,7 +711,7 @@ class MenuSystem:
                     screen.blit(lock_surf, lock_surf.get_rect(center=draw_rect.center))
                 
                 if b.icon_surf:
-                    ico_scaled = self._scale_icon(b.icon_surf, draw_rect, sm)
+                    ico_scaled = self._scale_icon_cached(b, draw_rect, sm)
                     screen.blit(ico_scaled, ico_scaled.get_rect(center=draw_rect.center))
                 else:
                     font = theme.get_font(theme.font_size_scene(), sm)
@@ -700,7 +730,7 @@ class MenuSystem:
                 if b.icon_surf:
                     if self.state == "settings":
                         # Layout Unificato Premium: Icona a sinistra (colonna dedicata), Valore a destra
-                        ico_scaled = self._scale_icon(b.icon_surf, draw_rect, sm)
+                        ico_scaled = self._scale_icon_cached(b, draw_rect, sm)
                         # Allineamento dell'icona all'interno della prima colonna (120px)
                         screen.blit(ico_scaled, ico_scaled.get_rect(midleft=(draw_rect.left + sm.scale_value(20), draw_rect.centery)))
                         
@@ -731,9 +761,14 @@ class MenuSystem:
                             # Blit finale del testo (centrato perfettamente nella pillola)
                             screen.blit(val_surf, v_rect)
                     else:
-                        ico_scaled = self._scale_icon(b.icon_surf, draw_rect, sm)
-                        
-                        if theme.is_icons_only():
+                        ico_scaled = self._scale_icon_cached(b, draw_rect, sm)
+                        # L'icona ottenuta è CONDIVISA (in cache): qualunque effetto
+                        # che la modifica in-place (es. riflesso BLEND_ADD) deve prima
+                        # lavorare su una copia, altrimenti l'effetto si accumula e
+                        # l'icona diventa progressivamente bianca.
+                        ico_owned = False
+
+                        if theme.is_icons_only() and not self._android:
                             # Effetti Professionali per Pure Icons
                             if b.hover_time > 0:
                                 # Alone morbido (falloff radiale) coerente con la forma dell'icona.
@@ -769,8 +804,10 @@ class MenuSystem:
                                 
                             if s != 1.0:
                                 ico_scaled = pygame.transform.smoothscale(ico_scaled, (int(ico_scaled.get_width()*s), int(ico_scaled.get_height()*s)))
+                                ico_owned = True
                             if hasattr(b, "angle") and abs(b.angle) > 0.1 and self.state != "settings":
                                 ico_scaled = pygame.transform.rotozoom(ico_scaled, b.angle, 1.0)
+                                ico_owned = True
                             
                             # Glossy Reflection (Premium Version: Trasparenza e Dettagli)
                             # Ciclo organico con pausa (4s totali, 1.2s di movimento)
@@ -786,6 +823,10 @@ class MenuSystem:
                             
                             # Attivazione: sweep ciclico o hover costante
                             if b.hover_time > 0.01 or refl_t >= 0.0:
+                                # Mai modificare la surface in cache: lavora su copia.
+                                if not ico_owned:
+                                    ico_scaled = ico_scaled.copy()
+                                    ico_owned = True
                                 iw, ih = ico_scaled.get_size()
                                 # Tecnica Robusta: Superficie nera + BLEND_ADD per un effetto luce reale
                                 # Invece di una superficie con alpha, usiamo il nero (0,0,0) come base neutra per l'ADD
@@ -924,8 +965,10 @@ class MenuSystem:
         if theme.has_magnifier() and not is_android_runtime():
             self._draw_magnifier(screen)
         # ── 4. Render Tooltips differiti (Massima prioritÃ  Z-Index)
-        for tt_text, tt_rect, tt_time in tooltip_queue:
-            self._draw_tooltip(screen, tt_text, tt_rect, sm, tt_time)
+        # Su Android (touch) i tooltip non hanno senso e sporcano lo schermo.
+        if not self._android:
+            for tt_text, tt_rect, tt_time in tooltip_queue:
+                self._draw_tooltip(screen, tt_text, tt_rect, sm, tt_time)
 
     def _focus_on_index(self, index: int, total: int, bw: float, gap: float) -> None:
         """Calcola e imposta lo scroll target per centrare un elemento specifico."""
@@ -952,8 +995,8 @@ class MenuSystem:
                     s_cfg = json.load(sf)
                 bg_file = s_cfg.get("background", "background.png")
                 bg_full_path = scene_dir / bg_file
-                if bg_full_path.exists():
-                    raw = pygame.image.load(str(bg_full_path))
+                raw = self._load_raw_cached(bg_full_path) if bg_full_path.exists() else None
+                if raw is not None:
                     preview = pygame.transform.smoothscale(raw, (w, h))
                     if not is_unlocked:
                         try: preview = pygame.transform.grayscale(preview)
@@ -988,8 +1031,8 @@ class MenuSystem:
                     s_cfg = json.load(sf)
                 bg_file = s_cfg.get("background", "background.png")
                 bg_full_path = scene_dir / bg_file
-                if bg_full_path.exists():
-                    raw = pygame.image.load(str(bg_full_path))
+                raw = self._load_raw_cached(bg_full_path) if bg_full_path.exists() else None
+                if raw is not None:
                     preview = pygame.transform.smoothscale(raw, (w, h))
                     if not is_unlocked:
                         try: preview = pygame.transform.grayscale(preview)
@@ -1095,15 +1138,25 @@ class MenuSystem:
         factor = 0.95 if self.theme.is_icons_only() else 0.7
         max_w = rect.w * factor
         max_h = rect.h * factor
-        
+
         iw, ih = icon.get_size()
         if iw == 0 or ih == 0: return icon
-        
+
         scale = min(max_w / iw, max_h / ih)
         new_w = int(iw * scale)
         new_h = int(ih * scale)
-        
+
         return pygame.transform.smoothscale(icon, (new_w, new_h))
+
+    def _scale_icon_cached(self, b: "MenuButton", rect: pygame.Rect, sm) -> pygame.Surface:
+        """Come _scale_icon ma memorizza il risultato sul bottone: evita lo
+        smoothscale ad ogni frame (costoso su pygame ARM). La chiave include la
+        dimensione del box, così il ridimensionamento avviene solo quando cambia."""
+        key = (rect.w, rect.h)
+        if b._scaled_icon is None or b._scaled_icon_key != key:
+            b._scaled_icon = self._scale_icon(b.icon_surf, rect, sm)
+            b._scaled_icon_key = key
+        return b._scaled_icon
 
     # âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     # Input

@@ -692,19 +692,23 @@ class SudokuGame(BaseMinigame):
                 msg = self._("tut_step_4", "Fallo il più velocemente possibile.\nBuona fortuna!")
                 self._draw_comic_tooltip(msg, (int(self.grid_x + self.grid_size//2), int(self.grid_y + self.grid_size//2)), "down")
 
-        # Overlay Panico (Vignetta Rossa)
+        # Overlay Panico (Vignetta Rossa). Disegnata come 4 strisce ai bordi
+        # invece di una SRCALPHA a tutto schermo (che su pygame ARM è lentissima):
+        # si fa l'alpha-blit solo sull'area effettivamente colorata.
         if self.state == "PLAYING" and self.game_timer < 10 and self.game_timer > 0:
             sw, sh = self.screen.get_size()
-            panic_surf = pygame.Surface((sw, sh), pygame.SRCALPHA)
             alpha = int(120 * self.panic_pulse)
-            # Rettangoli ai bordi per simulare vignetta
             border = int(sh * 0.15)
-            # Sopra
-            pygame.draw.rect(panic_surf, (200, 0, 0, alpha), (0, 0, sw, border))
-            # Sotto
-            pygame.draw.rect(panic_surf, (200, 0, 0, alpha), (0, sh-border, sw, border))
-            # Sinistra
-            pygame.draw.rect(panic_surf, (200, 0, 0, alpha), (0, 0, border, sh))
-            # Destra
-            pygame.draw.rect(panic_surf, (200, 0, 0, alpha), (sw-border, 0, border, sh))
-            self.screen.blit(panic_surf, (0, 0))
+            col = (200, 0, 0, alpha)
+
+            def _strip(w, h, x, y):
+                if w <= 0 or h <= 0:
+                    return
+                strip = pygame.Surface((w, h), pygame.SRCALPHA)
+                strip.fill(col)
+                self.screen.blit(strip, (x, y))
+
+            _strip(sw, border, 0, 0)            # Sopra
+            _strip(sw, border, 0, sh - border)  # Sotto
+            _strip(border, sh, 0, 0)            # Sinistra
+            _strip(border, sh, sw - border, 0)  # Destra
