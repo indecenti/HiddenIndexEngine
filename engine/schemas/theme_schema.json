@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HiddenEngine UI Theme",
+  "description": "Tema UI per il MenuSystem e gli skin. Le sezioni 'colors/layout/effects/font/views' sono il livello base storico; le sezioni 'layout_profile/motion/background/particles/typography/decor/audio_feel/scene3d' sono l'estensione skin (tutte OPZIONALI e retrocompatibili: se assenti, lo skin usa i default di 'default').",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "id":           { "type": "string" },
+    "display_name": { "type": "string" },
+    "category":     { "type": "string" },
+
+    "colors":  { "type": "object" },
+    "layout":  { "type": "object" },
+    "effects": { "type": "object" },
+    "font":    { "type": "object" },
+    "views":   { "type": "object" },
+
+    "layout_profile": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "description": "carousel | grid | sparse | radial | stack" }
+      }
+    },
+
+    "motion": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "carousel_zoom":  { "type": "number" },
+        "float_amp":      { "type": "number" },
+        "magnetic":       { "type": "boolean" },
+        "jitter":         { "type": "number" },
+        "bounce":         { "type": "boolean" },
+        "enter":          { "type": "object" },
+        "hover":          { "type": "object" },
+        "reduced_motion": { "type": "object" }
+      }
+    },
+
+    "background": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "mode": { "type": "string", "description": "image | static | poster | video | sky | fog | aurora | shader | stage3d" }
+      }
+    },
+
+    "particles": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type":    { "type": "string", "description": "none | fireflies | dust | embers | confetti | stars" },
+        "density": { "type": "number" },
+        "color":   { "type": "array", "items": { "type": "number" } }
+      }
+    },
+
+    "typography": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Stack font per ruolo: display/title/body/mono. Ogni ruolo: { family:[..], bold, spacing }. 'family' puo' contenere nomi di sistema o percorsi a .ttf/.otf bundlati."
+    },
+
+    "decor": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Layer decorativi: vignette, grain, scanline, candle_glow, sun, confetti, card_radius, ecc."
+    },
+
+    "audio_feel": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Mappatura SFX/mood per hover/click/transition e bed ambientale opzionale."
+    },
+
+    "scene3d": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Solo runtime web: descrittore scena 3D (factory id + params). Su Python/low-end degrada a poster."
+    }
+  }
+}

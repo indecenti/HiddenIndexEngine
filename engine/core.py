@@ -187,12 +187,24 @@ class EngineCore:
         from engine.catalog_manager import load_catalog
         from engine.results_screen import ResultsScreen
 
-        # Lettura game_config.json interno al gioco
+        # Lettura game_config.json interno al gioco (validato contro lo schema).
+        # La validazione e' DIAGNOSTICA: un config che non passa lo schema non deve
+        # mai far perdere la configurazione reale del gioco, quindi in caso di
+        # errore ricadiamo sul caricamento grezzo invece di azzerare la config.
         self.game_config = {}
         gc_path = get_resource_path("games", self.game_id, "game_config.json")
         if gc_path.exists():
-            with open(gc_path, "r", encoding="utf-8") as f:
-                self.game_config = json.load(f)
+            try:
+                from engine.json_validator import load_and_validate
+                self.game_config = load_and_validate(str(gc_path), "game_config")
+            except Exception as e:
+                self.logger.error(f"game_config.json non valido ({e}). Uso il caricamento grezzo.")
+                try:
+                    with open(gc_path, "r", encoding="utf-8") as f:
+                        self.game_config = json.load(f)
+                except Exception as e2:
+                    self.logger.error(f"Impossibile leggere game_config.json ({e2}). Uso default vuoto.")
+                    self.game_config = {}
 
         self.audio = AudioManager()
         self.audio.set_music_volume(self.music_volume)
@@ -1230,7 +1242,12 @@ class EngineCore:
         
     def _advance_scene(self) -> None:
         self.scaling_manager.invalidate_cache()
-        next_scene = self.level_manager.advance_to_next_scene()
+        try:
+            next_scene = self.level_manager.advance_to_next_scene()
+        except Exception as e:
+            self.logger.error(f"Impossibile caricare la scena successiva: {e}. Ritorno al menu.")
+            self._switch_to_menu()
+            return
         if next_scene:
             self._current_scene_data = next_scene
             self._current_scene_objects = next_scene.objects
@@ -1275,7 +1292,13 @@ class EngineCore:
                             break
             except: pass
 
-        scene_data = self.level_manager.start_level(level_id, start_scene_index=start_idx)
+        try:
+            scene_data = self.level_manager.start_level(level_id, start_scene_index=start_idx)
+        except Exception as e:
+            self.logger.error(f"[GAME] Impossibile avviare il livello '{level_id}': {e}. Ritorno al menu.")
+            self._switch_to_menu()
+            return
+
         self._current_scene_data = scene_data
         self._current_scene_objects = scene_data.objects
         self._current_scene_effects = scene_data.effects
@@ -1815,7 +1838,7 @@ class EngineCore:
 
                 # Se la dimensione richiesta era troppo grande, avvisiamo in log
                 if icon_w > MAX_ICON_DIM or icon_h > MAX_ICON_DIM:
-                    log.warning(
+                    self.logger.warning(
                         "Icon too large for '%s': requested %dx%d, clamped to %dx%d",
                         obj.catalog_id, icon_w, icon_h, draw_w, draw_h
                     )

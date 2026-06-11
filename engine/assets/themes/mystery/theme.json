@@ -67,5 +67,29 @@
     "pulse_scale":          1.07,
     "sepia_overlay":        true,
     "sepia_alpha":          22
-  }
+  },
+
+  "layout_profile": { "type": "carousel" },
+
+  "motion": {
+    "carousel_zoom":   0.20,
+    "float_amp":       2.0,
+    "magnetic":        false,
+    "hover":           { "scale": 1.05, "speed": 6.0 },
+    "reduced_motion":  { "disable": ["dust", "vignette", "particles"] }
+  },
+
+  "background": { "mode": "noir", "vignette": 0.72, "dust_color": [185, 150, 92] },
+
+  "particles": { "type": "dust", "density": 22, "color": [185, 150, 92] },
+
+  "typography": {
+    "display": { "family": ["Special Elite", "Georgia", "serif"], "file": "fonts/SpecialElite-Regular.ttf", "bold": false, "spacing": 2 },
+    "title":   { "family": ["Special Elite", "Georgia", "serif"], "file": "fonts/SpecialElite-Regular.ttf", "bold": false, "spacing": 2 },
+    "body":    { "family": ["Special Elite", "Georgia", "serif"], "file": "fonts/SpecialElite-Regular.ttf", "bold": false }
+  },
+
+  "decor": { "vignette": 0.72, "magnifier": true },
+
+  "audio_feel": { "hover": "hover", "click": "click" }
 }

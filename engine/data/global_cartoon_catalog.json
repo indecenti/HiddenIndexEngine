@@ -3611,7 +3611,8 @@
         "cultura",
         "antico"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_feather_small",
@@ -8045,7 +8046,8 @@
         "metallo",
         "veicolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_muffin_blueberry_paper",
@@ -8352,7 +8354,8 @@
         "lavoro",
         "decorazione"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_paint_can",
@@ -10504,7 +10507,8 @@
         "grande",
         "pietra"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_steamer_trunk_vintage",

@@ -68,5 +68,30 @@
     "flicker_speed":        22.0,
     "flashlight_fx":        true,
     "flashlight_radius":    300
-  }
+  },
+
+  "layout_profile": { "type": "sparse" },
+
+  "motion": {
+    "carousel_zoom":   0.08,
+    "float_amp":       1.5,
+    "magnetic":        false,
+    "jitter":          1.2,
+    "hover":           { "scale": 1.05, "speed": 5.0 },
+    "reduced_motion":  { "disable": ["flicker", "fog", "jitter", "particles", "grain"] }
+  },
+
+  "background": { "mode": "fog", "fog_color": [70, 40, 40], "vignette": 0.85 },
+
+  "particles": { "type": "dust", "density": 26, "color": [120, 92, 92] },
+
+  "typography": {
+    "display": { "family": ["Creepster", "Times New Roman", "serif"], "file": "fonts/Creepster-Regular.ttf", "bold": true, "spacing": 5 },
+    "title":   { "family": ["Creepster", "Times New Roman", "serif"], "file": "fonts/Creepster-Regular.ttf", "bold": true, "spacing": 4 },
+    "body":    { "family": ["Times New Roman", "Georgia", "serif"], "bold": false }
+  },
+
+  "decor": { "vignette": 0.85, "grain": 0.10, "candle_glow": true },
+
+  "audio_feel": { "hover": "miss", "click": "found" }
 }

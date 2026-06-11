@@ -51,8 +51,33 @@ class SaveManager:
                 self.data.update(loaded)
             self.logger.info("Salvataggio letto e normalizzato con successo.")
         except Exception as e:
-            self.logger.error(f"Impossibile leggere file salvataggio ({e}). Rigenero stato locale sicuro.")
+            self.logger.error(
+                f"Impossibile leggere file salvataggio ({e}). "
+                "Metto in quarantena il file e rigenero stato locale sicuro."
+            )
+            # Il file su disco potrebbe contenere progressi recuperabili: lo preserviamo
+            # con un suffisso .corrupt-<ts> invece di sovrascriverlo con il default.
+            self._quarantine_corrupt_save()
+            self.data = self._get_default_save()
             self.save()
+
+    def _quarantine_corrupt_save(self) -> None:
+        """Rinomina un salvataggio illeggibile in un sidecar .corrupt-<timestamp>.
+
+        Evita che un errore di lettura transitorio (o una scrittura parziale di
+        una vecchia versione) distrugga in modo permanente i progressi: il file
+        originale resta su disco e può essere ispezionato/recuperato a mano.
+        """
+        try:
+            if not self.save_path.exists():
+                return
+            from datetime import datetime
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            quarantined = self.save_path.with_name(f"{self.save_path.name}.corrupt-{ts}")
+            self.save_path.replace(quarantined)
+            self.logger.warning(f"Salvataggio illeggibile messo in quarantena: {quarantined.name}")
+        except Exception as e:
+            self.logger.error(f"Impossibile mettere in quarantena il salvataggio corrotto: {e}")
 
     def save(self) -> None:
         """

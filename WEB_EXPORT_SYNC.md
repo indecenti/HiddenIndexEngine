@@ -2,7 +2,9 @@
 
 > SCOLPITO NELLA PIETRA. Leggi questo prima di modificare l'engine.
 
-Il runtime web (`editor/web_template/runtime.js`) **non importa** codice Python:
+Il runtime web (sorgenti modulari in `editor/web_template/runtime/`: `core.js`,
+`game.js`, `minigames/<id>.js`, `bootstrap.js` — concatenati in `runtime.js` da
+`web_exporter._bundle_runtime`) **non importa** codice Python:
 **replica** la logica dell'engine in JavaScript. Quindi ogni modifica a una formula,
 costante o struttura dati elencata qui sotto **DEVE** essere propagata al web,
 altrimenti il gioco esportato diverge in silenzio (bug invisibili: oggetti fuori
@@ -19,11 +21,19 @@ fluiscono via `editor/web_exporter.py` (manifest); le **formule** sono duplicate
   che LEGGE i valori dall'engine e li inietta in `manifest.rules`. Il runtime usa
   `this.R` = `{RULES_DEFAULTS, ...manifest.rules}`. Cambiare la costante nell'engine la
   propaga al web al prossimo export, automaticamente.
-- **Test anti-drift**: `pytest tests/test_web_sync.py` verifica che engine, `RULES_DEFAULTS`
-  (fallback in runtime.js) e i minigiochi usati siano allineati; fallisce in caso di drift.
+- **Test anti-drift (costanti)**: `pytest tests/test_web_sync.py::test_runtime_defaults_match_engine`
+  verifica che engine e `RULES_DEFAULTS` (fallback in `runtime/core.js`) siano allineati
+  (incluse `miss_penalty_curve` e `miss_combo_window`); fallisce in caso di drift.
+- **Test di parita' COMPORTAMENTALE** (oltre alle costanti): esegue le VERE formule JS via
+  `node` (harness `tests/js/score_parity_harness.js`) e le confronta con l'engine su golden
+  vector — `test_scene_score_parity_python_vs_js` (bonus/stelle/score di fine scena) e
+  `test_miss_penalty_parity_python_vs_js` (curva penalita' miss). Una divergenza di FORMULA,
+  non solo di costante, diventa un fallimento di test.
+- **Smoke scene reali**: `tests/test_scene_smoke.py` carica ogni `scene.json` tramite il vero
+  `SceneLoader` (validazione + join catalogo) e verifica che i goal siano colpibili.
 - Restano **manuali** (non automatizzabili come valori): le **formule** di proiezione,
   hit-test, effetti, torcia — elencate qui sotto. Toccarle nell'engine richiede di
-  aggiornare a mano `runtime.js`.
+  aggiornare a mano i moduli in `editor/web_template/runtime/`.
 
 ---
 
@@ -55,10 +65,12 @@ rect → x/y top-left; circle → x/y centro. Esportati 1:1 nel manifest.
 | `POINTS_PER_OBJECT` | 100 | `POINTS_PER_OBJECT` |
 | `BONUS_TIME_MAX` | 500 | `BONUS_TIME_MAX` |
 | `STAR_MULTIPLIER` | `{1:1, 2:1, 3:2}` | `STAR_MULTIPLIER` |
-| `MISS_PENALTY_TIME` | 5.0 s | `MISS_TIME_PENALTY` |
-| `MISS_PENALTY_SCORE` | -25 | `MISS_POINT_PENALTY` (=25, sottratto) |
-| Stelle: 3 se all-found e `bonus/BONUS_TIME_MAX >= 0.66`; 2 se all-found; 1 altrimenti | — | `_finishScene` + `BONUS_RATIO_3STAR=0.66` |
-| `score = (scene_score + bonus) * STAR_MULTIPLIER[stars]` | — | `_finishScene` |
+| `MISS_PENALTY_TIME` | 5.0 s | `miss_time_penalty` |
+| `MISS_PENALTY_CURVE` progressiva sui miss consecutivi (finestra `MISS_COMBO_WINDOW`=1.5s) | `[25,50,100,150,300,500]` | `miss_penalty_curve` + `_missPenalty`/stato consecutivo in `_onPointer`; **lo score puo' andare NEGATIVO** (niente floor), come l'engine |
+| `bonus = int(time_ratio * BONUS_TIME_MAX)` — **troncamento** verso zero | — | `Math.trunc(...)` in `_doFinish` (NON `Math.round`) |
+| Stelle: 3 se all-found e `bonus/BONUS_TIME_MAX >= 0.66`; 2 se all-found; 1 altrimenti | — | `_doFinish` + `bonus_ratio_3star=0.66` |
+| `score = (scene_score + bonus) * STAR_MULTIPLIER[stars]` — aritmetica intera, **nessun arrotondamento** | — | `_doFinish` (nessun `Math.round` esterno) |
+| Sorgente unica testabile: `LevelManager.compute_scene_score` / `LevelManager.miss_penalty` | — | pinnati da `test_scene_score_parity_*` / `test_miss_penalty_parity_*` |
 
 ---
 
@@ -172,8 +184,9 @@ duplicate nelle rispettive classi JS (`AST`, `TET_*`, `AE_*`). Se cambiano, aggi
 
 1. La modifica tocca una riga in questo documento? Se sì, aggiorna il WEB corrispondente.
 2. Hai cambiato una **struttura dati** di scena/oggetto/salvataggio? Aggiorna
-   `editor/web_exporter.py` (manifest) e i lettori in `runtime.js`.
-3. Hai cambiato una **costante/formula**? Aggiorna il valore in `runtime.js`.
+   `editor/web_exporter.py` (manifest) e i lettori in `runtime/game.js` (o `core.js`).
+3. Hai cambiato una **costante/formula**? Aggiorna il valore in `runtime/core.js`
+   (`RULES_DEFAULTS`/formule) o nel modulo `runtime/minigames/<id>.js` interessato.
 4. Hai aggiunto un nuovo tipo di effetto / detection / campo oggetto? Esportalo e
    gestiscilo nel runtime (o documentane l'esclusione in WEB_EXPORT.md §7).
 5. Ri-esporta e verifica:

@@ -47,8 +47,20 @@ _FFMPEG = shutil.which("ffmpeg")
 
 # Dipendenze di asset tra minigiochi (alcuni riusano risorse di altri).
 # arcade_eleven carica le carte e i suoni dalla cartella 'tower'.
+# spot_differences pesca oggetti random da un pool per-stile (cartoon/real/lineart).
+# Il runtime richiede solo >=25 oggetti per stile (vedi runtime/minigames/spot_differences.js)
+# e ne disegna una manciata per round con reshuffle: esportare l'INTERO catalogo (~2760
+# immagini, centinaia di MB) e' spreco. Limitiamo il pool per stile mantenendo varieta'.
+SPOT_MAX_PER_STYLE = 120
+
 MINIGAME_ASSET_DEPS = {
     "arcade_eleven": ["tower"],
+    "centipede": ["centipede"],
+    "minipong": ["minipong"],
+    "slot_classic": ["slot_classic"],
+    "spot_differences": ["spot_differences"],
+    "sudoku": ["sudoku"],
+    "tower": ["tower"],
 }
 
 # Replica di engine/scene_loader.py:LAYER_Z
@@ -61,8 +73,53 @@ LAYER_Z = {
     "ui_overlay": 100,
 }
 
+# Ottimizzazione immagini web. Gli sfondi sono fotografici/illustrativi: WebP lossy
+# li riduce di ~90% rispetto al PNG. La risoluzione viene cappata: e' sicuro perche' le
+# coordinate restano in bg-space tramite bg_w/bg_h ORIGINALI nel manifest (lo sfondo viene
+# disegnato nel rect di bg-space, vedi runtime ScalingManager). Le icone restano a piena
+# risoluzione (nitidezza per l'hidden-object) ma in WebP lossless (piu' piccolo del PNG,
+# zero perdita). objCenterAndSize usa width/height/radius dal manifest, mai la dimensione
+# naturale dell'icona: anche un eventuale downscale icone sarebbe coordinate-safe.
+BG_MAX_DIM = 1920
+BG_WEBP_QUALITY = 82
+
 TEMPLATE_DIR = Path(__file__).parent / "web_template"
+RUNTIME_DIR = TEMPLATE_DIR / "runtime"
+# Ordine deterministico dei moduli base del runtime (i minigiochi vengono
+# aggiunti in mezzo, solo quelli effettivamente usati dal gioco).
+RUNTIME_CORE_FILES = ["core.js", "game.js"]
+# Skin dei menu (overlay DOM/CSS), inclusi dopo il core e prima dei minigiochi.
+RUNTIME_SKIN_FILES = ["skins/shaderbg.js", "skins/base.js", "skins/horror.js", "skins/kids.js",
+                      "skins/cyber_neon.js", "skins/mystery.js"]
 DEFAULT_CORNERS = [[0, 0], [0, 0], [0, 0], [0, 0]]
+
+
+def _bundle_runtime(output_path: Path, minigame_ids: set[str]) -> None:
+    """Concatena i moduli sorgente di web_template/runtime/ in un unico runtime.js.
+
+    Include core + game + SOLO i minigiochi richiesti (minigames/{id}.js) + bootstrap.
+    Gli script sono classici (niente ES module): la concatenazione produce lo stesso
+    scope globale del vecchio monolite e continua a funzionare da file:// senza server.
+    Ogni minigioco si auto-registra in window.MINIGAME_CLASSES.
+    """
+    parts: list[str] = [
+        "// runtime.js — GENERATO da web_exporter._bundle_runtime (NON modificare a mano).\n"
+        "// Sorgenti: editor/web_template/runtime/{core,game,minigames/*,bootstrap}.js\n",
+    ]
+    for fname in RUNTIME_CORE_FILES:
+        parts.append((RUNTIME_DIR / fname).read_text(encoding="utf-8"))
+    for fname in RUNTIME_SKIN_FILES:
+        sp = RUNTIME_DIR / fname
+        if sp.exists():
+            parts.append(sp.read_text(encoding="utf-8"))
+    for mid in sorted(minigame_ids):
+        mg_path = RUNTIME_DIR / "minigames" / f"{mid}.js"
+        if mg_path.exists():
+            parts.append(mg_path.read_text(encoding="utf-8"))
+        else:
+            print(f"  [WARN] runtime minigioco mancante (non in bundle): {mid}.js")
+    parts.append((RUNTIME_DIR / "bootstrap.js").read_text(encoding="utf-8"))
+    output_path.write_text("\n".join(parts), encoding="utf-8", newline="")
 
 
 def _load_json(path: Path) -> dict:
@@ -273,6 +330,73 @@ def _export_minigames(base: Path, output_dir: Path, used: set[str], languages: l
         ignore = shutil.ignore_patterns("*.py", "__pycache__", "*.pyc", "*.pyo")
         shutil.copytree(src_dir, dst_dir, ignore=ignore, dirs_exist_ok=True)
 
+        if mg_id == "slot_classic":
+            # Copia i simboli grafici dal catalogo dell'engine
+            assets_map = {
+                "shiny_star": "obj_slot_shiny_star.png",
+                "golden_bell": "obj_slot_golden_bell.png",
+                "red_cherries": "obj_slot_red_cherries.png",
+                "lucky_seven": "obj_slot_lucky_7.png",
+                "blue_diamond": "obj_slot_big_diamond.png",
+                "green_clover": "obj_slot_four_leaf_clover.png",
+                "grape_bunch": "obj_slot_purple_grapes.png"
+            }
+            # Crea la cartella assets/ nel minigioco se non esiste
+            dst_assets = dst_dir / "assets"
+            dst_assets.mkdir(parents=True, exist_ok=True)
+            for filename in assets_map.values():
+                src_pic = base / "engine" / "assets" / "objects_cartoon" / filename
+                if not src_pic.exists():
+                    src_pic = base / "engine" / "assets" / "objects" / filename
+                if src_pic.exists():
+                    shutil.copy2(src_pic, dst_assets / filename)
+                    print(f"  [Minigame] simbolo slot copiato: {filename}")
+
+        if mg_id == "spot_differences":
+            # Copia le immagini degli oggetti da tutti e tre i cataloghi dell'engine
+            # e inserisce un archivio compatto objects.json all'interno della cartella del minigioco.
+            dst_objects = dst_dir / "objects"
+            dst_objects.mkdir(parents=True, exist_ok=True)
+            
+            catalog_files = [
+                "global_cartoon_catalog.json", 
+                "global_real_catalog.json", 
+                "global_lineart_catalog.json"
+            ]
+            
+            copied_list = []
+            per_style: dict[str, int] = {}  # cap per stile (vedi SPOT_MAX_PER_STYLE)
+            for cat_name in catalog_files:
+                cat_path = base / "engine" / "data" / cat_name
+                if cat_path.exists():
+                    try:
+                        cat_data = _load_json(cat_path)
+                        for obj in cat_data.get("objects", []):
+                            icon_rel = obj.get("icon")
+                            if not icon_rel:
+                                continue
+                            style = obj.get("style", "cartoon").lower()
+                            if per_style.get(style, 0) >= SPOT_MAX_PER_STYLE:
+                                continue
+                            src_pic = base / "engine" / "assets" / icon_rel
+                            if src_pic.exists():
+                                shutil.copy2(src_pic, dst_objects / src_pic.name)
+                                per_style[style] = per_style.get(style, 0) + 1
+                                copied_list.append({
+                                    "id": src_pic.stem,
+                                    "icon": f"assets/minigames/spot_differences/objects/{src_pic.name}",
+                                    "style": style,
+                                    "tags": [t.lower() for t in obj.get("tags", [])]
+                                })
+                    except Exception as e:
+                        print(f"  [WARN] Fallito parsing catalogo {cat_name} in exporter: {e}")
+
+            # Scrive l'elenco degli oggetti in un file locale del minigioco, in modo che runtime.js possa caricarlo
+            with open(dst_dir / "objects.json", "w", encoding="utf-8") as f:
+                json.dump({"objects": copied_list}, f, ensure_ascii=False, indent=2)
+            print(f"  [Minigame] esportati {len(copied_list)} oggetti del catalogo per spot_differences "
+                  f"(cap {SPOT_MAX_PER_STYLE}/stile: {per_style})")
+
         # Copia anche gli asset dei minigiochi-dipendenza (es. arcade_eleven -> tower)
         for dep in MINIGAME_ASSET_DEPS.get(mg_id, []):
             dep_src = base / "engine" / "minigames" / dep
@@ -314,10 +438,50 @@ def _load_theme(base: Path, game_id: str, theme_id: str) -> dict:
                     "layout": data.get("layout", {}),
                     "effects": data.get("effects", {}),
                     "font": data.get("font", {}),
+                    # Estensione skin (per gli skin web DOM/CSS).
+                    "layout_profile": data.get("layout_profile", {}),
+                    "motion": data.get("motion", {}),
+                    "background": data.get("background", {}),
+                    "particles": data.get("particles", {}),
+                    "typography": data.get("typography", {}),
+                    "decor": data.get("decor", {}),
+                    "audio_feel": data.get("audio_feel", {}),
+                    "scene3d": data.get("scene3d", {}),
                 }
             except Exception as e:
                 print(f"  [WARN] tema non leggibile {path}: {e}")
-    return {"id": theme_id, "colors": {}, "layout": {}, "effects": {}, "font": {}}
+    return {"id": theme_id, "colors": {}, "layout": {}, "effects": {}, "font": {},
+            "layout_profile": {}, "motion": {}, "background": {}, "particles": {},
+            "typography": {}, "decor": {}, "audio_feel": {}, "scene3d": {}}
+
+
+def _export_fonts(base: Path, game_id: str, theme: dict, assets_dir: Path) -> list[dict]:
+    """Copia i font bundlati del tema (typography[*].file) nel build web e
+    ritorna [{family, url}] per le @font-face del runtime. Dedup per file."""
+    typ = (theme or {}).get("typography", {})
+    if not isinstance(typ, dict):
+        return []
+    theme_id = theme.get("id", "default")
+    out: list[dict] = []
+    seen: set[str] = set()
+    for cfg in typ.values():
+        if not isinstance(cfg, dict):
+            continue
+        file_rel, fam = cfg.get("file"), cfg.get("family")
+        if not file_rel or not fam:
+            continue
+        family = fam[0] if isinstance(fam, list) and fam else fam
+        src = next((c for c in (
+            base / "games" / game_id / "ui_theme" / file_rel,
+            base / "engine" / "assets" / "themes" / theme_id / file_rel,
+        ) if c.exists()), None)
+        if not src or src.name in seen:
+            continue
+        seen.add(src.name)
+        (assets_dir / "fonts").mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, assets_dir / "fonts" / src.name)
+        out.append({"family": family, "url": f"assets/fonts/{src.name}"})
+    return out
 
 
 def _theme_hex(theme: dict) -> str:
@@ -376,6 +540,15 @@ def _render_index_html(lang: str, title: str, desc: str, theme_color: str,
 </div>
 <script src="manifest.js"></script>
 <script src="runtime.js"></script>
+<script>
+// Service worker: offline + installabilita' PWA. Non funziona da file:// (richiede
+// http/https): in quel caso si salta in silenzio (il gioco gira comunque via manifest.js).
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {{
+  window.addEventListener("load", function () {{
+    navigator.serviceWorker.register("sw.js").catch(function () {{}});
+  }});
+}}
+</script>
 </body>
 </html>
 """
@@ -394,6 +567,45 @@ def _write_webmanifest(out: Path, title: str, theme_color: str, bg_color: str, i
         "icons": icons,
     }
     (out / "manifest.webmanifest").write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _write_service_worker(out: Path, game_id: str, version: str) -> None:
+    """Service worker: precache della app-shell + caching cache-first progressivo degli
+    asset al primo fetch (offline-ready). Il nome cache include game+versione, cosi' un
+    nuovo build invalida la cache vecchia. Le richieste Range (video/audio seeking) passano
+    dirette per non rompere lo streaming. Funziona solo da http(s) (vedi index.html)."""
+    cache_name = f"{game_id}-v{version}"
+    shell = '["./","./index.html","./style.css","./runtime.js","./manifest.js",' \
+            '"./manifest.json","./manifest.webmanifest"]'
+    sw = f"""// sw.js — GENERATO da web_exporter. Cache: {cache_name}
+const CACHE = "{cache_name}";
+const SHELL = {shell};
+self.addEventListener("install", (e) => {{
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+}});
+self.addEventListener("activate", (e) => {{
+  e.waitUntil(
+    caches.keys().then((keys) => Promise.all(
+      keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
+    )).then(() => self.clients.claim())
+  );
+}});
+self.addEventListener("fetch", (e) => {{
+  const req = e.request;
+  if (req.method !== "GET") return;
+  if (req.headers.has("range")) return; // video/audio seeking: passa diretto
+  e.respondWith(
+    caches.match(req).then((hit) => hit || fetch(req).then((res) => {{
+      if (res && res.status === 200 && res.type === "basic") {{
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy));
+      }}
+      return res;
+    }}).catch(() => caches.match("./index.html")))
+  );
+}});
+"""
+    (out / "sw.js").write_text(sw, encoding="utf-8")
 
 
 def _collect_strings(base: Path, game_id: str) -> tuple[dict, list[str]]:
@@ -466,21 +678,32 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
             print(f"  [WARN] icona mancante: {icon_rel}")
             copied_icons[icon_rel] = ""
             return ""
-        # Nome file univoco mantenendo il basename
-        web_name = Path(icon_rel).name
+        # Nome file univoco (basename -> .webp). Stessa icon_rel ritorna gia' dalla cache
+        # sopra, quindi una collisione qui = due icon_rel diverse con lo stesso basename.
+        web_name = Path(icon_rel).with_suffix(".webp").name
         dst = icons_assets / web_name
-        # Evita collisioni di basename tra cartelle diverse
-        if dst.exists() and dst.stat().st_size != src.stat().st_size:
-            web_name = icon_rel.replace("/", "__").replace("\\", "__")
+        if dst.exists():
+            safe = icon_rel.replace("/", "__").replace("\\", "__")
+            web_name = Path(safe).with_suffix(".webp").name
             dst = icons_assets / web_name
-        shutil.copy2(src, dst)
+        try:
+            with Image.open(src) as im:
+                im.convert("RGBA").save(dst, "WEBP", lossless=True, quality=100, method=6)
+        except Exception as e:
+            print(f"  [WARN] conversione WebP icona fallita {icon_rel}: {e} (copia raw)")
+            web_name = Path(icon_rel).name
+            dst = icons_assets / web_name
+            shutil.copy2(src, dst)
         web_path = f"assets/icons/{web_name}"
         copied_icons[icon_rel] = web_path
         return web_path
 
     # track_name -> path sorgente risolto (per la transcodifica audio)
     scene_music_refs: dict[str, str] = {}
-    used_minigames: set[str] = set()  # minigiochi triggerati nelle scene
+    # Minigiochi effettivamente referenziati da un trigger nelle scene: SOLO questi
+    # finiscono nel bundle runtime.js (vedi _bundle_runtime) e ne vengono esportati
+    # gli asset (le dipendenze di MINIGAME_ASSET_DEPS sono risolte in _export_minigames).
+    triggered_minigames: set[str] = set()
 
     levels_out = []
     levels_dir = game_path / "levels"
@@ -508,6 +731,18 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
                 continue
             sdata = _load_json(scene_json)
 
+            # Validazione schema PRIMA di costruire il manifest: una scena che
+            # l'engine Python rifiuterebbe non deve finire silenziosamente nel
+            # build web (dove diventerebbe un errore JS oscuro nel browser del
+            # giocatore). Stesso contratto validate-on-load dell'engine.
+            from engine.json_validator import validate as _validate_scene
+            _scene_errors = _validate_scene(sdata, "scene", source_path=str(scene_json))
+            if _scene_errors:
+                raise ValueError(
+                    f"Export interrotto: scene.json non valido ({scene_json}):\n"
+                    + "\n".join(_scene_errors)
+                )
+
             # Background: copia + dimensioni reali (bg-space). Supporta immagini e video.
             bg_name = sdata["background"]
             bg_src = scene_dir / bg_name
@@ -530,15 +765,27 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
                         thumb_web = f"assets/thumbs/{thumb_name}"
                 else:
                     with Image.open(bg_src) as im:
+                        # bg-space = dimensioni ORIGINALI: le coordinate non cambiano anche
+                        # se il file esportato viene ridotto di risoluzione.
                         bg_w, bg_h = im.size
-                        thumb = im.convert("RGB")
+                        rgb = im.convert("RGB")
+                        # thumbnail menu (480px)
                         tw = 480
                         th = max(1, round(bg_h * tw / bg_w))
-                        thumb = thumb.resize((tw, th), Image.LANCZOS)
-                        thumb.save(thumbs_assets / thumb_name, "JPEG", quality=80)
+                        rgb.resize((tw, th), Image.LANCZOS).save(
+                            thumbs_assets / thumb_name, "JPEG", quality=80)
                         thumb_web = f"assets/thumbs/{thumb_name}"
-                    shutil.copy2(bg_src, dst_dir / bg_name)
-                    bg_web = f"assets/scenes/{level_dir.name}__{sid}/{bg_name}"
+                        # sfondo: WebP, risoluzione cappata a BG_MAX_DIM
+                        scale = min(1.0, BG_MAX_DIM / max(bg_w, bg_h))
+                        bg_img = rgb
+                        if scale < 1.0:
+                            bg_img = rgb.resize(
+                                (max(1, round(bg_w * scale)), max(1, round(bg_h * scale))),
+                                Image.LANCZOS)
+                        bg_out_name = Path(bg_name).with_suffix(".webp").name
+                        bg_img.save(dst_dir / bg_out_name, "WEBP",
+                                    quality=BG_WEBP_QUALITY, method=6)
+                    bg_web = f"assets/scenes/{level_dir.name}__{sid}/{bg_out_name}"
             else:
                 print(f"  [WARN] background mancante: {bg_src}")
 
@@ -552,7 +799,7 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
                 obj = _build_object(raw, iid, catalog)
                 obj["icon"] = _copy_icon(obj.pop("_icon_rel"))
                 if obj.get("minigame_trigger") and obj["minigame_trigger"].get("minigame_id"):
-                    used_minigames.add(obj["minigame_trigger"]["minigame_id"])
+                    triggered_minigames.add(obj["minigame_trigger"]["minigame_id"])
                 objs.append(obj)
 
             # Effetti ambientali (glint/smoke/flies) + fumetti (bubble_tip),
@@ -666,7 +913,7 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
     strings, languages = _collect_strings(base, game_id)
 
     # Minigiochi: copia asset + stringhe namespaced per-minigioco
-    minigames, mg_strings = _export_minigames(base, output_dir, used_minigames, languages)
+    minigames, mg_strings = _export_minigames(base, output_dir, triggered_minigames, languages)
 
     manifest = {
         "game_id": game_id,
@@ -688,6 +935,7 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
         "minigame_strings": mg_strings,
         "levels": levels_out,
     }
+    manifest["fonts"] = _export_fonts(base, game_id, manifest["theme"], assets_dir)
 
     manifest_str = json.dumps(manifest, ensure_ascii=False, separators=(",", ":"))
     with open(output_dir / "manifest.json", "w", encoding="utf-8") as f:
@@ -721,9 +969,11 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
     (output_dir / "index.html").write_text(
         _render_index_html(default_lang, title, desc, theme_color, favicon_web, og_web),
         encoding="utf-8")
-    for fname in ("style.css", "runtime.js"):
-        shutil.copy2(TEMPLATE_DIR / fname, output_dir / fname)
+    shutil.copy2(TEMPLATE_DIR / "style.css", output_dir / "style.css")
+    # runtime.js: bundle dei soli minigiochi triggerati nelle scene.
+    _bundle_runtime(output_dir / "runtime.js", triggered_minigames)
     _write_webmanifest(output_dir, title, theme_color, bg_color, favicon_web or None)
+    _write_service_worker(output_dir, game_id, version)
 
     # File .bat per avviare un server locale e aprire il browser (Windows).
     # Utile per testare velocemente; per la pubblicazione basta caricare la cartella.

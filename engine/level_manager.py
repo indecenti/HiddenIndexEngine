@@ -59,6 +59,11 @@ PRELOAD_TIME_RATIO   = 0.40   # avvia preload quando <= 40% timer rimanente
 # Penalità
 MISS_PENALTY_TIME    = 5.0    # secondi aggiunti per ogni click a vuoto
 MISS_PENALTY_SCORE   = -25    # punteggio base sottratto per ogni click a vuoto
+# Curva progressiva sui miss consecutivi e finestra (secondi) entro cui un miss
+# conta come "consecutivo". FONTE UNICA DI VERITA' condivisa col runtime web
+# (game.js::_missPenalty) via web_rules.engine_rules() -> manifest.rules.
+MISS_PENALTY_CURVE   = [25, 50, 100, 150, 300, 500]
+MISS_COMBO_WINDOW    = 1.5
 
 # ---------------------------------------------------------------------------
 # Evento custom Pygame
@@ -469,21 +474,19 @@ class LevelManager:
         
         # Usiamo il tempo reale per rilevare la frequenza fisica dei click dell'utente
         now_real = time.time()
-        if now_real - self._last_miss_real_time < 1.5:
+        if now_real - self._last_miss_real_time < MISS_COMBO_WINDOW:
             self._consecutive_misses += 1
         else:
             self._consecutive_misses = 1
-            
+
         self._last_miss_real_time = now_real
         self._miss_clicks += 1
-        
+
         # 1. Penalità temporale fissa (5.0s)
         self._time_elapsed += MISS_PENALTY_TIME
-        
-        # 2. Penalità punteggio basata su lista specifica: -25, -50, -100, -150, -300, -500
-        penalties = [25, 50, 100, 150, 300, 500]
-        idx = min(self._consecutive_misses - 1, len(penalties) - 1)
-        penalty = -penalties[idx]
+
+        # 2. Penalità punteggio progressiva: -25, -50, -100, -150, -300, -500
+        penalty = -self.miss_penalty(self._consecutive_misses)
         
         self.apply_score_penalty(penalty)
         
@@ -590,14 +593,10 @@ class LevelManager:
     def _build_result(self, failed: bool) -> SceneResult:
         found = self._found_count()
         total = self._total_count()
-        bonus = 0
-        if not failed and found == total and self._time_total > 0:
-            # Punteggio diviso se trovi tutto prima del suggerito 'time_total'
-            time_ratio = max(0, self._time_total - self._time_elapsed) / self._time_total
-            bonus = int(time_ratio * BONUS_TIME_MAX)
-
-        stars = self._calc_stars(found, total, bonus, failed)
-        score = (self._scene_score + bonus) * STAR_MULTIPLIER.get(stars, 1)
+        bonus, stars, score = self.compute_scene_score(
+            found, total, self._scene_score,
+            self._time_elapsed, self._time_total, failed,
+        )
 
         hints_used = 0
         if self._hint_system:
@@ -621,6 +620,37 @@ class LevelManager:
             return 1
         bonus_ratio = bonus / BONUS_TIME_MAX if BONUS_TIME_MAX > 0 else 0
         return 3 if bonus_ratio >= 0.66 else 2
+
+    @staticmethod
+    def compute_scene_score(
+        found: int, total: int, scene_score: int,
+        time_elapsed: float, time_total: float, failed: bool,
+    ) -> tuple[int, int, int]:
+        """Calcolo PURO di (bonus, stars, score) di una scena.
+
+        Fonte unica di verita' dello scoring lato engine: usato sia da
+        _build_result sia dai test di parita' Python<->JS (tests/test_web_sync.py).
+        Il runtime web (game.js::_doFinish) DEVE replicare questa stessa formula.
+        """
+        bonus = 0
+        if not failed and found == total and time_total > 0:
+            # Bonus tempo se trovi tutto prima del 'time_total' suggerito.
+            time_ratio = max(0, time_total - time_elapsed) / time_total
+            bonus = int(time_ratio * BONUS_TIME_MAX)   # troncamento (verso zero)
+        stars = LevelManager._calc_stars(found, total, bonus, failed)
+        score = (scene_score + bonus) * STAR_MULTIPLIER.get(stars, 1)
+        return bonus, stars, score
+
+    @staticmethod
+    def miss_penalty(consecutive_misses: int) -> int:
+        """Penalita' punteggio (valore positivo) per un click a vuoto, data la
+        lunghezza della sequenza di miss consecutivi.
+
+        Curva progressiva = MISS_PENALTY_CURVE. Fonte unica di verita' replicata
+        dal runtime web (game.js::_missPenalty), verificata in test_web_sync.py.
+        """
+        idx = min(max(consecutive_misses, 1) - 1, len(MISS_PENALTY_CURVE) - 1)
+        return MISS_PENALTY_CURVE[idx]
 
     # ------------------------------------------------------------------
     # Accessors

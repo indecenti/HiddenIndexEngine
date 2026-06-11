@@ -2,17 +2,22 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "game_config.json",
   "type": "object",
-  "required": ["game_id", "version", "title_key", "menu", "default_language"],
-  "additionalProperties": false,
+  "required": ["game_id", "version", "title_key", "menu"],
+  "additionalProperties": true,
   "properties": {
+    "id":               { "type": "string" },
     "game_id":          { "type": "string", "minLength": 1 },
     "version":          { "type": "string" },
     "title_key":        { "type": "string" },
     "default_language": { "type": "string", "minLength": 2 },
     "fallback_language":{ "type": "string" },
+    "ui_theme":         { "type": "string" },
+    "category":         { "type": "string" },
+    "icon":             { "type": "string" },
+    "levels":           { "type": "array", "items": { "type": "string" } },
     "identity": {
       "type": "object",
-      "additionalProperties": false,
+      "additionalProperties": true,
       "properties": {
         "logo":             { "type": "string" },
         "icon":             { "type": "string" },
@@ -22,22 +27,35 @@
     "menu": {
       "type": "object",
       "required": ["background"],
-      "additionalProperties": false,
+      "additionalProperties": true,
       "properties": {
-        "background":            { "type": "string" },
-        "music":                 { "type": "string" },
-        "level_select_background":{ "type": "string" }
+        "background":             { "type": "string" },
+        "background_static":      { "type": "string" },
+        "level_select_background":{ "type": "string" },
+        "music": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        }
       }
     },
     "hud": {
       "type": "object",
-      "additionalProperties": false,
+      "additionalProperties": true,
       "properties": {
         "frame":        { "type": "string" },
         "font":         { "type": "string" },
         "text_color":   { "type": "array", "items": { "type": "integer" }, "minItems": 3, "maxItems": 4 },
         "accent_color": { "type": "array", "items": { "type": "integer" }, "minItems": 3, "maxItems": 4 },
         "position":     { "type": "string", "enum": ["bottom", "top"] }
+      }
+    },
+    "hint_earn_config": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "hints_per_scene": { "type": "integer", "minimum": 0 }
       }
     },
     "layer_hint_intensity": {
@@ -49,7 +67,7 @@
       "items": {
         "type": "object",
         "required": ["id", "z_value"],
-        "additionalProperties": false,
+        "additionalProperties": true,
         "properties": {
           "id":            { "type": "string" },
           "z_value":       { "type": "integer" },
@@ -63,7 +81,7 @@
       "items": {
         "type": "object",
         "required": ["id", "name_key", "condition"],
-        "additionalProperties": false,
+        "additionalProperties": true,
         "properties": {
           "id":              { "type": "string" },
           "name_key":        { "type": "string" },

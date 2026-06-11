@@ -61,20 +61,21 @@ build_web/
     └── v<X.Y>/                 # build versionato
         ├── index.html          # shell: meta SEO/OG/PWA + canvas + loading screen
         ├── style.css           # canvas full-viewport + loading screen
-        ├── runtime.js          # IL MOTORE WEB (replica dell'engine) — template condiviso
+        ├── runtime.js          # IL MOTORE WEB (replica dell'engine) — bundle generato da runtime/
         ├── manifest.js         # window.__MANIFEST__ = {...}  (per file://, senza fetch)
         ├── manifest.json       # stesso contenuto (per setup http)
         ├── manifest.webmanifest# PWA (installabile)
+        ├── sw.js               # service worker: offline + cache (cache <game>-v<X.Y>)
         ├── version.json        # gioco, versione, runtime_version, timestamp
         └── assets/
-            ├── scenes/<level>__<scene>/<bg>.png|.mp4   # sfondi scene (immagine o video)
+            ├── scenes/<level>__<scene>/<bg>.webp|.mp4  # sfondi (WebP q82, cap 1920px) o video
             ├── thumbs/<level>__<scene>.jpg             # anteprime menu (480px)
-            ├── icons/<obj>.png                          # icone oggetti (risolte e copiate)
+            ├── icons/<obj>.webp                         # icone oggetti (WebP lossless, piena risoluzione)
             ├── icon.<ext>, menu_poster.<ext>            # favicon/OG + poster menu
             ├── video/<menu>.mp4                         # video di sfondo del menu
             ├── audio/sfx/*.mp3                          # SFX globali (96k mono)
             ├── audio/music/*.mp3                        # musica scene/menu (112k stereo)
-            └── minigames/<id>/...                       # asset minigiochi (+ dipendenze)
+            └── minigames/<id>/...                       # asset SOLO dei minigiochi triggerati (+ dipendenze)
 ```
 
 ---
@@ -88,12 +89,20 @@ build_web/
 - Transcodifica audio con **ffmpeg** (SFX engine + musica scene/menu); fallback a copia raw se ffmpeg assente.
 - Incorpora le **stringhe** (engine + gioco uniti) e il **tema** UI nel manifest.
 - Copia gli asset dei **minigiochi** usati (+ dipendenze, vedi `MINIGAME_ASSET_DEPS`).
+- Genera `runtime.js` concatenando i moduli di `runtime/` (vedi sotto), includendo
+  **solo i minigiochi triggerati** nelle scene (`_bundle_runtime`).
 
-### Runtime — `editor/web_template/{index.html,style.css,runtime.js}`
-- File template condivisi, copiati in ogni export.
-- `runtime.js` contiene: `ScalingManager`, hit-test, rendering oggetti, `AudioEngine`,
-  `Theme`, `Save`, `Game` (state machine), effetti, torcia, fumetti, HUD, hint, pausa,
-  impostazioni, results, e i minigiochi (`TetranGame`, `ArcadeEleven`, `AsteroidsGame`).
+### Runtime — `editor/web_template/{index.html,style.css}` + `editor/web_template/runtime/`
+- `index.html`/`style.css`: template statici copiati in ogni export.
+- `runtime/`: sorgenti modulari (script classici, niente ES module → funzionano da `file://`):
+  - `core.js`: `ScalingManager`, hit-test, rendering oggetti, `AudioEngine`, `Theme`,
+    `Save`, `RULES_DEFAULTS`, effetti; inizializza `window.MINIGAME_CLASSES`.
+  - `game.js`: classe `Game` (state machine, scene, HUD, hint, pausa, impostazioni, results).
+  - `minigames/<id>.js`: un file per minigioco; ognuno si **auto-registra** in
+    `window.MINIGAME_CLASSES["<id>"]`. Aggiungere un minigioco = creare il file.
+  - `bootstrap.js`: `main()` (carica manifest, istanzia `Game`).
+- L'exporter li concatena in un unico `runtime.js` (bundle), includendo solo i
+  minigiochi effettivamente usati dal gioco.
 
 ---
 

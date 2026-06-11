@@ -68,5 +68,29 @@
     "text_shadow_color":    [0, 0, 0, 100],
     "pulse_hover":          true,
     "pulse_scale":          1.03
-  }
+  },
+
+  "layout_profile": { "type": "carousel" },
+
+  "motion": {
+    "carousel_zoom":   0.18,
+    "float_amp":       0.0,
+    "magnetic":        false,
+    "hover":           { "scale": 1.03, "speed": 8.0 },
+    "reduced_motion":  { "disable": [] }
+  },
+
+  "background": { "mode": "material" },
+
+  "particles": { "type": "none" },
+
+  "typography": {
+    "display": { "family": ["Roboto", "Segoe UI", "Arial", "sans-serif"], "bold": true },
+    "title":   { "family": ["Roboto", "Segoe UI", "sans-serif"], "bold": true },
+    "body":    { "family": ["Roboto", "Segoe UI", "sans-serif"], "bold": false }
+  },
+
+  "decor": {},
+
+  "audio_feel": { "hover": "hover", "click": "click" }
 }

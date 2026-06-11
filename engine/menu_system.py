@@ -41,6 +41,9 @@ class MenuButton:
         # Cache dell'icona scalata (evita smoothscale ad ogni frame su mobile)
         self._scaled_icon = None
         self._scaled_icon_key = None
+        # Cache effetti premium (glow morbido + ombra), generati con l'icona
+        self._icon_glow = None
+        self._icon_shadow = None
 
         # Effetti Premium
         self.ripple_pos = None
@@ -109,6 +112,10 @@ class MenuSystem:
 
         # Caricamento tema dal gioco
         self.theme: MenuTheme = load_theme_for_game(game_id)
+
+        # Skin attivo: look & feel pluggabile selezionato da ui_theme (fallback default).
+        from engine.menu_skins import get_skin
+        self.skin = get_skin(self.theme)
 
         self.build_buttons()
 
@@ -244,10 +251,81 @@ class MenuSystem:
     # Build buttons
     # âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
+    def _build_from_view(self, view: dict, has_save: bool) -> None:
+        """Costruisce bottoni e slider a partire dalla configurazione dichiarativa JSON."""
+        buttons_cfg = view.get("buttons", [])
+        
+        # Filtra i bottoni (es. `requires_save`)
+        filtered_btns = []
+        for b in buttons_cfg:
+            req_save = b.get("requires_save")
+            if req_save is True and not has_save:
+                continue
+            if req_save is False and has_save:
+                continue
+            filtered_btns.append(b)
+            
+        total_std = sum(1 for b in filtered_btns if not b.get("is_back") and not b.get("is_quit") and not b.get("custom_pos"))
+        std_idx = 0
+        
+        for b_cfg in filtered_btns:
+            lbl_key = b_cfg.get("text_key", "btn_unknown")
+            lbl = self.lang.get(lbl_key, lbl_key)
+            act = b_cfg.get("action", "none")
+            
+            override_w = b_cfg.get("width")
+            override_h = b_cfg.get("height")
+            
+            if b_cfg.get("is_back"):
+                target = act.replace("goto_", "")
+                self.buttons.append(self._back_btn(target))
+                continue
+                
+            if b_cfg.get("is_quit"):
+                self.buttons.append(self._quit_btn())
+                continue
+                
+            if "custom_pos" in b_cfg:
+                # Layout custom: x, y espliciti (es: popup)
+                cx, cy = b_cfg["custom_pos"]
+                bw, bh = override_w or self.theme.btn_size()[0], override_h or self.theme.btn_size()[1]
+                rx = cx - bw / 2
+                btn = MenuButton(lbl, act, rx, cy, bw, bh)
+                self.buttons.append(btn)
+                continue
+                
+            # Bottone standard del carosello
+            btn = self._std_btn(lbl, act, std_idx, total_std, override_w=override_w, override_h=override_h)
+            tip_key = b_cfg.get("tip_key")
+            if tip_key:
+                self._set_tooltip(btn, act, tip_key=tip_key)
+            self.buttons.append(btn)
+            std_idx += 1
+
+        sliders_cfg = view.get("sliders", [])
+        for s_cfg in sliders_cfg:
+            lbl_key = s_cfg.get("text_key", "slider_unknown")
+            lbl = self.lang.get(lbl_key, lbl_key)
+            act = s_cfg.get("action", "none")
+            
+            override_w = s_cfg.get("width", 400)
+            override_h = s_cfg.get("height", 20)
+            
+            if "custom_pos" in s_cfg:
+                cx, cy = s_cfg["custom_pos"]
+                s_val = self.music_volume if "music" in act else self.sfx_volume
+                rx = cx - override_w / 2
+                self.sliders.append(MenuSlider(lbl, act, rx, cy, override_w, override_h, s_val))
+
     def build_buttons(self, has_save: bool = False) -> None:
         """Ricalcola bottoni e slider in base allo stato corrente del menu."""
         self.buttons.clear()
         self.sliders.clear()
+
+        view = self.theme.get_view(self.state)
+        if view:
+            self._build_from_view(view, has_save)
+            return
 
         if self.state == "main":
             if has_save:
@@ -449,7 +527,11 @@ class MenuSystem:
             for i, (lbl, act) in enumerate(labels_actions):
                 self.buttons.append(self._std_btn(lbl, act, i, total))
 
-    # ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ        self.build_buttons(has_save=has_save)
+        # Lo skin puo' ricomporre il layout (arco kids, sparse horror) prima
+        # del calcolo di scroll/focus. Agisce solo su offset verticali.
+        self.skin.arrange(self)
+
+        # --- Calcolo scroll carosello + auto-focus su ultimo sbloccato ---
         
         # Calcolo max_scroll_x/y per il carosello
         if self.buttons or self.sliders:
@@ -543,7 +625,7 @@ class MenuSystem:
         if not is_slider and self.state in ("main", "levels", "scenes", "pause") and not is_fixed:
             # Calcolo basato sul centro dello schermo (1280/2 = 640)
             dist_center = abs(rect.centerx - 640)
-            zoom = 1.0 + max(0, (1.0 - dist_center / 640)) * 0.25
+            zoom = 1.0 + max(0, (1.0 - dist_center / 640)) * self.skin.carousel_zoom
             if zoom > 1.0:
                 orig_center = rect.center
                 rect.width = int(rect.width * zoom)
@@ -565,6 +647,7 @@ class MenuSystem:
         """Aggiorna hover, slider e animazioni tema."""
         self.mouse_pos = (mouse_x, mouse_y)
         self.theme.update(dt)
+        self.skin.update(self, dt)
         tick = self.theme._tick
 
         # Update Scroll (Carosello fluido)
@@ -590,14 +673,29 @@ class MenuSystem:
             if b.ripple_time > 0:
                 b.ripple_time = max(0.0, b.ripple_time - dt * 2.0)
             
-            # 3. Floating Animation (Disattivata come richiesto)
-            b.float_offset = 0.0
+            # 3. Floating Animation (Re-enabled for dynamic premium feel)
+            # Oscilla dolcemente. Si riduce se il cursore Ã¨ sopra il bottone (hover_time).
+            f_amp = self.skin.float_amp
+            if self.skin.reduced(self) and self.theme.motion_disabled("float"):
+                f_amp = 0.0
+            b.float_offset = math.sin(tick * 3.0 + i) * f_amp * (1.0 - b.hover_time * 0.8)
             
-            # 4. Tilt & Magnetic Effect (Disattivati per stabilitÃ Ã )
+            # 4. Magnetic Effect (Sottile interazione)
             if not hasattr(b, "angle"): b.angle = 0.0
-            b.angle = 0.0
+            b.angle = 0.0  # Tilt ancora disattivato per via delle Surface opache scalate
             if not hasattr(b, "mag_offset"): b.mag_offset = [0.0, 0.0]
-            b.mag_offset = [0.0, 0.0]
+            
+            if b.hovered and self.skin.magnetic:
+                dx = rx - b.ref_rect.centerx
+                dy = ry - b.ref_rect.centery
+                # Limitiamo il pull massimo a 6 pixel
+                target_mag_x = (dx / max(1, b.ref_rect.w / 2.0)) * 6.0
+                target_mag_y = (dy / max(1, b.ref_rect.h / 2.0)) * 6.0
+                b.mag_offset[0] += (target_mag_x - b.mag_offset[0]) * dt * 10.0
+                b.mag_offset[1] += (target_mag_y - b.mag_offset[1]) * dt * 10.0
+            else:
+                b.mag_offset[0] += (0.0 - b.mag_offset[0]) * dt * 10.0
+                b.mag_offset[1] += (0.0 - b.mag_offset[1]) * dt * 10.0
 
         for s in self.sliders:
             hitbox = self._get_hitbox(s, is_slider=True)
@@ -632,6 +730,9 @@ class MenuSystem:
         # Lista differita per i tooltips (per gestire correttamente lo Z-index)
         tooltip_queue = []
 
+        # Atmosfera di sfondo per-skin (aurora/nebbia/cielo) sopra il bg del core.
+        self.skin.draw_background_pre(self, screen, sw, sh)
+
         # ââ 1. Effetto Torcia (Flashlight)
         if theme.has_flashlight():
             dark_ov = pygame.Surface((sw, sh), pygame.SRCALPHA)
@@ -644,7 +745,7 @@ class MenuSystem:
             screen.blit(dark_ov, (0, 0))
 
         # ── 1.5 Titolo dello Stato
-        self._draw_state_title(screen)
+        self.skin.draw_title(self, screen)
 
         # ââ 2. Render Bottoni (Con supporto Carosello)
         for b in self.buttons:
@@ -665,7 +766,7 @@ class MenuSystem:
             max_dist = sw / 2
             zoom_factor = 1.0
             if is_carousel:
-                zoom_factor = 1.0 + max(0, (1.0 - dist_center / max_dist)) * 0.25 # Fino a 1.25x al centro
+                zoom_factor = 1.0 + max(0, (1.0 - dist_center / max_dist)) * self.skin.carousel_zoom
             
             is_locked = (b.action == "none")
             draw_rect = rect.copy()
@@ -681,6 +782,13 @@ class MenuSystem:
             if hasattr(b, "mag_offset"):
                 draw_rect.x += int(sm.scale_value(b.mag_offset[0]))
                 draw_rect.y += int(sm.scale_value(b.mag_offset[1]))
+
+            # Hook skin: jitter posizionale + decoro DIETRO al bottone.
+            jdx, jdy = self.skin.button_jitter(self, b)
+            if jdx or jdy:
+                draw_rect.x += int(sm.scale_value(jdx))
+                draw_rect.y += int(sm.scale_value(jdy))
+            self.skin.behind_button(self, screen, b, draw_rect, is_locked)
 
             if b.image:
                 # Bottone Scena/Anteprima. PERF: smoothscale + overlay seppia/scurente
@@ -761,7 +869,7 @@ class MenuSystem:
                             # Blit finale del testo (centrato perfettamente nella pillola)
                             screen.blit(val_surf, v_rect)
                     else:
-                        ico_scaled = self._scale_icon_cached(b, draw_rect, sm)
+                        ico_scaled, _glow, _shadow = self._icon_fx(b, draw_rect, sm)
                         # L'icona ottenuta è CONDIVISA (in cache): qualunque effetto
                         # che la modifica in-place (es. riflesso BLEND_ADD) deve prima
                         # lavorare su una copia, altrimenti l'effetto si accumula e
@@ -770,37 +878,27 @@ class MenuSystem:
 
                         if theme.is_icons_only() and not self._android:
                             # Effetti Professionali per Pure Icons
-                            if b.hover_time > 0:
-                                # Alone morbido (falloff radiale) coerente con la forma dell'icona.
-                                # Cerchi/rette concentrici con alpha crescente verso il centro,
-                                # fusi in blending normale: bagliore translucido, niente disco pieno.
-                                gc = theme.color3("btn_glow_color") if "btn_glow_color" in theme._colors else (255, 235, 180)
-                                breath = (math.sin(theme._tick * 5.0) + 1.0) * 0.5
-                                peak = (110 + 35 * breath) * b.hover_time   # alpha max al centro
-                                g_size = int(draw_rect.w * (1.32 + 0.1 * breath))
-                                glow_surf = pygame.Surface((g_size, g_size), pygame.SRCALPHA)
-                                cx = cy = g_size // 2
-                                is_square = theme.fx("glow_type") == "square"
-                                radius = theme.border_radius() + 6
-                                layers = 9
-                                for li in range(layers):
-                                    t = li / (layers - 1)         # 0 esterno .. 1 centro
-                                    half = (g_size / 2) * (1.0 - 0.78 * t)
-                                    a = int(peak * (0.10 + 0.90 * (t ** 1.6)))
-                                    col = (*gc, max(0, min(255, a)))
-                                    if is_square:
-                                        pygame.draw.rect(
-                                            glow_surf, col,
-                                            (cx - half, cy - half, half * 2, half * 2),
-                                            border_radius=int(radius * (1.0 - 0.55 * t)))
-                                    else:
-                                        pygame.draw.circle(glow_surf, col, (cx, cy), int(half))
-                                screen.blit(glow_surf, glow_surf.get_rect(center=draw_rect.center))
+                            # Ombra soffusa (profondita') + glow morbido a forma
+                            # d'icona. Superfici sfocate in cache: a runtime solo
+                            # un blit con alpha modulata (riposo + hover + respiro).
+                            breath = (math.sin(theme._tick * 3.2) + 1.0) * 0.5
+                            if _shadow is not None:
+                                _sh = _shadow.copy()
+                                _sh.fill((255, 255, 255, int(70 + 55 * b.hover_time)),
+                                         special_flags=pygame.BLEND_RGBA_MULT)
+                                _off = max(3, int(draw_rect.h * 0.05))
+                                screen.blit(_sh, _sh.get_rect(center=(draw_rect.centerx, draw_rect.centery + _off)))
+                            if _glow is not None:
+                                _g = _glow.copy()
+                                _gk = int(34 + 165 * b.hover_time + 22 * breath * (0.4 + b.hover_time))
+                                _g.fill((255, 255, 255, max(0, min(255, _gk))),
+                                        special_flags=pygame.BLEND_RGBA_MULT)
+                                screen.blit(_g, _g.get_rect(center=draw_rect.center))
                             
                             # Scale + Rotate (Tilt) - Disabilitati in settings per stabilitÃ 
                             s = 1.0
                             if self.state != "settings":
-                                s = 1.0 + (theme.pulse_scale() - 1.0) * b.hover_time
+                                s = 1.0 + max(theme.pulse_scale() - 1.0, 0.12) * b.hover_time
                                 
                             if s != 1.0:
                                 ico_scaled = pygame.transform.smoothscale(ico_scaled, (int(ico_scaled.get_width()*s), int(ico_scaled.get_height()*s)))
@@ -962,6 +1060,9 @@ class MenuSystem:
         # Posizionata qui per ingrandire anche i bottoni e le voci di menu.
         # Su Android (touch) NON va mostrata: seguirebbe il punto di tocco
         # lasciando un cerchio fisso a schermo (nessun puntatore deve comparire).
+        # Decoro frontale per-skin (grana/coriandoli) sopra i contenuti.
+        self.skin.draw_overlay(self, screen, sw, sh)
+
         if theme.has_magnifier() and not is_android_runtime():
             self._draw_magnifier(screen)
         # ── 4. Render Tooltips differiti (Massima prioritÃ  Z-Index)
@@ -970,42 +1071,6 @@ class MenuSystem:
             for tt_text, tt_rect, tt_time in tooltip_queue:
                 self._draw_tooltip(screen, tt_text, tt_rect, sm, tt_time)
 
-    def _focus_on_index(self, index: int, total: int, bw: float, gap: float) -> None:
-        """Calcola e imposta lo scroll target per centrare un elemento specifico."""
-        spacing = bw + gap
-        total_width = (total - 1) * spacing + bw
-        
-        margin = 100
-        if total_width < (1280 - margin * 2):
-            start_x = (1280 - total_width) / 2
-        else:
-            start_x = margin
-            
-        item_rx = start_x + index * spacing
-        self.target_scroll_x = max(0, min(self.max_scroll_x, item_rx - 640 + (bw / 2)))
-        if self.scroll_x == 0:
-            self.scroll_x = self.target_scroll_x
-
-    def _load_scene_preview(self, lvl_path, scene_id, w, h, is_unlocked) -> pygame.Surface | None:
-        try:
-            scene_dir = lvl_path / scene_id
-            s_cfg_p = scene_dir / "scene.json"
-            if s_cfg_p.exists():
-                with open(s_cfg_p, "r", encoding="utf-8") as sf:
-                    s_cfg = json.load(sf)
-                bg_file = s_cfg.get("background", "background.png")
-                bg_full_path = scene_dir / bg_file
-                raw = self._load_raw_cached(bg_full_path) if bg_full_path.exists() else None
-                if raw is not None:
-                    preview = pygame.transform.smoothscale(raw, (w, h))
-                    if not is_unlocked:
-                        try: preview = pygame.transform.grayscale(preview)
-                        except: pass
-                    return preview
-        except: pass
-        return None
-
-    
     def _focus_on_index(self, index: int, total: int, bw: float, gap: float) -> None:
         """Calcola e imposta lo scroll target per centrare un elemento specifico."""
         spacing = bw + gap
@@ -1041,23 +1106,28 @@ class MenuSystem:
         except: pass
         return None
 
-    def _draw_state_title(self, screen: pygame.Surface) -> None:
-        """Disegna il titolo dello stato corrente (es: 'SELEZIONA LIVELLO') con estetica premium."""
+    def _state_title_text(self) -> str:
+        """Testo del titolo per lo stato corrente (vuoto se lo stato non ne ha uno).
+        Esposto perche' gli skin possono renderizzarlo con stile proprio."""
         titles = {
             "levels": self.lang.get("menu_title_levels", "LEVEL SELECTION"),
             "scenes": self.lang.get("menu_title_scenes", "SCENE SELECTION"),
             "settings": self.lang.get("menu_title_settings", "ENGINE SETTINGS"),
             "confirm_new": self.lang.get("menu_title_confirm", "WARNING"),
         }
-        title_text = titles.get(self.state)
+        return titles.get(self.state, "")
+
+    def _draw_state_title(self, screen: pygame.Surface) -> None:
+        """Disegna il titolo dello stato corrente (es: 'SELEZIONA LIVELLO') con estetica premium."""
+        title_text = self._state_title_text()
         if not title_text: return
-        
+
         sm = self.scaling_manager
         theme = self.theme
-        
-        # Font premium (grande, spaziato, con ombra)
+
+        # Font premium (grande, spaziato, con ombra) — risolto per ruolo dal tema
         font_size = theme.layout("title_font_size", 44)
-        font = theme.get_font(font_size, sm)
+        font = theme.get_font_role("title", font_size, sm)
         
         # Render con shadow per massima leggibilità
         color = theme.color3("text_normal")
@@ -1135,7 +1205,7 @@ class MenuSystem:
 
     def _scale_icon(self, icon: pygame.Surface, rect: pygame.Rect, sm) -> pygame.Surface:
         """Scala l'icona mantenendo l'aspect ratio, garantendo che stia nel box."""
-        factor = 0.95 if self.theme.is_icons_only() else 0.7
+        factor = 1.0 if self.theme.is_icons_only() else 0.72
         max_w = rect.w * factor
         max_h = rect.h * factor
 
@@ -1157,6 +1227,25 @@ class MenuSystem:
             b._scaled_icon = self._scale_icon(b.icon_surf, rect, sm)
             b._scaled_icon_key = key
         return b._scaled_icon
+
+    def _icon_fx(self, b: "MenuButton", rect: pygame.Rect, sm):
+        """Ritorna (icona, glow, ombra) in cache per la dimensione del box.
+        Glow/ombra sono superfici sfocate a forma d'icona (vedi MenuTheme);
+        si ricostruiscono solo quando l'icona viene riscalata."""
+        key = (rect.w, rect.h)
+        if b._scaled_icon is None or b._scaled_icon_key != key:
+            b._scaled_icon = self._scale_icon(b.icon_surf, rect, sm)
+            b._scaled_icon_key = key
+            b._icon_glow = None
+            b._icon_shadow = None
+        if b._icon_glow is None and b._scaled_icon is not None:
+            try:
+                gc = self.theme.color3("btn_glow_color") if "btn_glow_color" in self.theme._colors else (255, 235, 180)
+                b._icon_glow = MenuTheme.make_glow(b._scaled_icon, gc)
+                b._icon_shadow = MenuTheme.make_shadow(b._scaled_icon)
+            except Exception:
+                b._icon_glow = b._icon_shadow = None
+        return b._scaled_icon, b._icon_glow, b._icon_shadow
 
     # âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     # Input

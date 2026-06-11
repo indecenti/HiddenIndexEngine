@@ -10266,22 +10266,6 @@
       "style": "real"
     },
     {
-      "id": "magnifying_glass",
-      "label_key": "obj_magnifying_glass",
-      "icon": "objects/magnifying_glass.png",
-      "default_detection": "circle",
-      "default_radius": 25,
-      "default_hint_delay": 25,
-      "tags": [
-        "cucina",
-        "metallo",
-        "piccolo",
-        "studio",
-        "vetro"
-      ],
-      "style": "real"
-    },
-    {
       "id": "magnifying_glass_st",
       "label_key": "obj_magnifying_glass_st",
       "icon": "objects/magnifying_glass_st.png",

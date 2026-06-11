@@ -19,10 +19,23 @@ try:
     _VALIDATION_AVAILABLE = True
 except ImportError:
     _VALIDATION_AVAILABLE = False
-    log.warning(
-        "jsonschema non installato — validazione JSON disabilitata. "
-        "Installa con: pip install jsonschema"
+    log.error(
+        "=" * 60 + "\n"
+        "  ATTENZIONE: 'jsonschema' NON e' installato.\n"
+        "  TUTTA la validazione JSON (scene, livelli, cataloghi,\n"
+        "  taxonomy) e' DISABILITATA: i dati malformati NON verranno\n"
+        "  intercettati. Installa con:  pip install jsonschema\n"
+        + "=" * 60
     )
+
+
+def validation_available() -> bool:
+    """True se 'jsonschema' e' disponibile e la validazione e' attiva.
+
+    Permette all'avvio del gioco/editor di verificare in modo esplicito che
+    la validazione non sia silenziosamente disabilitata.
+    """
+    return _VALIDATION_AVAILABLE
 
 # Mappa nome_schema -> schema caricato (lazy)
 _schema_cache: dict[str, dict] = {}
@@ -33,6 +46,7 @@ _SCHEMA_FILES = {
     "game_config":  "engine/schemas/game_config_schema.json",
     "catalog":      "engine/schemas/catalog_schema.json",
     "taxonomy":     "engine/schemas/taxonomy_schema.json",
+    "theme":        "engine/schemas/theme_schema.json",
 }
 
 

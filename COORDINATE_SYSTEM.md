@@ -13,22 +13,39 @@ This document defines the **authoritative coordinate system** for HiddenEngine, 
 - **Game Engine** (Runtime scene rendering and hit detection)
 - **JSON scene data** (Persistent object definitions)
 
-All coordinates are in a **reference space of 1280×720 pixels** (REF_W × REF_H), independent of:
-- Screen resolution
-- Zoom level (in editor and during gameplay)
-- Pan/scroll offset (in editor and during gameplay)
+There are **two distinct coordinate spaces**, and they must not be confused:
+
+1. **Scene object data space = background-image pixels.** Every `x`, `y`,
+   `radius`, `width`, `height` of objects and effects in `scene.json` is an
+   absolute pixel coordinate in the scene background's **native resolution**
+   (per-scene and variable — e.g. 1920×1080, 5120×2880). It is **not** a fixed
+   reference space. See `engine/click_detector.py` (`screen_to_bg_scenic`) and
+   `engine/scaling_manager.py`.
+2. **UI / menu / HUD space = 1280×720 reference space** (`REF_W × REF_H`). Menu,
+   HUD and results-screen layout coordinates use this fixed reference, mapped to
+   screen via letterbox scaling.
+
+Both spaces are independent of screen resolution, zoom level and pan/scroll
+offset; `ScalingManager` exposes a separate conversion pipeline for each.
 
 ---
 
 ## 1. Coordinate Spaces
 
 ### 1.1 Reference Space (1280×720)
-**The "truth" coordinate system** — all JSON data, hit areas, and internal calculations use this space.
+**The UI/menu/HUD coordinate system** — menu, HUD and results-screen layout use this fixed reference space.
 
 - Origin **(0, 0)** at top-left
 - X increases to the right
 - Y increases downward
-- **This is the only space that matters for saved data**
+- **Applies to UI/HUD only — NOT to `scene.json` object/effect coordinates** (those are in background-image pixels, see §1.1b)
+
+### 1.1b Background-Image Pixel Space (scene object data)
+**The "truth" for saved scene data** — every object/effect `x`, `y`, `radius`, `width`, `height` in `scene.json` is an absolute pixel in the background image's native resolution (per-scene, variable).
+
+- Origin **(0, 0)** at the top-left of the background image
+- Hit detection converts a screen click into this space via `ScalingManager.screen_to_bg_scenic` before testing against object geometry (`engine/click_detector.py`)
+- **This is the only space that matters for saved scene object/effect data**
 
 ### 1.2 Screen Space
 **The viewport** — varies with device and window size.

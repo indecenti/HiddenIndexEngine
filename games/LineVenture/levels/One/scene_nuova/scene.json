@@ -12,7 +12,10 @@
       "is_goal": true,
       "hint_delay": 30,
       "width": 355,
-      "height": 290
+      "height": 290,
+      "minigame_trigger": {
+        "minigame_id": "slot_classic"
+      }
     },
     {
       "catalog_id": "ca_rope_coil_small",

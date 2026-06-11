@@ -179,9 +179,9 @@ class SpotDifferencesGame(BaseMinigame):
         self.victory_timer = 0
         self.screen_shake = 0
         
-        # Difficoltà progressiva - Densità MASSIMA (Parti da 65 oggetti)
+        # Difficoltà progressiva (Parti da 63 oggetti)
         level_scale = (self.level - 1) / max(1, self.max_levels - 1)
-        self.num_total_objects = 65 + int(85 * level_scale) 
+        self.num_total_objects = 63 + int(85 * level_scale) 
         self.num_differences = 6 + int(9 * level_scale)
         self.time_left = max(30, self.time_limit * (1.0 - level_scale * 0.45))
         
@@ -470,7 +470,7 @@ class SpotDifferencesGame(BaseMinigame):
                 self.victory_timer = 0.0 # Usato come contatore per l'overlay Game Over
                 if "error" in self.sounds:
                     self.sounds["error"].play()
-                self.screen_shake = 45.0 # Botta finale esplosiva
+                self.screen_shake = 10.0 # Botta finale esplosiva
                 self._spawn_explosion(self.scaling_manager.screen_w // 2, self.scaling_manager.screen_h // 2)
                 
         if self.combo_timer > 0: self.combo_timer -= dt

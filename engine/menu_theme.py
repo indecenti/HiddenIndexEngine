@@ -88,9 +88,20 @@ class MenuTheme:
         self._layout: dict[str, Any] = data.get("layout", {})
         self._font_cfg: dict[str, Any] = data.get("font", {})
         self._effects: dict[str, Any] = data.get("effects", {})
+        self._views: dict[str, Any] = data.get("views", {})
+
+        # Estensione skin (tutte OPZIONALI; se assenti lo skin usa i default).
+        self._motion: dict[str, Any] = data.get("motion", {})
+        self._background: dict[str, Any] = data.get("background", {})
+        self._particles: dict[str, Any] = data.get("particles", {})
+        self._typography: dict[str, Any] = data.get("typography", {})
+        self._decor: dict[str, Any] = data.get("decor", {})
+        self._audio_feel: dict[str, Any] = data.get("audio_feel", {})
+        self._layout_profile: dict[str, Any] = data.get("layout_profile", {})
 
         # Cache font per dimensione — evita re-allocazioni ogni frame
         self._font_cache: dict[int, pygame.font.Font] = {}
+        self._role_font_cache: dict = {}
 
         # Ticker interno per effetti animati (incrementato da update())
         self._tick: float = 0.0
@@ -215,6 +226,45 @@ class MenuTheme:
     def slider_height(self) -> int:
         return int(self._layout.get("slider_height", 20))
 
+    def get_view(self, view_name: str) -> dict[str, Any]:
+        """Restituisce la configurazione della vista richiesta, se presente."""
+        return self._views.get(view_name, {})
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Estensione skin: motion / background / particles / decor / audio / layout
+    # Tutti gli accessor sono tolleranti: sezione assente -> default fornito.
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def motion(self, key: str, default: Any = None) -> Any:
+        v = self._motion.get(key)
+        return default if v is None else v
+
+    def background(self, key: str, default: Any = None) -> Any:
+        v = self._background.get(key)
+        return default if v is None else v
+
+    def particles_cfg(self, key: str = None, default: Any = None) -> Any:
+        if key is None:
+            return self._particles
+        v = self._particles.get(key)
+        return default if v is None else v
+
+    def decor(self, key: str, default: Any = None) -> Any:
+        v = self._decor.get(key)
+        return default if v is None else v
+
+    def audio_feel(self, key: str, default: Any = None) -> Any:
+        v = self._audio_feel.get(key)
+        return default if v is None else v
+
+    def layout_profile_type(self) -> str:
+        return str(self._layout_profile.get("type", "carousel"))
+
+    def motion_disabled(self, feature: str) -> bool:
+        """True se 'feature' è elencata in motion.reduced_motion.disable."""
+        rm = self._motion.get("reduced_motion") or {}
+        return feature in (rm.get("disable") or [])
+
     # ─────────────────────────────────────────────────────────────────────────
     # Font
     # ─────────────────────────────────────────────────────────────────────────
@@ -261,8 +311,122 @@ class MenuTheme:
                 break
             current_size -= 2
             font = self.get_font(current_size, sm)
-            
+
         return font
+
+    def get_font_role(self, role: str, ref_size: int, sm) -> pygame.font.Font:
+        """
+        Font per ruolo (display/title/body/mono) dalla sezione 'typography'.
+        'family' può contenere nomi di sistema o percorsi a .ttf/.otf bundlati.
+        Fallback trasparente a get_font() se il ruolo non è definito.
+        """
+        cfg = self._typography.get(role) if isinstance(self._typography, dict) else None
+        if not cfg:
+            return self.get_font(ref_size, sm)
+
+        scaled = max(10, sm.scale_value(ref_size))
+        bold = bool(cfg.get("bold", self._font_cfg.get("bold", False)))
+        cache_key = (role, scaled, bold)
+        cached = self._role_font_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        # 0) Font BUNDLATO per-tema: 'file' relativo a engine/assets/themes/<id>/.
+        file_rel = cfg.get("file")
+        if file_rel:
+            try:
+                fp = (Path(__file__).resolve().parent / "assets" / "themes"
+                      / str(getattr(self, "theme_id", "default")) / str(file_rel))
+                if fp.exists():
+                    fb = pygame.font.Font(str(fp), scaled)
+                    self._role_font_cache[cache_key] = fb
+                    return fb
+            except Exception as e:
+                logger.debug("MenuTheme: font bundlato '%s' fallback: %s", file_rel, e)
+
+        fam = cfg.get("family")
+        names = fam if isinstance(fam, list) else ([fam] if fam else [])
+        f: pygame.font.Font | None = None
+        try:
+            # 1) font file bundlato (percorso .ttf/.otf esistente)
+            for nm in names:
+                p = Path(str(nm))
+                if p.suffix.lower() in (".ttf", ".otf") and p.exists():
+                    f = pygame.font.Font(str(p), scaled)
+                    break
+            # 2) font di sistema per nome (SysFont accetta lista separata da virgole)
+            if f is None and names:
+                f = pygame.font.SysFont(",".join(str(n) for n in names), scaled, bold=bold)
+        except Exception as e:
+            logger.debug("MenuTheme: font ruolo '%s' fallback: %s", role, e)
+
+        if f is None:
+            f = self.get_font(ref_size, sm)
+
+        self._role_font_cache[cache_key] = f
+        return f
+
+    def render_spaced(self, font: pygame.font.Font, text: str,
+                      color: tuple, spacing: int) -> pygame.Surface:
+        """Renderizza testo con spaziatura extra tra le lettere (per titoli a tema)."""
+        if not spacing or spacing <= 0:
+            return font.render(text, True, color)
+        surfs = [font.render(ch, True, color) for ch in text]
+        sp = int(spacing)
+        w = sum(s.get_width() for s in surfs) + sp * max(0, len(surfs) - 1)
+        h = max((s.get_height() for s in surfs), default=font.get_height())
+        out = pygame.Surface((max(1, w), max(1, h)), pygame.SRCALPHA)
+        x = 0
+        for s in surfs:
+            out.blit(s, (x, 0))
+            x += s.get_width() + sp
+        return out
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Helper grafici "premium": glow morbido a forma d'icona + ombra soffusa.
+    # Tecnica: silhouette colorata -> sfocatura via downscale+smoothscale (blur
+    # gaussiano approssimato). Risultato cacheabile dal chiamante (vedi
+    # MenuSystem._icon_fx), quindi a runtime resta un semplice blit.
+    # ─────────────────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def tint_silhouette(icon: pygame.Surface, color) -> pygame.Surface:
+        """Silhouette dell'icona riempita di 'color', preservando l'alpha."""
+        s = icon.copy()
+        s.fill((0, 0, 0, 255), special_flags=pygame.BLEND_RGBA_MULT)   # rgb -> 0, alpha invariato
+        s.fill((int(color[0]), int(color[1]), int(color[2]), 0), special_flags=pygame.BLEND_RGBA_ADD)
+        return s
+
+    @staticmethod
+    def blur(surf: pygame.Surface, factor: float = 0.18) -> pygame.Surface:
+        """Sfocatura economica: downscale -> upscale con smoothscale."""
+        w, h = surf.get_size()
+        sw, sh = max(1, int(w * factor)), max(1, int(h * factor))
+        small = pygame.transform.smoothscale(surf, (sw, sh))
+        return pygame.transform.smoothscale(small, (w, h))
+
+    @classmethod
+    def make_glow(cls, icon: pygame.Surface, color, grow: float = 0.42,
+                  blur: float = 0.16) -> "pygame.Surface | None":
+        """Alone morbido nella forma dell'icona (per il glow degli skin)."""
+        iw, ih = icon.get_size()
+        if iw == 0 or ih == 0:
+            return None
+        pad = int(max(iw, ih) * grow)
+        base = pygame.Surface((iw + pad * 2, ih + pad * 2), pygame.SRCALPHA)
+        base.blit(cls.tint_silhouette(icon, color), (pad, pad))
+        return cls.blur(base, blur)
+
+    @classmethod
+    def make_shadow(cls, icon: pygame.Surface, blur: float = 0.22) -> "pygame.Surface | None":
+        """Ombra soffusa nella forma dell'icona (per profondità)."""
+        iw, ih = icon.get_size()
+        if iw == 0 or ih == 0:
+            return None
+        pad = int(max(iw, ih) * 0.16)
+        base = pygame.Surface((iw + pad * 2, ih + pad * 2), pygame.SRCALPHA)
+        base.blit(cls.tint_silhouette(icon, (0, 0, 0)), (pad, pad))
+        return cls.blur(base, blur)
 
     def font_size_btn(self) -> int:
         return int(self._font_cfg.get("size_btn", 28))
@@ -584,13 +748,20 @@ class MenuTheme:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _load_theme_data(theme_json_path: Path) -> dict:
-    """Carica e valida un theme.json."""
+    """Carica un theme.json (con validazione soft, non bloccante)."""
     try:
         with open(theme_json_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
     except Exception as e:
         logger.error("MenuTheme: impossibile caricare '%s': %s", theme_json_path, e)
         return {}
+    # Validazione non bloccante: logga eventuali incongruenze ma non interrompe.
+    try:
+        from engine.json_validator import validate
+        validate(data, "theme", source_path=str(theme_json_path))
+    except Exception:
+        pass
+    return data
 
 
 def load_theme_for_game(game_id: str) -> MenuTheme:
@@ -620,7 +791,7 @@ def load_theme_for_game(game_id: str) -> MenuTheme:
             # Merge grossolano (radice)
             final_data.update(global_data)
             # Merge specifico per sezioni critiche
-            for section in ["colors", "layout", "effects", "font"]:
+            for section in ["colors", "layout", "effects", "font", "views"]:
                 if section in global_data:
                     if section not in final_data: final_data[section] = {}
                     final_data[section].update(global_data[section])
@@ -628,7 +799,7 @@ def load_theme_for_game(game_id: str) -> MenuTheme:
     # 4. Sovrapponi i dati specifici del gioco (Override finale)
     if game_data:
         final_data.update(game_data)
-        for section in ["colors", "layout", "effects", "font"]:
+        for section in ["colors", "layout", "effects", "font", "views"]:
             if section in game_data:
                 if section not in final_data: final_data[section] = {}
                 final_data[section].update(game_data[section])

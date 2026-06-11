@@ -216,7 +216,19 @@ class SceneLoader:
         
         for raw in raw_list:
             cid = raw["catalog_id"]
-            cat = self._catalog.get(cid, {})
+            if cid not in self._catalog:
+                # Integrita' referenziale: un catalog_id inesistente produrrebbe un
+                # oggetto senza icona MA ancora contato come goal -> scena non
+                # completabile (goal invisibile/non trovabile), il peggior fallimento
+                # per un hidden-object. Lo scartiamo e logghiamo in modo evidente:
+                # il bug di contenuto diventa visibile invece che silenzioso.
+                log.error(
+                    "[LOADER] catalog_id '%s' assente dal catalogo (scena '%s'): "
+                    "oggetto SCARTATO (sarebbe un goal invisibile).",
+                    cid, os.path.basename(str(scene_dir)),
+                )
+                continue
+            cat = self._catalog[cid]
             counts[cid] = counts.get(cid, 0) + 1
             iid = cid if counts[cid] == 1 else f"{cid}_{counts[cid]}"
             

@@ -30,6 +30,16 @@ saves/
 *.tmp
 *.log
 
+# Backup timestampati dei cataloghi/taxonomy (rigenerabili; il bare *.bak non li copre)
+*.bak.*
+*_backup_*.json
+
+# Autosave dell'editor (file temporanei, non vanno versionati)
+*.autosave
+
+# Cache binarie rigenerabili dell'editor (scatter / palette background)
+engine/data/*.db
+
 # Safe delete: cestino locale + audit log delle operazioni distruttive
 .editor_trash/
 .editor_audit.log

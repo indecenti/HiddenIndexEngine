@@ -65,5 +65,30 @@
     "text_shadow_color":    [255, 255, 255, 120],
     "pulse_hover":          true,
     "pulse_scale":          1.06
-  }
+  },
+
+  "layout_profile": { "type": "carousel", "tilt": true },
+
+  "motion": {
+    "carousel_zoom":   0.30,
+    "float_amp":       6.0,
+    "magnetic":        true,
+    "bounce":          true,
+    "hover":           { "scale": 1.08, "speed": 9.0 },
+    "reduced_motion":  { "disable": ["bounce", "float", "confetti", "particles"] }
+  },
+
+  "background": { "mode": "sky", "sky_top": [98, 192, 246], "sky_bottom": [116, 207, 154], "sun": true, "sun_color": [255, 215, 68] },
+
+  "particles": { "type": "confetti", "density": 22, "color": [255, 122, 162] },
+
+  "typography": {
+    "display": { "family": ["Bubblegum Sans", "Comic Sans MS", "sans-serif"], "file": "fonts/BubblegumSans-Regular.ttf", "bold": true, "spacing": 1 },
+    "title":   { "family": ["Bubblegum Sans", "Comic Sans MS", "sans-serif"], "file": "fonts/BubblegumSans-Regular.ttf", "bold": true },
+    "body":    { "family": ["Bubblegum Sans", "Comic Sans MS", "sans-serif"], "file": "fonts/BubblegumSans-Regular.ttf", "bold": true }
+  },
+
+  "decor": { "card_radius": 24, "card_border": [255, 255, 255], "toy_shadow": [42, 126, 192], "confetti": true },
+
+  "audio_feel": { "hover": "hover", "click": "click" }
 }

@@ -31,11 +31,11 @@
     "btn_width":            360,
     "btn_height":           64,
     "btn_center_x":         640,
-    "btn_y_start":          540,
+    "btn_y_start":          470,
     "btn_y_step":           90,
     "btn_border_width":     0,
     "icons_only":           true,
-    "icon_btn_size":        120,
+    "icon_btn_size":        150,
     "no_btn_bg":            true,
     "slider_height":        24,
     "scene_grid_cols":      3,
@@ -68,5 +68,47 @@
     "text_shadow_color":    [0, 0, 0, 120],
     "pulse_hover":          true,
     "pulse_scale":          1.03
+  },
+
+  "layout_profile": { "type": "carousel" },
+
+  "motion": {
+    "carousel_zoom":   0.25,
+    "float_amp":       4.0,
+    "magnetic":        true,
+    "enter":           { "type": "fade", "dur": 0.4, "ease": "ease_out" },
+    "hover":           { "scale": 1.03, "speed": 8.0 },
+    "reduced_motion":  { "disable": ["float", "particles", "aurora"] }
+  },
+
+  "background": { "mode": "image", "aurora": true, "aurora_color": [96, 166, 240] },
+
+  "particles": { "type": "fireflies", "density": 7, "color": [188, 212, 245] },
+
+  "typography": {
+    "display": { "family": ["Marcellus", "Georgia", "serif"], "file": "fonts/Marcellus-Regular.ttf", "bold": false, "spacing": 1 },
+    "title":   { "family": ["Marcellus", "Georgia", "serif"], "file": "fonts/Marcellus-Regular.ttf", "bold": false },
+    "body":    { "family": ["Segoe UI", "Arial", "sans-serif"], "bold": true }
+  },
+
+  "decor": { "vignette": 0.0, "grain": 0.0, "icon_chip": true },
+
+  "audio_feel": { "hover": "hover", "click": "click", "transition": "whoosh" },
+
+  "views": {
+    "main": {
+      "buttons": [
+        {"text_key": "btn_play", "action": "goto_levels", "tip_key": "tip_play"},
+        {"text_key": "btn_settings", "action": "goto_settings", "tip_key": "tip_settings"},
+        {"text_key": "btn_quit", "action": "quit", "is_quit": true}
+      ]
+    },
+    "pause": {
+      "buttons": [
+        {"text_key": "btn_resume", "action": "resume_game"},
+        {"text_key": "btn_settings", "action": "goto_settings"},
+        {"text_key": "btn_quit_to_main", "action": "quit_to_main"}
+      ]
+    }
   }
 }

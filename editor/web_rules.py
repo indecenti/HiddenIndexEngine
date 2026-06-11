@@ -2,7 +2,7 @@
 editor/web_rules.py
 
 FONTE UNICA DI VERITA' per le costanti di gioco condivise tra l'engine Python e
-il runtime web (editor/web_template/runtime.js).
+il runtime web (editor/web_template/runtime/core.js, RULES_DEFAULTS).
 
 Questo modulo legge i valori REALI dall'engine e li espone come dict, che
 l'exporter inietta in manifest.rules. Il runtime web li usa al posto di costanti
@@ -38,6 +38,10 @@ def engine_rules() -> dict:
         "star_multiplier": {str(k): v for k, v in LM.STAR_MULTIPLIER.items()},
         "miss_time_penalty": float(LM.MISS_PENALTY_TIME),
         "miss_point_penalty": abs(int(LM.MISS_PENALTY_SCORE)),
+        # Curva progressiva miss consecutivi + finestra (s). Il web replica la
+        # macchina a stati dell'engine (game.js::_missPenalty / _onPointer).
+        "miss_penalty_curve": [abs(int(p)) for p in LM.MISS_PENALTY_CURVE],
+        "miss_combo_window": float(LM.MISS_COMBO_WINDOW),
         # Risoluzione di riferimento (engine/scaling_manager.py)
         "ref_w": int(REF_W),
         "ref_h": int(REF_H),
