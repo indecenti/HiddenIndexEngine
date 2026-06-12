@@ -39,6 +39,54 @@
       "order": 6,
       "time_limit": 120,
       "transition_out": "fade"
+    },
+    {
+      "id": "Albergo_Lobby",
+      "order": 7,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Caserma_Pompieri",
+      "order": 8,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Chiesa_Abbandonata",
+      "order": 9,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Cimitero_Montagna",
+      "order": 10,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Infermeria_Alpina",
+      "order": 11,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Municipio_Abbandonato",
+      "order": 12,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Officina_Abbandonata",
+      "order": 13,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Stazione_Abbandonata",
+      "order": 14,
+      "time_limit": 120,
+      "transition_out": "fade"
     }
   ]
 }

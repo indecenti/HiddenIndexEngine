@@ -1164,6 +1164,314 @@
     "valle camonica": {
       "it": "Valle camonica",
       "cat": "Generale"
+    },
+    "ancient": {
+      "it": "Ancient",
+      "cat": "Generale"
+    },
+    "animal": {
+      "it": "Animal",
+      "cat": "Generale"
+    },
+    "ball": {
+      "it": "Ball",
+      "cat": "Generale"
+    },
+    "bird": {
+      "it": "Bird",
+      "cat": "Generale"
+    },
+    "black": {
+      "it": "Black",
+      "cat": "Generale"
+    },
+    "box": {
+      "it": "Box",
+      "cat": "Generale"
+    },
+    "brass": {
+      "it": "Brass",
+      "cat": "Generale"
+    },
+    "clock": {
+      "it": "Clock",
+      "cat": "Generale"
+    },
+    "code": {
+      "it": "Code",
+      "cat": "Generale"
+    },
+    "crystal": {
+      "it": "Crystal",
+      "cat": "Generale"
+    },
+    "danger": {
+      "it": "Danger",
+      "cat": "Generale"
+    },
+    "electric": {
+      "it": "Electric",
+      "cat": "Generale"
+    },
+    "game": {
+      "it": "Game",
+      "cat": "Generale"
+    },
+    "glass": {
+      "it": "Glass",
+      "cat": "Generale"
+    },
+    "helmet": {
+      "it": "Helmet",
+      "cat": "Generale"
+    },
+    "instrument": {
+      "it": "Instrument",
+      "cat": "Generale"
+    },
+    "lightning": {
+      "it": "Lightning",
+      "cat": "Generale"
+    },
+    "magic": {
+      "it": "Magic",
+      "cat": "Generale"
+    },
+    "medieval": {
+      "it": "Medieval",
+      "cat": "Generale"
+    },
+    "metal": {
+      "it": "Metal",
+      "cat": "Generale"
+    },
+    "music": {
+      "it": "Music",
+      "cat": "Generale"
+    },
+    "mystery": {
+      "it": "Mystery",
+      "cat": "Generale"
+    },
+    "nature": {
+      "it": "Nature",
+      "cat": "Generale"
+    },
+    "office": {
+      "it": "Office",
+      "cat": "Generale"
+    },
+    "oriental": {
+      "it": "Oriental",
+      "cat": "Generale"
+    },
+    "puzzle": {
+      "it": "Puzzle",
+      "cat": "Generale"
+    },
+    "radiation": {
+      "it": "Radiation",
+      "cat": "Generale"
+    },
+    "red": {
+      "it": "Red",
+      "cat": "Generale"
+    },
+    "science": {
+      "it": "Science",
+      "cat": "Generale"
+    },
+    "smoke": {
+      "it": "Smoke",
+      "cat": "Generale"
+    },
+    "space": {
+      "it": "Space",
+      "cat": "Generale"
+    },
+    "stamp": {
+      "it": "Stamp",
+      "cat": "Generale"
+    },
+    "stick": {
+      "it": "Stick",
+      "cat": "Generale"
+    },
+    "time": {
+      "it": "Time",
+      "cat": "Generale"
+    },
+    "tool": {
+      "it": "Tool",
+      "cat": "Generale"
+    },
+    "trap": {
+      "it": "Trap",
+      "cat": "Generale"
+    },
+    "underwater": {
+      "it": "Underwater",
+      "cat": "Generale"
+    },
+    "weapon": {
+      "it": "Weapon",
+      "cat": "Generale"
+    },
+    "weird": {
+      "it": "Weird",
+      "cat": "Generale"
+    },
+    "wood": {
+      "it": "Wood",
+      "cat": "Generale"
+    },
+    "yellow": {
+      "it": "Yellow",
+      "cat": "Generale"
+    },
+    "albergo": {
+      "it": "Albergo",
+      "cat": "Generale"
+    },
+    "barca": {
+      "it": "Barca",
+      "cat": "Generale"
+    },
+    "caserma": {
+      "it": "Caserma",
+      "cat": "Generale"
+    },
+    "chiesa": {
+      "it": "Chiesa",
+      "cat": "Generale"
+    },
+    "cimitero": {
+      "it": "Cimitero",
+      "cat": "Generale"
+    },
+    "faro": {
+      "it": "Faro",
+      "cat": "Generale"
+    },
+    "hall": {
+      "it": "Hall",
+      "cat": "Generale"
+    },
+    "infermeria": {
+      "it": "Infermeria",
+      "cat": "Generale"
+    },
+    "lapidi": {
+      "it": "Lapidi",
+      "cat": "Generale"
+    },
+    "meccanica": {
+      "it": "Meccanica",
+      "cat": "Generale"
+    },
+    "molo": {
+      "it": "Molo",
+      "cat": "Generale"
+    },
+    "municipio": {
+      "it": "Municipio",
+      "cat": "Generale"
+    },
+    "ospedale": {
+      "it": "Ospedale",
+      "cat": "Generale"
+    },
+    "pompieri": {
+      "it": "Pompieri",
+      "cat": "Generale"
+    },
+    "religione": {
+      "it": "Religione",
+      "cat": "Generale"
+    },
+    "stazione": {
+      "it": "Stazione",
+      "cat": "Generale"
+    },
+    "treno": {
+      "it": "Treno",
+      "cat": "Generale"
+    },
+    "borgo": {
+      "it": "Borgo",
+      "cat": "Generale"
+    },
+    "bottega": {
+      "it": "Bottega",
+      "cat": "Generale"
+    },
+    "costiero": {
+      "it": "Costiero",
+      "cat": "Generale"
+    },
+    "funivia": {
+      "it": "Funivia",
+      "cat": "Generale"
+    },
+    "mercantile": {
+      "it": "Mercantile",
+      "cat": "Generale"
+    },
+    "nave": {
+      "it": "Nave",
+      "cat": "Generale"
+    },
+    "pescatore": {
+      "it": "Pescatore",
+      "cat": "Generale"
+    },
+    "pesce": {
+      "it": "Pesce",
+      "cat": "Generale"
+    },
+    "villa": {
+      "it": "Villa",
+      "cat": "Generale"
+    },
+    "carne": {
+      "it": "Carne",
+      "cat": "Generale"
+    },
+    "corda": {
+      "it": "Corda",
+      "cat": "Generale"
+    },
+    "futuro": {
+      "it": "Futuro",
+      "cat": "Generale"
+    },
+    "libro": {
+      "it": "Libro",
+      "cat": "Generale"
+    },
+    "macchina": {
+      "it": "Macchina",
+      "cat": "Generale"
+    },
+    "mostro": {
+      "it": "Mostro",
+      "cat": "Generale"
+    },
+    "oro": {
+      "it": "Oro",
+      "cat": "Generale"
+    },
+    "robot": {
+      "it": "Robot",
+      "cat": "Generale"
+    },
+    "strano": {
+      "it": "Strano",
+      "cat": "Generale"
+    },
+    "volo": {
+      "it": "Volo",
+      "cat": "Generale"
     }
   }
 }

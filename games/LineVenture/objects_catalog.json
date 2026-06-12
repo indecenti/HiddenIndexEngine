@@ -1,6 +1,21 @@
 {
   "objects": [
     {
+      "id": "ca_anchor_rusty",
+      "label_key": "obj_ca_anchor_rusty",
+      "icon": "objects_cartoon/ca_anchor_rusty.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 35,
+      "tags": [
+        "mare",
+        "metallo",
+        "antico"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_book_stack_adv",
       "label_key": "obj_ca_book_stack_adv",
       "icon": "objects_cartoon/ca_book_stack_adv.png",
@@ -25,6 +40,20 @@
         "strumento",
         "metallo",
         "viaggio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_magic_lamp_genie",
+      "label_key": "obj_ca_magic_lamp_genie",
+      "icon": "objects_cartoon/ca_magic_lamp_genie.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "antico",
+        "metallo",
+        "magia"
       ],
       "style": "cartoon"
     },

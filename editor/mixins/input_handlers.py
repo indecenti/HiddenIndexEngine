@@ -524,6 +524,16 @@ class InputHandlersMixin:
             if self._img_editor_active:
                 return 
 
+            # Dashboard Modals (Nuovo, Modifica, Elimina) in primo piano
+            if self.state == STATE_GAME_SELECT and (
+                getattr(self, '_gs_del_mode', None) or 
+                getattr(self, '_gs_new_mode', None) or 
+                getattr(self, '_gs_edit_mode', None)
+            ):
+                self._gs_dblclick(mx, my_raw, w, h)
+                self._gs_click(mx, my_raw)
+                return
+
         # 3. TOP BAR MENUS
         if my_raw < TOP_BAR_H:
             self._menu_click(mx, my_raw)

@@ -14,7 +14,7 @@
       "pizzeria",
       "horror",
       "notte",
-      "citt\u00e0"
+      "città"
     ]
   },
   "background_2.png": {
@@ -49,7 +49,7 @@
       "auto",
       "strada",
       "esterno",
-      "citt\u00e0",
+      "città",
       "notte"
     ]
   },
@@ -86,10 +86,193 @@
       "bar",
       "horror",
       "notte",
-      "citt\u00e0"
+      "città"
     ]
   },
   "mp_.mp4": {
     "tags": []
+  },
+  "chiesa_abbandonata.png": {
+    "tags": [
+      "chiesa",
+      "interno",
+      "horror",
+      "notte",
+      "religione"
+    ]
+  },
+  "stazione_abbandonata.png": {
+    "tags": [
+      "stazione",
+      "treno",
+      "esterno",
+      "horror",
+      "notte"
+    ]
+  },
+  "municipio_abbandonato.png": {
+    "tags": [
+      "municipio",
+      "piazza",
+      "esterno",
+      "horror",
+      "notte"
+    ]
+  },
+  "officina_abbandonata.png": {
+    "tags": [
+      "officina",
+      "interno",
+      "horror",
+      "notte",
+      "meccanica"
+    ]
+  },
+  "cimitero_montagna.png": {
+    "tags": [
+      "cimitero",
+      "esterno",
+      "horror",
+      "notte",
+      "lapidi"
+    ]
+  },
+  "albergo_lobby.png": {
+    "tags": [
+      "albergo",
+      "hall",
+      "interno",
+      "horror",
+      "notte"
+    ]
+  },
+  "caserma_pompieri.png": {
+    "tags": [
+      "caserma",
+      "pompieri",
+      "interno",
+      "horror",
+      "notte"
+    ]
+  },
+  "infermeria_alpina.png": {
+    "tags": [
+      "infermeria",
+      "ospedale",
+      "interno",
+      "horror",
+      "notte"
+    ]
+  },
+  "molo_costiero.png": {
+    "tags": [
+      "molo",
+      "mare",
+      "barca",
+      "esterno",
+      "notte",
+      "costiero"
+    ]
+  },
+  "faro_abbandonato.png": {
+    "tags": [
+      "faro",
+      "interno",
+      "mare",
+      "notte",
+      "costiero"
+    ]
+  },
+  "piazzetta_borgo.png": {
+    "tags": [
+      "piazza",
+      "borgo",
+      "esterno",
+      "notte",
+      "costiero"
+    ]
+  },
+  "chiesetta_mare.png": {
+    "tags": [
+      "chiesa",
+      "interno",
+      "religione",
+      "notte",
+      "costiero"
+    ]
+  },
+  "bottega_antiquario.png": {
+    "tags": [
+      "bottega",
+      "negozio",
+      "interno",
+      "notte",
+      "costiero"
+    ]
+  },
+  "cantina_pescatore.png": {
+    "tags": [
+      "cantina",
+      "interno",
+      "mare",
+      "pescatore",
+      "notte",
+      "costiero"
+    ]
+  },
+  "villa_scogliera.png": {
+    "tags": [
+      "villa",
+      "esterno",
+      "mare",
+      "notte",
+      "costiero"
+    ]
+  },
+  "mercato_pesce.png": {
+    "tags": [
+      "mercato",
+      "pesce",
+      "esterno",
+      "notte",
+      "costiero"
+    ]
+  },
+  "ufficio_doganale.png": {
+    "tags": [
+      "ufficio",
+      "interno",
+      "mare",
+      "notte",
+      "costiero"
+    ]
+  },
+  "cimitero_mare.png": {
+    "tags": [
+      "cimitero",
+      "esterno",
+      "mare",
+      "notte",
+      "costiero"
+    ]
+  },
+  "stiva_mercantile.png": {
+    "tags": [
+      "nave",
+      "interno",
+      "mare",
+      "notte",
+      "costiero",
+      "mercantile"
+    ]
+  },
+  "cabina_funivia.png": {
+    "tags": [
+      "funivia",
+      "interno",
+      "mare",
+      "notte",
+      "costiero"
+    ]
   }
 }

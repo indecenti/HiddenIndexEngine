@@ -1,6 +1,33 @@
 {
   "objects": [
     {
+      "id": "ca_abacus_wooden",
+      "label_key": "obj_ca_abacus_wooden",
+      "icon": "objects_cartoon/ca_abacus_wooden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "studio",
+        "legno",
+        "antico"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_accordion_instrument",
+      "name_key": "ca_accordion_instrument_name",
+      "image": "ca_accordion_instrument.png",
+      "detection_type": "rect",
+      "tags": [
+        "instrument",
+        "music",
+        "red",
+        "weird"
+      ]
+    },
+    {
       "id": "ca_accordion_wood",
       "label_key": "obj_ca_accordion_wood",
       "icon": "objects_cartoon/ca_accordion_wood.png",
@@ -53,6 +80,20 @@
         "natale",
         "gioco",
         "decorazione"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_alien_blaster_toy",
+      "label_key": "obj_ca_alien_blaster_toy",
+      "icon": "objects_cartoon/ca_alien_blaster_toy.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "giocattolo",
+        "plastica",
+        "tecnologia"
       ],
       "style": "cartoon"
     },
@@ -160,6 +201,19 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_ant_farm_glass",
+      "name_key": "ca_ant_farm_glass_name",
+      "image": "ca_ant_farm_glass.png",
+      "detection_type": "rect",
+      "tags": [
+        "glass",
+        "animal",
+        "weird",
+        "nature",
+        "box"
+      ]
+    },
+    {
       "id": "ca_antiseptic_bottle",
       "label_key": "obj_ca_antiseptic_bottle",
       "icon": "objects_cartoon/ca_antiseptic_bottle.png",
@@ -261,6 +315,19 @@
         "vintage"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_astrolabe_brass",
+      "name_key": "ca_astrolabe_brass_name",
+      "image": "ca_astrolabe_brass.png",
+      "detection_type": "rect",
+      "tags": [
+        "brass",
+        "weird",
+        "ancient",
+        "space",
+        "instrument"
+      ]
     },
     {
       "id": "ca_astrolabe_brass_antique",
@@ -528,6 +595,35 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_bagpipes_tartan",
+      "label_key": "obj_ca_bagpipes_tartan",
+      "icon": "objects_cartoon/ca_bagpipes_tartan.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "tessuto"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_banjo_instrument",
+      "label_key": "obj_ca_banjo_instrument",
+      "icon": "objects_cartoon/ca_banjo_instrument.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "legno"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_barcode_scanner_rugged",
       "label_key": "obj_ca_barcode_scanner_rugged",
       "icon": "objects_cartoon/ca_barcode_scanner_rugged.png",
@@ -595,6 +691,18 @@
         "palla"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_battering_ram_log",
+      "name_key": "ca_battering_ram_log_name",
+      "image": "ca_battering_ram_log.png",
+      "detection_type": "rect",
+      "tags": [
+        "wood",
+        "weapon",
+        "weird",
+        "medieval"
+      ]
     },
     {
       "id": "ca_battery_aa",
@@ -684,6 +792,19 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_bear_trap_metal",
+      "name_key": "ca_bear_trap_metal_name",
+      "image": "ca_bear_trap_metal.png",
+      "detection_type": "rect",
+      "tags": [
+        "metal",
+        "trap",
+        "weird",
+        "weapon",
+        "danger"
+      ]
+    },
+    {
       "id": "ca_beaver_wood",
       "label_key": "obj_ca_beaver_wood",
       "icon": "objects_cartoon/ca_beaver_wood.png",
@@ -710,6 +831,21 @@
         "pericolo"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_bellows_fireplace",
+      "label_key": "obj_ca_bellows_fireplace",
+      "icon": "objects_cartoon/ca_bellows_fireplace.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "attrezzo",
+        "fuoco",
+        "cuoio"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_bento_box_japanese",
@@ -783,6 +919,21 @@
         "metallo"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_billiards_triangle",
+      "label_key": "obj_ca_billiards_triangle",
+      "icon": "objects_cartoon/ca_billiards_triangle.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "gioco",
+        "legno",
+        "sport"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_binoculars_black",
@@ -883,6 +1034,35 @@
         "stoffa"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_blowtorch_blue_flame",
+      "label_key": "obj_ca_blowtorch_blue_flame",
+      "icon": "objects_cartoon/ca_blowtorch_blue_flame.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "attrezzo",
+        "fuoco",
+        "metallo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_bonsai_tree_potted",
+      "label_key": "obj_ca_bonsai_tree_potted",
+      "icon": "objects_cartoon/ca_bonsai_tree_potted.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "pianta",
+        "natura",
+        "arte"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_book_stack_adv",
@@ -1088,6 +1268,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_brain_with_eyeballs",
+      "label_key": "obj_ca_brain_with_eyeballs",
+      "icon": "objects_cartoon/ca_brain_with_eyeballs.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "scienza",
+        "macabro",
+        "carne"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_brass_whistle",
       "label_key": "obj_ca_brass_whistle",
       "icon": "objects_cartoon/ca_brass_whistle.png",
@@ -1231,6 +1425,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_butcher_cleaver_cursed",
+      "label_key": "obj_ca_butcher_cleaver_cursed",
+      "icon": "objects_cartoon/ca_butcher_cleaver_cursed.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "arma",
+        "macabro",
+        "metallo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_butterfly_net",
       "label_key": "obj_ca_butterfly_net",
       "icon": "objects_cartoon/ca_butterfly_net.png",
@@ -1241,6 +1449,20 @@
         "strumento",
         "natura",
         "esplorazione"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_cactus_potted_prickly",
+      "label_key": "obj_ca_cactus_potted_prickly",
+      "icon": "objects_cartoon/ca_cactus_potted_prickly.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "pianta",
+        "natura",
+        "verde"
       ],
       "style": "cartoon"
     },
@@ -1695,6 +1917,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_carillon_ballerina_wooden",
+      "label_key": "obj_ca_carillon_ballerina_wooden",
+      "icon": "objects_cartoon/ca_carillon_ballerina_wooden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "giocattolo",
+        "meccanismo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_carpenter_pencil",
       "label_key": "obj_ca_carpenter_pencil",
       "icon": "objects_cartoon/ca_carpenter_pencil.png",
@@ -1755,6 +1992,21 @@
         "antico"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_castanets_wooden",
+      "label_key": "obj_ca_castanets_wooden",
+      "icon": "objects_cartoon/ca_castanets_wooden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "legno"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_cauldron_bubbling",
@@ -1832,6 +2084,35 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_chainsaw_lumberjack",
+      "label_key": "obj_ca_chainsaw_lumberjack",
+      "icon": "objects_cartoon/ca_chainsaw_lumberjack.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "attrezzo",
+        "metallo",
+        "pericolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_chainsaw_rusty_gore",
+      "label_key": "obj_ca_chainsaw_rusty_gore",
+      "icon": "objects_cartoon/ca_chainsaw_rusty_gore.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "arma",
+        "macabro",
+        "metallo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_chameleon_jungle",
       "label_key": "obj_ca_chameleon_jungle",
       "icon": "objects_cartoon/ca_chameleon_jungle.png",
@@ -1842,6 +2123,20 @@
         "natura",
         "esplorazione",
         "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_chandelier_crystal",
+      "label_key": "obj_ca_chandelier_crystal",
+      "icon": "objects_cartoon/ca_chandelier_crystal.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "vetro",
+        "luce",
+        "decorazione"
       ],
       "style": "cartoon"
     },
@@ -2120,6 +2415,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_cleaver_butcher",
+      "label_key": "obj_ca_cleaver_butcher",
+      "icon": "objects_cartoon/ca_cleaver_butcher.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "attrezzo",
+        "metallo",
+        "pericolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_clef_pendant",
       "label_key": "obj_ca_clef_pendant",
       "icon": "objects_cartoon/ca_clef_pendant.png",
@@ -2182,6 +2491,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_clockwork_vampire_teeth",
+      "label_key": "obj_ca_clockwork_vampire_teeth",
+      "icon": "objects_cartoon/ca_clockwork_vampire_teeth.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "giocattolo",
+        "macabro",
+        "meccanismo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_closed_umbrella",
       "label_key": "obj_ca_closed_umbrella",
       "icon": "objects_cartoon/ca_closed_umbrella.png",
@@ -2197,6 +2520,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_clown_wig_rainbow",
+      "label_key": "obj_ca_clown_wig_rainbow",
+      "icon": "objects_cartoon/ca_clown_wig_rainbow.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "abbigliamento",
+        "circo",
+        "arte"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_coffee_bag_dark",
       "label_key": "obj_ca_coffee_bag_dark",
       "icon": "objects_cartoon/ca_coffee_bag_dark.png",
@@ -2207,6 +2544,20 @@
         "cibo",
         "carta",
         "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_coffin_creepy_wood",
+      "label_key": "obj_ca_coffin_creepy_wood",
+      "icon": "objects_cartoon/ca_coffin_creepy_wood.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "macabro",
+        "legno",
+        "religione"
       ],
       "style": "cartoon"
     },
@@ -2422,6 +2773,34 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_cotton_candy_pink",
+      "label_key": "obj_ca_cotton_candy_pink",
+      "icon": "objects_cartoon/ca_cotton_candy_pink.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "cibo",
+        "dolce",
+        "rosa"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_cowbell_metal",
+      "label_key": "obj_ca_cowbell_metal",
+      "icon": "objects_cartoon/ca_cowbell_metal.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "metallo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_cpu_cooler_fan_metal",
       "label_key": "obj_ca_cpu_cooler_fan_metal",
       "icon": "objects_cartoon/ca_cpu_cooler_fan_metal.png",
@@ -2492,6 +2871,33 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_crossbow_wooden",
+      "label_key": "obj_ca_crossbow_wooden",
+      "icon": "objects_cartoon/ca_crossbow_wooden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "arma",
+        "caccia",
+        "legno"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_cryptex_code_cylinder",
+      "name_key": "ca_cryptex_code_cylinder_name",
+      "image": "ca_cryptex_code_cylinder.png",
+      "detection_type": "rect",
+      "tags": [
+        "code",
+        "weird",
+        "puzzle",
+        "mystery",
+        "brass"
+      ]
+    },
+    {
       "id": "ca_crystal_ball",
       "label_key": "obj_ca_crystal_ball",
       "icon": "objects_cartoon/ca_crystal_ball.png",
@@ -2506,6 +2912,21 @@
         "mistero"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_crystal_ball_glowing",
+      "label_key": "obj_ca_crystal_ball_glowing",
+      "icon": "objects_cartoon/ca_crystal_ball_glowing.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "magia",
+        "mistero",
+        "vetro"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_crystal_ball_wooden_stand",
@@ -2652,6 +3073,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_crystal_skull_pink",
+      "label_key": "obj_ca_crystal_skull_pink",
+      "icon": "objects_cartoon/ca_crystal_skull_pink.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "magia",
+        "pietra",
+        "macabro"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_crystal_skull_purple_artifact",
       "label_key": "obj_ca_crystal_skull_purple_artifact",
       "icon": "objects_cartoon/ca_crystal_skull_purple_artifact.png",
@@ -2681,6 +3116,19 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_cuckoo_clock_wooden",
+      "name_key": "ca_cuckoo_clock_wooden_name",
+      "image": "ca_cuckoo_clock_wooden.png",
+      "detection_type": "rect",
+      "tags": [
+        "wood",
+        "clock",
+        "time",
+        "bird",
+        "vintage"
+      ]
+    },
+    {
       "id": "ca_cupcake_blue",
       "label_key": "obj_ca_cupcake_blue",
       "icon": "objects_cartoon/ca_cupcake_blue.png",
@@ -2704,6 +3152,48 @@
       "tags": [
         "cibo",
         "dolce"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_cursed_pendant_blood",
+      "label_key": "obj_ca_cursed_pendant_blood",
+      "icon": "objects_cartoon/ca_cursed_pendant_blood.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "magia",
+        "gioiello",
+        "macabro"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_cybernetic_pirate_hook",
+      "label_key": "obj_ca_cybernetic_pirate_hook",
+      "icon": "objects_cartoon/ca_cybernetic_pirate_hook.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "metallo",
+        "arma",
+        "tecnologia"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_cyberpunk_goggles",
+      "label_key": "obj_ca_cyberpunk_goggles",
+      "icon": "objects_cartoon/ca_cyberpunk_goggles.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "tecnologia",
+        "plastica",
+        "ottica"
       ],
       "style": "cartoon"
     },
@@ -2770,6 +3260,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_cymbals_brass",
+      "label_key": "obj_ca_cymbals_brass",
+      "icon": "objects_cartoon/ca_cymbals_brass.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "ottone"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_dartboard_electronic_led",
       "label_key": "obj_ca_dartboard_electronic_led",
       "icon": "objects_cartoon/ca_dartboard_electronic_led.png",
@@ -2813,6 +3317,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_dentures_chattering",
+      "label_key": "obj_ca_dentures_chattering",
+      "icon": "objects_cartoon/ca_dentures_chattering.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "giocattolo",
+        "plastica",
+        "meccanismo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_diamond_sparkling",
       "label_key": "obj_ca_diamond_sparkling",
       "icon": "objects_cartoon/ca_diamond_sparkling.png",
@@ -2839,6 +3358,21 @@
         "plastica"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_didgeridoo_australian",
+      "label_key": "obj_ca_didgeridoo_australian",
+      "icon": "objects_cartoon/ca_didgeridoo_australian.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "legno"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_digital_compass",
@@ -2930,6 +3464,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_disco_ball_shiny",
+      "label_key": "obj_ca_disco_ball_shiny",
+      "icon": "objects_cartoon/ca_disco_ball_shiny.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "decorazione",
+        "luce",
+        "vetro"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_disposable_syringe",
       "label_key": "obj_ca_disposable_syringe",
       "icon": "objects_cartoon/ca_disposable_syringe.png",
@@ -2944,6 +3492,19 @@
         "piccolo"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_diving_helmet_brass",
+      "name_key": "ca_diving_helmet_brass_name",
+      "image": "ca_diving_helmet_brass.png",
+      "detection_type": "rect",
+      "tags": [
+        "brass",
+        "underwater",
+        "weird",
+        "helmet",
+        "vintage"
+      ]
     },
     {
       "id": "ca_diving_mask",
@@ -2977,6 +3538,19 @@
       ],
       "style": "cartoon",
       "shape": "rect"
+    },
+    {
+      "id": "ca_divining_rod_wooden",
+      "name_key": "ca_divining_rod_wooden_name",
+      "image": "ca_divining_rod_wooden.png",
+      "detection_type": "rect",
+      "tags": [
+        "wood",
+        "weird",
+        "magic",
+        "stick",
+        "tool"
+      ]
     },
     {
       "id": "ca_domino_tile",
@@ -3037,6 +3611,33 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_dowsing_pendulum_crystal",
+      "name_key": "ca_dowsing_pendulum_crystal_name",
+      "image": "ca_dowsing_pendulum_crystal.png",
+      "detection_type": "rect",
+      "tags": [
+        "magic",
+        "crystal",
+        "weird",
+        "tool"
+      ]
+    },
+    {
+      "id": "ca_dragon_egg_purple",
+      "label_key": "obj_ca_dragon_egg_purple",
+      "icon": "objects_cartoon/ca_dragon_egg_purple.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "magia",
+        "natura",
+        "mistero"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_dragon_egg_red",
       "label_key": "obj_ca_dragon_egg_red",
       "icon": "objects_cartoon/ca_dragon_egg_red.png",
@@ -3062,6 +3663,21 @@
         "piccolo"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_dreamcatcher_feathers",
+      "label_key": "obj_ca_dreamcatcher_feathers",
+      "icon": "objects_cartoon/ca_dreamcatcher_feathers.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "decorazione",
+        "magia",
+        "cultura"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_drone_quadcopter",
@@ -3325,6 +3941,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_embalming_fluid_jar",
+      "label_key": "obj_ca_embalming_fluid_jar",
+      "icon": "objects_cartoon/ca_embalming_fluid_jar.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "scienza",
+        "macabro",
+        "vetro"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_emergency_poncho",
       "label_key": "obj_ca_emergency_poncho",
       "icon": "objects_cartoon/ca_emergency_poncho.png",
@@ -3415,6 +4045,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_enigma_machine_code",
+      "label_key": "obj_ca_enigma_machine_code",
+      "icon": "objects_cartoon/ca_enigma_machine_code.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "tecnologia",
+        "mistero",
+        "vintage"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_eraser_pink",
       "label_key": "obj_ca_eraser_pink",
       "icon": "objects_cartoon/ca_eraser_pink.png",
@@ -3427,6 +4071,21 @@
         "carta"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_excalibur_sword_stone",
+      "label_key": "obj_ca_excalibur_sword_stone",
+      "icon": "objects_cartoon/ca_excalibur_sword_stone.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "antico",
+        "metallo",
+        "magia"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_eye_cyborg_red",
@@ -3688,6 +4347,21 @@
       "shape": "rect"
     },
     {
+      "id": "ca_fez_hat_tassel",
+      "label_key": "obj_ca_fez_hat_tassel",
+      "icon": "objects_cartoon/ca_fez_hat_tassel.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "cappello",
+        "vestiario",
+        "rosso"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_film_roll_35mm",
       "label_key": "obj_ca_film_roll_35mm",
       "icon": "objects_cartoon/ca_film_roll_35mm.png",
@@ -3713,6 +4387,20 @@
         "sicurezza",
         "metallo",
         "lavoro"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_fire_spell_scroll",
+      "label_key": "obj_ca_fire_spell_scroll",
+      "icon": "objects_cartoon/ca_fire_spell_scroll.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "carta",
+        "magia",
+        "fuoco"
       ],
       "style": "cartoon"
     },
@@ -4927,6 +5615,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_flail_medieval_weapon",
+      "label_key": "obj_ca_flail_medieval_weapon",
+      "icon": "objects_cartoon/ca_flail_medieval_weapon.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "arma",
+        "antico",
+        "pericolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_flashlight_mini",
       "label_key": "obj_ca_flashlight_mini",
       "icon": "objects_cartoon/ca_flashlight_mini.png",
@@ -4969,6 +5671,20 @@
       ],
       "style": "cartoon",
       "shape": "rect"
+    },
+    {
+      "id": "ca_floating_bonsai_tree",
+      "label_key": "obj_ca_floating_bonsai_tree",
+      "icon": "objects_cartoon/ca_floating_bonsai_tree.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "pianta",
+        "natura",
+        "magia"
+      ],
+      "style": "cartoon"
     },
     {
       "id": "ca_floppy_disk_35",
@@ -5041,6 +5757,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_flyswatter_green",
+      "label_key": "obj_ca_flyswatter_green",
+      "icon": "objects_cartoon/ca_flyswatter_green.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "plastica",
+        "attrezzo",
+        "insetto"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_food_can",
       "label_key": "obj_ca_food_can",
       "icon": "objects_cartoon/ca_food_can.png",
@@ -5094,6 +5825,21 @@
         "arredo"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_french_horn_brass",
+      "label_key": "obj_ca_french_horn_brass",
+      "icon": "objects_cartoon/ca_french_horn_brass.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "ottone"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_fried_chicken_leg",
@@ -5472,6 +6218,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_garden_gnome_classic",
+      "label_key": "obj_ca_garden_gnome_classic",
+      "icon": "objects_cartoon/ca_garden_gnome_classic.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "giardino",
+        "decorazione",
+        "esterno"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_garden_shears_red",
       "label_key": "obj_ca_garden_shears_red",
       "icon": "objects_cartoon/ca_garden_shears_red.png",
@@ -5485,6 +6246,20 @@
       ],
       "style": "cartoon",
       "shape": "rect"
+    },
+    {
+      "id": "ca_gargoyle_stone_statue",
+      "label_key": "obj_ca_gargoyle_stone_statue",
+      "icon": "objects_cartoon/ca_gargoyle_stone_statue.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "pietra",
+        "arte",
+        "macabro"
+      ],
+      "style": "cartoon"
     },
     {
       "id": "ca_gas_canister_small",
@@ -5564,6 +6339,19 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_geiger_counter_yellow",
+      "name_key": "ca_geiger_counter_yellow_name",
+      "image": "ca_geiger_counter_yellow.png",
+      "detection_type": "rect",
+      "tags": [
+        "tech",
+        "weird",
+        "yellow",
+        "radiation",
+        "tool"
+      ]
+    },
+    {
       "id": "ca_gem_ruby_red",
       "label_key": "obj_ca_gem_ruby_red",
       "icon": "objects_cartoon/ca_gem_ruby_red.png",
@@ -5634,6 +6422,20 @@
         "arredo",
         "viaggio",
         "cultura"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_glowing_alien_egg",
+      "label_key": "obj_ca_glowing_alien_egg",
+      "icon": "objects_cartoon/ca_glowing_alien_egg.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "scienza",
+        "strano",
+        "natura"
       ],
       "style": "cartoon"
     },
@@ -5718,6 +6520,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_golden_ticket_wonka",
+      "label_key": "obj_ca_golden_ticket_wonka",
+      "icon": "objects_cartoon/ca_golden_ticket_wonka.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "carta",
+        "gioco",
+        "oro"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_golf_ball_tee_white",
       "label_key": "obj_ca_golf_ball_tee_white",
       "icon": "objects_cartoon/ca_golf_ball_tee_white.png",
@@ -5771,6 +6587,21 @@
         "metallo"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_gong_golden",
+      "label_key": "obj_ca_gong_golden",
+      "icon": "objects_cartoon/ca_gong_golden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "ottone"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_gps_rugged",
@@ -5869,6 +6700,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_green_brain_in_a_jar",
+      "label_key": "obj_ca_green_brain_in_a_jar",
+      "icon": "objects_cartoon/ca_green_brain_in_a_jar.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "scienza",
+        "macabro",
+        "vetro"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_green_caterpillar",
       "label_key": "obj_ca_green_caterpillar",
       "icon": "objects_cartoon/ca_green_caterpillar.png",
@@ -5902,6 +6747,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_guillotine_blade_bloody",
+      "label_key": "obj_ca_guillotine_blade_bloody",
+      "icon": "objects_cartoon/ca_guillotine_blade_bloody.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "arma",
+        "macabro",
+        "metallo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_guitar_pick",
       "label_key": "obj_ca_guitar_pick",
       "icon": "objects_cartoon/ca_guitar_pick.png",
@@ -5929,6 +6788,20 @@
       ],
       "style": "cartoon",
       "shape": "rect"
+    },
+    {
+      "id": "ca_halberd_polearm",
+      "label_key": "obj_ca_halberd_polearm",
+      "icon": "objects_cartoon/ca_halberd_polearm.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "arma",
+        "antico",
+        "metallo"
+      ],
+      "style": "cartoon"
     },
     {
       "id": "ca_hamburger_cheese",
@@ -6020,6 +6893,34 @@
       ],
       "style": "cartoon",
       "shape": "rect"
+    },
+    {
+      "id": "ca_hangman_noose_rope",
+      "label_key": "obj_ca_hangman_noose_rope",
+      "icon": "objects_cartoon/ca_hangman_noose_rope.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "macabro",
+        "arma",
+        "corda"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_haptic_cyber_glove",
+      "label_key": "obj_ca_haptic_cyber_glove",
+      "icon": "objects_cartoon/ca_haptic_cyber_glove.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "abbigliamento",
+        "tecnologia",
+        "futuro"
+      ],
+      "style": "cartoon"
     },
     {
       "id": "ca_hard_drive_external_silver",
@@ -6510,6 +7411,33 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_hookah_water_pipe",
+      "name_key": "ca_hookah_water_pipe_name",
+      "image": "ca_hookah_water_pipe.png",
+      "detection_type": "rect",
+      "tags": [
+        "glass",
+        "smoke",
+        "weird",
+        "oriental"
+      ]
+    },
+    {
+      "id": "ca_horseshoe_lucky",
+      "label_key": "obj_ca_horseshoe_lucky",
+      "icon": "objects_cartoon/ca_horseshoe_lucky.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "metallo",
+        "ferro",
+        "simbolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_hot_cocoa",
       "label_key": "obj_ca_hot_cocoa",
       "icon": "objects_cartoon/ca_hot_cocoa.png",
@@ -6613,6 +7541,19 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_hourglass_sand_timer",
+      "name_key": "ca_hourglass_sand_timer_name",
+      "image": "ca_hourglass_sand_timer.png",
+      "detection_type": "rect",
+      "tags": [
+        "time",
+        "glass",
+        "weird",
+        "magic",
+        "ancient"
+      ]
+    },
+    {
       "id": "ca_hourglass_wood",
       "label_key": "obj_ca_hourglass_wood",
       "icon": "objects_cartoon/ca_hourglass_wood.png",
@@ -6625,6 +7566,51 @@
         "legno"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_hoverboard_electric",
+      "label_key": "obj_ca_hoverboard_electric",
+      "icon": "objects_cartoon/ca_hoverboard_electric.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "veicolo",
+        "elettronico",
+        "tech"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_hula_hoop_stripes",
+      "label_key": "obj_ca_hula_hoop_stripes",
+      "icon": "objects_cartoon/ca_hula_hoop_stripes.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "plastica",
+        "gioco",
+        "sport"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_hurdy_gurdy_instrument",
+      "label_key": "obj_ca_hurdy_gurdy_instrument",
+      "icon": "objects_cartoon/ca_hurdy_gurdy_instrument.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "legno"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_ice_axe",
@@ -6839,6 +7825,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_iron_maiden_torture",
+      "label_key": "obj_ca_iron_maiden_torture",
+      "icon": "objects_cartoon/ca_iron_maiden_torture.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "metallo",
+        "macabro",
+        "antico"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_jack_adapter",
       "label_key": "obj_ca_jack_adapter",
       "icon": "objects_cartoon/ca_jack_adapter.png",
@@ -6898,6 +7898,49 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_jukebox_neon",
+      "label_key": "obj_ca_jukebox_neon",
+      "icon": "objects_cartoon/ca_jukebox_neon.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "retro",
+        "luce"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_kaleidoscope_toy",
+      "label_key": "obj_ca_kaleidoscope_toy",
+      "icon": "objects_cartoon/ca_kaleidoscope_toy.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "giocattolo",
+        "ottica",
+        "magia"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_kazoo_plastic",
+      "label_key": "obj_ca_kazoo_plastic",
+      "icon": "objects_cartoon/ca_kazoo_plastic.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "plastica"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_kebab_skewer_grilled",
       "label_key": "obj_ca_kebab_skewer_grilled",
       "icon": "objects_cartoon/ca_kebab_skewer_grilled.png",
@@ -6910,6 +7953,21 @@
         "cucina"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_kendama_toy",
+      "label_key": "obj_ca_kendama_toy",
+      "icon": "objects_cartoon/ca_kendama_toy.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "giocattolo",
+        "gioco",
+        "legno"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_ketchup_bottle_plastic",
@@ -7095,6 +8153,20 @@
       "tags": [
         "strumento",
         "tecnologia"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_laser_nunchaku_blue",
+      "label_key": "obj_ca_laser_nunchaku_blue",
+      "icon": "objects_cartoon/ca_laser_nunchaku_blue.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "arma",
+        "tecnologia",
+        "luce"
       ],
       "style": "cartoon"
     },
@@ -7414,6 +8486,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_loom_weaving_wooden",
+      "label_key": "obj_ca_loom_weaving_wooden",
+      "icon": "objects_cartoon/ca_loom_weaving_wooden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "legno",
+        "strumento",
+        "antico"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_macarons_box_colorful",
       "label_key": "obj_ca_macarons_box_colorful",
       "icon": "objects_cartoon/ca_macarons_box_colorful.png",
@@ -7443,6 +8529,33 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_machete_jungle_blade",
+      "label_key": "obj_ca_machete_jungle_blade",
+      "icon": "objects_cartoon/ca_machete_jungle_blade.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "arma",
+        "bosco",
+        "pericolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_magic_8_ball_black",
+      "name_key": "ca_magic_8_ball_black_name",
+      "image": "ca_magic_8_ball_black.png",
+      "detection_type": "rect",
+      "tags": [
+        "magic",
+        "black",
+        "game",
+        "weird",
+        "ball"
+      ]
+    },
+    {
       "id": "ca_magic_broom_straw",
       "label_key": "obj_ca_magic_broom_straw",
       "icon": "objects_cartoon/ca_magic_broom_straw.png",
@@ -7453,6 +8566,20 @@
       "tags": [
         "magia",
         "legno"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_magic_carpet_rolled",
+      "label_key": "obj_ca_magic_carpet_rolled",
+      "icon": "objects_cartoon/ca_magic_carpet_rolled.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "tessuto",
+        "magia",
+        "veicolo"
       ],
       "style": "cartoon"
     },
@@ -7485,6 +8612,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_magic_lamp_genie",
+      "label_key": "obj_ca_magic_lamp_genie",
+      "icon": "objects_cartoon/ca_magic_lamp_genie.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "antico",
+        "metallo",
+        "magia"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_magic_mirror_golden",
       "label_key": "obj_ca_magic_mirror_golden",
       "icon": "objects_cartoon/ca_magic_mirror_golden.png",
@@ -7510,6 +8652,20 @@
         "magia",
         "metallo",
         "vetro"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_magic_potion_blue",
+      "label_key": "obj_ca_magic_potion_blue",
+      "icon": "objects_cartoon/ca_magic_potion_blue.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "magia",
+        "vetro",
+        "scienza"
       ],
       "style": "cartoon"
     },
@@ -7642,6 +8798,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_maracas_colorful",
+      "label_key": "obj_ca_maracas_colorful",
+      "icon": "objects_cartoon/ca_maracas_colorful.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "cultura"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_matchbox",
       "label_key": "obj_ca_matchbox",
       "icon": "objects_cartoon/ca_matchbox.png",
@@ -7670,6 +8840,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_matryoshka_doll_red",
+      "label_key": "obj_ca_matryoshka_doll_red",
+      "icon": "objects_cartoon/ca_matryoshka_doll_red.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "legno",
+        "giocattolo",
+        "collezione"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_measuring_tape_yellow",
       "label_key": "obj_ca_measuring_tape_yellow",
       "icon": "objects_cartoon/ca_measuring_tape_yellow.png",
@@ -7680,6 +8864,20 @@
         "strumento",
         "metallo",
         "plastica"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_mecha_squirrel_toy",
+      "label_key": "obj_ca_mecha_squirrel_toy",
+      "icon": "objects_cartoon/ca_mecha_squirrel_toy.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "giocattolo",
+        "robot",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -7801,6 +8999,20 @@
       ],
       "style": "cartoon",
       "shape": "rect"
+    },
+    {
+      "id": "ca_metronome_wooden",
+      "label_key": "obj_ca_metronome_wooden",
+      "icon": "objects_cartoon/ca_metronome_wooden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "legno"
+      ],
+      "style": "cartoon"
     },
     {
       "id": "ca_microchip_electronic",
@@ -8021,6 +9233,36 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_monocle_golden",
+      "label_key": "obj_ca_monocle_golden",
+      "icon": "objects_cartoon/ca_monocle_golden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "ottica",
+        "accessorio",
+        "ottone"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_mortar_and_pestle_stone",
+      "label_key": "obj_ca_mortar_and_pestle_stone",
+      "icon": "objects_cartoon/ca_mortar_and_pestle_stone.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "cucina",
+        "pietra",
+        "alchimia"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_motherboard_pc_green",
       "label_key": "obj_ca_motherboard_pc_green",
       "icon": "objects_cartoon/ca_motherboard_pc_green.png",
@@ -8048,6 +9290,20 @@
       ],
       "style": "cartoon",
       "shape": "rect"
+    },
+    {
+      "id": "ca_mousetrap_cheese",
+      "label_key": "obj_ca_mousetrap_cheese",
+      "icon": "objects_cartoon/ca_mousetrap_cheese.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "legno",
+        "metallo",
+        "pericolo"
+      ],
+      "style": "cartoon"
     },
     {
       "id": "ca_muffin_blueberry_paper",
@@ -8200,6 +9456,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_necronomicon_book_flesh",
+      "label_key": "obj_ca_necronomicon_book_flesh",
+      "icon": "objects_cartoon/ca_necronomicon_book_flesh.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "magia",
+        "macabro",
+        "libro"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_newspaper_rolled",
       "label_key": "obj_ca_newspaper_rolled",
       "icon": "objects_cartoon/ca_newspaper_rolled.png",
@@ -8210,6 +9480,20 @@
       "tags": [
         "carta",
         "informazione"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_ninja_shuriken_gold",
+      "label_key": "obj_ca_ninja_shuriken_gold",
+      "icon": "objects_cartoon/ca_ninja_shuriken_gold.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "metallo",
+        "pericolo",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -8226,6 +9510,21 @@
         "carta"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_nunchaku_wooden",
+      "label_key": "obj_ca_nunchaku_wooden",
+      "icon": "objects_cartoon/ca_nunchaku_wooden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "arma",
+        "pericolo",
+        "legno"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_nutcracker",
@@ -8255,6 +9554,36 @@
         "strumento",
         "tech",
         "medio"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_obelisk_stone",
+      "label_key": "obj_ca_obelisk_stone",
+      "icon": "objects_cartoon/ca_obelisk_stone.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "pietra",
+        "arte",
+        "antico"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_ocarina_blue",
+      "label_key": "obj_ca_ocarina_blue",
+      "icon": "objects_cartoon/ca_ocarina_blue.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "ceramica"
       ],
       "style": "cartoon",
       "shape": "rect"
@@ -8315,6 +9644,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_origami_crane_paper",
+      "label_key": "obj_ca_origami_crane_paper",
+      "icon": "objects_cartoon/ca_origami_crane_paper.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "carta",
+        "arte",
+        "cultura"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_otter_river",
       "label_key": "obj_ca_otter_river",
       "icon": "objects_cartoon/ca_otter_river.png",
@@ -8325,6 +9669,20 @@
         "natura",
         "acqua",
         "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_ouija_board_planchette",
+      "label_key": "obj_ca_ouija_board_planchette",
+      "icon": "objects_cartoon/ca_ouija_board_planchette.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "magia",
+        "occulto",
+        "gioco"
       ],
       "style": "cartoon"
     },
@@ -8398,6 +9756,20 @@
         "cibo",
         "dolce",
         "cucina"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_panflute_bamboo",
+      "label_key": "obj_ca_panflute_bamboo",
+      "icon": "objects_cartoon/ca_panflute_bamboo.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -8517,6 +9889,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_pennyfarthing_vintage",
+      "label_key": "obj_ca_pennyfarthing_vintage",
+      "icon": "objects_cartoon/ca_pennyfarthing_vintage.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "veicolo",
+        "antico",
+        "metallo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_perfume_bottle",
       "label_key": "obj_ca_perfume_bottle",
       "icon": "objects_cartoon/ca_perfume_bottle.png",
@@ -8531,6 +9918,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_periscope_submarine",
+      "label_key": "obj_ca_periscope_submarine",
+      "icon": "objects_cartoon/ca_periscope_submarine.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "ottica",
+        "esplorazione",
+        "metallo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_phoenix_tear",
       "label_key": "obj_ca_phoenix_tear",
       "icon": "objects_cartoon/ca_phoenix_tear.png",
@@ -8541,6 +9942,20 @@
         "vetro",
         "magia",
         "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_phonograph_horn",
+      "label_key": "obj_ca_phonograph_horn",
+      "icon": "objects_cartoon/ca_phonograph_horn.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "audio",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -8587,6 +10002,35 @@
         "decorazione"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_pinata_donkey",
+      "label_key": "obj_ca_pinata_donkey",
+      "icon": "objects_cartoon/ca_pinata_donkey.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "carta",
+        "gioco",
+        "cultura"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_pinball_machine_retro",
+      "label_key": "obj_ca_pinball_machine_retro",
+      "icon": "objects_cartoon/ca_pinball_machine_retro.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "gioco",
+        "retro",
+        "elettronico"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_pine_cone",
@@ -8675,6 +10119,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_pirate_treasure_map_rolled",
+      "label_key": "obj_ca_pirate_treasure_map_rolled",
+      "icon": "objects_cartoon/ca_pirate_treasure_map_rolled.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "carta",
+        "antico",
+        "mistero"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_pizza_slice",
       "label_key": "obj_ca_pizza_slice",
       "icon": "objects_cartoon/ca_pizza_slice.png",
@@ -8702,6 +10160,35 @@
         "cucina"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_plasma_cutter_tool",
+      "label_key": "obj_ca_plasma_cutter_tool",
+      "icon": "objects_cartoon/ca_plasma_cutter_tool.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "attrezzo",
+        "scienza",
+        "arma"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_plasma_globe_electric",
+      "label_key": "obj_ca_plasma_globe_electric",
+      "icon": "objects_cartoon/ca_plasma_globe_electric.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "scienza",
+        "luce",
+        "vetro"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_plasters_box",
@@ -8781,6 +10268,35 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_plunger_red",
+      "label_key": "obj_ca_plunger_red",
+      "icon": "objects_cartoon/ca_plunger_red.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "attrezzo",
+        "igiene",
+        "gomma"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_pneumatic_drill_yellow",
+      "label_key": "obj_ca_pneumatic_drill_yellow",
+      "icon": "objects_cartoon/ca_pneumatic_drill_yellow.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "attrezzo",
+        "officina",
+        "metallo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_pocket_metronome",
       "label_key": "obj_ca_pocket_metronome",
       "icon": "objects_cartoon/ca_pocket_metronome.png",
@@ -8824,6 +10340,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_pogo_stick_red",
+      "label_key": "obj_ca_pogo_stick_red",
+      "icon": "objects_cartoon/ca_pogo_stick_red.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "giocattolo",
+        "sport",
+        "metallo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_poison_dagger",
       "label_key": "obj_ca_poison_dagger",
       "icon": "objects_cartoon/ca_poison_dagger.png",
@@ -8838,6 +10368,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_polygraph_machine_test",
+      "label_key": "obj_ca_polygraph_machine_test",
+      "icon": "objects_cartoon/ca_polygraph_machine_test.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "scienza",
+        "misura",
+        "tech"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_pomegranate",
       "label_key": "obj_ca_pomegranate",
       "icon": "objects_cartoon/ca_pomegranate.png",
@@ -8850,6 +10395,20 @@
         "autunno",
         "cibo",
         "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_pommel_horse_gymnastics",
+      "label_key": "obj_ca_pommel_horse_gymnastics",
+      "icon": "objects_cartoon/ca_pommel_horse_gymnastics.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "sport",
+        "legno",
+        "pelle"
       ],
       "style": "cartoon"
     },
@@ -9089,6 +10648,20 @@
       "shape": "rect"
     },
     {
+      "id": "ca_quantum_toaster_neon",
+      "label_key": "obj_ca_quantum_toaster_neon",
+      "icon": "objects_cartoon/ca_quantum_toaster_neon.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "macchina",
+        "scienza",
+        "strano"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_quiver_arrows",
       "label_key": "obj_ca_quiver_arrows",
       "icon": "objects_cartoon/ca_quiver_arrows.png",
@@ -9114,6 +10687,20 @@
         "natura",
         "bosco",
         "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_radar_dish_green",
+      "label_key": "obj_ca_radar_dish_green",
+      "icon": "objects_cartoon/ca_radar_dish_green.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "tecnologia",
+        "tech",
+        "elettronica"
       ],
       "style": "cartoon"
     },
@@ -9204,6 +10791,20 @@
         "tecnologia",
         "elettronica",
         "sicurezza"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_radioactive_pizza_slice",
+      "label_key": "obj_ca_radioactive_pizza_slice",
+      "icon": "objects_cartoon/ca_radioactive_pizza_slice.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "cibo",
+        "strano",
+        "pericolo"
       ],
       "style": "cartoon"
     },
@@ -9311,6 +10912,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_retro_cassette_tape_pink",
+      "label_key": "obj_ca_retro_cassette_tape_pink",
+      "icon": "objects_cartoon/ca_retro_cassette_tape_pink.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "retro",
+        "plastica",
+        "musica"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_ritual_dagger",
       "label_key": "obj_ca_ritual_dagger",
       "icon": "objects_cartoon/ca_ritual_dagger.png",
@@ -9355,6 +10971,21 @@
         "piccolo"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_robot_dog_toy",
+      "label_key": "obj_ca_robot_dog_toy",
+      "icon": "objects_cartoon/ca_robot_dog_toy.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "giocattolo",
+        "tecnologia",
+        "metallo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_robot_vacuum_white_round",
@@ -9414,6 +11045,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_rubber_chicken_toy",
+      "label_key": "obj_ca_rubber_chicken_toy",
+      "icon": "objects_cartoon/ca_rubber_chicken_toy.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "giocattolo",
+        "gomma",
+        "gioco"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_rubber_duck_yellow",
       "label_key": "obj_ca_rubber_duck_yellow",
       "icon": "objects_cartoon/ca_rubber_duck_yellow.png",
@@ -9425,6 +11070,19 @@
         "plastica"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_rubber_stamp_wooden",
+      "name_key": "ca_rubber_stamp_wooden_name",
+      "image": "ca_rubber_stamp_wooden.png",
+      "detection_type": "rect",
+      "tags": [
+        "wood",
+        "stamp",
+        "tool",
+        "weird",
+        "office"
+      ]
     },
     {
       "id": "ca_rubiks_cube",
@@ -9589,6 +11247,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_sarcophagus_golden",
+      "label_key": "obj_ca_sarcophagus_golden",
+      "icon": "objects_cartoon/ca_sarcophagus_golden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "antico",
+        "macabro",
+        "metallo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_sat_phone",
       "label_key": "obj_ca_sat_phone",
       "icon": "objects_cartoon/ca_sat_phone.png",
@@ -9629,6 +11302,20 @@
       "default_hint_delay": 15,
       "tags": [
         "cibo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_saxophone_golden",
+      "label_key": "obj_ca_saxophone_golden",
+      "icon": "objects_cartoon/ca_saxophone_golden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "ottone"
       ],
       "style": "cartoon"
     },
@@ -9710,6 +11397,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_scythe_grim_reaper",
+      "label_key": "obj_ca_scythe_grim_reaper",
+      "icon": "objects_cartoon/ca_scythe_grim_reaper.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "attrezzo",
+        "macabro",
+        "natura"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_sea_shell",
       "label_key": "obj_ca_sea_shell",
       "icon": "objects_cartoon/ca_sea_shell.png",
@@ -9765,6 +11467,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_seismograph_paper",
+      "label_key": "obj_ca_seismograph_paper",
+      "icon": "objects_cartoon/ca_seismograph_paper.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "scienza",
+        "misura",
+        "carta"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_server_rack_mini",
       "label_key": "obj_ca_server_rack_mini",
       "icon": "objects_cartoon/ca_server_rack_mini.png",
@@ -9776,6 +11492,20 @@
         "tecnologia",
         "dati",
         "elettronica"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_severed_hand_crawling",
+      "label_key": "obj_ca_severed_hand_crawling",
+      "icon": "objects_cartoon/ca_severed_hand_crawling.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "macabro",
+        "mostro",
+        "carne"
       ],
       "style": "cartoon"
     },
@@ -9881,6 +11611,20 @@
         "cibo",
         "vetro",
         "cucina"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_shrunken_head_voodoo",
+      "label_key": "obj_ca_shrunken_head_voodoo",
+      "icon": "objects_cartoon/ca_shrunken_head_voodoo.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "magia",
+        "macabro",
+        "cultura"
       ],
       "style": "cartoon"
     },
@@ -10073,6 +11817,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_slingshot_wooden",
+      "label_key": "obj_ca_slingshot_wooden",
+      "icon": "objects_cartoon/ca_slingshot_wooden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "arma",
+        "legno",
+        "giocattolo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_sloth_baby",
       "label_key": "obj_ca_sloth_baby",
       "icon": "objects_cartoon/ca_sloth_baby.png",
@@ -10170,6 +11928,20 @@
         "inverno",
         "natura",
         "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_snowboard_freestyle",
+      "label_key": "obj_ca_snowboard_freestyle",
+      "icon": "objects_cartoon/ca_snowboard_freestyle.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "sport",
+        "inverno",
+        "plastica"
       ],
       "style": "cartoon"
     },
@@ -10273,6 +12045,20 @@
         "strumento",
         "metallo",
         "elettronica"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_sombrero_colorful",
+      "label_key": "obj_ca_sombrero_colorful",
+      "icon": "objects_cartoon/ca_sombrero_colorful.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "cappello",
+        "vestiario",
+        "cultura"
       ],
       "style": "cartoon"
     },
@@ -10542,6 +12328,34 @@
       "shape": "rect"
     },
     {
+      "id": "ca_steampunk_jetpack_brass",
+      "label_key": "obj_ca_steampunk_jetpack_brass",
+      "icon": "objects_cartoon/ca_steampunk_jetpack_brass.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "veicolo",
+        "volo",
+        "ottone"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_steampunk_pocket_watch",
+      "label_key": "obj_ca_steampunk_pocket_watch",
+      "icon": "objects_cartoon/ca_steampunk_pocket_watch.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "antico",
+        "metallo",
+        "tempo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_stethoscope",
       "label_key": "obj_ca_stethoscope",
       "icon": "objects_cartoon/ca_stethoscope.png",
@@ -10553,6 +12367,21 @@
         "strumento"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_stilts_wooden",
+      "label_key": "obj_ca_stilts_wooden",
+      "icon": "objects_cartoon/ca_stilts_wooden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "gioco",
+        "sport",
+        "legno"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_stone_altar_ancient",
@@ -10580,6 +12409,20 @@
         "pietra",
         "antico",
         "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_stoplight_red",
+      "label_key": "obj_ca_stoplight_red",
+      "icon": "objects_cartoon/ca_stoplight_red.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "esterno",
+        "segnaletica",
+        "luce"
       ],
       "style": "cartoon"
     },
@@ -10612,6 +12455,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_straightjacket_dirty",
+      "label_key": "obj_ca_straightjacket_dirty",
+      "icon": "objects_cartoon/ca_straightjacket_dirty.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "abbigliamento",
+        "macabro",
+        "tessuto"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_straw_hat",
       "label_key": "obj_ca_straw_hat",
       "icon": "objects_cartoon/ca_straw_hat.png",
@@ -10637,6 +12494,20 @@
       "tags": [
         "strumento",
         "tecnologia",
+        "metallo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_submarine_yellow",
+      "label_key": "obj_ca_submarine_yellow",
+      "icon": "objects_cartoon/ca_submarine_yellow.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "veicolo",
+        "mare",
         "metallo"
       ],
       "style": "cartoon"
@@ -10928,6 +12799,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_synthesizer_keyboard",
+      "label_key": "obj_ca_synthesizer_keyboard",
+      "icon": "objects_cartoon/ca_synthesizer_keyboard.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "elettronico"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_syringe_medical",
       "label_key": "obj_ca_syringe_medical",
       "icon": "objects_cartoon/ca_syringe_medical.png",
@@ -11121,6 +13007,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_telegraph_key_vintage",
+      "label_key": "obj_ca_telegraph_key_vintage",
+      "icon": "objects_cartoon/ca_telegraph_key_vintage.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "comunicazione",
+        "antico",
+        "tecnologia"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_telescope_brass",
       "label_key": "obj_ca_telescope_brass",
       "icon": "objects_cartoon/ca_telescope_brass.png",
@@ -11254,6 +13154,19 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_tesla_coil_electric",
+      "name_key": "ca_tesla_coil_electric_name",
+      "image": "ca_tesla_coil_electric.png",
+      "detection_type": "rect",
+      "tags": [
+        "electric",
+        "weird",
+        "science",
+        "tech",
+        "lightning"
+      ]
+    },
+    {
       "id": "ca_theodolite_metallic",
       "label_key": "obj_ca_theodolite_metallic",
       "icon": "objects_cartoon/ca_theodolite_metallic.png",
@@ -11267,6 +13180,21 @@
         "tecnologia"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_theremin_instrument",
+      "label_key": "obj_ca_theremin_instrument",
+      "icon": "objects_cartoon/ca_theremin_instrument.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "elettronico"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_thermal_paste_tube_silver",
@@ -11393,6 +13321,20 @@
         "cibo",
         "metallo",
         "piccolo"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_tombstone_rip_mossy",
+      "label_key": "obj_ca_tombstone_rip_mossy",
+      "icon": "objects_cartoon/ca_tombstone_rip_mossy.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "macabro",
+        "pietra",
+        "religione"
       ],
       "style": "cartoon"
     },
@@ -11568,6 +13510,20 @@
         "sicurezza",
         "plastica",
         "lavoro"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_trampoline_round",
+      "label_key": "obj_ca_trampoline_round",
+      "icon": "objects_cartoon/ca_trampoline_round.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "sport",
+        "gioco",
+        "metallo"
       ],
       "style": "cartoon"
     },
@@ -12034,6 +13990,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_treadmill_machine",
+      "label_key": "obj_ca_treadmill_machine",
+      "icon": "objects_cartoon/ca_treadmill_machine.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "sport",
+        "elettronico",
+        "salute"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_treasure_map",
       "label_key": "obj_ca_treasure_map",
       "icon": "objects_cartoon/ca_treasure_map.png",
@@ -12047,6 +14018,36 @@
         "mistero"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_tricycle_red",
+      "label_key": "obj_ca_tricycle_red",
+      "icon": "objects_cartoon/ca_tricycle_red.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "veicolo",
+        "gioco",
+        "plastica"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_trident_golden_pitchfork",
+      "label_key": "obj_ca_trident_golden_pitchfork",
+      "icon": "objects_cartoon/ca_trident_golden_pitchfork.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "arma",
+        "mare",
+        "antico"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_trophy_gold",
@@ -12079,20 +14080,6 @@
       "style": "cartoon"
     },
     {
-      "id": "ca_trumpet_brass",
-      "label_key": "obj_ca_trumpet_brass",
-      "icon": "objects_cartoon/ca_trumpet_brass.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 25,
-      "tags": [
-        "musica",
-        "metallo",
-        "medio"
-      ],
-      "style": "cartoon"
-    },
-    {
       "id": "ca_trumpet_mute",
       "label_key": "obj_ca_trumpet_mute",
       "icon": "objects_cartoon/ca_trumpet_mute.png",
@@ -12106,6 +14093,21 @@
         "strumento"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_tuba_brass",
+      "label_key": "obj_ca_tuba_brass",
+      "icon": "objects_cartoon/ca_tuba_brass.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "ottone"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_tuning_fork",
@@ -12202,6 +14204,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_ufo_mini_model",
+      "label_key": "obj_ca_ufo_mini_model",
+      "icon": "objects_cartoon/ca_ufo_mini_model.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "giocattolo",
+        "metallo",
+        "scienza"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_ufo_saucer",
       "label_key": "obj_ca_ufo_saucer",
       "icon": "objects_cartoon/ca_ufo_saucer.png",
@@ -12212,6 +14228,20 @@
         "tecnologia",
         "metallo",
         "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_ukulele_wooden",
+      "label_key": "obj_ca_ukulele_wooden",
+      "icon": "objects_cartoon/ca_ukulele_wooden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -12228,6 +14258,21 @@
         "stoffa"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_unicycle_red",
+      "label_key": "obj_ca_unicycle_red",
+      "icon": "objects_cartoon/ca_unicycle_red.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "veicolo",
+        "circo",
+        "sport"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_usb_flash_drive_blue",
@@ -12256,6 +14301,20 @@
         "tecnologia",
         "elettronica",
         "dati"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_vampire_stake_wooden",
+      "label_key": "obj_ca_vampire_stake_wooden",
+      "icon": "objects_cartoon/ca_vampire_stake_wooden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "arma",
+        "legno",
+        "macabro"
       ],
       "style": "cartoon"
     },
@@ -12319,6 +14378,21 @@
         "gioco"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_viking_drinking_horn",
+      "label_key": "obj_ca_viking_drinking_horn",
+      "icon": "objects_cartoon/ca_viking_drinking_horn.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "antico",
+        "natura",
+        "cibo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_viking_horn",
@@ -12435,6 +14509,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_voodoo_doll_patched",
+      "label_key": "obj_ca_voodoo_doll_patched",
+      "icon": "objects_cartoon/ca_voodoo_doll_patched.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "stoffa",
+        "magia",
+        "mistero"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_voodoo_doll_straw",
       "label_key": "obj_ca_voodoo_doll_straw",
       "icon": "objects_cartoon/ca_voodoo_doll_straw.png",
@@ -12491,7 +14580,38 @@
         "elettronica",
         "gioco"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_vuvuzela_horn_plastic",
+      "label_key": "obj_ca_vuvuzela_horn_plastic",
+      "icon": "objects_cartoon/ca_vuvuzela_horn_plastic.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "plastica"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
+      "id": "ca_waffle_iron_open",
+      "label_key": "obj_ca_waffle_iron_open",
+      "icon": "objects_cartoon/ca_waffle_iron_open.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "cucina",
+        "elettronico",
+        "metallo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_walkie_talkie_rugged",
@@ -12524,20 +14644,6 @@
       "style": "cartoon"
     },
     {
-      "id": "ca_watering_can_blue",
-      "label_key": "obj_ca_watering_can_blue",
-      "icon": "objects_cartoon/ca_watering_can_blue.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 45,
-      "tags": [
-        "giardino",
-        "plastica",
-        "medio"
-      ],
-      "style": "cartoon"
-    },
-    {
       "id": "ca_watermelon_slice",
       "label_key": "obj_ca_watermelon_slice",
       "icon": "objects_cartoon/ca_watermelon_slice.png",
@@ -12551,6 +14657,21 @@
         "natura"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_weather_vane_rooster",
+      "label_key": "obj_ca_weather_vane_rooster",
+      "icon": "objects_cartoon/ca_weather_vane_rooster.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "esterno",
+        "misura",
+        "metallo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_webcam_black_round",
@@ -12595,6 +14716,21 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_wheelbarrow_metal_garden",
+      "label_key": "obj_ca_wheelbarrow_metal_garden",
+      "icon": "objects_cartoon/ca_wheelbarrow_metal_garden.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "attrezzo",
+        "giardino",
+        "metallo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
+    },
+    {
       "id": "ca_whip_antenna",
       "label_key": "obj_ca_whip_antenna",
       "icon": "objects_cartoon/ca_whip_antenna.png",
@@ -12609,6 +14745,21 @@
         "medio"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_whisk_metal",
+      "label_key": "obj_ca_whisk_metal",
+      "icon": "objects_cartoon/ca_whisk_metal.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "cucina",
+        "attrezzo",
+        "metallo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_whistle_orange",
@@ -12635,6 +14786,20 @@
         "sport",
         "metallo",
         "audio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_whoopee_cushion_pink",
+      "label_key": "obj_ca_whoopee_cushion_pink",
+      "icon": "objects_cartoon/ca_whoopee_cushion_pink.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "gomma",
+        "giocattolo",
+        "rosa"
       ],
       "style": "cartoon"
     },
@@ -12802,6 +14967,20 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_witch_cauldron_bubbling",
+      "label_key": "obj_ca_witch_cauldron_bubbling",
+      "icon": "objects_cartoon/ca_witch_cauldron_bubbling.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "magia",
+        "macabro",
+        "metallo"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_wizard_hat_blue_stars",
       "label_key": "obj_ca_wizard_hat_blue_stars",
       "icon": "objects_cartoon/ca_wizard_hat_blue_stars.png",
@@ -12813,6 +14992,20 @@
         "magia",
         "vestiario",
         "stoffa"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_wizard_spellbook_ancient",
+      "label_key": "obj_ca_wizard_spellbook_ancient",
+      "icon": "objects_cartoon/ca_wizard_spellbook_ancient.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "carta",
+        "magia",
+        "antico"
       ],
       "style": "cartoon"
     },
@@ -12943,7 +15136,8 @@
         "bosco",
         "piccolo"
       ],
-      "style": "cartoon"
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_wool_socks",
@@ -12974,6 +15168,21 @@
         "morbido"
       ],
       "style": "cartoon"
+    },
+    {
+      "id": "ca_wrecking_ball_crane",
+      "label_key": "obj_ca_wrecking_ball_crane",
+      "icon": "objects_cartoon/ca_wrecking_ball_crane.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "veicolo",
+        "metallo",
+        "pericolo"
+      ],
+      "style": "cartoon",
+      "shape": "rect"
     },
     {
       "id": "ca_xmas_angel",
@@ -13094,6 +15303,20 @@
         "natale",
         "inverno",
         "decorazione"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_xylophone_rainbow",
+      "label_key": "obj_ca_xylophone_rainbow",
+      "icon": "objects_cartoon/ca_xylophone_rainbow.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "musica",
+        "strumento",
+        "legno"
       ],
       "style": "cartoon"
     },
@@ -13738,23 +15961,6 @@
       "style": "cartoon"
     },
     {
-      "id": "un2_lift_bag",
-      "label_key": "obj_un2_lift_bag",
-      "icon": "objects_cartoon/un2_lift_bag.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 60,
-      "default_hint_delay": 30,
-      "tags": [
-        "medio",
-        "stoffa",
-        "plastica",
-        "attrezzatura",
-        "oceano"
-      ],
-      "style": "cartoon"
-    },
-    {
       "id": "un2_porthole",
       "label_key": "obj_un2_porthole",
       "icon": "objects_cartoon/un2_porthole.png",
@@ -13780,22 +15986,6 @@
         "piccolo",
         "metallo",
         "strumento",
-        "oceano"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "un2_scooter",
-      "label_key": "obj_un2_scooter",
-      "icon": "objects_cartoon/un2_scooter.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 25,
-      "default_hint_delay": 40,
-      "tags": [
-        "grande",
-        "veicolo",
-        "tecnologia",
         "oceano"
       ],
       "style": "cartoon"
@@ -13959,23 +16149,6 @@
       "shape": "rect"
     },
     {
-      "id": "un_flippers",
-      "label_key": "obj_un_flippers",
-      "icon": "objects_cartoon/un_flippers.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 50,
-      "default_hint_delay": 20,
-      "tags": [
-        "medio",
-        "gomma",
-        "plastica",
-        "attrezzatura",
-        "oceano"
-      ],
-      "style": "cartoon"
-    },
-    {
       "id": "un_harpoon",
       "label_key": "obj_un_harpoon",
       "icon": "objects_cartoon/un_harpoon.png",
@@ -13987,22 +16160,6 @@
         "grande",
         "metallo",
         "pericolo",
-        "oceano"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "un_oxygen_tank",
-      "label_key": "obj_un_oxygen_tank",
-      "icon": "objects_cartoon/un_oxygen_tank.png",
-      "default_detection": "rect",
-      "default_width": 20,
-      "default_height": 60,
-      "default_hint_delay": 30,
-      "tags": [
-        "medio",
-        "metallo",
-        "attrezzatura",
         "oceano"
       ],
       "style": "cartoon"

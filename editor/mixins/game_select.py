@@ -1620,90 +1620,106 @@ if __name__ == "__main__":
         
         # 2. PRIORITÀ: Click dentro dialog "Modifica" (se aperto)
         if hasattr(self, '_gs_edit_mode') and self._gs_edit_mode:
-            dw = min(1500, max(1150, int(w * 0.85)))
-            dh = min(950, max(750, int(h * 0.85)))
+            # Dimensioni sincronizzate con _r_gs_edit_dialog
+            dw = min(1600, max(1200, int(w * 0.92)))
+            dh = min(1000, max(820, int(h * 0.92)))
             dx, dy = (w-dw)//2, (h-dh)//2
-            
-            # Bottone X chiusura
-            xr = pygame.Rect(dx + dw - 42, dy + 15, 28, 28)
+
+            # STILE CAMPO LINGUA: stride e altezza aggiornati
+            _LANG_FIELD_H: int = 34
+            _LANG_FIELD_STRIDE: int = 40
+
+            # Bottone X chiusura (hitbox allargata 34×34)
+            xr = pygame.Rect(dx + dw - 46, dy + 13, 34, 34)
             if _in_rect((mx, my_raw), xr):
                 self._gs_edit_mode = None; return
-            
+
             if self._gs_edit_mode == "game":
-                # Colonna 2: Dinamica
+                # Sincronizziamo layout modale game con coordinate assolute
                 off_x2 = int(dw * 0.52)
-                
-                # Hitbox campi lingua (Colonna 1)
-                f_w = off_x2 - 150
+                c1_x   = dx + 20
+                c2_x   = dx + off_x2 + 10
+                f_w    = off_x2 - 120
+
+                _SEC1_Y = dy + 68
                 for i, l in enumerate(self.LANGS):
-                    field_r = (dx + 110, dy + 110 + i*32, f_w, 28)
+                    field_r = (c1_x + 50, _SEC1_Y + 38 + i * _LANG_FIELD_STRIDE, f_w, _LANG_FIELD_H)
                     if _in_rect((mx, my_raw), field_r):
                         self._gs_edit_active_field = l
                         self._gs_edit_all_selected = False
                         self._gs_edit_cursors[l] = len(self._gs_edit_lang_bufs[l])
                         return
 
-                # Hitbox Sfondo Immagine
-                _y_img = dy + int(dh * 0.12)
-                if _in_rect((mx, my_raw), (dx + off_x2, _y_img, 160, 34)):
-                    self._bg_modal_open(context="game_edit"); return
-                
-                # Hitbox Sfondo Video
-                _y_vid = dy + int(dh * 0.42)
-                if _in_rect((mx, my_raw), (dx + off_x2, _y_vid, 160, 34)):
-                    self._vid_modal_open(context="game_edit"); return
-
-                # Hitbox Playlist Musica
-                _y_mu = dy + int(dh * 0.78)
-                if _in_rect((mx, my_raw), (dx + off_x2, _y_mu, 550, 34)):
-                    self._music_modal_open(context="game_edit"); return
-                
-                # Hitbox Dropdown Categoria
-                _y_cat = dy + int(dh * 0.44)
-                cat_r = pygame.Rect(dx + 20, _y_cat, 270, 32)
+                _sep1_y = _SEC1_Y + 38 + len(self.LANGS) * _LANG_FIELD_STRIDE + 8
+                _SEC2_Y = _sep1_y + 16
+                cat_r = pygame.Rect(c1_x, _SEC2_Y + 22, 260, 34)
                 if _in_rect((mx, my_raw), cat_r):
                     self._gs_edit_cat_dropdown = not getattr(self, "_gs_edit_cat_dropdown", False)
                     return
-                
-                if getattr(self, "_gs_edit_cat_dropdown", False):
-                    if _in_rect((mx, my_raw), (dx + 20, _y_cat + 32, 270, 32)):
-                        self._gs_edit_category = "desktop"; self._gs_edit_cat_dropdown = False; return
-                    if _in_rect((mx, my_raw), (dx + 20, _y_cat + 64, 270, 32)):
-                        self._gs_edit_category = "android"; self._gs_edit_cat_dropdown = False; return
 
-                # Hitbox dinamica per i temi (card-anteprima a 2 colonne)
-                _t_btn_w, _t_btn_h, _t_gap = 260, 42, 8
-                _t_start = dx + 20
-                _y_theme = dy + int(dh * 0.55)
+                if getattr(self, "_gs_edit_cat_dropdown", False):
+                    if _in_rect((mx, my_raw), (c1_x, _SEC2_Y + 22 + 34, 260, 34)):
+                        self._gs_edit_category = "desktop"; self._gs_edit_cat_dropdown = False; return
+                    if _in_rect((mx, my_raw), (c1_x, _SEC2_Y + 22 + 68, 260, 34)):
+                        self._gs_edit_category = "android"; self._gs_edit_cat_dropdown = False; return
+                    self._gs_edit_cat_dropdown = False
+                    return
+
+                _sep2_y = _SEC2_Y + 68
+                _SEC3_Y = _sep2_y + 16
                 _cur_cat = getattr(self, "_gs_edit_category", "desktop")
-                _THEME_INFO = [t for t in self.theme_manager.discover_themes() 
+                _THEME_INFO = [t for t in self.theme_manager.discover_themes()
                                if t.get("category", "desktop") == _cur_cat]
-                
+                if not _THEME_INFO: _THEME_INFO = [{"id": "default", "name": "Default"}]
+                _t_btn_w, _t_btn_h, _t_gap = min(260, (off_x2 - 60) // 2), 42, 6
+                _theme_grid_y = _SEC3_Y + 22
                 for _ti, _tdata in enumerate(_THEME_INFO):
                     _tid = _tdata["id"]
-                    # Griglia 2 colonne per i bottoni dei temi
-                    _tx = _t_start + (_ti % 2) * (_t_btn_w + _t_gap) 
-                    _ty = _y_theme + (_ti // 2) * (_t_btn_h + _t_gap)
+                    _tx = c1_x + (_ti % 2) * (_t_btn_w + _t_gap)
+                    _ty = _theme_grid_y + (_ti // 2) * (_t_btn_h + _t_gap)
                     if _in_rect((mx, my_raw), (_tx, _ty, _t_btn_w, _t_btn_h)):
                         self._gs_edit_theme_id = _tid; return
 
-                # Hitbox Magnifier Toggle
-                _y_extra = _y_theme + ((len(_THEME_INFO) + 1) // 2) * (_t_btn_h + _t_gap) + 10
-                if _in_rect((mx, my_raw), (dx + 20, _y_extra, 300, 30)):
-                    self._gs_edit_magnifier = not self._gs_edit_magnifier
+                _n_theme_rows = (len(_THEME_INFO) + 1) // 2
+                _sep3_y = _theme_grid_y + _n_theme_rows * (_t_btn_h + _t_gap) + 12
+                _SEC4_Y = _sep3_y + 10
+                mag_r = pygame.Rect(c1_x, _SEC4_Y, off_x2 - 50, 32)
+                if _in_rect((mx, my_raw), mag_r):
+                    self._gs_edit_magnifier = not getattr(self, "_gs_edit_magnifier", False)
                     return
 
-                # Fix NameError: definisco _y_icon
-                _y_icon = dy + int(dh * 0.82)
-                if _in_rect((mx, my_raw), (dx + 20, _y_icon, 200, 34)):
+                _SEC5_Y = _SEC4_Y + 44
+                btn_icon_r = pygame.Rect(c1_x, _SEC5_Y + 22, 190, 36)
+                if _in_rect((mx, my_raw), btn_icon_r):
                     self._icon_modal_open(); return
+
+                # Colonna 2 (Destra)
+                _A_Y = dy + 68
+                btn_i_r = pygame.Rect(c2_x, _A_Y + 22, 155, 34)
+                if _in_rect((mx, my_raw), btn_i_r):
+                    self._bg_modal_open(context="game_edit"); return
+
+                r_col_w = dw - off_x2 - 40
+                max_prev_h = max(80, (dh - 400) // 2)
+                iprev_h = min(int(r_col_w * 9 / 16), max_prev_h)
+                
+                _B_Y = _A_Y + 66 + iprev_h + 22
+                btn_v_r = pygame.Rect(c2_x, _B_Y + 22, 155, 34)
+                if _in_rect((mx, my_raw), btn_v_r):
+                    self._vid_modal_open(context="game_edit"); return
+                
+                vprev_h = iprev_h
+                _C_Y = _B_Y + 66 + vprev_h + 16
+                btn_m_r = pygame.Rect(c2_x, _C_Y + 22, r_col_w, 36)
+                if _in_rect((mx, my_raw), btn_m_r):
+                    self._music_modal_open(context="game_edit"); return
 
             elif self._gs_edit_mode == "scene":
                 off_x2 = int(dw * 0.52)
-                # Hitbox campi lingua (Colonna 1)
+                # Hitbox campi lingua (Colonna 1) — stride 40, h 34
                 f_w = off_x2 - 150
                 for i, l in enumerate(self.LANGS):
-                    field_r = (dx + 110, dy + 110 + i*32, f_w, 28)
+                    field_r = (dx + 90, dy + 106 + i * _LANG_FIELD_STRIDE, f_w, _LANG_FIELD_H)
                     if _in_rect((mx, my_raw), field_r):
                         self._gs_edit_active_field = l
                         self._gs_edit_all_selected = False
@@ -1719,25 +1735,26 @@ if __name__ == "__main__":
                     self._vid_modal_open(context="scene_edit"); return
 
             elif self._gs_edit_mode == "level":
-                # Hitbox campi lingua (Centrale/Largo)
-                f_w = dw - 180
+                # Hitbox campi lingua (Colonna 1 del layout 2 col) — stride 40, h 34
+                off_x2 = int(dw * 0.52)
+                f_w = off_x2 - 150
                 for i, l in enumerate(self.LANGS):
-                    field_r = (dx + 110, dy + 110 + i*32, f_w, 28)
+                    field_r = (dx + 90, dy + 106 + i * _LANG_FIELD_STRIDE, f_w, _LANG_FIELD_H)
                     if _in_rect((mx, my_raw), field_r):
                         self._gs_edit_active_field = l
                         self._gs_edit_all_selected = False
                         self._gs_edit_cursors[l] = len(self._gs_edit_lang_bufs[l])
                         return
 
-            # Pulsanti SALVA / ANNULLA / ELIMINA
-            btn_y = dy + dh - 60
-            if _in_rect((mx, my_raw), (dx + 20, btn_y, 210, 34)):
+            # Pulsanti SALVA / ANNULLA / ELIMINA — altezza aumentata a 40px
+            btn_y = dy + dh - 64
+            if _in_rect((mx, my_raw), (dx + 20, btn_y, 220, 40)):
                 self._gs_confirm_edit(); return
-            if _in_rect((mx, my_raw), (dx + dw - 230, btn_y, 210, 34)):
+            if _in_rect((mx, my_raw), (dx + dw - 240, btn_y, 220, 40)):
                 self._gs_edit_mode = None; return
-            
+
             if self._gs_edit_mode == "game":
-                del_r = pygame.Rect(dx + 250, btn_y, 210, 34)
+                del_r = pygame.Rect(dx + 260, btn_y, 220, 40)
                 if _in_rect((mx, my_raw), del_r):
                     self._gs_edit_del_stage = getattr(self, "_gs_edit_del_stage", 0) + 1
                     if self._gs_edit_del_stage >= 3:
@@ -1839,17 +1856,18 @@ if __name__ == "__main__":
                             self._status("Seleziona prima un gioco", WARN_C, 2)
                         return
 
-                # Clic su Modifica (✎)
-                # Per i==0 (giochi) sposto a -152 per fare spazio ai bottoni APK/HTML
-                edit_off = -152 if i == 0 else -92
-                edit_r = (cx2 + col_w + edit_off, cy2 + 5, 26, 24)
-                if _in_rect((mx, my_raw), edit_r):
-                    sel = self.gs_sel_game if i == 0 else (self.gs_sel_level if i == 1 else self.gs_sel_scene)
-                    if sel is None: self._status("Seleziona prima un elemento", WARN_C, 2)
-                    elif i == 0: self._gs_edit_game(sel)
-                    elif i == 1: self._gs_edit_level(sel)
-                    else: self._gs_edit_scene(sel)
-                    return
+                # Clic su Modifica (✎) — solo per Scene (i==2)
+                # Per i Giochi (i==0) e Livelli (i==1): ✎ è inline nella riga
+                if i == 2:
+                    edit_off = -92
+                    edit_r = (cx2 + col_w + edit_off, cy2 + 5, 26, 24)
+                    if _in_rect((mx, my_raw), edit_r):
+                        sel = self.gs_sel_scene
+                        if sel is None:
+                            self._status("Seleziona prima un elemento", WARN_C, 2)
+                        else:
+                            self._gs_edit_scene(sel)
+                        return
                 iy     = cy2 + 35
                 ITEM_H = 64 if i == 2 else (50 if i == 1 else 34)
                 scroll_offset = [self.gs_scroll_game, self.gs_scroll_lvl, self.gs_scroll_scn][i]
@@ -1862,30 +1880,43 @@ if __name__ == "__main__":
                         btn_w = 28
                         cw_safe = col_w - 15
                         bx_play = cx2 + cw_safe - 40
+                        bx_edit_row = cx2 + cw_safe - 74
+                        if _in_rect((mx, my_raw), (bx_edit_row, item_y + (ITEM_H-24)//2, btn_w, 24)):
+                            import logging
+                            logging.info(f"[GS_CLICK] Click ✎ riga gioco idx={idx}")
+                            self._gs_select_game(idx)
+                            self._gs_edit_game(idx)
+                            return
                         if _in_rect((mx, my_raw), (bx_play, item_y + (ITEM_H-24)//2, btn_w, 24)):
                             self._gs_run_game(idx)
                             return
                     self._gs_select_game(idx)
-                elif i == 1 and idx < len(self.gs_cur_levels): 
+                elif i == 1 and idx < len(self.gs_cur_levels):
                     item_y = iy + idx * ITEM_H - scroll_offset * ITEM_H
                     if not (cy2 + 35 <= my_raw <= cy2 + col_h):
                         return
-                    
+
                     btn_w = 28
-                    bx_down = cx2 + col_w - 40
-                    bx_up   = cx2 + col_w - 74
-                    
-                    if idx > 0 and _in_rect((mx, my_raw), (bx_up, item_y + (ITEM_H-btn_w)//2, btn_w, btn_w)):
+                    cw_safe = col_w - 15
+                    bx_down     = cx2 + cw_safe - 40
+                    bx_up       = cx2 + cw_safe - 74
+                    bx_edit_row = cx2 + cw_safe - 108
+
+                    # Bottone ✎ inline (come i giochi)
+                    if _in_rect((mx, my_raw), (bx_edit_row, item_y + (ITEM_H - btn_w) // 2, btn_w, btn_w)):
+                        self._gs_select_level(idx)
+                        self._gs_edit_level(idx)
+                        return
+
+                    if idx > 0 and _in_rect((mx, my_raw), (bx_up, item_y + (ITEM_H - btn_w) // 2, btn_w, btn_w)):
                         self._gs_move_level(idx, -1); return
-                        
-                    if idx < len(self.gs_cur_levels)-1 and _in_rect((mx, my_raw), (bx_down, item_y + (ITEM_H-btn_w)//2, btn_w, btn_w)):
+
+                    if idx < len(self.gs_cur_levels) - 1 and _in_rect((mx, my_raw), (bx_down, item_y + (ITEM_H - btn_w) // 2, btn_w, btn_w)):
                         self._gs_move_level(idx, 1); return
 
                     # Drag Start per i Livelli
                     self.gs_dragging_idx = idx
                     self.gs_dragging_col = i
-                    self._gs_select_level(idx)
-
                     self._gs_select_level(idx)
                 elif i == 2 and idx < len(self.gs_cur_scenes):
                     # Click su bottoni specifici della riga
@@ -1954,11 +1985,16 @@ if __name__ == "__main__":
 
         # Priorità: Scroll Playlist in Dialog Modifica (se aperto)
         if hasattr(self, '_gs_edit_mode') and self._gs_edit_mode == "game":
-            dh, dw = 1050, 1000
-            dx, dy = (w-dw)//2, (h-dh)//2
-            my = dy + 650
-            list_r = pygame.Rect(dx+20, my+45, dw-40, 150)
-            if list_r.collidepoint(mx, my_raw):
+            # Calcolo dinamico allineato con _r_gs_edit_dialog
+            _dw_e = min(1600, max(1200, int(w * 0.92)))
+            _dh_e = min(1000, max(820, int(h * 0.92)))
+            _dx_e = (w - _dw_e) // 2
+            _dy_e = (h - _dh_e) // 2
+            _off_x2_e = int(_dw_e * 0.52)
+            _y_mu_e = _dy_e + int(_dh_e * 0.78)
+            _r_col_w_e = _dw_e - _off_x2_e - 40
+            mu_r_scroll = pygame.Rect(_dx_e + _off_x2_e, _y_mu_e + 45, _r_col_w_e, 150)
+            if mu_r_scroll.collidepoint(mx, my_raw):
                 mu_list = getattr(self, "_gs_edit_music_paths", [])
                 max_s = max(0, len(mu_list) - 8)
                 self.gs_edit_mu_scroll = max(0, min(max_s, self.gs_edit_mu_scroll - ev.y))
@@ -1982,16 +2018,6 @@ if __name__ == "__main__":
                 elif i == 1: self.gs_scroll_lvl = max(0, min(max_scroll, self.gs_scroll_lvl - ev.y))
                 elif i == 2: self.gs_scroll_scn = max(0, min(max_scroll, self.gs_scroll_scn - ev.y))
                 return
-
-        # Scroll per lista musica nel dialog Edit Game
-        if hasattr(self, '_gs_edit_mode') and self._gs_edit_mode == "game":
-            dw, dh = 1000, 950
-            dx, dy = (w-dw)//2, (h-dh)//2
-            mu_r = pygame.Rect(dx+20, dy + 650 + 45, dw-40, 150)
-            if _in_rect((mx, my_raw), mu_r):
-                mu_list = getattr(self, "_gs_edit_music_paths", [])
-                max_s = max(0, len(mu_list) - 8)
-                self.gs_edit_mu_scroll = max(0, min(max_s, self.gs_edit_mu_scroll - ev.y))
 
     def _gs_key(self, ev):
         # Dialog conferma eliminazione — ha priorità su tutto
@@ -2311,16 +2337,15 @@ if __name__ == "__main__":
                 _button(self.screen, del_g_r, "×", del_g_hov, danger=has_sel_build)
                 if del_g_hov: self.active_tooltip = self.lang_manager.get("gs_tip_delete_game", "ELIMINA COMPLETAMENTE il progetto dal disco")
 
-            # Pulsante ✎ di modifica
-            # Per i==0 (giochi): spostato a -152 per fare spazio ai bottoni EXE/APK/WEB
-            has_sel = (i == 0 and self.gs_sel_game is not None) or \
-                      (i == 1 and self.gs_sel_level is not None) or \
-                      (i == 2 and self.gs_sel_scene is not None)
-            edit_off = -152 if i == 0 else -92
-            edit_r = pygame.Rect(cx2 + col_w + edit_off, cy2 + 5, 26, 24)
-            edit_hov = _in_rect((mx, my_raw), edit_r)
-            _button(self.screen, edit_r, "✎", edit_hov, active=has_sel)
-            if edit_hov: self.active_tooltip = self.lang_manager.get("gs_tip_edit", "Modifica impostazioni e nomi dell'elemento selezionato")
+            # Pulsante ✎ di modifica — solo per Scene (i==2)
+            # Per Giochi (i==0) e Livelli (i==1) il ✎ è inline nella riga
+            if i == 2:
+                has_sel = (self.gs_sel_scene is not None)
+                edit_r = pygame.Rect(cx2 + col_w - 92, cy2 + 5, 26, 24)
+                edit_hov = _in_rect((mx, my_raw), edit_r)
+                _button(self.screen, edit_r, "✎", edit_hov, active=has_sel)
+                if edit_hov: self.active_tooltip = self.lang_manager.get(
+                    "gs_tip_edit", "Modifica impostazioni e nomi dell'elemento selezionato")
 
             # Pulsante × di eliminazione (solo livelli e scene)
             if i in (1, 2):
@@ -2397,7 +2422,7 @@ if __name__ == "__main__":
             
             col = TXT_HI if (is_sel or hov) else TXT
             pad_w = 50
-            if col_idx == 1: pad_w = 80
+            if col_idx == 1: pad_w = 160  # Maggiore spazio per via del badge scene
             elif col_idx == 2: pad_w = 110
             
             # --- Rendering specifico per SCENE con anteprima ---
@@ -2427,13 +2452,13 @@ if __name__ == "__main__":
                 _rect(self.screen, cat_col, _badge_r, 1, radius=4)
                 _draw_text(self.screen, _cat[0].upper(), "xs", cat_col, _badge_r.x+5, _badge_r.y+2)
                 
-                # Nome Gioco
-                _draw_text(self.screen, label, "sm", col, cx + 35, iy + (ITEM_H - 20) // 2, cw_safe - 145)
+                # Nome Gioco — larghezza ridotta per fare spazio a ▶ e ✎
+                _draw_text(self.screen, label, "sm", col, cx + 35, iy + (ITEM_H - 20) // 2, cw_safe - 180)
                 
-                # Badge Tema (Destra, a sinistra del pulsante Play)
+                # Badge Tema (Destra, a sinistra dei pulsanti ✎ e ▶)
                 t_label = _theme.upper()
                 tw_t, th_t = _text_wh(t_label, "xs")
-                t_r = pygame.Rect(cx + cw_safe - tw_t - 55, iy + (ITEM_H - 18) // 2, tw_t + 10, 18)
+                t_r = pygame.Rect(cx + cw_safe - tw_t - 110, iy + (ITEM_H - 18) // 2, tw_t + 10, 18)
                 _rect(self.screen, (60, 65, 80), t_r, radius=4)
                 _draw_text(self.screen, t_label, "xs", (180, 190, 210), t_r.x + 5, t_r.y + 2)
             else:
@@ -2447,18 +2472,17 @@ if __name__ == "__main__":
                         n_scenes = len(self.gs_cur_levels[i].get("scenes", []))
                         badge_txt = f"{n_scenes} SCENE"
                         tw, th = _text_wh(badge_txt, "xs")
-                        # Sistema a SLOT: i bottoni sono a -35 e -65. Il badge inizia a -100
-                        bx = cx + cw_safe - tw - 100 
+                        # Sistema a SLOT: ✎ a -108, ▲▼ a -74/-40. Badge a -144
+                        bx = cx + cw_safe - tw - 144
                         br = pygame.Rect(bx, iy + (ITEM_H - 22)//2, tw + 10, 22)
                         _rect(self.screen, (35, 40, 65), br, radius=6)
                         _rect(self.screen, (ACCENT[0], ACCENT[1], ACCENT[2], 180), br, 1, radius=6)
                         _draw_text(self.screen, badge_txt, "xs", TXT_HI, br.x + 5, br.y + 4)
-                        
+
                         if ITEM_H >= 50:
                             sub_txt = f"ID: {self.gs_cur_levels[i].get('id', '')}"
-                            # Colore Bianco Puro se selezionato/hover per contrasto MASSIMO su azzurro
                             sub_col = (255, 255, 255) if (is_sel or hov) else (130, 135, 160)
-                            _draw_text(self.screen, sub_txt, "xs", sub_col, tx, iy + v_off + 12)
+                            _draw_text(self.screen, sub_txt, "xs", sub_col, tx, iy + v_off + 12, max_w=cw_safe - 160)
                     except: pass
             
             if col_idx in (0, 1, 2):
@@ -2475,18 +2499,34 @@ if __name__ == "__main__":
                     _button(self.screen, (bx_play, iy + (ITEM_H-24)//2, btn_w, 24), "▶", btn_play_hov, font="sm")
                     if btn_play_hov:
                         self.active_tooltip = self.lang_manager.get("btn_play", "GIOCA")
+                    # Bottone Modifica inline per Giochi
+                    bx_edit = cx + cw_safe - 74
+                    btn_edit_hov = _in_rect((mx, my_raw), (bx_edit, iy + (ITEM_H-24)//2, btn_w, 24))
+                    _button(self.screen, (bx_edit, iy + (ITEM_H-24)//2, btn_w, 24), "✎",
+                            btn_edit_hov, active=(i == sel_idx), font="sm")
+                    if btn_edit_hov:
+                        self.active_tooltip = self.lang_manager.get(
+                            "gs_tip_edit", "Modifica impostazioni e nomi dell'elemento selezionato")
                 
                 elif col_idx == 1:
-                    bx_down = cx + cw_safe - 40
-                    bx_up   = cx + cw_safe - 74
-                    
+                    # Slot sistema: ▼=-40, ▲=-74, ✎=-108 (inline come i giochi)
+                    bx_down   = cx + cw_safe - 40
+                    bx_up     = cx + cw_safe - 74
+                    bx_edit   = cx + cw_safe - 108
+
                     can_up   = (i > 0)
                     can_down = (i < count - 1)
-                    
+
                     btn_up_hov   = _in_rect((mx, my_raw), (bx_up, iy + v_off_btn, btn_w, btn_h)) if can_up else False
                     btn_down_hov = _in_rect((mx, my_raw), (bx_down, iy + v_off_btn, btn_w, btn_h)) if can_down else False
-                    
-                    # Uso di radius=8 per coerenza
+                    btn_edit_hov = _in_rect((mx, my_raw), (bx_edit, iy + v_off_btn, btn_w, btn_h))
+
+                    _button(self.screen, (bx_edit, iy + v_off_btn, btn_w, btn_h), "✎",
+                            btn_edit_hov, active=(i == sel_idx), font="sm")
+                    if btn_edit_hov:
+                        self.active_tooltip = self.lang_manager.get(
+                            "gs_tip_edit", "Modifica impostazioni e nomi dell'elemento selezionato")
+
                     _button(self.screen, (bx_up, iy + v_off_btn, btn_w, btn_h), "▲", btn_up_hov, active=can_up, font="sm")
                     _button(self.screen, (bx_down, iy + v_off_btn, btn_w, btn_h), "▼", btn_down_hov, active=can_down, font="sm")
                         
@@ -2715,210 +2755,337 @@ if __name__ == "__main__":
         dim = pygame.Surface((w, h), pygame.SRCALPHA)
         dim.fill((0, 0, 0, 180)); self.screen.blit(dim, (0, 0))
 
-        # Dimensioni dinamiche relative alla finestra
-        dw = min(1500, max(1150, int(w * 0.85)))
-        dh = min(950, max(750, int(h * 0.85)))
-        dx, dy = (w-dw)//2, (h-dh)//2
-        box    = pygame.Rect(dx, dy, dw, dh)
-        _rect(self.screen, (28, 30, 42), box, radius=12); _rect(self.screen, ACCENT, box, 2, radius=12)
+        # Dimensioni dinamiche relative alla finestra — ingrandite per miglior usabilità
+        dw = min(1600, max(1200, int(w * 0.92)))
+        dh = min(1000, max(820, int(h * 0.92)))
+        dx, dy = (w - dw) // 2, (h - dh) // 2
+        box = pygame.Rect(dx, dy, dw, dh)
+        # Sfondo con leggero gradiente simulato (layer doppio)
+        _rect(self.screen, (22, 24, 36), box, radius=14)
+        _rect(self.screen, (28, 30, 42), pygame.Rect(dx, dy + dh // 2, dw, dh // 2), radius=0)
+        _rect(self.screen, (28, 30, 42), pygame.Rect(dx + 14, dy, dw - 28, dh), radius=0)
+        _rect(self.screen, ACCENT, box, 2, radius=14)
 
-        _draw_text(self.screen, etitle, "lg", TXT_HI, dx + 30, dy + 25)
-        
-        # Bottone X di chiusura
+        _draw_text(self.screen, etitle, "lg", TXT_HI, dx + 30, dy + 22)
+
+        # Separatore header
+        pygame.draw.line(self.screen, (*ACCENT[:3], 80), (dx + 20, dy + 52), (dx + dw - 20, dy + 52), 1)
+
+        # Bottone X di chiusura — hitbox 34×34
         mx2, my2 = pygame.mouse.get_pos()
-        xr = pygame.Rect(dx + dw - 42, dy + 15, 28, 28)
+        xr = pygame.Rect(dx + dw - 46, dy + 13, 34, 34)
         x_hov = _in_rect((mx2, my2), xr)
         _button(self.screen, xr, "X", x_hov, danger=True)
 
+        # Costanti layout campi lingua (condivise render/click)
+        _LANG_FIELD_H: int = 34
+        _LANG_FIELD_STRIDE: int = 40
+
         if self._gs_edit_mode == "game":
             off_x2 = int(dw * 0.52)
+            # Separatore verticale tra le due colonne
+            pygame.draw.line(
+                self.screen, (*BORDER[:3], 60),
+                (dx + off_x2 - 14, dy + 62), (dx + off_x2 - 14, dy + dh - 70), 1
+            )
             # ── COLONNA 1 (Sinistra): TESTI E TEMA ────────────────────────────
             # Punto 1: Localizzazione
-            _draw_text(self.screen, "1. TITOLO E TRADUZIONI", "sm", TXT_DIM, dx+20, dy+80)
-            f_w = off_x2 - 150 # Larghezza dinamica campo testo
+            _draw_text(self.screen, "1. TITOLO E TRADUZIONI", "sm", TXT_DIM, dx + 20, dy + 68)
+            f_w = off_x2 - 150  # Larghezza dinamica campo testo
             for i, l in enumerate(self.LANGS):
-                field_r = pygame.Rect(dx + 110, dy + 110 + i*32, f_w, 28)
-                _rect(self.screen, (18, 20, 28), field_r, radius=6)
+                fy = dy + 106 + i * _LANG_FIELD_STRIDE
                 is_active = (self._gs_edit_active_field == l)
-                if is_active: _rect(self.screen, ACCENT, field_r, 1, radius=6)
-                _draw_text(self.screen, l.upper(), "xs", TXT_DIM, dx+35, dy+117+i*32)
-                buf = self._gs_edit_lang_bufs.get(l, "")
-                is_all = (is_active and getattr(self, "_gs_edit_all_selected", False))
-                if is_all:
-                    tw_all, _ = _text_wh(buf, "sm")
-                    _rect(self.screen, (*ACCENT[:3], 100), (dx+120, dy+112+i*32, tw_all+4, 24), radius=2)
-                _draw_text(self.screen, buf, "sm", TXT_HI if is_active else TXT, dx+120, dy+115+i*32)
-                if is_active:
-                    cur_pos = self._gs_edit_cursors.get(l, 0)
-                    tw_c, _ = _text_wh(buf[:cur_pos], "sm")
-                    if (pygame.time.get_ticks() // 500) % 2 == 0:
-                        pygame.draw.line(self.screen, ACCENT, (dx+120+tw_c, dy+114+i*32), (dx+120+tw_c, dy+134+i*32), 2)
+                lbl_col = ACCENT if is_active else TXT_DIM
+                # Etichetta lingua (font sm per leggibilità)
+                _draw_text(self.screen, l.upper(), "sm", lbl_col, dx + 20, fy + 8)
+            # ── LAYOUT: coordinate fisse dentro la modale (no percentuali di dh) ──
+            # Colonna sx: 0..off_x2-14  Colonna dx: off_x2..dw
+            off_x2 = int(dw * 0.52)
+            c1_x   = dx + 20          # Inizio content col sinistra
+            c2_x   = dx + off_x2 + 10  # Inizio content col destra
+            c2_w   = dw - off_x2 - 50  # Larghezza utile col destra
+            f_w    = off_x2 - 120       # Larghezza campo testo lingua
 
-            # Punto 1.5: Piattaforma UI
-            _y_cat = dy + int(dh * 0.44)
-            _draw_text(self.screen, "1.5 PIATTAFORMA TARGET", "sm", TXT_DIM, dx + 20, _y_cat - 28)
-            cat_r = pygame.Rect(dx + 20, _y_cat, 270, 32)
+            # Separatore verticale
+            pygame.draw.line(
+                self.screen, (*BORDER[:3], 60),
+                (dx + off_x2 - 14, dy + 62), (dx + off_x2 - 14, dy + dh - 70), 1
+            )
+
+            # ══════════════════════════════════════════════════
+            # COLONNA SINISTRA
+            # ══════════════════════════════════════════════════
+
+            # ── Sez. 1: Titolo e traduzioni ───────────────────
+            _SEC1_Y = dy + 68   # Y inizio sezione 1
+            _draw_text(self.screen, "❶  TITOLO DEL GIOCO", "sm", TXT_DIM, c1_x, _SEC1_Y)
+
+            # Hint TAB
+            _draw_text(self.screen,
+                       "TAB → campo successivo  •  Ctrl+A / C / V",
+                       "xs", (70, 74, 95), c1_x, _SEC1_Y + 18)
+
+            for i, l in enumerate(self.LANGS):
+                fy = _SEC1_Y + 38 + i * _LANG_FIELD_STRIDE
+                is_active = (self._gs_edit_active_field == l)
+                lbl_col = ACCENT if is_active else TXT_DIM
+                _draw_text(self.screen, l.upper(), "sm", lbl_col, c1_x, fy + 8)
+                field_r = pygame.Rect(c1_x + 50, fy, f_w, _LANG_FIELD_H)
+                buf     = self._gs_edit_lang_bufs.get(l, "")
+                is_all  = (is_active and getattr(self, "_gs_edit_all_selected", False))
+                cur_pos = self._gs_edit_cursors.get(l, 0) if is_active else None
+                _input_box(self.screen, field_r, buf, focused=is_active,
+                           hint=f"{l.upper()}...", font="md",
+                           all_selected=is_all, cursor_pos=cur_pos)
+
+            # Separatore orizzontale post-campi
+            _sep1_y = _SEC1_Y + 38 + len(self.LANGS) * _LANG_FIELD_STRIDE + 8
+            pygame.draw.line(
+                self.screen, (*BORDER[:3], 55),
+                (c1_x, _sep1_y), (dx + off_x2 - 30, _sep1_y), 1
+            )
+
+            # ── Sez. 2: Piattaforma target ────────────────────
+            _SEC2_Y = _sep1_y + 16
+            _draw_text(self.screen, "❷  PIATTAFORMA TARGET", "sm", TXT_DIM, c1_x, _SEC2_Y)
             _cur_cat = getattr(self, "_gs_edit_category", "desktop")
             _is_open = getattr(self, "_gs_edit_cat_dropdown", False)
-            _button(self.screen, cat_r, f"TYPE: {_cur_cat.upper()}  " + ("^" if _is_open else "v"), _in_rect((mx2, my2), cat_r), active=_is_open)
+            cat_r = pygame.Rect(c1_x, _SEC2_Y + 22, 260, 34)
+            _button(self.screen, cat_r,
+                    f"{'💻 DESKTOP' if _cur_cat == 'desktop' else '📱 ANDROID'}  {'▲' if _is_open else '▼'}",
+                    _in_rect((mx2, my2), cat_r), active=_is_open)
 
-            # Punto 2: Selezione Tema (Refactoring: solo bottoni per pulizia e spazio)
-            _y_theme = dy + int(dh * 0.55)
-            _draw_text(self.screen, "2. TEMA INTERFACCIA MENU", "sm", TXT_DIM, dx + 20, _y_theme - 28)
-            _THEME_INFO = [t for t in self.theme_manager.discover_themes() 
+            # ── Sez. 3: Tema interfaccia ──────────────────────
+            _sep2_y = _SEC2_Y + 68
+            pygame.draw.line(
+                self.screen, (*BORDER[:3], 55),
+                (c1_x, _sep2_y), (dx + off_x2 - 30, _sep2_y), 1
+            )
+            _SEC3_Y = _sep2_y + 16
+            _draw_text(self.screen, "❸  TEMA INTERFACCIA MENU", "sm", TXT_DIM, c1_x, _SEC3_Y)
+
+            _THEME_INFO = [t for t in self.theme_manager.discover_themes()
                            if t.get("category", "desktop") == _cur_cat]
-            if not _THEME_INFO: 
+            if not _THEME_INFO:
                 _THEME_INFO = [{"id": "default", "name": "Default"}]
-            
-            _t_btn_w, _t_btn_h, _t_gap = 260, 42, 8
-            _t_start = dx + 20
+
             _cur_theme = getattr(self, "_gs_edit_theme_id", "default")
+            _t_btn_w, _t_btn_h, _t_gap = min(260, (off_x2 - 60) // 2), 42, 6
 
             def _tcol(colors, key, fallback):
                 v = colors.get(key)
                 return tuple(v[:3]) if v else fallback
 
+            _theme_grid_y = _SEC3_Y + 22
             for _ti, _tdata in enumerate(_THEME_INFO):
-                _tid = _tdata["id"]
+                _tid    = _tdata["id"]
                 _tlabel = _tdata["name"]
-                _cols = self.theme_manager._cached_themes.get(_tid, {}).get("colors", {})
-                _bg = _tcol(_cols, "background_overlay", (30, 32, 42))
+                _cols   = self.theme_manager._cached_themes.get(_tid, {}).get("colors", {})
+                _bg  = _tcol(_cols, "background_overlay", (30, 32, 42))
                 _acc = _tcol(_cols, "btn_border_hover", _tcol(_cols, "btn_glow_color", ACCENT))
                 _ico = _tcol(_cols, "icon_color", _tcol(_cols, "text_normal", (235, 238, 245)))
 
-                # Griglia 2 colonne: card che anteprima i colori reali del tema
-                _tx = _t_start + (_ti % 2) * (_t_btn_w + _t_gap)
-                _ty = _y_theme + (_ti // 2) * (_t_btn_h + _t_gap)
+                _tx = c1_x + (_ti % 2) * (_t_btn_w + _t_gap)
+                _ty = _theme_grid_y + (_ti // 2) * (_t_btn_h + _t_gap)
                 _tr = pygame.Rect(_tx, _ty, _t_btn_w, _t_btn_h)
                 _is_sel = (_cur_theme == _tid)
-                _t_hov = _in_rect((mx2, my2), _tr)
+                _t_hov  = _in_rect((mx2, my2), _tr)
 
-                # Sfondo card = colore base del tema (più chiaro su hover)
                 _fill = tuple(min(255, c + 22) for c in _bg) if _t_hov else _bg
                 _rect(self.screen, _fill, _tr, radius=8)
-                # Barra accento a sinistra (identità cromatica del tema)
-                _rect(self.screen, _acc, (_tx, _ty, 6, _t_btn_h), radius=0)
-                # Bordo: ACCENT se selezionato
-                _rect(self.screen, ACCENT if _is_sel else BORDER, _tr, 2 if _is_sel else 1, radius=8)
-                # Nome tema
-                _draw_text(self.screen, _tlabel, "sm", TXT_HI, _tx + 18, _ty + 12, max_w=_t_btn_w - 90)
-                # Chip palette (accento + colore icone) sulla destra
+                _rect(self.screen, _acc, (_tx, _ty, 5, _t_btn_h), radius=0)
+                _rect(self.screen, ACCENT if _is_sel else BORDER, _tr,
+                      2 if _is_sel else 1, radius=8)
+                _draw_text(self.screen, _tlabel, "sm", TXT_HI,
+                           _tx + 14, _ty + 12, max_w=_t_btn_w - 80)
                 _cy = _ty + _t_btn_h // 2
                 for _ci, _cc in enumerate((_acc, _ico)):
-                    _cr = pygame.Rect(_tx + _t_btn_w - 52 + _ci * 22, _cy - 9, 18, 18)
+                    _cr = pygame.Rect(_tx + _t_btn_w - 46 + _ci * 22, _cy - 8, 16, 16)
                     _rect(self.screen, _cc, _cr, radius=4)
                     _rect(self.screen, (0, 0, 0), _cr, 1, radius=4)
                 if _is_sel:
-                    _draw_text(self.screen, "●", "xs", ACCENT, _tx + _t_btn_w - 14, _ty + 4)
+                    _draw_text(self.screen, "●", "xs", ACCENT,
+                               _tx + _t_btn_w - 12, _ty + 4)
 
-            # Opzioni Extra Tema
-            _y_extra = _y_theme + ((len(_THEME_INFO) + 1) // 2) * (_t_btn_h + _t_gap) + 10
-            mag_r = pygame.Rect(dx + 20, _y_extra, 300, 30)
+            # ── Sez. 4: Extra tema + Icona ────────────────────
+            _n_theme_rows = (len(_THEME_INFO) + 1) // 2
+            _sep3_y = _theme_grid_y + _n_theme_rows * (_t_btn_h + _t_gap) + 12
+            pygame.draw.line(
+                self.screen, (*BORDER[:3], 55),
+                (c1_x, _sep3_y), (dx + off_x2 - 30, _sep3_y), 1
+            )
+            _SEC4_Y = _sep3_y + 10
+
+            # Toggle Magnifier
+            mag_r   = pygame.Rect(c1_x, _SEC4_Y, off_x2 - 50, 32)
             mag_hov = _in_rect((mx2, my2), mag_r)
-            _rect(self.screen, (40, 42, 55) if mag_hov else (32, 34, 45), mag_r, radius=6)
-            _rect(self.screen, ACCENT if self._gs_edit_magnifier else BORDER, mag_r, 1, radius=6)
-            _draw_text(self.screen, "●" if self._gs_edit_magnifier else "○", "sm", ACCENT if self._gs_edit_magnifier else TXT_DIM, mag_r.x + 10, mag_r.y + 5)
-            _draw_text(self.screen, "EFFETTO LENTE D'INGRANDIMENTO (MYSTERY)", "xs", TXT_HI if mag_hov else TXT, mag_r.x + 35, mag_r.y + 7)
+            _mag_on = self._gs_edit_magnifier
+            _rect(self.screen, (40, 42, 55) if mag_hov else (26, 28, 40), mag_r, radius=7)
+            _rect(self.screen, ACCENT if _mag_on else BORDER, mag_r, 1, radius=7)
+            # Pill on/off
+            _pill_col = ACCENT if _mag_on else (55, 58, 75)
+            _pill_r   = pygame.Rect(mag_r.x + 8, mag_r.y + 7, 36, 18)
+            _rect(self.screen, _pill_col, _pill_r, radius=9)
+            _knob_x   = _pill_r.x + 20 if _mag_on else _pill_r.x + 2
+            pygame.draw.circle(self.screen, TXT_HI, (_knob_x + 7, _pill_r.y + 9), 7)
+            _draw_text(self.screen, "EFFETTO LENTE D'INGRANDIMENTO",
+                       "xs", TXT_HI if mag_hov else TXT, mag_r.x + 52, mag_r.y + 9)
 
-            # Punto 2.5: Icona Gioco
-            _y_icon = dy + int(dh * 0.82)
-            _draw_text(self.screen, "2.5 ICONA DEL PROGETTO", "sm", TXT_DIM, dx + 20, _y_icon - 28)
-            btn_icon_r = pygame.Rect(dx + 20, _y_icon, 200, 34)
+            # Icona progetto
+            _SEC5_Y = _SEC4_Y + 44
+            _draw_text(self.screen, "❹  ICONA DEL PROGETTO", "sm", TXT_DIM, c1_x, _SEC5_Y)
+            btn_icon_r = pygame.Rect(c1_x, _SEC5_Y + 22, 190, 36)
             _button(self.screen, btn_icon_r, "Scegli Icona...", _in_rect((mx2, my2), btn_icon_r))
-            
-            # Anteprima Icona Corrente
             g_id = self.gs_games[self.gs_sel_game]
             icon_path = self.base_path / "games" / g_id / "assets" / "icon.png"
-            _icon_prev_r = pygame.Rect(dx + 240, _y_icon - 10, 54, 54)
-            _rect(self.screen, (10, 10, 15), _icon_prev_r, radius=6)
+            _icon_prev_r = pygame.Rect(c1_x + 200, _SEC5_Y + 14, 48, 48)
+            _rect(self.screen, (10, 10, 15), _icon_prev_r, radius=8)
+            _rect(self.screen, BORDER, _icon_prev_r, 1, radius=8)
             if icon_path.exists():
                 try:
-                    # Caricamento veloce anteprima icona
                     i_key = f"gs_icon_{g_id}"
                     if i_key not in self._img_cache:
                         sur = pygame.image.load(str(icon_path)).convert_alpha()
-                        self._img_cache[i_key] = pygame.transform.smoothscale(sur, (54, 54))
+                        self._img_cache[i_key] = pygame.transform.smoothscale(sur, (48, 48))
                     self.screen.blit(self._img_cache[i_key], _icon_prev_r.topleft)
                 except: pass
             else:
-                _draw_shape_icon(self.screen, (_icon_prev_r.x+15, _icon_prev_r.y+15, 24, 24), "image", (60, 60, 75))
+                _draw_shape_icon(
+                    self.screen,
+                    (_icon_prev_r.x + 12, _icon_prev_r.y + 12, 24, 24),
+                    "image", (60, 60, 75)
+                )
 
-            # ── COLONNA 2 (Destra): ASSET GRAFICI E AUDIO ──────────────────────
-            # off_x2 già calcolato all'inizio
-            r_col_w = dw - off_x2 - 40
-            
-            # Punto 3: Immagine di Sfondo
-            _y_img = dy + int(dh * 0.12)
-            _draw_text(self.screen, "3. IMMAGINE DI SFONDO", "sm", TXT_DIM, dx + off_x2, _y_img - 28)
-            btn_i_r = pygame.Rect(dx + off_x2, _y_img, 160, 34)
-            _button(self.screen, btn_i_r, "Scegli Immagine", _in_rect((mx2, my2), btn_i_r))
-            
-            ipath = getattr(self, '_gs_edit_bg_path', "")
-            path_w = r_col_w - 180
-            _rect(self.screen, (20, 22, 30), (dx + off_x2 + 175, _y_img, path_w, 34), radius=6)
-            _draw_text(self.screen, Path(ipath).name if ipath else "Nessuna immagine", "xs", TXT_HI if ipath else TXT_DIM, dx+off_x2+185, _y_img+8, path_w - 20)
-            
-            # Preview Immagine
-            iprev_w, iprev_h = 320, 180
-            iprev_r = pygame.Rect(dx + off_x2, _y_img + 45, iprev_w, iprev_h)
-            _rect(self.screen, (10, 12, 18), iprev_r, radius=12); _rect(self.screen, BORDER, iprev_r, 1, radius=12)
+            # ══════════════════════════════════════════════════
+            # COLONNA DESTRA
+            # ══════════════════════════════════════════════════
+            r_col_w  = dw - off_x2 - 40
+            path_w   = r_col_w - 185
+
+            # ── Sez. A: Immagine di sfondo ────────────────────
+            _A_Y = dy + 68
+            _draw_text(self.screen, "❺  IMMAGINE DI SFONDO", "sm", TXT_DIM, c2_x, _A_Y)
+            btn_i_r = pygame.Rect(c2_x, _A_Y + 22, 155, 34)
+            _button(self.screen, btn_i_r, "Scegli...", _in_rect((mx2, my2), btn_i_r))
+            ipath   = getattr(self, '_gs_edit_bg_path', "")
+            _path_box_r = pygame.Rect(c2_x + 163, _A_Y + 22, path_w, 34)
+            _rect(self.screen, (20, 22, 30), _path_box_r, radius=5)
+            _rect(self.screen, BORDER, _path_box_r, 1, radius=5)
+            _draw_text(
+                self.screen,
+                Path(ipath).name if ipath else "— nessuna immagine —",
+                "xs", TXT_HI if ipath else (65, 70, 90),
+                _path_box_r.x + 10, _path_box_r.y + 10, path_w - 16
+            )
+            # Preview
+            # Calcoliamo l'altezza massima per non sforare la modale (circa 400px spazio fisso usato + footer)
+            max_prev_h = max(80, (dh - 400) // 2)
+            iprev_h = min(int(r_col_w * 9 / 16), max_prev_h)
+            iprev_w = int(iprev_h * 16 / 9)
+            iprev_r = pygame.Rect(c2_x, _A_Y + 66, iprev_w, iprev_h)
+            _rect(self.screen, (10, 12, 18), iprev_r, radius=10)
+            _rect(self.screen, BORDER, iprev_r, 1, radius=10)
             isurf = getattr(self, "_gs_edit_bg_preview_surf", None)
             if isurf:
                 is_scaled = pygame.transform.smoothscale(isurf, (iprev_w, iprev_h))
                 self.screen.blit(is_scaled, iprev_r.topleft)
+            else:
+                _draw_text(
+                    self.screen, "[ ANTEPRIMA ]", "xs", (55, 60, 82),
+                    iprev_r.x + iprev_w // 2 - 35, iprev_r.y + iprev_h // 2 - 7
+                )
 
-            # Punto 4: Video di Sfondo
-            _y_vid = dy + int(dh * 0.42)
-            _draw_text(self.screen, "4. VIDEO DI SFONDO (LOOP)", "sm", TXT_DIM, dx + off_x2, _y_vid - 28)
-            btn_v_r = pygame.Rect(dx + off_x2, _y_vid, 160, 34)
-            _button(self.screen, btn_v_r, "Scegli Video", _in_rect((mx2, my2), btn_v_r))
-            
+            # ── Sez. B: Video di sfondo ───────────────────────
+            _B_Y = _A_Y + 66 + iprev_h + 22
+            _draw_text(self.screen, "❻  VIDEO DI SFONDO (LOOP)", "sm", TXT_DIM, c2_x, _B_Y)
+            btn_v_r = pygame.Rect(c2_x, _B_Y + 22, 155, 34)
+            _button(self.screen, btn_v_r, "Scegli...", _in_rect((mx2, my2), btn_v_r))
             vpath = getattr(self, '_gs_edit_vid_path', "")
-            _rect(self.screen, (20, 22, 30), (dx + off_x2 + 175, _y_vid, path_w, 34), radius=6)
-            _draw_text(self.screen, Path(vpath).name if vpath else "Nessun video", "xs", OK_C if vpath else TXT_DIM, dx+off_x2+185, _y_vid+8, path_w - 20)
-            
-            # Preview Video
-            vprev_w, vprev_h = 320, 180
-            vprev_r = pygame.Rect(dx + off_x2, _y_vid + 45, vprev_w, vprev_h)
-            _rect(self.screen, (10, 12, 18), vprev_r, radius=12); _rect(self.screen, BORDER, vprev_r, 1, radius=12)
+            _vpath_box_r = pygame.Rect(c2_x + 163, _B_Y + 22, path_w, 34)
+            _rect(self.screen, (20, 22, 30), _vpath_box_r, radius=5)
+            _rect(self.screen, BORDER, _vpath_box_r, 1, radius=5)
+            _draw_text(
+                self.screen,
+                Path(vpath).name if vpath else "— nessun video —",
+                "xs", OK_C if vpath else (65, 70, 90),
+                _vpath_box_r.x + 10, _vpath_box_r.y + 10, path_w - 16
+            )
+            # Preview video
+            vprev_h = iprev_h
+            vprev_r = pygame.Rect(c2_x, _B_Y + 66, iprev_w, vprev_h)
+            _rect(self.screen, (10, 12, 18), vprev_r, radius=10)
+            _rect(self.screen, BORDER, vprev_r, 1, radius=10)
             vsurf = getattr(self, "_gs_edit_vid_preview_surf", None)
             if vsurf:
-                vs_scaled = pygame.transform.smoothscale(vsurf, (vprev_w, vprev_h))
+                vs_scaled = pygame.transform.smoothscale(vsurf, (iprev_w, vprev_h))
                 self.screen.blit(vs_scaled, vprev_r.topleft)
-            
-            # Punto 5: Playlist Musicale
-            _y_mu = dy + int(dh * 0.78)
-            _draw_text(self.screen, "5. PLAYLIST MUSICALE", "sm", TXT_DIM, dx + off_x2, _y_mu - 28)
+            else:
+                _draw_text(
+                    self.screen, "[ ANTEPRIMA ]", "xs", (55, 60, 82),
+                    vprev_r.x + iprev_w // 2 - 35, vprev_r.y + vprev_h // 2 - 7
+                )
+
+            # ── Sez. C: Playlist musicale ─────────────────────
+            _C_Y = _B_Y + 66 + vprev_h + 16
+            _draw_text(self.screen, "❼  PLAYLIST MUSICALE", "sm", TXT_DIM, c2_x, _C_Y)
             mu_list = getattr(self, "_gs_edit_music_paths", [])
-            btn_m_r = pygame.Rect(dx + off_x2, _y_mu, r_col_w, 34)
-            m_label = f"{len(mu_list)} brani - Gestisci Playlist..."
-            _button(self.screen, btn_m_r, m_label, _in_rect((mx2, my2), btn_m_r))
+            _mu_label = (f"{len(mu_list)} bran{'o' if len(mu_list)==1 else 'i'} — Gestisci..."
+                         if mu_list else "Nessuna traccia — Aggiungi...")
+            btn_m_r = pygame.Rect(c2_x, _C_Y + 22, r_col_w, 36)
+            _button(self.screen, btn_m_r, _mu_label, _in_rect((mx2, my2), btn_m_r))
+
+            # Riferimenti Y da usare nel click handler (salvati come costanti locali
+            # per hitbox allineate — il click handler usa le stesse formule)
+            # _A_Y, _B_Y, _C_Y sono variabili locali; le hitbox nel click usano
+            # le stesse variabili ri-calcolate identicamente.
+            # NB: salviamo i valori calcolati per il click handler nello state
+            self._gs_modal_layout = {
+                "off_x2": off_x2, "c1_x": c1_x, "c2_x": c2_x,
+                "f_w": f_w, "c2_w": c2_w, "r_col_w": r_col_w,
+                "_SEC1_Y": _SEC1_Y, "_SEC2_Y": _SEC2_Y, "_SEC3_Y": _SEC3_Y,
+                "_SEC4_Y": _SEC4_Y, "_SEC5_Y": _SEC5_Y,
+                "_A_Y": _A_Y, "_B_Y": _B_Y, "_C_Y": _C_Y,
+                "iprev_h": iprev_h, "cat_r": cat_r,
+                "mag_r": mag_r, "btn_icon_r": btn_icon_r,
+                "_THEME_INFO": _THEME_INFO,
+                "_t_btn_w": _t_btn_w, "_t_btn_h": _t_btn_h, "_t_gap": _t_gap,
+                "_theme_grid_y": _theme_grid_y,
+            }
 
         elif self._gs_edit_mode == "scene":
             off_x2 = int(dw * 0.52)
-            # ── COLONNA 1 (Sinistra): NOME SCENA ──────────────────────────────
-            _draw_text(self.screen, "1. NOME SCENA E TRADUZIONI", "sm", TXT_DIM, dx+20, dy+80)
+            # Separatore verticale tra le due colonne
+            pygame.draw.line(
+                self.screen, (*BORDER[:3], 60),
+                (dx + off_x2 - 14, dy + 62), (dx + off_x2 - 14, dy + dh - 70), 1
+            )
+            # ── COLONNA 1 (Sinistra): NOME SCENA ────────────────────────────
+            _draw_text(self.screen, "1. NOME SCENA E TRADUZIONI", "sm", TXT_DIM, dx + 20, dy + 68)
             f_w = off_x2 - 150
             for i, l in enumerate(self.LANGS):
-                field_r = pygame.Rect(dx + 110, dy + 110 + i*32, f_w, 28)
-                _rect(self.screen, (18, 20, 28), field_r, radius=6)
+                fy = dy + 106 + i * _LANG_FIELD_STRIDE
                 is_active = (self._gs_edit_active_field == l)
-                if is_active: _rect(self.screen, ACCENT, field_r, 1, radius=6)
-                _draw_text(self.screen, l.upper(), "xs", TXT_DIM, dx+35, dy+117+i*32)
+                lbl_col = ACCENT if is_active else TXT_DIM
+                _draw_text(self.screen, l.upper(), "sm", lbl_col, dx + 20, fy + 8)
+                field_r = pygame.Rect(dx + 90, fy, f_w, _LANG_FIELD_H)
                 buf = self._gs_edit_lang_bufs.get(l, "")
                 is_all = (is_active and getattr(self, "_gs_edit_all_selected", False))
-                if is_all:
-                    tw_all, _ = _text_wh(buf, "sm")
-                    _rect(self.screen, (*ACCENT[:3], 100), (dx+120, dy+112+i*32, tw_all+4, 24), radius=2)
-                _draw_text(self.screen, buf, "sm", TXT_HI if is_active else TXT, dx+120, dy+115+i*32)
-                if is_active:
-                    cur_pos = self._gs_edit_cursors.get(l, 0)
-                    tw_c, _ = _text_wh(buf[:cur_pos], "sm")
-                    if (pygame.time.get_ticks() // 500) % 2 == 0:
-                        pygame.draw.line(self.screen, ACCENT, (dx+120+tw_c, dy+114+i*32), (dx+120+tw_c, dy+134+i*32), 2)
+                cur_pos = self._gs_edit_cursors.get(l, 0) if is_active else None
+                _input_box(self.screen, field_r, buf, focused=is_active,
+                           hint=f"{l.upper()}...", font="md",
+                           all_selected=is_all, cursor_pos=cur_pos)
 
-            # ── COLONNA 2 (Destra): SFONDO SCENA ──────────────────────────────
+            # Separatore orizzontale post-campi
+            pygame.draw.line(
+                self.screen, (*BORDER[:3], 60),
+                (dx + 20, dy + 106 + len(self.LANGS) * _LANG_FIELD_STRIDE + 6),
+                (dx + off_x2 - 30, dy + 106 + len(self.LANGS) * _LANG_FIELD_STRIDE + 6), 1
+            )
+
+            # ── COLONNA 2 (Destra): SFONDO SCENA ────────────────────────────
             r_col_w = dw - off_x2 - 40
+            path_w = r_col_w - 185
+
             # Punto 2: Immagine di Sfondo
             _y_img = dy + int(dh * 0.12)
             _draw_text(self.screen, "2. IMMAGINE DI SFONDO", "sm", TXT_DIM, dx + off_x2, _y_img - 28)
@@ -2957,42 +3124,126 @@ if __name__ == "__main__":
                 self.screen.blit(vs_scaled, vprev_r.topleft)
 
         elif self._gs_edit_mode == "level":
-            # ── CENTRALE: NOME LIVELLO ──────────────────────────────────────
-            _draw_text(self.screen, "1. NOME LIVELLO E TRADUZIONI", "sm", TXT_DIM, dx+30, dy+80)
-            f_w = dw - 180
+            # ── LAYOUT 2 COLONNE: sinistra=traduzioni, destra=info/stat ──
+            off_x2 = int(dw * 0.52)
+            # Separatore verticale
+            pygame.draw.line(
+                self.screen, (*BORDER[:3], 60),
+                (dx + off_x2 - 14, dy + 62), (dx + off_x2 - 14, dy + dh - 70), 1
+            )
+
+            # ── COLONNA 1 (Sinistra): NOME LIVELLO E TRADUZIONI ────────────
+            _draw_text(self.screen, "1. NOME LIVELLO E TRADUZIONI", "sm", TXT_DIM, dx + 30, dy + 68)
+            f_w = off_x2 - 150
             for i, l in enumerate(self.LANGS):
-                field_r = pygame.Rect(dx + 110, dy + 110 + i*32, f_w, 28)
-                _rect(self.screen, (18, 20, 28), field_r, radius=6)
+                fy = dy + 106 + i * _LANG_FIELD_STRIDE
                 is_active = (self._gs_edit_active_field == l)
-                if is_active: _rect(self.screen, ACCENT, field_r, 1, radius=6)
-                _draw_text(self.screen, l.upper(), "xs", TXT_DIM, dx+35, dy+117+i*32)
+                lbl_col = ACCENT if is_active else TXT_DIM
+                _draw_text(self.screen, l.upper(), "sm", lbl_col, dx + 20, fy + 8)
+                field_r = pygame.Rect(dx + 90, fy, f_w, _LANG_FIELD_H)
                 buf = self._gs_edit_lang_bufs.get(l, "")
                 is_all = (is_active and getattr(self, "_gs_edit_all_selected", False))
-                if is_all:
-                    tw_all, _ = _text_wh(buf, "sm")
-                    _rect(self.screen, (*ACCENT[:3], 100), (dx+120, dy+112+i*32, tw_all+4, 24), radius=2)
-                _draw_text(self.screen, buf, "sm", TXT_HI if is_active else TXT, dx+120, dy+115+i*32)
-                if is_active:
-                    cur_pos = self._gs_edit_cursors.get(l, 0)
-                    tw_c, _ = _text_wh(buf[:cur_pos], "sm")
-                    if (pygame.time.get_ticks() // 500) % 2 == 0:
-                        pygame.draw.line(self.screen, ACCENT, (dx+120+tw_c, dy+114+i*32), (dx+120+tw_c, dy+134+i*32), 2)
+                cur_pos = self._gs_edit_cursors.get(l, 0) if is_active else None
+                _input_box(self.screen, field_r, buf, focused=is_active,
+                           hint=f"{l.upper()}...", font="md",
+                           all_selected=is_all, cursor_pos=cur_pos)
 
+            # Separatore orizzontale post-campi
+            _sep_y = dy + 106 + len(self.LANGS) * _LANG_FIELD_STRIDE + 10
+            pygame.draw.line(
+                self.screen, (*BORDER[:3], 60),
+                (dx + 20, _sep_y), (dx + off_x2 - 30, _sep_y), 1
+            )
 
-        btn_y = dy + dh - 60
-        ok_r  = pygame.Rect(dx+20, btn_y, 210, 34)
-        esc_r = pygame.Rect(dx+dw-230, btn_y, 210, 34)
-        _button(self.screen, ok_r, self.lang_manager.get("gs_btn_save", "SALVA MODIFICHE"), _in_rect((mx2, my2), ok_r), active=True)
+            # Hint TAB navigation
+            _draw_text(
+                self.screen,
+                self.lang_manager.get("gs_tip_tab_nav", "TAB → campo successivo  •  Ctrl+A → seleziona tutto"),
+                "xs", (80, 85, 105), dx + 20, _sep_y + 12
+            )
+
+            # ── COLONNA 2 (Destra): INFO LIVELLO ────────────────────────────
+            _draw_text(self.screen, "2. INFO LIVELLO", "sm", TXT_DIM, dx + off_x2, dy + 68)
+
+            # Recupera dati livello selezionato
+            try:
+                _lvl_idx = getattr(self, "gs_sel_level", None)
+                _lvl_data = self.gs_cur_levels[_lvl_idx] if _lvl_idx is not None else {}
+                _lvl_id = _lvl_data.get("id", "—")
+                _lvl_scenes = _lvl_data.get("scenes", [])
+                _lvl_cfg = _lvl_data.get("cfg", {})
+                _lvl_nk = _lvl_cfg.get("name_key", f"{_lvl_id}_name")
+            except Exception:
+                _lvl_id = "—"; _lvl_scenes = []; _lvl_nk = "—"
+
+            _info_y = dy + 100
+            _info_x = dx + off_x2
+            _info_card_w = dw - off_x2 - 40
+
+            # Card ID
+            id_card_r = pygame.Rect(_info_x, _info_y, _info_card_w, 52)
+            _rect(self.screen, (26, 28, 40), id_card_r, radius=10)
+            _rect(self.screen, BORDER, id_card_r, 1, radius=10)
+            _draw_text(self.screen, "ID LIVELLO", "xs", TXT_DIM, _info_x + 14, _info_y + 8)
+            _draw_text(self.screen, str(_lvl_id), "md", TXT_HI, _info_x + 14, _info_y + 24)
+
+            # Card N. Scene
+            sc_card_r = pygame.Rect(_info_x, _info_y + 64, _info_card_w // 2 - 6, 52)
+            _rect(self.screen, (26, 28, 40), sc_card_r, radius=10)
+            _rect(self.screen, (*ACCENT[:3], 120), sc_card_r, 1, radius=10)
+            _draw_text(self.screen, "SCENE", "xs", TXT_DIM, sc_card_r.x + 14, sc_card_r.y + 8)
+            _draw_text(self.screen, str(len(_lvl_scenes)), "lg", ACCENT, sc_card_r.x + 14, sc_card_r.y + 22)
+
+            # Card Name Key
+            nk_card_r = pygame.Rect(_info_x + _info_card_w // 2 + 6, _info_y + 64, _info_card_w // 2 - 6, 52)
+            _rect(self.screen, (26, 28, 40), nk_card_r, radius=10)
+            _rect(self.screen, BORDER, nk_card_r, 1, radius=10)
+            _draw_text(self.screen, "NAME KEY", "xs", TXT_DIM, nk_card_r.x + 14, nk_card_r.y + 8)
+            _draw_text(self.screen, str(_lvl_nk), "sm", TXT, nk_card_r.x + 14, nk_card_r.y + 24,
+                       max_w=nk_card_r.width - 20)
+
+            # Lista scene del livello (preview compatta)
+            _list_y = _info_y + 132
+            _draw_text(self.screen, "SCENE NEL LIVELLO", "xs", TXT_DIM, _info_x, _list_y - 18)
+            _list_r = pygame.Rect(_info_x, _list_y, _info_card_w, dh - (_list_y - dy) - 80)
+            _rect(self.screen, (22, 24, 34), _list_r, radius=8)
+            _rect(self.screen, BORDER, _list_r, 1, radius=8)
+            self.screen.set_clip(_list_r)
+            for _si, _scn in enumerate(_lvl_scenes[:20]):
+                _sname = Path(_scn.get("path", str(_si))).name if isinstance(_scn, dict) else str(_scn)
+                _sy = _list_r.y + 8 + _si * 24
+                _row_r = pygame.Rect(_list_r.x + 4, _sy, _list_r.width - 8, 22)
+                if _si % 2 == 0:
+                    _rect(self.screen, (28, 30, 44), _row_r, radius=4)
+                _draw_text(self.screen, f"{_si + 1:02d}. {_sname}", "sm", TXT,
+                           _list_r.x + 14, _sy + 3, max_w=_list_r.width - 22)
+            if not _lvl_scenes:
+                _draw_text(self.screen,
+                           self.lang_manager.get("gs_level_no_scenes", "Nessuna scena in questo livello"),
+                           "sm", (60, 65, 85), _list_r.x + 14, _list_r.y + 14)
+            self.screen.set_clip(None)
+
+        # ── FOOTER: Pulsanti azione — altezza 40px per hitbox più generosa ──
+        btn_y = dy + dh - 64
+        ok_r = pygame.Rect(dx + 20, btn_y, 220, 40)
+        esc_r = pygame.Rect(dx + dw - 240, btn_y, 220, 40)
+        _button(self.screen, ok_r, self.lang_manager.get("gs_btn_save", "SALVA MODIFICHE"),
+                _in_rect((mx2, my2), ok_r), active=True)
         if self._gs_edit_mode == "game":
-            del_r = pygame.Rect(dx + 250, btn_y, 210, 34)
+            del_r = pygame.Rect(dx + 260, btn_y, 220, 40)
             stage = getattr(self, "_gs_edit_del_stage", 0)
-            _button(self.screen, del_r, self.lang_manager.get(f"gs_btn_edit_del_{stage}", "ELIMINA PROGETTO"), _in_rect((mx2, my2), del_r), danger=True)
-        _button(self.screen, esc_r, self.lang_manager.get("gs_btn_cancel", "ANNULLA"), _in_rect((mx2, my2), esc_r))
+            _button(self.screen, del_r,
+                    self.lang_manager.get(f"gs_btn_edit_del_{stage}", "ELIMINA PROGETTO"),
+                    _in_rect((mx2, my2), del_r), danger=True)
+        _button(self.screen, esc_r, self.lang_manager.get("gs_btn_cancel", "ANNULLA"),
+                _in_rect((mx2, my2), esc_r))
 
         if self._gs_edit_mode == "game" and getattr(self, "_gs_edit_cat_dropdown", False):
-            _y_cat = dy + int(dh * 0.44)
-            _cur_cat = getattr(self, "_gs_edit_category", "desktop")
-            opt_d = pygame.Rect(dx + 20, _y_cat + 32, 270, 32)
-            opt_a = pygame.Rect(dx + 20, _y_cat + 64, 270, 32)
-            _button(self.screen, opt_d, "DESKTOP", _in_rect((mx2, my2), opt_d), active=(_cur_cat=="desktop"))
-            _button(self.screen, opt_a, "ANDROID", _in_rect((mx2, my2), opt_a), active=(_cur_cat=="android"))
+            if hasattr(self, "_gs_modal_layout"):
+                _SEC2_Y = self._gs_modal_layout["_SEC2_Y"]
+                c1_x = self._gs_modal_layout["c1_x"]
+                _cur_cat = getattr(self, "_gs_edit_category", "desktop")
+                opt_d = pygame.Rect(c1_x, _SEC2_Y + 22 + 34, 260, 34)
+                opt_a = pygame.Rect(c1_x, _SEC2_Y + 22 + 68, 260, 34)
+                _button(self.screen, opt_d, "💻 DESKTOP", _in_rect((mx2, my2), opt_d), active=(_cur_cat == "desktop"))
+                _button(self.screen, opt_a, "📱 ANDROID", _in_rect((mx2, my2), opt_a), active=(_cur_cat == "android"))

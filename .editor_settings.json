@@ -4,7 +4,7 @@
       "name": "scene_nuova",
       "path": "G:\\HIE git\\games\\LineVenture\\levels\\One\\scene_nuova",
       "game": "LineVenture",
-      "time": 1781170940.7068374
+      "time": 1781265108.658901
     },
     {
       "name": "Welcome",
@@ -49,8 +49,8 @@
       "time": 1778249382.466988
     }
   ],
-  "panel_l_w": 501,
-  "panel_r_w": 564,
+  "panel_l_w": 488,
+  "panel_r_w": 346,
   "scatter": {
     "tier_choice": "ultra",
     "layers": {
