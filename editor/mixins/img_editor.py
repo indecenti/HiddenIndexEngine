@@ -10,6 +10,7 @@ import logging
 import math
 import copy
 import json
+import hashlib
 from pathlib import Path
 from editor.constants import (
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC, PANEL,
@@ -115,6 +116,16 @@ class ImgEditorMixin:
                 return
 
         try:
+            # Hash dei byte del file ORIGINALE: serve a riconoscere i duplicati
+            # reali (stesso contenuto) in fase di salvataggio, evitando di
+            # sovrascrivere file omonimi ma diversi appartenenti ad altri giochi.
+            try:
+                self._img_editor_orig_hash = hashlib.sha256(
+                    self._img_editor_path.read_bytes()
+                ).hexdigest()
+            except Exception:
+                self._img_editor_orig_hash = None
+
             orig = pygame.image.load(str(self._img_editor_path)).convert_alpha()
             self._img_editor_surf = orig
             self._img_editor_view_surf = orig.copy()
@@ -159,17 +170,27 @@ class ImgEditorMixin:
             # 1. Salva il file principale
             pygame.image.save(final_surf, str(self._img_editor_path))
             
-            # 2. Sincronizzazione globale (duplicati)
+            # 2. Sincronizzazione duplicati REALI: sovrascrive solo i file omonimi
+            #    il cui contenuto e' byte-identico all'originale pre-modifica.
+            #    Senza questo controllo, file con lo stesso nome ma appartenenti ad
+            #    altri giochi (es. icon.png, bg.png) verrebbero distrutti.
             overwritten_paths = [self._img_editor_path]
-            search_roots = [self.base_path / "engine" / "assets", self.base_path / "games"]
-            for root in search_roots:
-                if not root.exists(): continue
-                for p in root.rglob(target_name):
-                    if p.resolve() != self._img_editor_path.resolve():
+            orig_hash = getattr(self, "_img_editor_orig_hash", None)
+            self_resolved = self._img_editor_path.resolve()
+            if orig_hash:
+                search_roots = [self.base_path / "engine" / "assets", self.base_path / "games"]
+                for root in search_roots:
+                    if not root.exists(): continue
+                    for p in root.rglob(target_name):
                         try:
+                            if p.resolve() == self_resolved:
+                                continue
+                            if hashlib.sha256(p.read_bytes()).hexdigest() != orig_hash:
+                                continue  # file omonimo ma diverso: NON toccare
                             pygame.image.save(final_surf, str(p))
                             overwritten_paths.append(p)
-                        except: pass
+                        except Exception:
+                            pass
 
             # 2b. Sincronizza Metadati nel Catalogo Globale Engine
             style = cat_item.get("style", "cartoon").replace(" ", "")
@@ -186,7 +207,7 @@ class ImgEditorMixin:
                             break
                     with open(global_path, "w", encoding="utf-8") as f:
                         json.dump(g_cat, f, indent=2, ensure_ascii=False)
-                except: pass
+                except Exception: pass
 
             # 3. Pulizia Cache
             self._img_cache.clear()
@@ -241,7 +262,12 @@ class ImgEditorMixin:
             p = Path(orig_rel_path)
             clean_stem = re.sub(r"_v\d+$", "", p.stem)
             new_rel_path = str(p.parent / f"{clean_stem}_v{counter}{p.suffix}").replace("\\", "/")
-            new_abs_path = self._img_editor_path.parent / f"{clean_stem}_v{counter}{p.suffix}"
+            # Risolvi il path assoluto contro game_path (la radice a cui il path
+            # relativo registrato nel catalogo fa riferimento). Usare la cartella di
+            # apertura sarebbe errato in fallback master (engine/assets): il file
+            # finirebbe nell'engine mentre il catalogo punta al gioco.
+            new_abs_path = self.game_path / new_rel_path
+            new_abs_path.parent.mkdir(parents=True, exist_ok=True)
             
             new_item = copy.deepcopy(orig_item)
             new_item["id"] = new_id
@@ -608,7 +634,7 @@ class ImgEditorMixin:
             alpha_smooth = gaussian_filter(alpha, sigma=0.6)
             surfarray.pixels_alpha(self._img_editor_view_surf)[:] = alpha_smooth.astype(np.uint8)
             self._img_editor_dirty = True; self._status("Bordi Ammorbiditi", OK_C, 2)
-        except: self._status("Smooth non disponibile", WARN_C, 2)
+        except Exception: self._status("Smooth non disponibile", WARN_C, 2)
 
     def _img_editor_drag(self, mx, my):
         ex, ey, ew, eh = self._img_editor_get_modal_rect()

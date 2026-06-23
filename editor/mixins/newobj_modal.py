@@ -59,7 +59,10 @@ class NewObjModalMixin:
             self._newobj["id"] = self._newobj_buf.strip().replace(" ", "_")
         elif f in ("radius", "width", "height", "hint"):
             try:
-                self._newobj[f] = int(self._newobj_buf)
+                v = int(self._newobj_buf)
+                # Clamp a minimi sensati: raggio/dimensioni >= 1, hint >= 0.
+                # Zero/negativi produrrebbero un oggetto senza area valida nel catalogo.
+                self._newobj[f] = max(0, v) if f == "hint" else max(1, v)
             except ValueError:
                 pass
         self._newobj_buf = ""

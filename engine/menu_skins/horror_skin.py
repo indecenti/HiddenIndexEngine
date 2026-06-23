@@ -11,7 +11,10 @@ import math
 import random
 import pygame
 
+from engine.utils import is_android_runtime
 from .default_skin import DefaultSkin
+
+_ANDROID = is_android_runtime()
 
 
 class HorrorSkin(DefaultSkin):
@@ -21,6 +24,9 @@ class HorrorSkin(DefaultSkin):
         super().__init__(theme)
         self._grain = None  # tile di rumore in cache
         self._halo = None   # alone radiale morbido in cache (candela)
+        self._title_cache_key = None  # chiave (text, size, spacing, col, glow_col)
+        self._title_surf = None       # superficie titolo renderizzata in cache
+        self._title_glow = None       # superficie alone titolo in cache
 
     # Niente aurora/lucciole: solo nebbia.
     def draw_background_pre(self, ms, screen, sw, sh) -> None:
@@ -66,17 +72,32 @@ class HorrorSkin(DefaultSkin):
         if not text:
             return
         size = theme.layout("title_font_size", 48)
-        font = theme.get_font_role("title", size, sm)
         spacing = sm.scale_value(int((theme._typography.get("title", {}) or {}).get("spacing", 4)))
         up = text.upper()
         col = theme.color3("text_hover")
-        surf = theme.render_spaced(font, up, col, spacing)
+        glow_col = (90, 0, 0)
+        # Cache delle superfici titolo: render_spaced fa una font.render PER CARATTERE
+        # (x2: testo + alone), ricostruita ogni frame nel path di disegno. Gli unici
+        # input che cambiano l'aspetto sono testo/size/spacing/colore; il flicker e'
+        # solo set_alpha (sotto). Cachiamo i glifi composti e ri-applichiamo l'alpha
+        # per-frame: stessi pixel su entrambe le piattaforme, ma niente re-render.
+        # NB: la key deve includere la dimensione SCALATA (sm.scale_value(size)),
+        # non solo la costante 'size': il font reale e' scalato da get_font_role,
+        # quindi senza di essa il titolo resterebbe alla vecchia risoluzione dopo
+        # un resize/fullscreen.
+        key = (up, sm.scale_value(size), spacing, col, glow_col)
+        if key != self._title_cache_key:
+            font = theme.get_font_role("title", size, sm)
+            self._title_surf = theme.render_spaced(font, up, col, spacing)
+            self._title_glow = theme.render_spaced(font, up, glow_col, spacing)
+            self._title_cache_key = key
+        surf = self._title_surf
+        glow = self._title_glow
         alpha = int(255 * theme.flicker_alpha_mod()) if self.fx_on(ms, "flicker") else 255
         surf.set_alpha(alpha)
+        glow.set_alpha(min(alpha, 130))
         tx = (screen.get_width() - surf.get_width()) // 2
         ty = sm.scale_value(theme.layout("title_y_offset", 100))
-        glow = theme.render_spaced(font, up, (90, 0, 0), spacing)
-        glow.set_alpha(min(alpha, 130))
         screen.blit(glow, (tx + 2, ty + 2))
         screen.blit(surf, (tx, ty))
 

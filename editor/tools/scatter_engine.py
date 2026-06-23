@@ -289,7 +289,6 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
             clip_raw = out.get("clip_grid")     # solo ULTRA
             if semantic_raw is not None:
                 # Aggrega: per cella, classe dominante
-                from collections import Counter
                 semantic_grid = np.zeros((cell_h, cell_w), dtype=np.int32)
                 semantic_score_grid = np.zeros((cell_h, cell_w), dtype=np.float32)
                 # Import constants
@@ -2199,7 +2198,10 @@ def _overlaps_any(x_min: float, y_min: float, x_max: float, y_max: float,
     overlap_margin_factor: % di overlap accettato (0.20 = 20% di compenetrazione).
     Piu' alto = piu' tollerante (utile per density alta).
     """
-    margin = -eff_size * overlap_margin_factor
+    # Margine POSITIVO: restringe la bbox dei piazzati cosi' da TOLLERARE una
+    # compenetrazione pari a overlap_margin_factor. Un fattore piu' alto rende il
+    # piazzamento piu' permissivo (come da docstring), non piu' restrittivo.
+    margin = eff_size * overlap_margin_factor
     for p in placed:
         if p.detection_type == "circle":
             r = p.radius * p.scale

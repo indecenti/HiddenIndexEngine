@@ -5,7 +5,6 @@ RenderPanelsMixin — rendering pannello sinistro (tree/catalog),
                     pannello destro (layers/props).
 """
 
-import time
 import pygame
 
 from editor.constants import (

@@ -6,7 +6,13 @@ from typing import List, Optional, Tuple, Dict
 
 from engine.minigames.minigame_base import BaseMinigame
 from engine.minigames.centipede import centipede_config as cfg
-from engine.utils import get_resource_path
+from engine.utils import get_resource_path, is_android_runtime
+
+# Flag a livello modulo: su Android (pygame/SDL2 su ARM) gli FX ricchi e l'overdraw
+# dei glow ambientali affondano gli FPS. Le classi entita' (Mushroom/CentipedeSegment/
+# Spider) non hanno self._android, quindi gate gli FX dietro questo flag. Il DESKTOP
+# resta visivamente IDENTICO.
+_ANDROID = is_android_runtime()
 
 class Mushroom:
     def __init__(self, gx: int, gy: int):
@@ -22,10 +28,11 @@ class Mushroom:
         
         rx = offset_x + self.gx * cfg.GRID_SIZE
         ry = offset_y + self.gy * cfg.GRID_SIZE
-        
-        # Glow sotto
-        glow_rect = sm.scale_rect(rx + 1, ry + 1, cfg.GRID_SIZE - 2, cfg.GRID_SIZE - 2)
-        pygame.draw.rect(screen, (c[0]//3, c[1]//3, c[2]//3), glow_rect, border_radius=sm.scale_value(6))
+
+        # Glow sotto (FX ambientale: solo desktop, su Android e' overdraw inutile)
+        if not _ANDROID:
+            glow_rect = sm.scale_rect(rx + 1, ry + 1, cfg.GRID_SIZE - 2, cfg.GRID_SIZE - 2)
+            pygame.draw.rect(screen, (c[0]//3, c[1]//3, c[2]//3), glow_rect, border_radius=sm.scale_value(6))
         
         # Cappello
         hat_rect = sm.scale_rect(rx + 2, ry + 2, cfg.GRID_SIZE - 4, cfg.GRID_SIZE // 2 + 2)
@@ -94,11 +101,12 @@ class CentipedeSegment:
         color = cfg.COLOR_CENTI_HEAD if self.is_head else cfg.COLOR_CENTI_BODY
         if self.poisoned: color = cfg.COLOR_MUSHROOM_POISON
         rx, ry = offset_x + self.pos.x, offset_y + self.pos.y
-        
-        # Glow
-        glow_c = (color[0]//4, color[1]//4, color[2]//4)
-        pygame.draw.rect(screen, glow_c, sm.scale_rect(rx-1, ry-1, cfg.GRID_SIZE+2, cfg.GRID_SIZE+2), border_radius=sm.scale_value(10))
-        
+
+        # Glow (FX ambientale: solo desktop, su Android e' overdraw per ogni segmento)
+        if not _ANDROID:
+            glow_c = (color[0]//4, color[1]//4, color[2]//4)
+            pygame.draw.rect(screen, glow_c, sm.scale_rect(rx-1, ry-1, cfg.GRID_SIZE+2, cfg.GRID_SIZE+2), border_radius=sm.scale_value(10))
+
         rect = sm.scale_rect(rx + 1, ry + 1, cfg.GRID_SIZE - 2, cfg.GRID_SIZE - 2)
         pygame.draw.rect(screen, color, rect, border_radius=sm.scale_value(self.is_head and 8 or 10))
         
@@ -143,9 +151,10 @@ class Spider:
     def draw(self, screen, sm, offset_x, offset_y):
         rx, ry = offset_x + self.pos.x, offset_y + self.pos.y
         color = cfg.COLOR_SPIDER
-        # Glow
-        pygame.draw.circle(screen, (color[0]//5, color[1]//5, color[2]//5), sm.ref_to_screen(rx+10, ry+10), sm.scale_value(15))
-        
+        # Glow (FX ambientale: solo desktop)
+        if not _ANDROID:
+            pygame.draw.circle(screen, (color[0]//5, color[1]//5, color[2]//5), sm.ref_to_screen(rx+10, ry+10), sm.scale_value(15))
+
         rect = sm.scale_rect(rx, ry, 20, 20)
         pygame.draw.rect(screen, color, rect, border_radius=sm.scale_value(4))
         # Zampe animate
@@ -166,12 +175,14 @@ class Particle:
         self.pos += self.vel * dt
         self.life -= dt * 1.5
 
-    def draw(self, screen, sm, offset_x, offset_y):
+    def draw(self, screen, sm, offset_x, offset_y, game):
         if self.life > 0:
             rx, ry = offset_x + self.pos.x, offset_y + self.pos.y
             alpha = int(self.life * 255)
-            s = pygame.Surface((sm.scale_value(self.size), sm.scale_value(self.size)), pygame.SRCALPHA)
-            s.fill((*self.color, alpha))
+            # Surface base cachata per (colore, size): si modula solo l'alpha del fade,
+            # evitando l'allocazione di una Surface SRCALPHA per-particella per-frame.
+            s = game._particle_surf(self.color, sm.scale_value(self.size))
+            s.set_alpha(alpha)
             screen.blit(s, (sm.scale_value(rx), sm.scale_value(ry)))
 
 class CentipedeGame(BaseMinigame):
@@ -202,6 +213,18 @@ class CentipedeGame(BaseMinigame):
         self.last_mouse_pos = pygame.mouse.get_pos()
         self.using_mouse = False
         self._font_cache: dict = {}
+        # Cache delle Surface di testo renderizzate: keyed da (testo, size, bold, colore).
+        # font.render e' tra le op piu' care su ARM: lo stesso testo (es. il punteggio
+        # quando non cambia) diventa cosi' un cache-hit invece di un re-render per frame.
+        self._text_cache: dict = {}
+        # Cache del pannello overlay statico (chrome non animato): renderizzato una
+        # volta su una Surface e ri-blittato, invece di ricreare una Surface SRCALPHA
+        # fullscreen-panel + piu' draw.rect ogni frame. Keyed da (phase, w, h).
+        self._panel_cache: dict = {}
+        # Cache delle Surface base delle particelle: keyed da (colore, size_px). Evita
+        # di allocare una Surface SRCALPHA per-particella per-frame; l'alpha del fade
+        # viene modulato con set_alpha (risultato visivo identico).
+        self._particle_surf_cache: dict = {}
 
     def _font(self, size: int, bold: bool = False) -> pygame.font.Font:
         key = (size, bold)
@@ -210,6 +233,35 @@ class CentipedeGame(BaseMinigame):
             f = pygame.font.SysFont("Courier New", max(8, size), bold=bold)
             self._font_cache[key] = f
         return f
+
+    def _text_surf(self, text: str, size: int, color, bold: bool = False) -> pygame.Surface:
+        """Ritorna una Surface di testo renderizzata e cachata (sicuro su entrambe le
+        piattaforme): se (testo, size, bold, colore) non cambia e' un cache-hit e non
+        si ri-renderizza il font."""
+        key = (text, int(size), bool(bold), color)
+        s = self._text_cache.get(key)
+        if s is None:
+            s = self._font(int(size), bold=bold).render(text, True, color)
+            s = s.convert_alpha()
+            # Cap anti-crescita: _text_cache e' keyed anche dal testo (es. il punteggio),
+            # quindi cresce di una entry per ogni valore distinto. Senza eviction la cache
+            # cresce illimitata in partite lunghe; al superamento della soglia la svuotiamo.
+            if len(self._text_cache) > 200:
+                self._text_cache.clear()
+            self._text_cache[key] = s
+        return s
+
+    def _particle_surf(self, color, size_px: int) -> pygame.Surface:
+        """Surface base opaca-per-canale cachata per (colore, size_px). L'alpha del
+        fade viene applicato a runtime con set_alpha sulla copia cachata."""
+        key = (color, int(size_px))
+        s = self._particle_surf_cache.get(key)
+        if s is None:
+            s = pygame.Surface((max(1, int(size_px)), max(1, int(size_px))), pygame.SRCALPHA)
+            s.fill((color[0], color[1], color[2], 255))
+            s = s.convert_alpha()
+            self._particle_surf_cache[key] = s
+        return s
 
     def start(self) -> None:
         self.score, self.lives, self.level, self.phase = 0, cfg.INITIAL_LIVES, 0, "START"
@@ -224,6 +276,14 @@ class CentipedeGame(BaseMinigame):
 
     def _spawn_centipede(self, length: int):
         self.segments = [CentipedeSegment((cfg.COLS//2 - i) * cfg.GRID_SIZE, 0, i==0) for i in range(length)]
+
+    def on_resize(self) -> None:
+        # Le Surface cachate sono dimensionate per la scala corrente: su resize
+        # vanno scartate e lo scanline rigenerato per la nuova risoluzione.
+        self._text_cache.clear()
+        self._panel_cache.clear()
+        self._particle_surf_cache.clear()
+        self._create_scanlines()
 
     def _create_scanlines(self):
         # Su Android niente scanline (blit full-screen SRCALPHA per frame troppo lento).
@@ -382,7 +442,7 @@ class CentipedeGame(BaseMinigame):
             pygame.draw.rect(self.screen, cfg.COLOR_BULLET, (sp[0], sp[1], sm.scale_value(4), sm.scale_value(12)))
         
         # Draw Particles
-        for p in self.particles: p.draw(self.screen, sm, self.offset_x, self.offset_y)
+        for p in self.particles: p.draw(self.screen, sm, self.offset_x, self.offset_y, self)
 
         # Draw Player
         if self.phase == "PLAY":
@@ -391,8 +451,9 @@ class CentipedeGame(BaseMinigame):
                 pass # Salta il frame per il lampeggio
             else:
                 ps = sm.ref_to_screen(self.offset_x+self.player_pos.x, self.offset_y+self.player_pos.y)
-                # Player Glow
-                pygame.draw.circle(self.screen, (0, 80, 80), (ps[0]+sm.scale_value(10), ps[1]+sm.scale_value(10)), sm.scale_value(15))
+                # Player Glow (FX ambientale: solo desktop)
+                if not self._android:
+                    pygame.draw.circle(self.screen, (0, 80, 80), (ps[0]+sm.scale_value(10), ps[1]+sm.scale_value(10)), sm.scale_value(15))
                 pygame.draw.rect(self.screen, cfg.COLOR_PLAYER, (ps[0], ps[1], sm.scale_value(20), sm.scale_value(20)), border_radius=4)
                 pygame.draw.rect(self.screen, cfg.COLOR_PLAYER, (ps[0]+sm.scale_value(8), ps[1]-sm.scale_value(5), sm.scale_value(4), sm.scale_value(5)))
         
@@ -401,38 +462,77 @@ class CentipedeGame(BaseMinigame):
 
     def _draw_ui(self):
         sm = self.scaling_manager
-        font = self._font(sm.scale_value(28), bold=True)
-        score_surf = font.render(self._("centipede_score").format(score=self.score), True, (255, 255, 255))
+        score_size = sm.scale_value(28)
+        # Punteggio: cache-hit finche' la stringa non cambia (niente font.render per frame).
+        score_surf = self._text_surf(self._("centipede_score").format(score=self.score),
+                                     score_size, (255, 255, 255), bold=True)
         self.screen.blit(score_surf, (sm.scale_value(1260 - score_surf.get_width()), sm.scale_value(10)))
         for i in range(self.lives):
             lx = 1260 - 15 - (i * 30)
             pygame.draw.rect(self.screen, cfg.COLOR_PLAYER, (sm.scale_value(lx), sm.scale_value(50), sm.scale_value(15), sm.scale_value(15)))
 
         if self.phase in ("START", "GAMEOVER"):
-            self._draw_overlay_panel(font)
+            self._draw_overlay_panel(self._font(sm.scale_value(28), bold=True))
 
     def _draw_overlay_panel(self, font):
         sm = self.scaling_manager
         sw, sh = self.screen.get_size()
         panel_w, panel_h = sm.scale_value(580), sm.scale_value(240)
         panel_x, panel_y = (sw - panel_w)//2, (sh - panel_h)//2
-        
-        # Glass Panel
-        panel_surf = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
-        pygame.draw.rect(panel_surf, (10, 10, 25, 230), (0,0,panel_w,panel_h), border_radius=int(sm.scale_value(15)))
-        pygame.draw.rect(panel_surf, (0, 255, 255, 120), (0,0,panel_w,panel_h), int(sm.scale_value(3)), border_radius=int(sm.scale_value(15)))
-        self.screen.blit(panel_surf, (panel_x, panel_y))
-        
-        if self.phase == "START":
-            self._blit_centered_text(self._("centipede_title"), panel_x, panel_y + sm.scale_value(40), panel_w, font, (0, 255, 255))
-            sm_font = self._font(sm.scale_value(18))
-            self._blit_centered_text(self._("centipede_instructions"), panel_x, panel_y + sm.scale_value(100), panel_w, sm_font, (200, 200, 200))
-            self._blit_centered_text(self._("centipede_start"), panel_x, panel_y + sm.scale_value(160), panel_w, font, (255, 255, 255))
-        elif self.phase == "GAMEOVER":
-            self._blit_centered_text(self._("centipede_gameover"), panel_x, panel_y + sm.scale_value(60), panel_w, font, (255, 50, 50))
-            sm_font = self._font(sm.scale_value(20))
-            self._blit_centered_text(self._("centipede_exit"), panel_x, panel_y + sm.scale_value(130), panel_w, sm_font, (255, 255, 255))
 
-    def _blit_centered_text(self, text, px, py, pw, font, color):
+        # Il pannello (vetro + testi) e' chrome STATICO per ogni (phase, w, h): lo
+        # componiamo una volta su una Surface cachata e ri-blittiamo. Cosi' niente
+        # Surface SRCALPHA + draw.rect + font.render multipli ricreati ogni frame.
+        panel_surf = self._get_overlay_panel(panel_w, panel_h, font)
+        self.screen.blit(panel_surf, (panel_x, panel_y))
+
+    def _get_overlay_panel(self, panel_w, panel_h, font) -> pygame.Surface:
+        sm = self.scaling_manager
+        # La chiave include le stringhe tradotte usate: un eventuale cambio lingua
+        # produce una chiave nuova (invalidazione naturale della cache).
+        if self.phase == "START":
+            strs = (self._("centipede_title"), self._("centipede_instructions"), self._("centipede_start"))
+        else:
+            strs = (self._("centipede_gameover"), self._("centipede_exit"))
+        key = (self.phase, panel_w, panel_h, strs)
+        cached = self._panel_cache.get(key)
+        if cached is not None:
+            return cached
+
+        # Il pannello (grande, cachato) viene comunque BLITTATO OGNI FRAME in START/
+        # GAMEOVER: una Surface SRCALPHA grande ri-blittata per-frame e' ~10x piu' cara
+        # su GPU mobile/software del blit opaco. Su Android lo rendiamo OPACO: il
+        # pannello e' centrato sull'area di gioco, quindi gli angoli/bordo trasparenti
+        # appoggiano sul COLOR_BG dell'arena; riempiamo con COLOR_BG (uguale al fondo
+        # dietro al pannello) e usiamo .convert() invece di .convert_alpha(). Il DESKTOP
+        # mantiene il vetro semitrasparente originale (ramo SRCALPHA invariato).
+        if self._android:
+            panel_surf = pygame.Surface((panel_w, panel_h))
+            panel_surf.fill(cfg.COLOR_BG)
+            # Vetro reso opaco (stesso colore, senza canale alpha)
+            pygame.draw.rect(panel_surf, (10, 10, 25), (0,0,panel_w,panel_h), border_radius=int(sm.scale_value(15)))
+            pygame.draw.rect(panel_surf, (0, 255, 255), (0,0,panel_w,panel_h), int(sm.scale_value(3)), border_radius=int(sm.scale_value(15)))
+        else:
+            panel_surf = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
+            # Glass Panel
+            pygame.draw.rect(panel_surf, (10, 10, 25, 230), (0,0,panel_w,panel_h), border_radius=int(sm.scale_value(15)))
+            pygame.draw.rect(panel_surf, (0, 255, 255, 120), (0,0,panel_w,panel_h), int(sm.scale_value(3)), border_radius=int(sm.scale_value(15)))
+
+        if self.phase == "START":
+            self._blit_centered_text(panel_surf, self._("centipede_title"), sm.scale_value(40), panel_w, font, (0, 255, 255))
+            sm_font = self._font(sm.scale_value(18))
+            self._blit_centered_text(panel_surf, self._("centipede_instructions"), sm.scale_value(100), panel_w, sm_font, (200, 200, 200))
+            self._blit_centered_text(panel_surf, self._("centipede_start"), sm.scale_value(160), panel_w, font, (255, 255, 255))
+        elif self.phase == "GAMEOVER":
+            self._blit_centered_text(panel_surf, self._("centipede_gameover"), sm.scale_value(60), panel_w, font, (255, 50, 50))
+            sm_font = self._font(sm.scale_value(20))
+            self._blit_centered_text(panel_surf, self._("centipede_exit"), sm.scale_value(130), panel_w, sm_font, (255, 255, 255))
+
+        # Opaco su Android (blit veloce), vetro alpha-per-pixel su desktop.
+        panel_surf = panel_surf.convert() if self._android else panel_surf.convert_alpha()
+        self._panel_cache[key] = panel_surf
+        return panel_surf
+
+    def _blit_centered_text(self, dest, text, py, pw, font, color):
         s = font.render(text, True, color)
-        self.screen.blit(s, (px + (pw - s.get_width())//2, py))
+        dest.blit(s, ((pw - s.get_width())//2, py))

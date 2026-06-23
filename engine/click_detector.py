@@ -36,7 +36,8 @@ class ClickDetector:
                screen_y: int,
                objects: list[SceneObject],
                background_scale: float = 1.0,
-               scenic_factor: float = 1.0) -> Optional[SceneObject]:
+               scenic_factor: float = 1.0,
+               slop_screen: float = 0.0) -> Optional[SceneObject]:
         """
         Dato un click in coordinate schermo, restituisce l'oggetto colpito
         con la priorità z-index più alta, oppure None.
@@ -46,6 +47,10 @@ class ClickDetector:
             objects:            lista di SceneObject attivi (non trovati)
             background_scale:   scala dello sfondo della scena corrente
             scenic_factor:      fattore di zoom scenico (intro zoom)
+            slop_screen:        tolleranza "fat-finger" in pixel schermo. Se nessun
+                                oggetto è colpito esattamente, viene scelto l'oggetto
+                                cliccabile più vicino la cui distanza dal bordo è entro
+                                questa tolleranza (0 = precisione esatta, desktop/mouse).
         """
         # Converti coordinate schermo → coordinate background (spazio del file immagine)
         # Le coordinate JSON sono in pixel del background originale (es. 1920x1080)
@@ -70,6 +75,28 @@ class ClickDetector:
                 candidates.append(obj)
 
         if not candidates:
+            # Fallback "fat-finger": nessun colpo esatto. Su touch un dito copre
+            # diversi mm: invece di registrare un miss penalizzato, agganciamo
+            # l'oggetto cliccabile più vicino entro la tolleranza (snap al goal).
+            if slop_screen and slop_screen > 0:
+                slop_bg = self._sm.screen_dist_to_bg(slop_screen, scenic_factor)
+                near: list[tuple[float, int, SceneObject]] = []
+                for obj in objects:
+                    if obj.found:
+                        continue
+                    is_clickable = obj.is_goal or getattr(obj, "minigame_trigger", None) is not None
+                    if not is_clickable or obj.layer == "overlay":
+                        continue
+                    d = self._edge_distance(obj, scene_x, scene_y)
+                    if d <= slop_bg:
+                        # chiave: prima il più vicino, poi z più alto (-z per ordine asc)
+                        near.append((d, -obj.layer_z, obj))
+                if near:
+                    near.sort(key=lambda t: (t[0], t[1]))
+                    hit = near[0][2]
+                    log.debug("Near-tap snap (%.1f, %.1f) -> '%s' (d=%.1f / slop=%.1f bg)",
+                              scene_x, scene_y, hit.instance_id, near[0][0], slop_bg)
+                    return hit
             return None
 
         # Ordine per z decrescente; a parità di z vince l'ordine nella lista (primo = precedenza)
@@ -78,6 +105,52 @@ class ClickDetector:
         log.debug("Click (%.1f, %.1f) -> '%s' (z=%d)", scene_x, scene_y,
                   hit.instance_id, hit.layer_z)
         return hit
+
+    def _edge_distance(self, obj: SceneObject, sx: float, sy: float) -> float:
+        """Distanza (in scena/bg-space) dal punto al bordo della hit area dell'oggetto.
+        0 se il punto è interno. Usata solo per il fallback di tolleranza tap, quindi
+        le forme complesse (warp/mask) sono approssimate con un cerchio di bounding."""
+        dtype = obj.detection_type
+        has_warp = any(c[0] != 0 or c[1] != 0 for c in obj.corners)
+
+        # Poligono deformato o mask: approssima con bounding-circle attorno al centro.
+        if dtype == "mask" or has_warp:
+            if obj.width > 0 or obj.height > 0:
+                r = 0.5 * math.hypot(max(obj.width, 1.0), max(obj.height, 1.0))
+            else:
+                r = obj.radius if obj.radius > 0 else 30.0
+            if dtype == "rect":
+                cx, cy = obj.x + obj.width / 2, obj.y + obj.height / 2
+            else:
+                cx, cy = obj.x, obj.y
+            return max(0.0, math.hypot(sx - cx, sy - cy) - r)
+
+        if dtype == "circle":
+            dx, dy = sx - obj.x, sy - obj.y
+            if obj.rotation != 0:
+                rad = math.radians(-obj.rotation)
+                c, s = math.cos(rad), math.sin(rad)
+                dx, dy = dx * c - dy * s, dx * s + dy * c
+            rx = obj.width / 2 if obj.width > 0 else obj.radius
+            ry = obj.height / 2 if obj.height > 0 else obj.radius
+            rx = rx if rx > 0 else 1.0
+            ry = ry if ry > 0 else 1.0
+            norm = math.hypot(dx / rx, dy / ry)
+            if norm <= 1.0:
+                return 0.0
+            return math.hypot(dx, dy) * (1.0 - 1.0 / norm)
+
+        if dtype == "rect":
+            cx, cy = obj.x + obj.width / 2, obj.y + obj.height / 2
+            if obj.rotation != 0:
+                rx, ry = self._rotate_point(sx, sy, cx, cy, -obj.rotation)
+            else:
+                rx, ry = sx, sy
+            ddx = max(abs(rx - cx) - obj.width / 2, 0.0)
+            ddy = max(abs(ry - cy) - obj.height / 2, 0.0)
+            return math.hypot(ddx, ddy)
+
+        return float("inf")
 
     # ------------------------------------------------------------------
     # Hit test per tipo

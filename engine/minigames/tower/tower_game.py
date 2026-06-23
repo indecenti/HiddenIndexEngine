@@ -135,9 +135,41 @@ class TowerGame(BaseMinigame):
         self._init_deck(p); random.shuffle(self.deck); self._update_fonts(); self._auto_draw()
 
 
+    def _font(self, name, size, bold=False, italic=False):
+        """Font cacheato (evita SysFont ogni frame: lento su Android)."""
+        if not hasattr(self, "_font_cache"):
+            self._font_cache = {}
+        key = (name, int(size), bold, italic)
+        f = self._font_cache.get(key)
+        if f is None:
+            f = pygame.font.SysFont(name, max(8, int(size)), bold=bold, italic=italic)
+            self._font_cache[key] = f
+        return f
+
+    def _text_surf(self, font, text, color):
+        """Surface di testo cacheata per (font, testo, colore). Cache-hit quando
+        il testo non cambia: evita font.render ripetuto (op piu' cara su ARM)."""
+        if not hasattr(self, "_text_cache"):
+            self._text_cache = {}
+        key = (id(font), text, color)
+        surf = self._text_cache.get(key)
+        if surf is None:
+            surf = font.render(text, True, color)
+            if len(self._text_cache) > 200: self._text_cache.clear()
+            self._text_cache[key] = surf
+        return surf
+
     def _update_fonts(self):
         s = self.scaling_manager.scale
-        self.f_tit = pygame.font.SysFont("Verdana", int(28 * s), bold=True) 
+        # I font cambiano dimensione: invalida le cache testo/chrome legate alla scala.
+        if hasattr(self, "_text_cache"): self._text_cache.clear()
+        if hasattr(self, "_banner_cache"): self._banner_cache.clear()
+        if hasattr(self, "_overlay_cache"): self._overlay_cache.clear()
+        self._logo_cache = None
+        self._grid_chrome = None
+        self._deck_back_cache = None
+        self._castle_scaled = None
+        self.f_tit = pygame.font.SysFont("Verdana", int(28 * s), bold=True)
         self.f_ui = pygame.font.SysFont("Impact", int(22 * s))
         self.f_side = pygame.font.SysFont("Georgia", int(15 * s), italic=True)
         self.f_banner = pygame.font.SysFont("Impact", int(70 * s))
@@ -305,7 +337,7 @@ class TowerGame(BaseMinigame):
         title_text = self._("mg_title").upper()
         self._draw_logo_text(title_text, 50*s, 15*s, s, self.f_tit, CYAN)
         
-        # Istruzioni (Super Slim Column)
+        # Istruzioni (Super Slim Column) - testo statico cachato (cache-hit per riga)
         y_instr = 75*s; max_w = 210*s
         for line in [self._("tower_instr_1"), self._("tower_instr_2")]:
             words = line.split(' '); cur_line = ""
@@ -313,33 +345,42 @@ class TowerGame(BaseMinigame):
                 test_line = cur_line + w + " "
                 if self.f_side.size(test_line)[0] < max_w: cur_line = test_line
                 else:
-                    self.screen.blit(self.f_side.render(cur_line, True, (130, 130, 160)), (50*s, y_instr)); y_instr += 18*s; cur_line = w + " "
-            self.screen.blit(self.f_side.render(cur_line, True, (130, 130, 160)), (50*s, y_instr)); y_instr += 25*s
-            
-        # Punti & Deck (Top Right)
+                    self.screen.blit(self._text_surf(self.f_side, cur_line, (130, 130, 160)), (50*s, y_instr)); y_instr += 18*s; cur_line = w + " "
+            self.screen.blit(self._text_surf(self.f_side, cur_line, (130, 130, 160)), (50*s, y_instr)); y_instr += 25*s
+
+        # Punti & Deck (Top Right) - cache per stringa: cache-hit quando il valore non cambia
         score_label = self._('tower_score_label', 'SCORE')
         score_str = f"{score_label}: {self.score}"
-        st = self.f_ui.render(score_str, True, GOLD)
+        st = self._text_surf(self.f_ui, score_str, GOLD)
         self.screen.blit(st, (sw - st.get_width() - 40*s, 25*s))
-        
+
         deck_label = self._('tower_deck_label', 'DECK')
         deck_str = f"{deck_label}: {len(self.deck)}"
-        dt = self.f_ui.render(deck_str, True, (160, 160, 220))
+        dt = self._text_surf(self.f_ui, deck_str, (160, 160, 220))
         self.screen.blit(dt, (sw - dt.get_width() - 40*s, 60*s))
-        
+
+        # Chrome statico della griglia (16 celle): cachato in una sola surface e
+        # riblittato ogni frame. In matching_mode il glow e' animato (desktop):
+        # su Android usiamo il chrome highlight cachato (32 primitive/frame
+        # sostenute affondano gli FPS) mantenendo il feedback visivo.
+        if self.matching_mode and not self._android:
+            for (r, c) in self.grid.keys():
+                p = self._get_pos(r, c); rect = pygame.Rect(0, 0, CELL_WIDTH * s, CELL_HEIGHT * s); rect.center = (int(p.x), int(p.y))
+                glow = abs(math.sin(self.timer_anim * 5))
+                sc = (35 + 25*glow, 35 + 25*glow, 50 + 40*glow)
+                pygame.draw.rect(self.screen, sc, rect, border_radius=int(10 * s))
+                pygame.draw.rect(self.screen, CYAN, rect, int(2*s), border_radius=int(10*s))
+        else:
+            chrome, chrome_pos = self._get_grid_chrome(sw, sh, s, self.matching_mode)
+            self.screen.blit(chrome, chrome_pos)
         for (r, c) in self.grid.keys():
-            p = self._get_pos(r, c); rect = pygame.Rect(0, 0, CELL_WIDTH * s, CELL_HEIGHT * s); rect.center = (int(p.x), int(p.y))
-            glow = abs(math.sin(self.timer_anim * 5)) if self.matching_mode else 0
-            sc = (35 + 25*glow, 35 + 25*glow, 50 + 40*glow) if self.matching_mode else (20, 20, 28)
-            pygame.draw.rect(self.screen, sc, rect, border_radius=int(10 * s))
-            if self.matching_mode: pygame.draw.rect(self.screen, CYAN, rect, int(2*s), border_radius=int(10*s))
             card = self.grid[(r, c)]
             if card: card.draw(self.screen, s, is_sel=((r, c) in self.selected))
         for v in self.vanishing: v.draw(self.screen, s)
         if self.deck:
             dp = (sw - 140 * s, sh - 250 * s) # Spostato più in alto (sh - 250 invece di 180)
+            bk = self._get_deck_back(s)
             for i in range(min(4, len(self.deck))):
-                bk = pygame.transform.smoothscale(self.deck[0].back, (int(CELL_WIDTH * s), int(CELL_HEIGHT * s)))
                 self.screen.blit(bk, (int(dp[0] - i * 2), int(dp[1] - i * 2)))
 
         if self.hand:
@@ -353,37 +394,140 @@ class TowerGame(BaseMinigame):
         if self.phase == "PLAYING":
             t_label = self._("tower_time_label", "TIME")
             t_str = f"{t_label}: {int(self.game_time)}s"
-            ts = self.f_ui.render(t_str, True, (200, 200, 255) if self.game_time < 120 else (255, 100, 100))
+            ts = self._text_surf(self.f_ui, t_str, (200, 200, 255) if self.game_time < 120 else (255, 100, 100))
             self.screen.blit(ts, (sw - ts.get_width() - 40*s, sh - ts.get_height() - 25*s))
 
         if self.phase_banner_t > 0: self._draw_comic_banner("MATCH PHASE!", sw//2, sh//2, s, self.phase_banner_t)
 
         if self.phase == "LOSE":
-            ov = pygame.Surface((sw, sh), pygame.SRCALPHA); ov.fill((0, 0, 0, 160)); self.screen.blit(ov, (0, 0))
+            self.screen.blit(self._get_dim_overlay(sw, sh, 160), (0, 0))
             self._draw_comic_banner("GAME OVER", sw//2, sh//2, s, life=1.0)
         if self.castle_alpha > 0 and self.castle_img:
-            ci = pygame.transform.smoothscale(self.castle_img, (sw, sh)); ci.set_alpha(int(self.castle_alpha)); self.screen.blit(ci, (0, 0))
+            ci = self._get_castle_scaled(sw, sh); ci.set_alpha(int(self.castle_alpha)); self.screen.blit(ci, (0, 0))
             if self.phase == "WIN": self._draw_comic_banner(self._("tower_win"), sw//2, sh//2, s, life=1.0)
         
         if self.phase == "SUMMARY": self._draw_summary(sw, sh, s)
 
+    def _get_castle_scaled(self, sw, sh):
+        """Castello vittoria pre-scalato a tutto schermo e cachato: era
+        smoothscale fullscreen ogni frame durante la dissolvenza WIN."""
+        sig = (sw, sh)
+        cache = getattr(self, "_castle_scaled", None)
+        if cache is None or cache[0] != sig:
+            ci = pygame.transform.smoothscale(self.castle_img, (sw, sh)).convert_alpha()
+            self._castle_scaled = (sig, ci)
+            cache = self._castle_scaled
+        return cache[1]
+
+    def _get_dim_overlay(self, sw, sh, alpha):
+        """Overlay scuro a tutto schermo cachato: niente Surface SRCALPHA +
+        fill ogni frame (su Android ~10x). Surface opaca con set_alpha (cheap)."""
+        if not hasattr(self, "_overlay_cache"):
+            self._overlay_cache = {}
+        key = (sw, sh)
+        ov = self._overlay_cache.get(key)
+        if ov is None:
+            ov = pygame.Surface((sw, sh)).convert()
+            ov.fill((0, 0, 0))
+            self._overlay_cache[key] = ov
+        ov.set_alpha(alpha)
+        return ov
+
+    def _get_grid_chrome(self, sw, sh, s, matching=False):
+        """Chrome statico della griglia (16 celle) renderizzato una volta su una
+        surface e riblittato. Due varianti cachate: normale e highlight (matching
+        mode, usata su Android al posto del glow animato). Invalidato su resize.
+
+        Ritorna (surface, posizione_blit).
+
+        Su Android la surface fullscreen SRCALPHA (alpha per-pixel, blittata ogni
+        frame) e' ~10x piu' cara del blit opaco: la riduciamo al bounding box
+        della griglia, OPACA (fill col colore di fondo (5,5,12) + .convert()).
+        Il box e' centrato e non tocca i testi della HUD (logo/istruzioni/punti
+        stanno nei margini), quindi i pixel restano identici al desktop.
+        Sul desktop resta la fullscreen SRCALPHA originale (pixel-fedele)."""
+        sig = (sw, sh, round(s, 3), matching)
+        cache = getattr(self, "_grid_chrome", None)
+        if cache is None or cache.get(sig) is None:
+            if cache is None:
+                cache = {}
+                self._grid_chrome = cache
+            base = (50, 50, 70) if matching else (20, 20, 28)
+            if self._android:
+                # Bounding box della griglia (4x4) in coordinate schermo.
+                p0 = self._get_pos(0, 0); p3 = self._get_pos(3, 3)
+                half_w = CELL_WIDTH * s / 2; half_h = CELL_HEIGHT * s / 2
+                ox = int(p0.x - half_w); oy = int(p0.y - half_h)
+                bw = int(p3.x + half_w) - ox; bh = int(p3.y + half_h) - oy
+                surf = pygame.Surface((bw, bh))
+                surf.fill((5, 5, 12))  # colore di fondo NOTO -> opaco, niente alpha
+                for (r, c) in self.grid.keys():
+                    p = self._get_pos(r, c)
+                    rect = pygame.Rect(0, 0, CELL_WIDTH * s, CELL_HEIGHT * s)
+                    rect.center = (int(p.x) - ox, int(p.y) - oy)
+                    pygame.draw.rect(surf, base, rect, border_radius=int(10 * s))
+                    if matching:
+                        pygame.draw.rect(surf, CYAN, rect, int(2*s), border_radius=int(10*s))
+                cache[sig] = (surf.convert(), (ox, oy))
+            else:
+                surf = pygame.Surface((sw, sh), pygame.SRCALPHA)
+                for (r, c) in self.grid.keys():
+                    p = self._get_pos(r, c)
+                    rect = pygame.Rect(0, 0, CELL_WIDTH * s, CELL_HEIGHT * s)
+                    rect.center = (int(p.x), int(p.y))
+                    pygame.draw.rect(surf, base, rect, border_radius=int(10 * s))
+                    if matching:
+                        pygame.draw.rect(surf, CYAN, rect, int(2*s), border_radius=int(10*s))
+                cache[sig] = (surf.convert_alpha(), (0, 0))
+        return cache[sig]
+
+    def _get_deck_back(self, s):
+        """Dorso carta del mazzo pre-scalato e cachato (era smoothscale fino a 4
+        volte/frame nel loop di disegno del mazzo)."""
+        if getattr(self, "_deck_back_cache", None) is None and self.deck:
+            bk = pygame.transform.smoothscale(self.deck[0].back, (int(CELL_WIDTH * s), int(CELL_HEIGHT * s)))
+            self._deck_back_cache = bk.convert_alpha()
+        return self._deck_back_cache
+
     def _draw_summary(self, sw, sh, s):
-        ov = pygame.Surface((sw, sh), pygame.SRCALPHA); ov.fill((0, 0, 0, 220)); self.screen.blit(ov, (0, 0))
+        self.screen.blit(self._get_dim_overlay(sw, sh, 220), (0, 0))
         self._draw_comic_banner("RESULTS", sw//2, sh//2 - 150*s, s, life=2.0)
-        
+
         y = sh//2 - 50*s
         items = [("BASE SCORE:", self.score), ("TIME BONUS:", self.time_bonus), ("WIN BONUS:", 1000), ("TOTAL:", self.total_score)]
         for i, (label, val) in enumerate(items):
             c = GOLD if "TOTAL" in label else (255, 255, 255)
             fs = int(24*s) if "TOTAL" not in label else int(32*s)
-            font = pygame.font.SysFont("Impact", fs)
-            # Shadow
-            self.screen.blit(font.render(f"{label} {val}", True, (0,0,0)), (sw//2 - 198*s, y + 2*s))
-            self.screen.blit(font.render(f"{label} {val}", True, c), (sw//2 - 200*s, y))
+            font = self._font("Impact", fs)
+            txt = f"{label} {val}"
+            # Shadow (testo statico nel summary: cache-hit ogni frame)
+            self.screen.blit(self._text_surf(font, txt, (0,0,0)), (sw//2 - 198*s, y + 2*s))
+            self.screen.blit(self._text_surf(font, txt, c), (sw//2 - 200*s, y))
             y += 50*s
-        
-        msg = pygame.font.SysFont("Verdana", int(18*s), italic=True).render("CLICK TO CONTINUE", True, (200, 200, 200))
+
+        msg = self._text_surf(self._font("Verdana", int(18*s), italic=True), "CLICK TO CONTINUE", (200, 200, 200))
         self.screen.blit(msg, (sw//2 - msg.get_width()//2, sh - 60*s))
+
+    def _get_banner_base(self, text, color):
+        """Composito banner comic (outline nero 8-offset + riempimento colorato)
+        renderizzato UNA volta su una surface trasparente e cachato per
+        (testo, colore). Evita 9 font.render + 9 rotozoom per frame: il frame
+        applica un solo rotozoom alla surface cachata."""
+        if not hasattr(self, "_banner_cache"):
+            self._banner_cache = {}
+        key = (text, color)
+        base = self._banner_cache.get(key)
+        if base is None:
+            outline = self.f_banner.render(text, True, (0, 0, 0))
+            fill = self.f_banner.render(text, True, color)
+            ow, oh = outline.get_size()
+            pad = 8
+            base = pygame.Surface((ow + pad * 2, oh + pad * 2), pygame.SRCALPHA)
+            for dx, dy in [(-3,-3),(3,-3),(-3,3),(3,3),(0,-4),(0,4),(-4,0),(4,0)]:
+                base.blit(outline, (pad + dx, pad + dy))
+            base.blit(fill, (pad, pad))
+            self._banner_cache[key] = base
+        return base
 
     def _draw_comic_banner(self, text, x, y, s, life=1.0):
         t = self.timer_anim; al = 255; sc = 1.0; rot = 0
@@ -392,16 +536,44 @@ class TowerGame(BaseMinigame):
              rot = math.sin(t * 10) * 5; al = int(255 * min(1.0, life * 2))
         else:
              sc = 1.8 + math.sin(t*10)*0.05; rot = math.sin(t*5)*2
+        c = COMIC_YELLOW if (t * 20) % 2 < 1 else COMIC_ORANGE
+        if "GAME OVER" in text: c = ARCADE_RED if (t * 20) % 2 < 1 else (255, 255, 255)
+        if self._android:
+            # Path veloce Android: outline cotto nella surface base + un solo
+            # rotozoom per frame (i banner compaiono su transizioni/schermate,
+            # la lieve differenza di outline e' accettabile sul mobile).
+            base = self._get_banner_base(text, c)
+            rt = pygame.transform.rotozoom(base, rot, sc)
+            if al < 255: rt.set_alpha(al)
+            self.screen.blit(rt, (x - rt.get_width()//2, y - rt.get_height()//2))
+            return
+        # Desktop: rendering ORIGINALE pixel-fedele (outline applicato in screen
+        # space dopo il rotozoom, offset scalati per s, 9 rotozoom per frame).
         for dx, dy in [(-3,-3),(3,-3),(-3,3),(3,3),(0,-4),(0,4),(-4,0),(4,0)]:
             ts = self.f_banner.render(text, True, (0, 0, 0)); ts.set_alpha(al)
             rt = pygame.transform.rotozoom(ts, rot, sc); self.screen.blit(rt, (x - rt.get_width()//2 + dx*s, y - rt.get_height()//2 + dy*s))
-        c = COMIC_YELLOW if (t * 20) % 2 < 1 else COMIC_ORANGE
-        if "GAME OVER" in text: c = ARCADE_RED if (t * 20) % 2 < 1 else (255, 255, 255)
         ts_color = self.f_banner.render(text, True, c); ts_color.set_alpha(al)
         rt = pygame.transform.rotozoom(ts_color, rot, sc); self.screen.blit(rt, (x - rt.get_width()//2, y - rt.get_height()//2))
 
     def _draw_logo_text(self, text, x, y, s, font, color):
-        # Outline 1px per massima nitidezza
+        if self._android:
+            # Logo statico: outline + riempimento compositi UNA volta su surface
+            # trasparente e cachati (key testo+colore+scala). Evita 5 font.render/frame.
+            if not hasattr(self, "_logo_cache") or self._logo_cache is None \
+                    or self._logo_cache[0] != (text, color, round(s, 3)):
+                off = max(1, int(round(s)))
+                body = font.render(text, True, color)
+                outline = font.render(text, True, (0, 0, 0))
+                bw, bh = body.get_size()
+                surf = pygame.Surface((bw + off * 2, bh + off * 2), pygame.SRCALPHA)
+                for dx, dy in [(-1,-1), (1,-1), (-1,1), (1,1)]:
+                    surf.blit(outline, (off + dx * off, off + dy * off))
+                surf.blit(body, (off, off))
+                self._logo_cache = ((text, color, round(s, 3)), surf, off)
+            _, surf, off = self._logo_cache
+            self.screen.blit(surf, (int(x) - off, int(y) - off))
+            return
+        # Desktop: rendering ORIGINALE pixel-fedele (outline 1px con offset float dx*s).
         for dx, dy in [(-1,-1), (1,-1), (-1,1), (1,1)]:
             ts = font.render(text, True, (0, 0, 0))
             self.screen.blit(ts, (int(x + dx*s), int(y + dy*s)))

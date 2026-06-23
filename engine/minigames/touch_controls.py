@@ -51,10 +51,18 @@ class TouchControls:
         self.sm = scaling_manager
         # Di default attivi solo su Android (touch). Forzabile per test.
         self.enabled = is_android_runtime() if enabled is None else enabled
+        self._android = is_android_runtime()
         self._buttons: list[_Button] = []
         self._held: set[str] = set()       # bottoni attualmente tenuti premuti
         self._active: str | None = None     # bottone sotto il puntatore corrente
         self._font_cache: dict[int, pygame.font.Font] = {}
+        # Cache del chrome statico del bottone (sfondo+bordo+glifo), keyed da
+        # (w, h, glyph, held, color). Il chrome non cambia tra frame finche' lo
+        # stato non cambia: lo renderizziamo una volta su una Surface convertita
+        # e blittiamo quella, evitando una Surface SRCALPHA + draw per-frame.
+        self._chrome_cache: dict[tuple, pygame.Surface] = {}
+        # Cache delle label gia' renderizzate, keyed da (label, size, color).
+        self._label_cache: dict[tuple, pygame.Surface] = {}
 
     # ------------------------------------------------------------------
     def add(self, bid: str, rect: pygame.Rect, glyph: str = "", label: str = "",
@@ -66,6 +74,8 @@ class TouchControls:
         self._buttons.clear()
         self._held.clear()
         self._active = None
+        self._chrome_cache.clear()
+        self._label_cache.clear()
 
     def _hit(self, pos) -> str | None:
         for b in self._buttons:
@@ -141,24 +151,48 @@ class TouchControls:
             # nessun glifo: eventuale label testuale
             pass
 
+    def _get_chrome(self, b, held: bool) -> pygame.Surface:
+        """Surface composita (sfondo + bordo + glifo) cachata per bottone.
+        Dipende solo da (w, h, glyph, held, color): finche' lo stato non cambia
+        e' un cache-hit, quindi nessuna Surface SRCALPHA ne' pygame.draw per
+        frame. Risultato identico al rendering diretto su entrambe le piattaforme."""
+        key = (b.rect.w, b.rect.h, b.glyph, held, b.color)
+        surf = self._chrome_cache.get(key)
+        if surf is not None:
+            return surf
+        w, h = b.rect.w, b.rect.h
+        base_alpha = 150 if held else 90
+        btn_surf = pygame.Surface((w, h), pygame.SRCALPHA)
+        radius = min(w, h) // 4
+        pygame.draw.rect(btn_surf, (15, 18, 28, base_alpha + 40),
+                         (0, 0, w, h), border_radius=radius)
+        border_col = (*b.color, 220 if held else 130)
+        pygame.draw.rect(btn_surf, border_col, (0, 0, w, h),
+                         width=max(2, w // 40), border_radius=radius)
+        if b.glyph:
+            glyph_col = b.color if held else tuple(int(c * 0.85) for c in b.color)
+            # _draw_glyph usa rect.center/rect.w: passiamo un rect locale.
+            self._draw_glyph(btn_surf, b.glyph, pygame.Rect(0, 0, w, h), glyph_col)
+        btn_surf = btn_surf.convert_alpha()
+        self._chrome_cache[key] = btn_surf
+        return btn_surf
+
+    def _get_label(self, label: str, size: int, color: tuple) -> pygame.Surface:
+        """font.render cachato per (label, size, color): evita di rendere lo
+        stesso testo ogni frame (op cara su ARM)."""
+        key = (label, size, color)
+        surf = self._label_cache.get(key)
+        if surf is None:
+            surf = self._font(size).render(label, True, color).convert_alpha()
+            self._label_cache[key] = surf
+        return surf
+
     def draw(self, screen: pygame.Surface) -> None:
         if not self.enabled or not self._buttons:
             return
         for b in self._buttons:
             held = b.bid in self._held
-            base_alpha = 150 if held else 90
-            btn_surf = pygame.Surface((b.rect.w, b.rect.h), pygame.SRCALPHA)
-            radius = min(b.rect.w, b.rect.h) // 4
-            pygame.draw.rect(btn_surf, (15, 18, 28, base_alpha + 40),
-                             (0, 0, b.rect.w, b.rect.h), border_radius=radius)
-            border_col = (*b.color, 220 if held else 130)
-            pygame.draw.rect(btn_surf, border_col, (0, 0, b.rect.w, b.rect.h),
-                             width=max(2, b.rect.w // 40), border_radius=radius)
-            screen.blit(btn_surf, b.rect.topleft)
-            glyph_col = (*b.color, 255) if held else (*b.color, 200)
-            if b.glyph:
-                self._draw_glyph(screen, b.glyph, b.rect, b.color if held else tuple(int(c * 0.85) for c in b.color))
+            screen.blit(self._get_chrome(b, held), b.rect.topleft)
             if b.label:
-                f = self._font(max(12, b.rect.h // 4))
-                txt = f.render(b.label, True, b.color)
+                txt = self._get_label(b.label, max(12, b.rect.h // 4), b.color)
                 screen.blit(txt, txt.get_rect(center=b.rect.center))

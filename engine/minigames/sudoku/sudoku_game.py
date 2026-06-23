@@ -3,7 +3,12 @@ import random
 import time
 from typing import Dict, Any, List, Tuple, Optional
 from engine.minigames.minigame_base import BaseMinigame
-from engine.utils import get_resource_path
+from engine.utils import get_resource_path, is_android_runtime
+
+# Flag runtime Android: su SDL2/ARM le op care (font.render ripetuti, SRCALPHA
+# a tutto schermo, chrome ridisegnato con decine di pygame.draw ogni frame)
+# affondano gli FPS. Si usa per gateare gli FX e scegliere il path veloce.
+_ANDROID = is_android_runtime()
 
 # Colori Stile Fumetto
 DARK_BGS = [
@@ -113,7 +118,16 @@ class SudokuGame(BaseMinigame):
         self.font_large = None
         self.font_med = None
         self.font_small = None
-        
+
+        # Cache di rendering (sicura su entrambe le piattaforme):
+        # - _text_cache: Surface gia' renderizzate keyed da (id(font), text, color)
+        # - _grid_chrome: chrome statico (linee + bordo) pre-renderizzato
+        self._text_cache: Dict[Tuple[int, str, Tuple], pygame.Surface] = {}
+        self._grid_chrome: Optional[pygame.Surface] = None
+        self._grid_chrome_size: int = -1
+        self._vignette_cache: Optional[pygame.Surface] = None
+        self._vignette_alpha: int = -1
+
         self.grid_size = 0.0
         self.cell_size = 0.0
         self.grid_x = 0.0
@@ -170,6 +184,12 @@ class SudokuGame(BaseMinigame):
         self.font_large = pygame.font.SysFont("impact", f_large)
         self.font_med = pygame.font.SysFont("impact", f_med)
         self.font_small = pygame.font.SysFont("impact", f_small)
+
+        # Cambiando font/dimensioni, le Surface testuali e il chrome cachati
+        # non sono piu' validi: invalida tutto cosi' verra' ri-renderizzato.
+        self._text_cache.clear()
+        self._grid_chrome = None
+        self._grid_chrome_size = -1
         
         # Numpad (a destra della griglia)
         numpad_x = self.grid_x + self.grid_size + (sh * 0.05)
@@ -400,10 +420,101 @@ class SudokuGame(BaseMinigame):
                 success = (self.state == "GAME_OVER")
                 self.finish({"success": success, "score": self.score})
 
+    def _text(self, text: str, font: pygame.font.Font, color: Tuple) -> pygame.Surface:
+        """Surface testuale cachata: evita font.render ripetuto ogni frame
+        (op tra le piu' care su ARM). Keyed da (id(font), text, color); quando
+        la stringa/colore non cambiano e' un cache-hit. Sicuro su entrambe le
+        piattaforme: il risultato visivo e' identico."""
+        key = (id(font), text, color)
+        surf = self._text_cache.get(key)
+        if surf is None:
+            surf = font.render(text, True, color)
+            surf = surf.convert_alpha()
+            self._text_cache[key] = surf
+        return surf
+
     def _draw_text_centered(self, text: str, font: pygame.font.Font, color: Tuple, rect: pygame.Rect):
-        surf = font.render(text, True, color)
+        surf = self._text(text, font, color)
         r = surf.get_rect(center=rect.center)
         self.screen.blit(surf, r)
+
+    def _get_grid_chrome(self, gs: int) -> pygame.Surface:
+        """Chrome statico della griglia (linee blocco/interne + bordo esterno)
+        pre-renderizzato su una Surface trasparente e cachato. Ridisegnare
+        decine di pygame.draw.line ogni frame e' un costo notevole su ARM:
+        qui si ri-renderizza solo quando la dimensione (gs, dovuta allo zoom
+        del panico) cambia. Sicuro su entrambe le piattaforme."""
+        if self._grid_chrome is not None and self._grid_chrome_size == gs:
+            return self._grid_chrome
+
+        chrome = pygame.Surface((gs + 1, gs + 1), pygame.SRCALPHA)
+        n = self.board.n
+        for i in range(n + 1):
+            # Orizzontali (blocchi h)
+            thick = 4 if i % self.board.bh == 0 else 1
+            color = COLOR_LINE_THICK if i % self.board.bh == 0 else COLOR_LINE_THIN
+            ly = int(round(i * (gs / n)))
+            pygame.draw.line(chrome, color, (0, ly), (gs, ly), thick)
+
+            # Verticali (blocchi w)
+            thick = 4 if i % self.board.bw == 0 else 1
+            color = COLOR_LINE_THICK if i % self.board.bw == 0 else COLOR_LINE_THIN
+            lx = int(round(i * (gs / n)))
+            pygame.draw.line(chrome, color, (lx, 0), (lx, gs), thick)
+
+        # Bordo esterno spesso (stile fumetto)
+        pygame.draw.rect(chrome, COLOR_LINE_THICK, pygame.Rect(0, 0, gs, gs), 6)
+
+        chrome = chrome.convert_alpha()
+        self._grid_chrome = chrome
+        self._grid_chrome_size = gs
+        return chrome
+
+    def _get_overlay(self, color: Tuple[int, int, int]) -> pygame.Surface:
+        """Overlay opaco fullscreen cachato per (colore, dimensione schermo),
+        da usare con set_alpha. Path veloce per Android: evita di ricreare e
+        riempire una Surface SRCALPHA a tutto schermo ogni frame (~10x su ARM).
+        Usato SOLO dietro il flag _ANDROID; il desktop resta sul path SRCALPHA."""
+        if not hasattr(self, "_overlay_cache"):
+            self._overlay_cache = {}
+        size = self.screen.get_size()
+        key = (color, size)
+        surf = self._overlay_cache.get(key)
+        if surf is None:
+            surf = pygame.Surface(size)
+            surf.fill(color)
+            surf = surf.convert()
+            self._overlay_cache[key] = surf
+        return surf
+
+    def _get_vignette_strips(self, sw: int, sh: int, border: int):
+        """4 strisce opache (rosse) cachate per la vignetta di panico, una per
+        bordo. Si ri-creano solo se cambia la firma (sw, sh, border). L'alpha
+        del battito viene applicato a runtime via set_alpha sul chiamante.
+        Usato SOLO dietro _ANDROID; il desktop resta sul path SRCALPHA."""
+        sig = (sw, sh, border)
+        if self._vignette_cache is not None and self._vignette_alpha == hash(sig):
+            return self._vignette_cache
+
+        col = (200, 0, 0)
+        layout = [
+            ((sw, border), (0, 0)),            # Sopra
+            ((sw, border), (0, sh - border)),  # Sotto
+            ((border, sh), (0, 0)),            # Sinistra
+            ((border, sh), (sw - border, 0)),  # Destra
+        ]
+        strips = []
+        for (w, h), pos in layout:
+            if w <= 0 or h <= 0:
+                continue
+            s = pygame.Surface((w, h))
+            s.fill(col)
+            s = s.convert()
+            strips.append((s, pos))
+
+        self._vignette_cache = strips
+        self._vignette_alpha = hash(sig)
+        return strips
 
     def _draw_comic_tooltip(self, text: str, pos: Tuple[int, int], arrow_pos: str = "down"):
         """Disegna un tooltip in stile fumetto puntando a una posizione con animazione pop-in."""
@@ -414,7 +525,9 @@ class SudokuGame(BaseMinigame):
             
         padding = 15
         lines = text.split("\n")
-        surfs = [self.font_small.render(line, True, (20, 20, 20)) for line in lines]
+        # Surface per riga cachate: la stringa del tutorial e' fissa per step,
+        # quindi e' un cache-hit ogni frame durante l'animazione pop-in.
+        surfs = [self._text(line, self.font_small, (20, 20, 20)) for line in lines]
         
         tw = int((max(s.get_width() for s in surfs) + padding * 2) * scale)
         th = int((sum(s.get_height() for s in surfs) + padding * 2) * scale)
@@ -480,9 +593,9 @@ class SudokuGame(BaseMinigame):
         txt_level = f"{self._('sudoku_level')} {self.level}/{self.max_levels}"
         txt_score = f"{self._('sudoku_score')} {self.score}"
         
-        # Testo UI bianco per contrastare con gli sfondi scuri
-        surf_l = self.font_med.render(txt_level, True, (255, 255, 255))
-        surf_s = self.font_med.render(txt_score, True, (255, 255, 255))
+        # Testo UI bianco per contrastare con gli sfondi scuri (cachato)
+        surf_l = self._text(txt_level, self.font_med, (255, 255, 255))
+        surf_s = self._text(txt_score, self.font_med, (255, 255, 255))
         
         sh = self.screen.get_height()
         ui_y = int(round(sh * 0.05))
@@ -501,16 +614,32 @@ class SudokuGame(BaseMinigame):
             t_col = (255, 255, 255)
             tx = self.screen.get_width() - ui_x
             ty = ui_y
-            
-            if self.game_timer < 10:
+            panic = self.game_timer < 10
+
+            if panic:
                 import math
                 pulse = abs(math.sin(time.time() * 10))
-                t_col = (255, int(255 * (1 - pulse)), int(255 * (1 - pulse)))
+                if _ANDROID:
+                    # Android: colore quantizzato (step 16) per non saturare
+                    # la cache testuale con un colore diverso a ogni frame.
+                    ch = (int(255 * (1 - pulse)) // 16) * 16
+                    t_col = (255, ch, ch)
+                else:
+                    # Desktop: colore continuo originale (pixel-fedele).
+                    t_col = (255, int(255 * (1 - pulse)), int(255 * (1 - pulse)))
                 # Shake del timer
                 tx += int(math.sin(time.time() * 50) * 4)
                 ty += int(math.cos(time.time() * 45) * 2)
-            
-            surf_t = self.font_med.render(txt_timer, True, t_col)
+
+            if panic and not _ANDROID:
+                # Desktop in panico: render diretto ogni frame (solo gli ultimi
+                # 10s) per non far crescere la cache con un colore continuo
+                # diverso a ogni frame. Il path normale resta cachato.
+                surf_t = self.font_med.render(txt_timer, True, t_col)
+            else:
+                # Path normale (e Android in panico col colore quantizzato):
+                # resta cachato e invariato.
+                surf_t = self._text(txt_timer, self.font_med, t_col)
             tx -= surf_t.get_width()
             self.screen.blit(surf_t, (tx, ty))
         
@@ -572,33 +701,16 @@ class SudokuGame(BaseMinigame):
                         
                     self._draw_text_centered(str(val), self.font_large, color, cell_rect)
 
-        # Linee Griglia
-        for i in range(self.board.n + 1):
-            # Spessore linee blocchi
-            thick = 4 if i % self.board.bw == 0 or i % self.board.bh == 0 else 1
-            color = COLOR_LINE_THICK if i % self.board.bw == 0 or i % self.board.bh == 0 else COLOR_LINE_THIN
-            
-            if i == 0 or i == self.board.n: thick = 6
-            
-            # Orizzontali (blocchi h)
-            thick = 4 if i % self.board.bh == 0 else 1
-            color = COLOR_LINE_THICK if i % self.board.bh == 0 else COLOR_LINE_THIN
-            ly = int(round(gy + i * (gs / self.board.n)))
-            pygame.draw.line(self.screen, color, (gx, ly), (gx + gs, ly), thick)
-            
-            # Verticali (blocchi w)
-            thick = 4 if i % self.board.bw == 0 else 1
-            color = COLOR_LINE_THICK if i % self.board.bw == 0 else COLOR_LINE_THIN
-            lx = int(round(gx + i * (gs / self.board.n)))
-            pygame.draw.line(self.screen, color, (lx, gy), (lx, gy + gs), thick)
-
-        # Bordo esterno spesso (stile fumetto)
-        pygame.draw.rect(self.screen, COLOR_LINE_THICK, rect_grid, 6)
+        # Linee Griglia + Bordo esterno (chrome statico cachato, blittato
+        # con l'offset dello shake/zoom). Evita ~2*(n+1) draw.line + 1 draw.rect
+        # ogni frame, costo notevole su ARM.
+        self.screen.blit(self._get_grid_chrome(gs), (gx, gy))
         
         # Feedback info message
         if self.info_timer > 0 and self.info_msg:
             alpha = min(255, int(self.info_timer * 255))
-            msg_surf = self.font_large.render(self.info_msg, True, COLOR_TEXT_ERROR if "ERROR" in self.info_msg else COLOR_BTN_BG)
+            msg_col = COLOR_TEXT_ERROR if "ERROR" in self.info_msg else COLOR_BTN_BG
+            msg_surf = self._text(self.info_msg, self.font_large, msg_col)
             msg_surf.set_alpha(alpha)
             msg_rect = msg_surf.get_rect(center=(gx + gs // 2, gy + gs // 2))
             
@@ -624,16 +736,24 @@ class SudokuGame(BaseMinigame):
 
         # Overlay Vittoria (Animato)
         if self.state == "GAME_OVER":
-            over_surf = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
             progress = max(0.0, min(1.0, (3.0 - self.timer_msg) / 0.5))
-            over_surf.fill((0, 0, 0, int(200 * progress)))
-            self.screen.blit(over_surf, (0, 0))
-            
+            ov_alpha = int(200 * progress)
+            if _ANDROID:
+                # Su ARM una SRCALPHA fullscreen ricreata+riempita ogni frame
+                # costa ~10x: si usa una surface opaca cachata con set_alpha.
+                over_surf = self._get_overlay((0, 0, 0))
+                over_surf.set_alpha(ov_alpha)
+                self.screen.blit(over_surf, (0, 0))
+            else:
+                over_surf = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+                over_surf.fill((0, 0, 0, ov_alpha))
+                self.screen.blit(over_surf, (0, 0))
+
             if progress >= 1.0:
                 import math
                 bounce = abs(math.sin(self.timer_msg * 5)) * 20
                 color = (255, 255, 0) if int(self.timer_msg * 10) % 2 == 0 else (255, 100, 0)
-                msg_surf = self.font_large.render(self._("sudoku_game_over"), True, color)
+                msg_surf = self._text(self._("sudoku_game_over"), self.font_large, color)
                 center_x = self.screen.get_width() // 2
                 center_y = int(self.screen.get_height() // 2 - bounce)
                 msg_rect = msg_surf.get_rect(center=(center_x, center_y))
@@ -645,12 +765,19 @@ class SudokuGame(BaseMinigame):
 
         # Overlay Tempo Scaduto
         if self.state == "TIME_UP":
-            over_surf = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-            over_surf.fill((100, 0, 0, 180)) # Rosso scuro trasparente
-            self.screen.blit(over_surf, (0, 0))
-            
+            if _ANDROID:
+                # Path veloce ARM: surface opaca cachata + set_alpha invece di
+                # ricreare una SRCALPHA fullscreen ogni frame.
+                over_surf = self._get_overlay((100, 0, 0))
+                over_surf.set_alpha(180)
+                self.screen.blit(over_surf, (0, 0))
+            else:
+                over_surf = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+                over_surf.fill((100, 0, 0, 180)) # Rosso scuro trasparente
+                self.screen.blit(over_surf, (0, 0))
+
             msg = self._("sudoku_time_up")
-            msg_surf = self.font_large.render(msg, True, (255, 255, 0))
+            msg_surf = self._text(msg, self.font_large, (255, 255, 0))
             msg_rect = msg_surf.get_rect(center=(self.screen.get_width()//2, self.screen.get_height()//2))
             
             # Comic backplate
@@ -699,16 +826,26 @@ class SudokuGame(BaseMinigame):
             sw, sh = self.screen.get_size()
             alpha = int(120 * self.panic_pulse)
             border = int(sh * 0.15)
-            col = (200, 0, 0, alpha)
 
-            def _strip(w, h, x, y):
-                if w <= 0 or h <= 0:
-                    return
-                strip = pygame.Surface((w, h), pygame.SRCALPHA)
-                strip.fill(col)
-                self.screen.blit(strip, (x, y))
+            if _ANDROID:
+                # Path veloce ARM: 4 strisce opache cachate (per dimensione) +
+                # set_alpha per frame, invece di creare+riempire 4 SRCALPHA ogni
+                # frame. L'alpha varia col battito senza nuove allocazioni.
+                strips = self._get_vignette_strips(sw, sh, border)
+                for surf, pos in strips:
+                    surf.set_alpha(alpha)
+                    self.screen.blit(surf, pos)
+            else:
+                col = (200, 0, 0, alpha)
 
-            _strip(sw, border, 0, 0)            # Sopra
-            _strip(sw, border, 0, sh - border)  # Sotto
-            _strip(border, sh, 0, 0)            # Sinistra
-            _strip(border, sh, sw - border, 0)  # Destra
+                def _strip(w, h, x, y):
+                    if w <= 0 or h <= 0:
+                        return
+                    strip = pygame.Surface((w, h), pygame.SRCALPHA)
+                    strip.fill(col)
+                    self.screen.blit(strip, (x, y))
+
+                _strip(sw, border, 0, 0)            # Sopra
+                _strip(sw, border, 0, sh - border)  # Sotto
+                _strip(border, sh, 0, 0)            # Sinistra
+                _strip(border, sh, sw - border, 0)  # Destra

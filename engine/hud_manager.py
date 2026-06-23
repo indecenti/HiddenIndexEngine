@@ -232,6 +232,9 @@ class HintConfirmDialog:
 class HudManager:
     """Gestisce il rendering e la logica della HUD moderna."""
 
+    # Durata dell'animazione di ritrovamento del tile nella lista a icone (mobile).
+    FOUND_ANIM_DUR = 0.7
+
     def __init__(self,
                  scaling_manager: "ScalingManager",
                  lang: "LanguageManager",
@@ -301,6 +304,16 @@ class HudManager:
         self._shared_hud_font: Optional[pygame.font.Font] = None
         self._last_shared_size: int = 0
 
+        # Lista a icone (mobile): default per essere robusti se draw precede setup.
+        self._found_anim: dict[str, float] = {}
+        self._prev_found: set[str] = set()
+        self._icon_thumb_cache: dict[tuple, pygame.Surface] = {}
+        self._tile_cache: dict[tuple, pygame.Surface] = {}
+        self._text_cache: dict[tuple, pygame.Surface] = {}
+        self._hud_sig = None  # firma contenuto barra mobile (dirty-flag)
+        self._obj_color_idx: dict[str, int] = {}
+        self._caption_fonts: dict[int, pygame.font.Font] = {}
+
     def _load_resources(self) -> None:
         """Carica font e inizializza superfici base."""
         font_path = self._cfg.get("font", "")
@@ -325,10 +338,10 @@ class HudManager:
             else:
                 self._fonts[name] = pygame.font.SysFont("segoeui", size, bold=(name in ["timer", "score"]))
 
-        # Font dedicati alla HUD mobile (chip oggetti + pulsante hint): sans
-        # leggibile e grande, indipendenti dal tema serif del desktop.
+        # Font dedicati alla HUD mobile (pulsante hint): sans leggibile e grande,
+        # indipendente dal tema serif del desktop. (La lista oggetti a icone usa
+        # _caption_font, non piu' un font "chip" testuale.)
         if getattr(self, "_android", False):
-            self._fonts["chip"] = pygame.font.SysFont("segoeui", int(round(22 * 1.5)), bold=True)
             self._fonts["hint"] = pygame.font.SysFont("segoeui", int(round(20 * 1.5)), bold=True)
             self._fonts["hint_badge"] = pygame.font.SysFont("segoeui", int(round(26 * 1.5)), bold=True)
 
@@ -348,7 +361,12 @@ class HudManager:
         # SRCALPHA full-width sono lentissimi su pygame ARM. Su desktop resta
         # SRCALPHA (glass/fade trasparente).
         if getattr(self, "_android", False):
-            self._hud_surf = pygame.Surface((self._screen_w, self._hud_h))
+            # .convert() al formato display: i tile opachi (anch'essi convert()) si
+            # blittano cosi' senza conversione di formato per-pixel -> molto piu' veloce.
+            try:
+                self._hud_surf = pygame.Surface((self._screen_w, self._hud_h)).convert()
+            except Exception:
+                self._hud_surf = pygame.Surface((self._screen_w, self._hud_h))
         else:
             self._hud_surf = pygame.Surface((self._screen_w, self._hud_h), pygame.SRCALPHA)
 
@@ -365,6 +383,19 @@ class HudManager:
         self._score_target = 0
         self._found_count = 0
         self._reward_tracker = reward_tracker
+
+        # Lista oggetti a ICONE (mobile): animazione di ritrovamento + cache thumbnail.
+        self._found_anim = {}   # instance_id -> elapsed (s)
+        self._prev_found = set(o.instance_id for o in self._objects if o.found)
+        self._icon_thumb_cache = {}
+        # Cache dei TILE composti (sfondo+icona+didascalia): si ricostruisce solo al
+        # cambio stato/dimensione, non ogni frame -> taglia i ms di draw HUD su Android.
+        self._tile_cache = {}
+        self._hud_sig = None
+        # Cache delle scritte info-row (tempo/punti/trovati): il tempo cambia ~1/sec.
+        self._text_cache = {}
+        # Colore stabile per oggetto (no .index() O(n) per tile a ogni frame).
+        self._obj_color_idx = {o.instance_id: i for i, o in enumerate(self._objects)}
 
         self._update_visible_pool()
         # Su Android mostra il cassetto all'avvio scena (poi si chiude da solo),
@@ -397,6 +428,24 @@ class HudManager:
         self._time_elapsed = time_elapsed
         self._score_target = score
         self._found_count = sum(1 for o in self._objects if o.found)
+
+        # Animazione di ritrovamento (lista a icone, SOLO mobile): rileva i nuovi
+        # found e fa restare il tile col segno di spunta per FOUND_ANIM_DUR prima di
+        # sparire. Su desktop la lista e' testuale: niente tracking (overhead inutile).
+        if self._android:
+            found_now = set(o.instance_id for o in self._objects if o.found)
+            new_found = found_now - self._prev_found
+            for iid in new_found:
+                self._found_anim[iid] = 0.0
+            self._prev_found = found_now
+            # Mostra brevemente il cassetto al ritrovamento, così la spunta sull'icona
+            # e' visibile anche se il drawer era chiuso durante il gioco.
+            if new_found:
+                self.open_drawer(max(1.6, self.FOUND_ANIM_DUR + 0.6))
+            for iid in list(self._found_anim.keys()):
+                self._found_anim[iid] += dt
+                if self._found_anim[iid] >= self.FOUND_ANIM_DUR:
+                    del self._found_anim[iid]
 
         # Aggiorna stato hint system
         self._hint_system = hint_system
@@ -507,6 +556,10 @@ class HudManager:
         self._screen_w = screen_w
         self._screen_h = screen_h
         self._rebuild_surface()
+        # Le cache dipendono dalla dimensione dei tile: invalidale al resize.
+        self._icon_thumb_cache = {}
+        self._tile_cache = {}
+        self._hud_sig = None
 
     def draw(self, surface: pygame.Surface, elapsed_s: float) -> None:
         """Disegna la HUD completa."""
@@ -520,23 +573,27 @@ class HudManager:
                 self._draw_tooltip(surface)
             return
 
-        self._hud_surf.fill((0, 0, 0, 0))
-
-        # 1. Pannello di Sfondo (Glassmorphism)
-        self._draw_glass_panel()
-
         if self._android:
-            # HUD mobile dedicata: chip oggetti grandi a griglia + pulsante hint
-            # integrato nella barra. Niente layout serrato del desktop.
-            self._draw_mobile_hud(elapsed_s)
+            # DIRTY-FLAG: la barra (_hud_surf) si ricompone SOLO quando il contenuto
+            # cambia (secondo del timer, punti, trovati, stato hint, animazione found).
+            # Altrimenti si riusa la surface gia' composta: durante lo slide del
+            # cassetto e nei frame "fermi" si fa solo il blit -> grosso risparmio.
+            anim_active = bool(self._found_anim)
+            avail = self._reward_tracker.get_available_hints() if self._reward_tracker else 0
+            sig = (int(self._time_elapsed), int(self._score_display), self._found_count,
+                   self._hint_can_use, avail, round(self._hint_cooldown_pct, 2),
+                   tuple(o.instance_id for o in self._mobile_display_objects()))
+            if anim_active or sig != getattr(self, "_hud_sig", None):
+                self._hud_surf.fill((0, 0, 0, 0))
+                self._draw_glass_panel()
+                self._draw_mobile_hud(elapsed_s)
+                self._hud_sig = sig
         else:
-            # 2. Modulo Sinistra: Galleria Obiettivi
+            self._hud_surf.fill((0, 0, 0, 0))
+            self._draw_glass_panel()
+            # 2. Galleria obiettivi / 3. Timer / 4. Dashboard
             self._draw_objective_gallery()
-
-            # 3. Modulo Centro: Timer Premium
             self._draw_central_timer(elapsed_s)
-
-            # 4. Modulo Destra: Dashboard Punti/Stats
             self._draw_right_dashboard()
 
         # Applica alpha e disegna a schermo
@@ -594,42 +651,52 @@ class HudManager:
         surface.blit(pill_surf, pill.topleft)
 
     def _draw_pause_button(self, surface: pygame.Surface) -> None:
-        """Disegna il pulsante pausa in formato ultra-mini e quasi invisibile."""
+        """Pulsante pausa in alto a sinistra. Su desktop discreto; su touch deve
+        essere un target comodo (>=48dp equivalenti) e visibile, perché va
+        raggiunto col pollice."""
         s = self._scale
-        margin = int(8 * s)
-        btn_w = int(28 * s)
-        btn_h = int(28 * s)
+        margin = int(10 * s)
+        if self._android:
+            # Bersaglio touch comodo: ~48dp+ a prescindere dalla densità.
+            btn_w = btn_h = max(int(40 * s), int(self._screen_h * 0.085))
+        else:
+            btn_w = btn_h = int(28 * s)
 
-        self._pause_button_rect = pygame.Rect(
+        draw_rect = pygame.Rect(
             self._sm.safe_left + margin, self._sm.safe_top + margin, btn_w, btn_h
         )
-        
-        # Background molto trasparente
-        alpha = 180 if self._pause_button_hovered else 100
+        # Area di tocco più generosa del disegno su mobile (non mancare il bersaglio);
+        # su desktop coincide col disegno.
+        self._pause_button_rect = draw_rect.inflate(btn_w // 2, btn_h // 2) if self._android else draw_rect
+
+        # Opacità: mobile più visibile (discoverability), desktop discreto.
+        if self._android:
+            alpha = 230 if self._pause_button_hovered else 175
+            border_alpha = 170
+        else:
+            alpha = 180 if self._pause_button_hovered else 100
+            border_alpha = 120
         bg_color = (*COLOR_BG[:3], alpha)
-        border_color = COLOR_ACCENT if self._pause_button_hovered else (*COLOR_BORDER[:3], 120)
-        
-        # Rendering su una surface temporanea
+        border_color = COLOR_ACCENT if self._pause_button_hovered else (*COLOR_BORDER[:3], border_alpha)
+
         btn_surf = pygame.Surface((btn_w, btn_h), pygame.SRCALPHA)
-        pygame.draw.rect(btn_surf, bg_color, (0, 0, btn_w, btn_h), border_radius=5)
-        pygame.draw.rect(btn_surf, border_color, (0, 0, btn_w, btn_h), 1, border_radius=5)
-        
-        # Icona Pausa ultra-mini
-        bar_w = int(2 * s)
-        bar_h = int(12 * s)
-        bar_gap = int(4 * s)
-        
+        radius = max(5, btn_w // 5)
+        pygame.draw.rect(btn_surf, bg_color, (0, 0, btn_w, btn_h), border_radius=radius)
+        pygame.draw.rect(btn_surf, border_color, (0, 0, btn_w, btn_h), max(1, int(2 * s)), border_radius=radius)
+
+        # Icona Pausa proporzionale al pulsante
+        bar_w = max(2, int(btn_w * 0.10))
+        bar_h = int(btn_h * 0.42)
+        bar_gap = max(2, int(btn_w * 0.12))
         cx, cy = btn_w // 2, btn_h // 2
         left_bar_x = cx - (bar_w + bar_gap // 2)
         right_bar_x = cx + bar_gap // 2
         bar_y = cy - bar_h // 2
-        
-        # Icona sottile e trasparente
-        icon_color = (*COLOR_TEXT, 160)
-        pygame.draw.rect(btn_surf, icon_color, (left_bar_x, bar_y, bar_w, bar_h), border_radius=1)
-        pygame.draw.rect(btn_surf, icon_color, (right_bar_x, bar_y, bar_w, bar_h), border_radius=1)
-        
-        surface.blit(btn_surf, self._pause_button_rect.topleft)
+        icon_color = (*COLOR_TEXT, 230 if self._android else 160)
+        pygame.draw.rect(btn_surf, icon_color, (left_bar_x, bar_y, bar_w, bar_h), border_radius=2)
+        pygame.draw.rect(btn_surf, icon_color, (right_bar_x, bar_y, bar_w, bar_h), border_radius=2)
+
+        surface.blit(btn_surf, draw_rect.topleft)
 
     def is_pause_button_clicked(self, pos: tuple[int, int]) -> bool:
         """Controlla se il click è sul pulsante pausa."""
@@ -856,11 +923,11 @@ class HudManager:
 
         mins, secs = divmod(int(max(0, self._time_elapsed)), 60)
         timer_str = f"{mins:02d}:{secs:02d}"
-        t_surf = f_timer.render(timer_str, True, COLOR_TEXT)
+        t_surf = self._cached_text(f_timer, "timer", timer_str, COLOR_TEXT)
         surf.blit(t_surf, (content_left, info_cy - t_surf.get_height() // 2))
 
         score_str = f"{int(self._score_display):05d}"
-        sc_surf = f_score.render(score_str, True, COLOR_ACCENT)
+        sc_surf = self._cached_text(f_score, "score", score_str, COLOR_ACCENT)
         surf.blit(sc_surf, ((content_left + content_right) // 2 - sc_surf.get_width() // 2,
                             info_cy - sc_surf.get_height() // 2))
 
@@ -869,116 +936,287 @@ class HudManager:
         found_str = (self._lang("hud_found_all").upper() if is_all
                      else f"{self._found_count}/{total}")
         fcol = COLOR_SUCCESS if is_all else COLOR_TEXT
-        fnd_surf = f_stats.render(found_str, True, fcol)
+        fnd_surf = self._cached_text(f_stats, "found", found_str, fcol)
         surf.blit(fnd_surf, (content_right - fnd_surf.get_width(),
                              info_cy - fnd_surf.get_height() // 2))
 
-        # ── Griglia chip oggetti (font fisso leggibile, va a capo) ─────────────
-        self._draw_mobile_chips(content_left, pad + info_h, content_right, H - pad, s)
+        # ── Griglia oggetti a ICONE (standard HOG) con found animato ───────────
+        self._draw_mobile_icons(content_left, pad + info_h, content_right, H - pad, s)
 
-    def _draw_mobile_chips(self, x0: int, y0: int, x1: int, y1: int, s: float) -> None:
-        """Dispone gli oggetti come pillole grandi a font fisso che vanno a capo
-        e si centrano riga per riga nell'area indicata."""
+    # ------------------------------------------------------------------
+    # Lista oggetti a ICONE (mobile) — thumbnail + caption + found animato
+    # ------------------------------------------------------------------
+
+    def _mobile_display_objects(self) -> list:
+        """Oggetti mostrati nella lista a icone: ordine di scena stabile, con un cap
+        totale ~_max_visible (i tile in animazione di ritrovamento hanno priorita' e
+        consumano slot, così una combo di find non rimpicciolisce le icone)."""
+        n_anim = sum(1 for o in self._objects if o.instance_id in self._found_anim)
+        slots = max(0, self._max_visible - n_anim)
+        display, shown = [], 0
+        for o in self._objects:
+            if o.instance_id in self._found_anim:
+                display.append(o)
+            elif not o.found and shown < slots:
+                display.append(o)
+                shown += 1
+        return display
+
+    def _draw_mobile_icons(self, x0: int, y0: int, x1: int, y1: int, s: float) -> None:
         surf = self._hud_surf
-        font = self._fonts["chip"]
         area_w = max(10, x1 - x0)
-
-        cpx = int(16 * s)   # padding orizzontale chip
-        cpy = int(8 * s)    # padding verticale chip
-        gap = int(10 * s)
-        row_gap = int(10 * s)
-
-        # Pre-calcola le chip (testo + dimensioni)
-        chips = []
-        for i, obj in enumerate(self._visible_objects):
-            txt = self._lang(obj.label_key)
-            if not txt:
-                txt = str(obj.label_key)
-            tw, th = font.size(txt)
-            chips.append((txt, tw, th, i))
-
-        if not chips:
+        area_h = max(10, y1 - y0)
+        display = self._mobile_display_objects()
+        if not display:
             return
 
-        chip_h = chips[0][2] + cpy * 2
-        # Suddividi in righe rispettando la larghezza disponibile
-        rows = []
-        cur, cur_w = [], 0
-        for txt, tw, th, i in chips:
-            cw = tw + cpx * 2
-            add = cw if not cur else cw + gap
-            if cur and cur_w + add > area_w:
-                rows.append(cur)
-                cur, cur_w = [], 0
-                add = cw
-            cur.append((txt, cw, i))
-            cur_w += add
-        if cur:
-            rows.append(cur)
+        n = len(display)
+        gap = int(10 * s)
+        # Scegli righe/colonne massimizzando la dimensione del tile quadrato.
+        best = (1, n, 0.0)
+        for rows in (1, 2, 3):
+            cols = math.ceil(n / rows)
+            tw = (area_w - gap * (cols - 1)) / cols
+            th = (area_h - gap * (rows - 1)) / rows
+            tile = min(tw, th)
+            if tile > best[2]:
+                best = (rows, cols, tile)
+        _, cols, tile = best
+        tile = int(max(1, min(tile, area_h, area_w)))
 
-        total_h = len(rows) * chip_h + (len(rows) - 1) * row_gap
-        cy = y0 + max(0, ((y1 - y0) - total_h) // 2)
-
-        for row in rows:
-            row_w = sum(cw for _, cw, _ in row) + gap * (len(row) - 1)
-            cx = x0 + max(0, (area_w - row_w) // 2)
-            for txt, cw, i in row:
-                color = COLOR_PALETTE[i % len(COLOR_PALETTE)]
-                rect = pygame.Rect(cx, cy, cw, chip_h)
-                pygame.draw.rect(surf, (18, 22, 32), rect, border_radius=int(chip_h // 2))
-                pygame.draw.rect(surf, (*color, 220), rect, max(2, int(2 * s)), border_radius=int(chip_h // 2))
-                tsurf = font.render(txt, True, color)
-                surf.blit(tsurf, (cx + (cw - tsurf.get_width()) // 2,
-                                  cy + (chip_h - tsurf.get_height()) // 2))
-                cx += cw + gap
-            cy += chip_h + row_gap
-            if cy > y1:
+        total_rows = math.ceil(n / cols)
+        grid_h = total_rows * tile + (total_rows - 1) * gap
+        start_y = y0 + max(0, (area_h - grid_h) // 2)
+        for r in range(total_rows):
+            row_items = display[r * cols:(r + 1) * cols]
+            if not row_items:
                 break
+            row_w = len(row_items) * tile + (len(row_items) - 1) * gap
+            cx = x0 + max(0, (area_w - row_w) // 2)
+            cy = start_y + r * (tile + gap)
+            for o in row_items:
+                self._draw_icon_tile(surf, o, cx, cy, tile, s)
+                cx += tile + gap
+
+    def _draw_icon_tile(self, surf, obj, x: int, y: int, tile: int, s: float) -> None:
+        # Tile composto CACHATO (per (id, stato-found, dimensione)): si ricostruisce
+        # solo al primo uso o al cambio stato, non ogni frame -> draw HUD economico.
+        anim = self._found_anim.get(obj.instance_id)
+        found = anim is not None
+        key = (obj.instance_id, found, tile)
+        base = self._tile_cache.get(key)
+        if base is None:
+            base = self._build_tile_surface(obj, tile, found, s)
+            self._tile_cache[key] = base
+
+        scale, alpha = 1.0, 255
+        if found:
+            t = anim / self.FOUND_ANIM_DUR
+            scale = 1.0 + 0.18 * math.sin(min(1.0, t * 1.6) * math.pi)  # pop
+            if t > 0.65:
+                alpha = max(0, int(255 * (1.0 - (t - 0.65) / 0.35)))    # fade out
+
+        img = base
+        if scale != 1.0:
+            dsz = max(1, int(tile * scale))
+            img = pygame.transform.smoothscale(base, (dsz, dsz))  # copia (non tocca la cache)
+            x -= (dsz - tile) // 2
+            y -= (dsz - tile) // 2
+        if alpha < 255:
+            if img is base:
+                img = base.copy()
+            img.set_alpha(alpha)
+        surf.blit(img, (x, y))
+
+    def _build_tile_surface(self, obj, tile: int, found: bool, s: float) -> pygame.Surface:
+        """Compone (una volta, poi cachato) il tile: sfondo arrotondato + thumbnail
+        icona + didascalia col NOME INTERO su max 2 righe (font ridotto per entrare,
+        niente troncamento)."""
+        color = COLOR_PALETTE[self._obj_color_idx.get(obj.instance_id, 0) % len(COLOR_PALETTE)]
+        # Android: tile OPACO riempito col colore della barra HUD (12,14,22): gli angoli
+        # arrotondati esterni coincidono col fondo barra (anch'esso opaco) -> il blit del
+        # tile diventa OPACO. 7 tile SRCALPHA ~271px blittati ogni recompose costavano
+        # ~108ms su GPU mobile (stesso killer per-pixel-alpha del cabinet slot).
+        if self._android:
+            ts = pygame.Surface((tile, tile))
+            ts.fill((12, 14, 22))
+        else:
+            ts = pygame.Surface((tile, tile), pygame.SRCALPHA)
+        radius = int(tile * 0.18)
+        pygame.draw.rect(ts, (28, 60, 40) if found else (24, 30, 42), (0, 0, tile, tile), border_radius=radius)
+        pygame.draw.rect(ts, COLOR_SUCCESS if found else (*color, 230),
+                         (0, 0, tile, tile), max(2, int(2 * s)), border_radius=radius)
+
+        cap_h = int(tile * 0.30)   # piu' spazio per la didascalia (fino a 2 righe)
+        icon_area = tile - cap_h
+        pad = int(6 * s)
+        thumb = self._get_icon_thumb(obj, max(1, icon_area - pad))
+        if thumb is not None:
+            tw, th = thumb.get_size()
+            ts.blit(thumb, ((tile - tw) // 2, pad // 2 + (icon_area - th) // 2))
+        else:
+            nm = (self._lang(obj.label_key) or str(obj.label_key)).strip()
+            ini = nm[:1].upper() if nm else "?"
+            bigf = self._caption_font(max(10, int(icon_area * 0.55)))
+            gl = bigf.render(ini, True, color)
+            ts.blit(gl, ((tile - gl.get_width()) // 2, (icon_area - gl.get_height()) // 2))
+
+        name = self._lang(obj.label_key) or str(obj.label_key)
+        cap = self._render_caption(name, tile - int(4 * s), cap_h, max(9, int(tile * 0.16)))
+        if cap is not None:
+            ts.blit(cap, ((tile - cap.get_width()) // 2, tile - cap_h + (cap_h - cap.get_height()) // 2))
+
+        if found:
+            self._draw_check_badge(ts, tile, s)
+        # Su Android la tile e' opaca (vedi sopra): convert() -> blit rapido. Il fade
+        # del found-anim usa set_alpha (alpha di superficie) che funziona anche opaco.
+        return ts.convert() if self._android else ts
+
+    def _render_caption(self, name: str, max_w: int, max_h: int, max_size: int):
+        """Renderizza il nome su 1-2 righe centrate, riducendo il font finche' entra in
+        (max_w x max_h). I nomi lunghi vanno A CAPO invece di essere troncati."""
+        col = (220, 225, 235)
+        for size in range(int(max_size), 8, -1):
+            f = self._caption_font(size)
+            lines = self._wrap_lines(name, f, max_w, 2)
+            if lines is None:
+                continue
+            lh = f.get_height()
+            total_h = lh * len(lines)
+            if total_h > max_h:
+                continue
+            cap = pygame.Surface((max(1, max_w), total_h), pygame.SRCALPHA)
+            cy = 0
+            for ln in lines:
+                ls = f.render(ln, True, col)
+                cap.blit(ls, ((max_w - ls.get_width()) // 2, cy))
+                cy += lh
+            return cap
+        # Fallback estremo: font minimo, 1 riga troncata
+        f = self._caption_font(9)
+        return f.render(self._truncate_text(name, f, max_w), True, col)
+
+    @staticmethod
+    def _wrap_lines(text: str, font: pygame.font.Font, max_w: int, max_lines: int):
+        """Word-wrap greedy in <= max_lines righe, ciascuna <= max_w px.
+        None se non ci sta (il chiamante riprova con un font piu' piccolo)."""
+        if font.size(text)[0] <= max_w:
+            return [text]
+        lines, cur = [], ""
+        for w in text.split():
+            trial = (cur + " " + w).strip()
+            if font.size(trial)[0] <= max_w:
+                cur = trial
+            else:
+                if cur:
+                    lines.append(cur)
+                cur = w
+                if font.size(cur)[0] > max_w:
+                    return None  # parola singola troppo larga per questo font
+                if len(lines) >= max_lines:
+                    return None
+        if cur:
+            lines.append(cur)
+        return lines if len(lines) <= max_lines else None
+
+    def _get_icon_thumb(self, obj, size: int):
+        """Thumbnail scalata e cachata dell'icona dell'oggetto (fit, aspect preservato).
+        None se l'oggetto non ha icon_surface (fallback all'iniziale del nome)."""
+        size = max(1, int(size))
+        src = getattr(obj, "icon_surface", None)
+        if src is None:
+            return None
+        key = (obj.instance_id, size)
+        cached = self._icon_thumb_cache.get(key)
+        if cached is not None:
+            return cached
+        sw, sh = src.get_size()
+        if sw <= 0 or sh <= 0:
+            return None
+        f = min(size / sw, size / sh)
+        tw, th = max(1, int(sw * f)), max(1, int(sh * f))
+        try:
+            thumb = pygame.transform.smoothscale(src, (tw, th))
+        except Exception:
+            thumb = pygame.transform.scale(src, (tw, th))
+        self._icon_thumb_cache[key] = thumb
+        return thumb
+
+    def _caption_font(self, size: int) -> pygame.font.Font:
+        size = max(8, int(size))
+        cache = getattr(self, "_caption_fonts", None)
+        if cache is None:
+            cache = self._caption_fonts = {}
+        if size not in cache:
+            cache[size] = pygame.font.SysFont("segoeui", size, bold=True)
+        return cache[size]
+
+    def _cached_text(self, font, fkey: str, text: str, color) -> pygame.Surface:
+        """font.render memoizzato per (font, testo, colore): la riga info HUD cambia
+        valore al massimo ~1/sec (tempo) o di rado (trovati), quindi quasi sempre hit."""
+        ck = (fkey, text, color)
+        s = self._text_cache.get(ck)
+        if s is None:
+            s = font.render(text, True, color)
+            self._text_cache[ck] = s
+            if len(self._text_cache) > 80:
+                self._text_cache.pop(next(iter(self._text_cache)))
+        return s
+
+    @staticmethod
+    def _truncate_text(text: str, font: pygame.font.Font, max_w: int) -> str:
+        if font.size(text)[0] <= max_w:
+            return text
+        ell = "…"
+        while text and font.size(text + ell)[0] > max_w:
+            text = text[:-1]
+        return (text + ell) if text else ""
+
+    def _draw_check_badge(self, surf: pygame.Surface, size: int, s: float) -> None:
+        r = max(5, int(size * 0.16))
+        cx, cy = size - r - int(2 * s), r + int(2 * s)
+        pygame.draw.circle(surf, COLOR_SUCCESS, (cx, cy), r)
+        pygame.draw.circle(surf, (10, 30, 18), (cx, cy), r, max(1, int(s)))
+        pts = [(cx - r * 0.45, cy), (cx - r * 0.10, cy + r * 0.42), (cx + r * 0.50, cy - r * 0.42)]
+        pygame.draw.lines(surf, (12, 30, 18), False,
+                          [(int(px), int(py)) for px, py in pts], max(2, int(2 * s)))
 
     def _draw_mobile_hint(self, x: int, y: int, w: int, h: int, s: float) -> None:
-        """Pulsante HINT grande integrato nella barra (touch friendly)."""
-        surf = self._hud_surf
+        """Pulsante HINT grande integrato nella barra (touch friendly). Il pulsante
+        e' CACHATO in una surface: prima faceva 3 font.render + 2 rounded-rect ad OGNI
+        recompose della barra (ricorrente ogni frame durante il found-anim) -> caro su
+        GPU mobile. Ora si ricostruisce solo a cambio stato (disponibilita'/cooldown)."""
         can_use = self._hint_can_use
         available = self._reward_tracker.get_available_hints() if self._reward_tracker else 0
-
-        if can_use:
-            bg = (30, 90, 55)
-            border = COLOR_SUCCESS
-            qcol = COLOR_SUCCESS
-            lblcol = (210, 255, 225)
-        else:
-            bg = (60, 60, 72)
-            border = (110, 110, 130)
-            qcol = (150, 150, 165)
-            lblcol = (170, 170, 185)
-
-        rect = pygame.Rect(x, y, w, h)
-        radius = int(18 * s)
-        pygame.draw.rect(surf, bg, rect, border_radius=radius)
-        pygame.draw.rect(surf, border, rect, max(2, int(2 * s)), border_radius=radius)
-
-        # "?" grande
-        q_surf = self._fonts["hint_badge"].render("?", True, qcol)
-        q_y = y + int(h * 0.16)
-        surf.blit(q_surf, (x + (w - q_surf.get_width()) // 2, q_y))
-
-        # Etichetta HINT
-        lbl = self._fonts["hint"].render(self._lang("hud_hint", "HINT").upper(), True, lblcol)
-        surf.blit(lbl, (x + (w - lbl.get_width()) // 2, y + int(h * 0.46)))
-
-        # Conteggio hint disponibili
-        cnt = self._fonts["hint"].render(f"x{available}", True, lblcol)
-        surf.blit(cnt, (x + (w - cnt.get_width()) // 2, y + int(h * 0.70)))
-
-        # Overlay cooldown (riempie dal basso mentre si attende)
-        if self._hint_cooldown_pct > 0 and not can_use:
-            cov_h = int(h * self._hint_cooldown_pct)
-            cov = pygame.Surface((w, cov_h), pygame.SRCALPHA)
-            cov.fill((10, 10, 16, 150))
-            surf.blit(cov, (x, y + h - cov_h))
-
+        cd = 0.0 if can_use else round(self._hint_cooldown_pct, 2)
+        key = (w, h, can_use, available, cd, round(s, 2))
+        cached = getattr(self, "_hint_btn_cache", None)
+        if cached is None or cached[0] != key:
+            if can_use:
+                bg, border, qcol, lblcol = (30, 90, 55), COLOR_SUCCESS, COLOR_SUCCESS, (210, 255, 225)
+            else:
+                bg, border, qcol, lblcol = (60, 60, 72), (110, 110, 130), (150, 150, 165), (170, 170, 185)
+            btn = pygame.Surface((w, h), pygame.SRCALPHA)
+            radius = int(18 * s)
+            pygame.draw.rect(btn, bg, (0, 0, w, h), border_radius=radius)
+            pygame.draw.rect(btn, border, (0, 0, w, h), max(2, int(2 * s)), border_radius=radius)
+            q_surf = self._fonts["hint_badge"].render("?", True, qcol)
+            btn.blit(q_surf, ((w - q_surf.get_width()) // 2, int(h * 0.16)))
+            lbl = self._fonts["hint"].render(self._lang("hud_hint", "HINT").upper(), True, lblcol)
+            btn.blit(lbl, ((w - lbl.get_width()) // 2, int(h * 0.46)))
+            cnt = self._fonts["hint"].render(f"x{available}", True, lblcol)
+            btn.blit(cnt, ((w - cnt.get_width()) // 2, int(h * 0.70)))
+            if cd > 0 and not can_use:
+                cov_h = int(h * cd)
+                cov = pygame.Surface((w, cov_h), pygame.SRCALPHA)
+                cov.fill((10, 10, 16, 150))
+                btn.blit(cov, (0, h - cov_h))
+            btn = btn.convert_alpha()
+            self._hint_btn_cache = (key, btn)
+            cached = self._hint_btn_cache
+        self._hud_surf.blit(cached[1], (x, y))
         # Memorizza il rettangolo LOCALE (verrà convertito in schermo dal getter)
-        self._mobile_hint_rect_local = rect
+        self._mobile_hint_rect_local = pygame.Rect(x, y, w, h)
 
     def get_mobile_hint_rect(self) -> pygame.Rect:
         """Rettangolo del pulsante hint mobile in coordinate SCHERMO.

@@ -10,7 +10,6 @@ import math
 import logging
 import pygame
 import random
-import re
 from pathlib import Path
 
 from editor.constants import (
@@ -777,6 +776,12 @@ class ObjectOpsMixin:
                 
         # Batch Move
         idxs = self.selected_indices if len(self.selected_indices) > 1 else ([self.selected_idx] if self.selected_idx is not None else [])
+        if idxs and lid == "overlay":
+            # 'overlay' non è cliccabile (_objs_at lo salta): spostarci la selezione
+            # la renderebbe non più selezionabile sul canvas. Lo usiamo solo come
+            # layer di creazione, senza muovere gli oggetti già selezionati.
+            self._status("Layer 'overlay' non cliccabile: impostato solo come layer di creazione", (230, 170, 60), 3)
+            return
         if idxs:
             self._push_undo()
             for idx in idxs:
@@ -937,6 +942,9 @@ class ObjectOpsMixin:
     def _ctx_menu_click(self, mx, my_raw) -> bool:
         if not self._ctx_menu: return False
         items = self._get_ctx_items()
+        # _get_ctx_items() puo' azzerare _ctx_menu se l'indice memorizzato non e'
+        # piu' valido (scena mutata da undo/delete mentre il menu era aperto).
+        if not self._ctx_menu: return False
         m_w, m_h, mx_m, my_m = self._get_ctx_menu_info(items)
         
         y_off = my_m + 6
@@ -1234,17 +1242,6 @@ class ObjectOpsMixin:
                 self.scene_dirty = True
                 self._mark_dirty()
         except Exception: logging.error("Color picker fallito (selezione)")
-
-    def _open_layer_selector_for_selection(self, objs_sel):
-        # Ciclo tra i layer disponibili se cliccato
-        layers = ["objects_low", "objects_mid", "objects_high", "overlay"]
-        curr = objs_sel[0].get("layer", "objects_mid")
-        try:
-            idx = layers.index(curr)
-            next_l = layers[(idx + 1) % len(layers)]
-            self._set_layer(next_l)
-        except ValueError:
-            self._set_layer("objects_mid")
 
     def _get_objs_selection(self) -> list:
         """Restituisce la lista degli oggetti correntemente selezionati (multi o singolo)."""

@@ -29,9 +29,6 @@ Requisiti host (Windows):
   - Verificare con scripts/setup_android_wsl.sh.
 """
 
-import sys
-import shutil
-import logging
 import subprocess
 import threading
 import time
@@ -251,7 +248,8 @@ android.ndk_path = {WSL_ANDROID_NDK}
 
 # WAKE_LOCK: richiesto dal motore per pygame.display.set_allow_screensaver(False)
 # che mantiene lo schermo acceso durante il gameplay.
-android.permissions = android.permission.WAKE_LOCK
+# VIBRATE: feedback aptico (engine/haptics.py) su find/miss/vittoria.
+android.permissions = android.permission.WAKE_LOCK,android.permission.VIBRATE
 
 {icon_line}
 {splash_line}
@@ -288,7 +286,7 @@ if [ -f "$PYGAME_RECIPE" ] && grep -q "version = '2.1.0'" "$PYGAME_RECIPE"; then
     
     # Forza rebuild pulendo cache specifica se la versione è cambiata.
     # Se non lo facciamo, p4a potrebbe provare a riusare .o vecchi incompatibili.
-    rm -rf "$WORKSPACE/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/pygame" 2>/dev/null || true
+    rm -rf "$WORKSPACE/.buildozer/android/platform/build-"*"/build/other_builds/pygame" 2>/dev/null || true
     rm -f "/root/.buildozer/android/packages/pygame/2.1.0.tar.gz" 2>/dev/null || true
 fi
 
@@ -296,7 +294,7 @@ fi
 # SDL2 2.30+ ha spostato loadLibraries() in finishLoad, ma p4a UnpackFilesTask
 # chiama nativeSetenv() prima, fallendo se libSDL2.so non è caricata.
 TEMPLATE_PA="$P4A_ROOT/pythonforandroid/bootstraps/sdl2/build/src/main/java/org/kivy/android/PythonActivity.java"
-DIST_PA="$WORKSPACE/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/dists/$PKG_NAME/src/main/java/org/kivy/android/PythonActivity.java"
+DIST_PA=$(ls -d "$WORKSPACE/.buildozer/android/platform/build-"*"/dists/$PKG_NAME/src/main/java/org/kivy/android/PythonActivity.java" 2>/dev/null | head -1)
 for FILE in "$TEMPLATE_PA" "$DIST_PA"; do
     if [ -f "$FILE" ]; then
         if ! grep -q "p4a fix: force loadLibraries before UnpackFilesTask" "$FILE"; then
@@ -312,11 +310,45 @@ for FILE in "$TEMPLATE_PA" "$DIST_PA"; do
     fi
 done
 
-# ── Patch 3: pygame Setup.Android.SDL2.in SIMD include ────────────────────
-# Bug: pygame surface.c referenzia symbol da simd_blitters_sse2.c, ma il
-# build template non include il file → ImportError "alphablit_alpha_sse2_*
-# symbol not found" su ARM.
-for ARCH_DIR in "$WORKSPACE/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/pygame/"*__ndk_target_*; do
+# ── Patch 3: pygame — blitter SIMD in surface.so (fix a livello di RECIPE) ─
+# Bug: pygame surface.c referenzia simboli da simd_blitters_sse2.c, ma il build
+# template SDL2/Android non li include → ImportError "alphablit_alpha_sse2_*
+# symbol not found" → crash a pygame.display.
+#
+# La recipe pygame, in prebuild_arch(), legge buildconfig/Setup.Android.SDL2.in
+# (template), lo formatta e scrive 'Setup'. Patchiamo la RECIPE perche' inietti
+# i file SIMD nel template DENTRO prebuild_arch: cosi' avviene SEMPRE al momento
+# giusto (dopo l'estrazione, prima della compilazione), a ogni rebuild di pygame.
+# Questo risolve il problema di timing (la vecchia patch al file estratto girava
+# prima dell'estrazione e non veniva mai applicata correttamente).
+PYGAME_RECIPE="$P4A_ROOT/pythonforandroid/recipes/pygame/__init__.py"
+if [ -f "$PYGAME_RECIPE" ] && ! grep -q "p4a-simd-fix" "$PYGAME_RECIPE"; then
+python3 - "$PYGAME_RECIPE" <<'PYEOF'
+import sys
+p = sys.argv[1]
+s = open(p, encoding='utf-8').read()
+needle = 'setup_template = open(join("buildconfig", "Setup.Android.SDL2.in")).read()'
+add = (
+    '\n            # p4a-simd-fix: forza i blitter SIMD in surface.so (evita'
+    '\n            # ImportError alphablit_alpha_sse2_* / crash a pygame.display)'
+    '\n            if "simd_blitters_sse2.c" not in setup_template:'
+    '\n                setup_template = setup_template.replace('
+    '"surface src_c/surface.c src_c/alphablit.c src_c/surface_fill.c", '
+    '"surface src_c/surface.c src_c/alphablit.c src_c/surface_fill.c '
+    'src_c/simd_blitters_sse2.c src_c/simd_blitters_avx2.c")'
+)
+if needle in s and 'p4a-simd-fix' not in s:
+    s = s.replace(needle, needle + add, 1)
+    open(p, 'w', encoding='utf-8').write(s)
+    print("[p4a-patch] pygame recipe SIMD inject OK")
+else:
+    print("[p4a-patch] pygame recipe: needle non trovato o gia' patchato")
+PYEOF
+fi
+
+# Belt-and-suspenders: se un template Setup.Android.SDL2.in e' gia' estratto, lo
+# patchiamo anche (idempotente; la recipe sopra resta la fonte di verita').
+for ARCH_DIR in "$WORKSPACE/.buildozer/android/platform/build-"*"/build/other_builds/pygame/"*__ndk_target_*; do
     SETUP="$ARCH_DIR/pygame/buildconfig/Setup.Android.SDL2.in"
     if [ -f "$SETUP" ] && ! grep -q "simd_blitters_sse2.c" "$SETUP"; then
         sed -i 's|^surface src_c/surface.c src_c/alphablit.c src_c/surface_fill.c|surface src_c/surface.c src_c/alphablit.c src_c/surface_fill.c src_c/simd_blitters_sse2.c src_c/simd_blitters_avx2.c|' "$SETUP"
@@ -353,6 +385,237 @@ def _apply_p4a_patches(wsl_workspace: str, pkg_name: str) -> None:
         for line in result.stdout.splitlines():
             if "[p4a-patch]" in line:
                 logger.info(line.strip())
+
+
+# ---------------------------------------------------------------------------
+# Asset pruning: engine/assets contiene LIBRERIE condivise enormi (la palette
+# dell'editor: ~218MB backgrounds, ~142MB objects, ~71MB objects_cartoon,
+# ~11MB objects_lineart). A RUNTIME non servono:
+#   - i background sono caricati scene-local (scene_loader: os.path.join(scene_dir, bg));
+#   - le icone sono game-local con fallback engine (scene_loader: local-first).
+# Impacchettarle tutte gonfia l'APK a ~558MB (non installabile su molti device/
+# emulatori). Le escludiamo, tenendo SOLO i file di fallback realmente referenziati.
+# ---------------------------------------------------------------------------
+
+# Cartelle libreria di engine/assets potenzialmente solo-editor (oltre a backgrounds).
+_ENGINE_ASSET_LIB_DIRS = ("objects", "objects_cartoon", "objects_lineart")
+
+# Minigiochi che a RUNTIME leggono l'INTERA libreria condivisa engine/assets/objects*
+# (es. spot_differences popola i propri pool dai cataloghi globali). Se il gioco ne usa
+# uno, NON possiamo potare le cartelle oggetti: le svuoteremmo. (slot_classic invece e'
+# self-contained: usa i propri sprite bundlati, quindi non vincola il pruning.)
+_LIBRARY_DEPENDENT_MINIGAMES = {"spot_differences"}
+
+
+def _compute_kept_engine_assets(game_id: str) -> Optional[set]:
+    """Path relativi (sotto engine/assets/) da TENERE pur potando le dir libreria:
+    le icone di catalogo usate dal gioco che risolvono SOLO in engine/assets (non
+    presenti game-local). Di norma vuoto (i giochi sono autosufficienti).
+
+    Ritorna None se l'analisi non e' affidabile (catalogo non caricabile): in tal
+    caso il chiamante NON pota le dir oggetti (prudenza), rimuovendo solo backgrounds.
+    """
+    import json as _json
+    base = get_base_path()
+    game_dir = base / "games" / game_id
+    eng_assets = base / "engine" / "assets"
+    try:
+        from engine.catalog_manager import load_catalog
+        cat = load_catalog(game_id)
+    except Exception as e:
+        logger.warning(f"[Asset Prune] Catalogo non caricabile ({e}); poto solo backgrounds.")
+        return None
+
+    used: set[str] = set()
+    levels = game_dir / "levels"
+    if levels.exists():
+        for sj in levels.rglob("scene.json"):
+            try:
+                d = _json.loads(sj.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            for o in d.get("objects", []):
+                cid = o.get("catalog_id")
+                if cid:
+                    used.add(cid)
+
+    kept: set[str] = set()
+    for cid in used:
+        entry = cat.get_by_id(cid)
+        icon = (entry or {}).get("icon", "")
+        if not icon:
+            continue
+        rel = icon.replace("\\", "/")
+        # Tenere solo se il gioco NON ha la copia locale ma engine si' (fallback reale).
+        if not (game_dir / rel).exists() and (eng_assets / rel).exists():
+            kept.add(rel)
+    return kept
+
+
+# ---------------------------------------------------------------------------
+# Thumbnail anteprime scene: il menu mostra card piccole, ma i background sono
+# enormi (fino a 5480x3072, 20MB; ~67MB decodificati in RAM). Caricarli full-res
+# per le card e' un collo di bottiglia su mobile. In pacchettizzazione generiamo
+# un _preview.jpg leggero (max 640px, ~80KB) per scena; il menu lo preferisce.
+# ---------------------------------------------------------------------------
+
+_PREVIEW_MAX_DIM = 640       # lato massimo della thumbnail (px)
+_PREVIEW_JPEG_QUALITY = 80   # qualita' JPEG: buon compromesso nitidezza/peso
+
+
+def _write_bytes(path_wsl: str, data: bytes) -> None:
+    """Scrive dati binari in un path WSL via base64 su stdin (binary-safe,
+    nessun limite di lunghezza argomenti)."""
+    import base64
+    b64 = base64.b64encode(data).decode("ascii")
+    wsl_cmd = ["wsl", "-d", WSL_DISTRO, "-u", "root", "-e", "bash", "-c",
+               f"base64 -d > '{path_wsl}'"]
+    r = subprocess.run(
+        wsl_cmd, input=b64, capture_output=True, text=True,
+        timeout=30, encoding="utf-8", errors="replace",
+    )
+    if r.returncode != 0:
+        raise RuntimeError(f"Scrittura binaria {path_wsl} fallita: {r.stderr}")
+
+
+def _generate_scene_previews(
+    game_id: str,
+    wsl_workspace: str,
+    progress_callback: Optional[Callable[[float, str], None]] = None,
+) -> None:
+    """Genera una thumbnail _preview.jpg per ogni scena del gioco e la scrive
+    nel workspace WSL. Le thumbnail vengono caricate dal menu al posto dei
+    background full-res, riducendo del ~95% peso e tempo di decodifica delle
+    card (level/scene selection)."""
+    try:
+        from PIL import Image
+    except Exception:
+        logger.warning("[Scene Preview] Pillow non disponibile: salto la generazione thumbnail.")
+        return
+
+    try:
+        resample = Image.Resampling.LANCZOS
+    except AttributeError:  # Pillow < 9.1
+        resample = Image.LANCZOS
+
+    base = get_base_path()
+    levels_dir = base / "games" / game_id / "levels"
+    if not levels_dir.is_dir():
+        return
+
+    import io
+    scene_jsons = sorted(levels_dir.rglob("scene.json"))
+    made = 0
+    total_kb = 0.0
+    for sj in scene_jsons:
+        try:
+            scene_dir = sj.parent
+            bg_file = _load_json(sj).get("background", "background.png")
+            bg_path = scene_dir / bg_file
+            if not bg_path.exists():
+                continue
+            with Image.open(bg_path) as im:
+                im = im.convert("RGB")
+                im.thumbnail((_PREVIEW_MAX_DIM, _PREVIEW_MAX_DIM), resample)
+                buf = io.BytesIO()
+                im.save(buf, format="JPEG", quality=_PREVIEW_JPEG_QUALITY, optimize=True)
+            data = buf.getvalue()
+            rel = scene_dir.relative_to(base).as_posix()  # games/<id>/levels/.../<scene>
+            _write_bytes(f"{wsl_workspace}/{rel}/_preview.jpg", data)
+            made += 1
+            total_kb += len(data) / 1024.0
+        except Exception as e:
+            logger.warning(f"[Scene Preview] {sj}: {e}")
+
+    if made:
+        logger.info(
+            f"[Scene Preview] {made} thumbnail generate ({total_kb/1024.0:.1f}MB) "
+            f"-> menu fast-load."
+        )
+    if progress_callback:
+        progress_callback(14, f"Anteprime scene ottimizzate ({made})")
+
+
+# Estensioni immagine considerate background/asset di scena.
+_SCENE_IMG_EXT = (".png", ".jpg", ".jpeg", ".webp", ".bmp")
+
+
+def _collect_referenced_images(obj, out: set) -> None:
+    """Raccoglie ricorsivamente il basename di ogni stringa che sembra un file
+    immagine dentro una struttura JSON. Cattura non solo la chiave 'background'
+    ma anche eventuali immagini referenziate da oggetti/effetti/altre chiavi,
+    cosi' il pruning non rimuove mai un file realmente usato."""
+    if isinstance(obj, str):
+        if obj.lower().endswith(_SCENE_IMG_EXT):
+            out.add(Path(obj.replace("\\", "/")).name)
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            _collect_referenced_images(v, out)
+    elif isinstance(obj, list):
+        for v in obj:
+            _collect_referenced_images(v, out)
+
+
+def _prune_unreferenced_scene_backgrounds(
+    game_id: str,
+    wsl_workspace: str,
+    progress_callback: Optional[Callable[[float, str], None]] = None,
+) -> None:
+    """Rimuove dal WORKSPACE i file immagine presenti nelle cartelle scena ma
+    NON referenziati da scene.json. Quando nell'editor si cambia lo sfondo di una
+    scena, i vecchi background restano nella cartella e finirebbero nell'APK come
+    peso morto (es. una scena LineVenture ne aveva ~16MB). Il SORGENTE resta
+    intatto (serve all'editor): si legge dal sorgente per decidere, si cancella
+    solo nel workspace WSL. NON tocca mai _preview.jpg (thumbnail generata) ne' i
+    file referenziati."""
+    base = get_base_path()
+    levels_dir = base / "games" / game_id / "levels"
+    if not levels_dir.is_dir():
+        return
+
+    rm_paths = []
+    saved_bytes = 0
+    for sj in sorted(levels_dir.rglob("scene.json")):
+        try:
+            scene_dir = sj.parent
+            refs = set()
+            _collect_referenced_images(_load_json(sj), refs)
+            if not refs:
+                # Sicurezza: se non determiniamo alcun riferimento, NON potiamo
+                # (scene.json mancante/corrotto -> meglio tenere tutto).
+                continue
+            for f in scene_dir.iterdir():
+                if not f.is_file() or f.suffix.lower() not in _SCENE_IMG_EXT:
+                    continue
+                if f.name == "_preview.jpg" or f.name in refs:
+                    continue
+                if "'" in f.name:
+                    continue  # quoting bash non sicuro: salta (nessun caso reale)
+                rel = scene_dir.relative_to(base).as_posix()
+                rm_paths.append(f"{wsl_workspace}/{rel}/{f.name}")
+                try:
+                    saved_bytes += f.stat().st_size
+                except OSError:
+                    pass
+        except Exception as e:
+            logger.warning(f"[Scene Prune] {sj}: {e}")
+
+    if not rm_paths:
+        return
+    # Cancellazioni nel workspace in batch (rm -f: ignora file gia' assenti).
+    chunk = 50
+    for i in range(0, len(rm_paths), chunk):
+        batch = rm_paths[i:i + chunk]
+        cmd = "rm -f " + " ".join(f"'{p}'" for p in batch)
+        r = _wsl_run(cmd, timeout=30)
+        if r.returncode != 0:
+            logger.warning(f"[Scene Prune] rm non-zero exit: {r.stderr}")
+    logger.info(
+        f"[Scene Prune] Rimossi {len(rm_paths)} background scena non referenziati "
+        f"({saved_bytes/1024.0/1024.0:.1f}MB) dal workspace -> APK piu' leggero."
+    )
+    if progress_callback:
+        progress_callback(14, f"Background scena non usati rimossi ({len(rm_paths)})")
 
 
 # ---------------------------------------------------------------------------
@@ -416,6 +679,63 @@ def _prepare_workspace(
     result = _wsl_run(prepare_cmd, timeout=60)
     if result.returncode != 0:
         raise RuntimeError(f"Setup workspace fallito:\n{result.stderr}")
+
+    # ── Asset pruning: rimuove la libreria condivisa enorme non usata a runtime ──
+    if progress_callback:
+        progress_callback(13, "Pruning asset non usati (riduzione APK)...")
+    try:
+        # backgrounds: MAI usato a runtime (bg sempre scene-local) -> potabile sempre.
+        prune_lines = [f"cd '{wsl_workspace}'", "rm -rf engine/assets/backgrounds"]
+
+        # Le cartelle oggetti si potano solo se nessun minigioco usato dipende dalla
+        # libreria condivisa (vedi _LIBRARY_DEPENDENT_MINIGAMES).
+        try:
+            used_mg = set(_analyze_game_usage(get_base_path() / "games" / game_id).get("minigames", set()))
+        except Exception:
+            used_mg = set()
+        blocking = used_mg & _LIBRARY_DEPENDENT_MINIGAMES
+
+        if blocking:
+            logger.info(
+                f"[Asset Prune] Minigiochi library-dependent usati {blocking}: "
+                f"tengo objects/objects_cartoon/objects_lineart, poto solo backgrounds."
+            )
+        else:
+            kept = _compute_kept_engine_assets(game_id)
+            if kept is None:
+                logger.warning("[Asset Prune] Catalogo non affidabile: poto solo backgrounds.")
+            else:
+                for d in _ENGINE_ASSET_LIB_DIRS:
+                    prune_lines.append(f"rm -rf 'engine/assets/{d}'")
+                # Ricrea i soli file di fallback realmente referenziati (di norma nessuno).
+                for rel in sorted(kept):
+                    parent = rel.rsplit("/", 1)[0] if "/" in rel else ""
+                    if parent:
+                        prune_lines.append(f"mkdir -p 'engine/assets/{parent}'")
+                    prune_lines.append(
+                        f"ln -sf '{WSL_MASTER_ENGINE}/engine/assets/{rel}' 'engine/assets/{rel}'"
+                    )
+                logger.info(
+                    f"[Asset Prune] Rimosse dir libreria (backgrounds+{len(_ENGINE_ASSET_LIB_DIRS)}); "
+                    f"{len(kept)} file di fallback engine tenuti."
+                )
+        pr = _wsl_run(" && ".join(prune_lines), timeout=60)
+        if pr.returncode != 0:
+            logger.warning(f"[Asset Prune] non-zero exit: {pr.stderr}")
+    except Exception as prune_err:
+        logger.warning(f"[Asset Prune] Errore non critico: {prune_err}")
+
+    # ── Pruning background scena non referenziati (vecchi sfondi residui) ──
+    try:
+        _prune_unreferenced_scene_backgrounds(game_id, wsl_workspace, progress_callback)
+    except Exception as sp_err:
+        logger.warning(f"[Scene Prune] Errore non critico: {sp_err}")
+
+    # ── Thumbnail anteprime scene: card menu leggere e a caricamento rapido ──
+    try:
+        _generate_scene_previews(game_id, wsl_workspace, progress_callback)
+    except Exception as prev_err:
+        logger.warning(f"[Scene Preview] Errore non critico: {prev_err}")
 
     if progress_callback:
         progress_callback(15, "Workspace ottimizzato pronto")
@@ -651,7 +971,8 @@ def _get_p4a_apk_command(
 
     # Requirements e permessi fissi (allineati al motore 2026)
     reqs = "python3,pygame,android,pyjnius,numpy"
-    perms = "android.permission.WAKE_LOCK"
+    perms = ["android.permission.WAKE_LOCK", "android.permission.VIBRATE"]
+    perm_args = " ".join(f"--permission {p}" for p in perms)
 
     cmd = (
         f"p4a apk --private . "
@@ -661,7 +982,7 @@ def _get_p4a_apk_command(
         f"--bootstrap sdl2 "
         f"--requirements {reqs} "
         f"--arch arm64-v8a "
-        f"--permission {perms} "
+        f"{perm_args} "
         f"{icon_arg} {splash_arg} "
         f"{'--release' if release else ''}"
     )
@@ -671,6 +992,37 @@ def _get_p4a_apk_command(
 # ---------------------------------------------------------------------------
 # Entry point principale: build_game_apk()
 # ---------------------------------------------------------------------------
+
+def _resign_apk_max_compat(apk_path: Path) -> None:
+    """Rifirma l'APK DEBUG con tutti gli schemi (v1+v2+v3) per la massima compatibilita'
+    di installazione su device/ROM eterogenei. Gradle in debug firma solo v2 (salta v1 con
+    minSdk>=24): aggiungiamo v3 e tentiamo v1. Best-effort: se apksigner/keystore non sono
+    disponibili, l'APK resta con la firma v2 di Gradle (gia' valida da Android 7 in su)."""
+    import os
+    sdk = (os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
+           or str(Path.home() / "AppData" / "Local" / "Android" / "Sdk"))
+    bt_root = Path(sdk) / "build-tools"
+    ks = Path.home() / ".android" / "debug.keystore"
+    if not bt_root.is_dir() or not ks.exists():
+        logger.warning("[Re-sign] apksigner/keystore non disponibili: mantengo la firma Gradle (v2).")
+        return
+    cands = sorted((d for d in bt_root.iterdir() if (d / "apksigner.bat").exists()),
+                   key=lambda d: d.name, reverse=True)
+    if not cands:
+        logger.warning("[Re-sign] apksigner non trovato nelle build-tools: firma Gradle mantenuta.")
+        return
+    apksigner = cands[0] / "apksigner.bat"
+    cmd = [str(apksigner), "sign", "--ks", str(ks), "--ks-pass", "pass:android",
+           "--ks-key-alias", "androiddebugkey", "--key-pass", "pass:android",
+           "--v1-signing-enabled", "true", "--v2-signing-enabled", "true",
+           "--v3-signing-enabled", "true", str(apk_path)]
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=120,
+                       encoding="utf-8", errors="replace")
+    if r.returncode == 0:
+        logger.info("[Re-sign] APK rifirmato (v2+v3, v1 se applicabile) per massima compatibilita'.")
+    else:
+        logger.warning(f"[Re-sign] non riuscita, mantengo firma Gradle: {(r.stderr or '')[:200]}")
+
 
 def build_game_apk(
     game_id: str,
@@ -836,13 +1188,16 @@ def build_game_apk(
 
         log_step(f"✓ {'Fast Path' if use_fast_path else 'Buildozer'} completato con successo", 95)
 
-        # ── 6) Recupero APK ───────────────────────────────────────────────
-        log_step("Recupero APK dal workspace...", 96)
-        ls_cmd = f"ls -1 '{wsl_workspace}/bin/'*.apk 2>/dev/null | head -1"
+        # ── 6) Recupero artefatto ─────────────────────────────────────────
+        # In release buildozer produce un .aab (App Bundle), non un .apk: glob
+        # solo *.apk farebbe fallire (FileNotFoundError) una build riuscita.
+        artifact_ext = "aab" if release else "apk"
+        log_step(f"Recupero {artifact_ext.upper()} dal workspace...", 96)
+        ls_cmd = f"ls -1 '{wsl_workspace}/bin/'*.{artifact_ext} 2>/dev/null | head -1"
         apk_wsl_path = _wsl_run(ls_cmd, timeout=10).stdout.strip()
         if not apk_wsl_path:
             raise FileNotFoundError(
-                f"Nessun APK trovato in {wsl_workspace}/bin/ dopo build success"
+                f"Nessun {artifact_ext.upper()} trovato in {wsl_workspace}/bin/ dopo build success"
             )
 
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -857,6 +1212,13 @@ def build_game_apk(
 
         if not dst_apk.exists():
             raise FileNotFoundError(f"APK non trovato dopo copia: {dst_apk}")
+
+        # Rifirma max-compatibilita' (solo debug .apk; release usa keystore+.aab dedicati).
+        if not release:
+            try:
+                _resign_apk_max_compat(dst_apk)
+            except Exception as _rs_err:
+                logger.warning(f"[Re-sign] errore non critico: {_rs_err}")
 
         apk_size_mb = dst_apk.stat().st_size / 1024 / 1024
         log_step(f"✓ APK copiato in {dst_apk} ({apk_size_mb:.1f} MB)", 99)

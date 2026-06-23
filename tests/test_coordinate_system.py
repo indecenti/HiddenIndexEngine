@@ -295,9 +295,10 @@ class TestGamePanZoomHandling:
         sm = ScalingManager()
         sm.update_screen_size(1280, 720)
 
-        # Apply game pan and zoom
-        sm.set_pan(100.0, 50.0)
+        # Apply game zoom THEN pan: la camera consente il pan solo da ingranditi
+        # (a zoom 1.0 il pan è clampato a 0 per non far derivare la scena).
         sm.set_zoom(2.0)
+        sm.set_pan(100.0, 50.0)
 
         # Click at screen center
         screen_x, screen_y = 640, 360
@@ -479,6 +480,245 @@ class TestHitDetectionConsistency:
             assert detector._hit_circle(obj, 640.0, 360.0) is True
             assert detector._hit_circle(obj, 670.0, 360.0) is True
             assert detector._hit_circle(obj, 671.0, 360.0) is False
+
+
+class TestFatFingerTolerance:
+    """Fase 0 mobile: tolleranza tap 'fat-finger' in ClickDetector.detect.
+
+    Con set_background 1:1 le coordinate schermo coincidono con quelle bg, così
+    slop_screen è direttamente la tolleranza in pixel di riferimento.
+    """
+
+    def _setup(self):
+        sm = ScalingManager()
+        sm.update_screen_size(1280, 720)
+        sm.set_background(1280, 720, 1.0)  # mapping bg<->schermo 1:1
+        return ClickDetector(sm)
+
+    def _goal(self, x=640.0, y=360.0, radius=10.0, iid="g"):
+        obj = SceneObject(
+            instance_id=iid, catalog_id="t", label_key="t", icon_path="",
+            x=x, y=y, detection_type="circle", radius=radius,
+        )
+        obj.is_goal = True
+        return obj
+
+    def test_exact_hit_still_works(self):
+        det = self._setup()
+        obj = self._goal()
+        assert det.detect(640, 360, [obj]) is obj
+
+    def test_no_slop_is_exact(self):
+        # Senza slop (desktop/mouse) un tap fuori dal bordo non aggancia.
+        det = self._setup()
+        obj = self._goal()
+        assert det.detect(660, 360, [obj], slop_screen=0.0) is None
+
+    def test_near_tap_snaps_within_slop(self):
+        # Su touch un tap vicino entro tolleranza aggancia il goal.
+        det = self._setup()
+        obj = self._goal()  # raggio 10 a (640,360)
+        assert det.detect(660, 360, [obj], slop_screen=40.0) is obj
+
+    def test_far_tap_outside_slop_is_miss(self):
+        det = self._setup()
+        obj = self._goal()
+        assert det.detect(900, 360, [obj], slop_screen=40.0) is None
+
+    def test_found_goal_not_snapped(self):
+        det = self._setup()
+        obj = self._goal()
+        obj.found = True
+        assert det.detect(660, 360, [obj], slop_screen=40.0) is None
+
+    def test_snaps_to_nearest_goal(self):
+        det = self._setup()
+        a = self._goal(x=600.0, y=360.0, radius=8.0, iid="a")
+        b = self._goal(x=720.0, y=360.0, radius=8.0, iid="b")
+        # tap a (640,360): centro 'a' dista 40, 'b' dista 80 -> aggancia 'a'.
+        assert det.detect(640, 360, [a, b], slop_screen=200.0) is a
+
+
+class TestInteractiveCamera:
+    """Fase 1 mobile: camera di ispezione (pinch-to-zoom + pan) nello ScalingManager.
+
+    set_background 1280x720 su schermo 1280x720 -> mapping base 1:1 (scale 1.0,
+    origine 0,0), così i conti sono diretti.
+    """
+
+    def _sm(self):
+        sm = ScalingManager()
+        sm.update_screen_size(1280, 720)
+        sm.set_background(1280, 720, 1.0)
+        return sm
+
+    def test_zoom_scales_display(self):
+        sm = self._sm()
+        assert abs(sm._bg_display_scale - 1.0) < 1e-6
+        sm.set_zoom(2.0)
+        assert abs(sm._bg_display_scale - 2.0) < 1e-6
+        assert abs(sm.scale_bg_value(10.0) - 20.0) < 1e-6
+
+    def test_zoom_clamped_min_one(self):
+        sm = self._sm()
+        sm.set_zoom(0.3)
+        assert sm.zoom == 1.0
+        assert not sm.is_zoomed()
+
+    def test_zoom_clamped_max(self):
+        sm = self._sm()
+        sm.set_zoom(99.0)
+        assert sm.zoom == 3.0
+
+    def test_roundtrip_with_camera(self):
+        sm = self._sm()
+        for z in (1.0, 1.5, 2.5):
+            sm.reset_pan_zoom()
+            sm.set_zoom(z)
+            sm.pan_by(-40.0, 25.0)
+            for sx, sy in ((640, 360), (300, 200), (1000, 600)):
+                bx, by = sm.screen_to_bg(sx, sy)
+                rx, ry = sm.bg_to_screen(bx, by)
+                assert abs(rx - sx) < 0.5 and abs(ry - sy) < 0.5
+
+    def test_pinch_keeps_focus_point(self):
+        sm = self._sm()
+        focus = (500.0, 300.0)
+        bg_before = sm.screen_to_bg(*focus)
+        sm.zoom_at(2.0, *focus)
+        bg_after = sm.screen_to_bg(*focus)
+        # Il punto-mondo sotto le dita resta fermo sotto lo stesso punto schermo.
+        assert abs(bg_after[0] - bg_before[0]) < 0.5
+        assert abs(bg_after[1] - bg_before[1]) < 0.5
+
+    def test_pan_clamped_to_cover_screen(self):
+        sm = self._sm()
+        sm.set_zoom(2.0)
+        sm.pan_by(100000.0, 100000.0)  # pan assurdo
+        # Il background deve continuare a coprire lo schermo (niente bande nere).
+        assert sm._bg_screen_x <= 0.0
+        assert sm._bg_screen_x + sm._bg_screen_w >= sm.screen_w - 0.5
+        assert sm._bg_screen_y <= 0.0
+        assert sm._bg_screen_y + sm._bg_screen_h >= sm.screen_h - 0.5
+
+    def test_reset_restores_base(self):
+        sm = self._sm()
+        sm.set_zoom(2.5)
+        sm.pan_by(-200.0, 120.0)
+        sm.reset_pan_zoom()
+        assert sm.zoom == 1.0
+        assert abs(sm._bg_display_scale - 1.0) < 1e-6
+        assert abs(sm._bg_screen_x) < 1e-6 and abs(sm._bg_screen_y) < 1e-6
+
+    def test_hit_test_through_zoom(self):
+        sm = self._sm()
+        det = ClickDetector(sm)
+        obj = SceneObject(
+            instance_id="g", catalog_id="t", label_key="t", icon_path="",
+            x=640.0, y=360.0, detection_type="circle", radius=20.0,
+        )
+        obj.is_goal = True
+        sm.zoom_at(2.0, 640.0, 360.0)  # zoom centrato sull'oggetto
+        # Il tap nel punto schermo che corrisponde al centro bg dell'oggetto colpisce.
+        sx, sy = sm.bg_to_screen(640.0, 360.0)
+        assert det.detect(int(sx), int(sy), [obj]) is obj
+
+
+class TestGestureStateMachine:
+    """Fase 1 mobile: ciclo di vita dei flag di gesto multitouch (core.py).
+
+    Verifica le invarianti che garantiscono 'nessun tap/penalità dai gesti':
+    _gesture_seen resta True finché restano dita a contatto, si azzera solo a 0 dita,
+    e il secondo dito annulla un tap in sospeso. Usa uno stub leggero con i metodi
+    di EngineCore rilegati, senza istanziare l'intero motore.
+    """
+
+    def _stub(self):
+        import types
+        from engine.core import EngineCore, EngineState
+        sm = ScalingManager()
+        sm.update_screen_size(1280, 720)
+        sm.set_background(1280, 720, 1.0)
+        stub = types.SimpleNamespace(
+            state=EngineState.SCENE, res_w=1280, res_h=720, scaling_manager=sm,
+            _touch_points={}, _gesture_active=False, _gesture_seen=False,
+            _touch_start=None, _one_finger_panning=False,
+            _pinch_ref_dist=0.0, _pinch_ref_zoom=1.0, _pinch_last_centroid=(0.0, 0.0),
+            _scene_intro_timer=0.0,
+        )
+        for name in ("_finger_xy", "_pinch_metrics", "_begin_pinch",
+                     "_handle_finger_down", "_handle_finger_motion",
+                     "_handle_finger_up", "_reset_touch_state"):
+            setattr(stub, name, types.MethodType(getattr(EngineCore, name), stub))
+        stub._finger_id = EngineCore._finger_id  # staticmethod
+        return stub
+
+    @staticmethod
+    def _evt(fid, x, y):
+        import types
+        return types.SimpleNamespace(finger_id=fid, x=x, y=y)
+
+    def test_second_finger_sets_gesture_and_cancels_pending_tap(self):
+        s = self._stub()
+        s._touch_start = (100, 100)  # tap in sospeso dal mouse emulato
+        s._handle_finger_down(self._evt(0, 0.3, 0.5))
+        assert s._gesture_seen is False  # una dita: nessun gesto
+        s._handle_finger_down(self._evt(1, 0.6, 0.5))
+        assert s._gesture_active is True
+        assert s._gesture_seen is True
+        assert s._touch_start is None  # il tap in sospeso e' annullato
+
+    def test_gesture_seen_persists_until_all_fingers_up(self):
+        s = self._stub()
+        s._handle_finger_down(self._evt(0, 0.3, 0.5))
+        s._handle_finger_down(self._evt(1, 0.6, 0.5))
+        # Alza PRIMA la dita primaria (caso che rompeva il vecchio _ignore_next_tap)
+        s._handle_finger_up(self._evt(0, 0.3, 0.5))
+        assert s._gesture_active is False
+        assert s._gesture_seen is True       # resta gated: una dita ancora giu'
+        assert len(s._touch_points) == 1
+        s._handle_finger_up(self._evt(1, 0.6, 0.5))
+        assert s._gesture_seen is False       # tutte su: reset
+        assert s._one_finger_panning is False
+        assert s._touch_points == {}
+
+    def test_single_finger_never_triggers_gesture(self):
+        s = self._stub()
+        s._handle_finger_down(self._evt(0, 0.5, 0.5))
+        assert s._gesture_active is False and s._gesture_seen is False
+        s._handle_finger_up(self._evt(0, 0.5, 0.5))
+        assert s._gesture_seen is False and s._touch_points == {}
+
+    def test_reset_touch_state_clears_all(self):
+        s = self._stub()
+        s._handle_finger_down(self._evt(0, 0.3, 0.5))
+        s._handle_finger_down(self._evt(1, 0.6, 0.5))
+        s._touch_start = (10, 10)
+        s._reset_touch_state()
+        assert s._touch_points == {}
+        assert s._gesture_active is False and s._gesture_seen is False
+        assert s._touch_start is None and s._one_finger_panning is False
+
+    def test_one_finger_pan_flag_survives_fingerup(self):
+        # Per il dito primario SDL accoda FINGERUP prima del MOUSEBUTTONUP emulato:
+        # _one_finger_panning deve restare armato dopo il FINGERUP, così il
+        # MOUSEBUTTONUP successivo sopprime tap/swipe (no miss, no toggle HUD).
+        s = self._stub()
+        s._touch_points = {0: (100.0, 100.0)}
+        s._touch_start = (100.0, 100.0)
+        s._one_finger_panning = True
+        s._handle_finger_up(self._evt(0, 0.1, 0.1))
+        assert s._touch_points == {}
+        assert s._one_finger_panning is True  # non azzerato dal FINGERUP
+
+    def test_pinch_blocked_during_intro(self):
+        # Durante l'intro la camera non deve muoversi (evita drift sfondo/oggetti).
+        s = self._stub()
+        s._scene_intro_timer = 2.0
+        s._handle_finger_down(self._evt(0, 0.3, 0.5))
+        s._handle_finger_down(self._evt(1, 0.7, 0.5))
+        s._handle_finger_motion(self._evt(1, 0.9, 0.5))  # allarga: sarebbe zoom-in
+        assert s.scaling_manager.zoom == 1.0  # nessuno zoom durante l'intro
 
 
 if __name__ == "__main__":

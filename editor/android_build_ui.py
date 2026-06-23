@@ -17,7 +17,6 @@ import time
 import os
 import subprocess
 import sys
-import threading
 from pathlib import Path
 from tkinter import Tk, Frame, Label, Text, Button, messagebox, IntVar
 from tkinter import ttk
@@ -367,6 +366,18 @@ class AndroidBuildProgressWindow:
                     self.build_process.kill()
             except Exception as e:
                 print(f"[Cancel] Errore termination: {e}")
+
+        # Termina anche l'albero buildozer/gradle DENTRO la distro WSL: uccidere il
+        # processo Windows non propaga ai processi Linux, che altrimenti continuano
+        # un cross-compile multi-GB di ~50 minuti in background.
+        try:
+            subprocess.run(
+                ["wsl", "-u", "root", "-e", "bash", "-lc",
+                 "pkill -9 -f buildozer; pkill -9 -f gradle; pkill -9 -f sdkmanager; true"],
+                capture_output=True, timeout=30,
+            )
+        except Exception as e:
+            print(f"[Cancel] WSL pkill fallito: {e}")
 
         try:
             if self.status_file.exists():

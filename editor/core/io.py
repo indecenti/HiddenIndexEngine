@@ -20,7 +20,13 @@ def _load_json(path: Path) -> dict:
     try:
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
-    except Exception:
+    except FileNotFoundError:
+        return {}
+    except Exception as e:
+        # File presente ma illeggibile/corrotto: lo segnaliamo (a differenza del
+        # file mancante, che e' un caso normale). I chiamanti che gestiscono dati
+        # critici (scene) devono distinguere i due casi per non perderli.
+        logging.warning("_load_json: file presente ma non parsabile %s: %s", path, e)
         return {}
 
 
@@ -97,8 +103,24 @@ def _load_scene_data(scene_path: Path) -> dict:
     if path_key in _SCENE_DATA_CACHE:
         return _SCENE_DATA_CACHE[path_key]
         
-    d = _load_json(scene_path / "scene.json")
+    scene_file = scene_path / "scene.json"
+    d = _load_json(scene_file)
     if not d:
+        # Distinzione mancante vs corrotto: se il file esiste ed e' non vuoto ma
+        # non e' stato parsato, NON e' una scena nuova bensi' corrotta. Ne salviamo
+        # una copia (.corrupt) prima che un eventuale salvataggio la sovrascriva,
+        # evitando perdita di dati irreversibile.
+        try:
+            if scene_file.exists() and scene_file.stat().st_size > 2:
+                backup = scene_path / "scene.json.corrupt"
+                if not backup.exists():
+                    import shutil
+                    shutil.copy2(scene_file, backup)
+                logging.error(
+                    "scene.json corrotto: %s — backup preservato in %s", scene_file, backup
+                )
+        except Exception as e:
+            logging.error("Gestione scene.json corrotto fallita per %s: %s", scene_file, e)
         d = {"id": scene_path.name, "background": "background.jpg",
              "background_scale": 1.0, "objects": [], "effects": [],
              "flashlight": False, "flashlight_radius": 150.0}
@@ -137,7 +159,7 @@ def _get_scene_thumbnail(scene_path: Path, size: tuple[int, int]) -> Optional[an
             surf = pygame.image.load(str(cache_path)).convert_alpha()
             _THUMB_CACHE[t_hash] = surf
             return surf
-        except: pass
+        except Exception: pass
 
     # 3. Generazione (Lenta, solo la prima volta)
     try:

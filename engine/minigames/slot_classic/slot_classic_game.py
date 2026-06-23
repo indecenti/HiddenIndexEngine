@@ -5,7 +5,11 @@ from pathlib import Path
 from typing import List, Dict, Any, Tuple
 
 from engine.minigames.minigame_base import BaseMinigame
-from engine.utils import get_resource_path, get_logger
+from engine.utils import get_resource_path, get_logger, is_android_runtime
+
+# Su Android alcuni effetti "ricchi" dello slot (glow radiale full-screen, motion-blur
+# dei simboli) sono troppo cari per-frame: vengono degradati per tenere alti gli FPS.
+_ANDROID = is_android_runtime()
 
 # Configurazione Logica Bilanciata (RTP ~96%)
 INITIAL_CREDITS = 2000
@@ -101,12 +105,16 @@ class SlotClassicGame(BaseMinigame):
             "grape_bunch": "obj_slot_purple_grapes.png"
         }
         for key, filename in assets_map.items():
-            # Cerca prima nel catalogo Cartoon
-            path = get_resource_path("engine", "assets", "objects_cartoon", filename)
+            # 1) Sprite BUNDLATO del minigioco (self-contained: sopravvive al pruning
+            #    della libreria condivisa engine/assets/ nel packaging Android).
+            path = get_resource_path("engine", "minigames", "slot_classic", "assets", "sprite", filename)
             if not path.exists():
-                # Fallback nel catalogo Real/Standard
+                # 2) Fallback: catalogo Cartoon condiviso
+                path = get_resource_path("engine", "assets", "objects_cartoon", filename)
+            if not path.exists():
+                # 3) Fallback: catalogo Real/Standard condiviso
                 path = get_resource_path("engine", "assets", "objects", filename)
-            
+
             if path.exists():
                 self.symbols_images[key] = pygame.image.load(str(path)).convert_alpha()
             else:
@@ -198,6 +206,11 @@ class SlotClassicGame(BaseMinigame):
         self.spin_timer = 0 # Azzera il timer residuo
 
     def update(self, dt: float) -> None:
+        # Clamp del dt per la fisica: a FPS bassi (es. 8 FPS -> dt~0.125) i fattori
+        # di decadimento "1 - dt*k" diventavano NEGATIVI, facendo oscillare i rulli
+        # all'infinito (overshoot che cambia segno ogni frame) -> sembravano non
+        # fermarsi mai. Limitando dt il decadimento resta stabile (sempre in [0,1]).
+        dt = min(dt, 0.05)
         # Interpolazione fluida crediti e vincite (Professional LERP)
         lerp_speed = 8.0
         self.display_credits += (self.credits - self.display_credits) * dt * lerp_speed
@@ -315,6 +328,27 @@ class SlotClassicGame(BaseMinigame):
                 'gravity': 0.35, 'color': (255, 215, 0) if random.random() > 0.3 else (255, 255, 255)
             })
 
+    def _get_slot_bg(self, sw, sh):
+        """Sfondo statico cachato (fill scuro + raggiera). Su Android i raggi non
+        ruotano (sarebbe un costo per-frame): pre-renderizzati una volta sola."""
+        key = (sw, sh)
+        cached = getattr(self, "_slot_bg_cache", None)
+        if cached is not None and cached[0] == key:
+            return cached[1]
+        bg = pygame.Surface((sw, sh)).convert()
+        bg.fill((2, 2, 8))
+        center = (sw // 2, sh // 2)
+        num_rays = 12
+        ray_angle = 360 / num_rays
+        for i in range(num_rays):
+            angle = math.radians(i * ray_angle)
+            p1 = center
+            p2 = (center[0] + math.cos(angle - 0.2) * sw, center[1] + math.sin(angle - 0.2) * sw)
+            p3 = (center[0] + math.cos(angle + 0.2) * sw, center[1] + math.sin(angle + 0.2) * sw)
+            pygame.draw.polygon(bg, (25, 10, 50), [p1, p2, p3])
+        self._slot_bg_cache = (key, bg)
+        return bg
+
     def _draw_ambient_glow(self, sw, sh, scale):
         # Sfondo a raggiera (Sunburst) stile copertina fumetto
         center = (sw // 2, sh // 2)
@@ -331,14 +365,17 @@ class SlotClassicGame(BaseMinigame):
             pygame.draw.polygon(self.screen, (25, 10, 50), [p1, p2, p3])
 
         # Rimossi i punti Halftone (Ben-Day) dallo sfondo per un look più pulito
-        
-        col = self._get_neon_color()
-        g_size = int(600 * scale)
-        g_surf = pygame.Surface((g_size*2, g_size*2), pygame.SRCALPHA)
-        for r in range(g_size, 0, -int(30*scale)):
-            alpha = int(60 * (1.0 - r/g_size))
-            pygame.draw.circle(g_surf, (*col, alpha), (g_size, g_size), r)
-        self.screen.blit(g_surf, (sw//2 - g_size, sh//2 - g_size), special_flags=pygame.BLEND_ADD)
+
+        # Glow radiale ambient: su Android e' troppo caro (Surface SRCALPHA ~900x900
+        # + ~15 cerchi + blit BLEND_ADD OGNI frame) -> saltato. I raggi sopra bastano.
+        if not _ANDROID:
+            col = self._get_neon_color()
+            g_size = int(600 * scale)
+            g_surf = pygame.Surface((g_size*2, g_size*2), pygame.SRCALPHA)
+            for r in range(g_size, 0, -int(30*scale)):
+                alpha = int(60 * (1.0 - r/g_size))
+                pygame.draw.circle(g_surf, (*col, alpha), (g_size, g_size), r)
+            self.screen.blit(g_surf, (sw//2 - g_size, sh//2 - g_size), special_flags=pygame.BLEND_ADD)
 
     def _get_neon_color(self) -> Tuple[int, int, int]:
         if self.free_spins_left > 0:
@@ -361,43 +398,97 @@ class SlotClassicGame(BaseMinigame):
         scale = self.scaling_manager.scale
         ox = random.randint(-int(self.screen_shake), int(self.screen_shake)) if self.screen_shake > 0 else 0
         oy = random.randint(-int(self.screen_shake), int(self.screen_shake)) if self.screen_shake > 0 else 0
-        
-        self.screen.fill((2, 2, 8)) 
-        self._draw_ambient_glow(sw, sh, scale)
+
+        # Sfondo: su Android pre-renderizzato e cachato (fill + 12 raggi). I raggi
+        # full-screen ridisegnati ogni frame erano un grosso costo su rendering ARM.
+        if _ANDROID:
+            self.screen.blit(self._get_slot_bg(sw, sh), (0, 0))
+        else:
+            self.screen.fill((2, 2, 8))
+            self._draw_ambient_glow(sw, sh, scale)
         self._draw_particles(scale, ox, oy)
 
         cab_w = min(sw * 0.85, 800 * scale)
         cab_h = min(sh * 0.65, 480 * scale)
         cab_rect = pygame.Rect(sw//2 - cab_w//2 + ox, sh//2 - cab_h//2 + oy, cab_w, cab_h)
-        
+
         self._draw_cabinet(cab_rect, scale)
         self._draw_jackpot_panel(cab_rect, scale, ox, oy)
 
         reels_w, reels_h = cab_w * 0.82, cab_h * 0.52 # Ridotto ulteriormente per dare aria
         reels_area = pygame.Rect(cab_rect.centerx - reels_w//2, cab_rect.centery - reels_h//2 - 55*scale, reels_w, reels_h)
-        
+
         pygame.draw.rect(self.screen, (0, 0, 0), reels_area.inflate(16*scale, 16*scale), border_radius=int(14*scale))
         pygame.draw.rect(self.screen, (15, 15, 45), reels_area, border_radius=int(8*scale)) # Blu Casino Profondo
-        
+
         # Rimossa texture a punti dai rulli per maggiore leggibilità
         self._draw_reels(reels_area, scale)
         self._draw_overlay_and_ui(sw, sh, scale, reels_area, ox, oy, cab_rect)
 
+    def _get_coin_sprite(self, color, sz):
+        """Sprite moneta pre-disegnato e cachato per (colore, dimensione). Senza cache
+        ogni particella ricreava una Surface SRCALPHA + 2 draw.circle ogni frame: con
+        fino a 150 monete (jackpot) e' un costo enorme su Android."""
+        if not hasattr(self, "_coin_sprite_cache"):
+            self._coin_sprite_cache = {}
+        key = (color, sz)
+        spr = self._coin_sprite_cache.get(key)
+        if spr is None:
+            spr = pygame.Surface((sz, sz), pygame.SRCALPHA)
+            pygame.draw.circle(spr, color, (sz // 2, sz // 2), sz // 2)
+            pygame.draw.circle(spr, (0, 0, 0), (sz // 2, sz // 2), sz // 2, 1)
+            spr = spr.convert_alpha()
+            self._coin_sprite_cache[key] = spr
+        return spr
+
     def _draw_particles(self, scale, ox, oy):
+        sz = int(12 * scale)
         for p in self.particles:
-            sz = int(12 * scale)
-            c_surf = pygame.Surface((sz, sz), pygame.SRCALPHA)
-            pygame.draw.circle(c_surf, p['color'], (sz//2, sz//2), sz//2)
-            pygame.draw.circle(c_surf, (0, 0, 0), (sz//2, sz//2), sz//2, 1)
-            rot = pygame.transform.rotate(c_surf, p['angle'])
-            self.screen.blit(rot, (p['x'] + ox - rot.get_width()//2, p['y'] + oy - rot.get_height()//2))
+            spr = self._get_coin_sprite(p['color'], sz)
+            if _ANDROID:
+                # Su Android: niente rotate per-particella-per-frame (la moneta e'
+                # un cerchio piccolo, la rotazione e' impercettibile mentre vola).
+                self.screen.blit(spr, (p['x'] + ox - sz // 2, p['y'] + oy - sz // 2))
+            else:
+                rot = pygame.transform.rotate(spr, p['angle'])
+                self.screen.blit(rot, (p['x'] + ox - rot.get_width() // 2, p['y'] + oy - rot.get_height() // 2))
 
     def _draw_cabinet(self, rect, scale):
-        # Bordo Nero Massiccio (Stile Inchiostrato)
-        pygame.draw.rect(self.screen, (0, 0, 0), rect.inflate(20*scale, 20*scale), border_radius=int(32*scale))
-        pygame.draw.rect(self.screen, (255, 215, 0), rect.inflate(12*scale, 12*scale), border_radius=int(30*scale))
-        pygame.draw.rect(self.screen, (180, 140, 20), rect.inflate(6*scale, 6*scale), border_radius=int(28*scale))
-        pygame.draw.rect(self.screen, (15, 15, 25), rect, border_radius=int(26*scale))
+        # Chrome statico (4 rounded-rect nidificati): la forma non cambia mai.
+        if not _ANDROID:
+            # Desktop: disegno diretto dei 4 rounded-rect TRASPARENTI come l'originale,
+            # cosi' gli angoli arrotondati lasciano trasparire raggi/glow dello sfondo.
+            pygame.draw.rect(self.screen, (0, 0, 0), rect.inflate(20*scale, 20*scale), border_radius=int(32*scale))
+            pygame.draw.rect(self.screen, (255, 215, 0), rect.inflate(12*scale, 12*scale), border_radius=int(30*scale))
+            pygame.draw.rect(self.screen, (180, 140, 20), rect.inflate(6*scale, 6*scale), border_radius=int(28*scale))
+            pygame.draw.rect(self.screen, (15, 15, 25), rect, border_radius=int(26*scale))
+            return
+        # Android: chrome pre-renderizzato su Surface OPACA e cachato. Il blit
+        # per-pixel-alpha (SRCALPHA) di una surface grande e' ~10x piu' caro su GPU
+        # mobile (era ~90ms/frame); gli angoli esterni sono riempiti col colore di
+        # sfondo (2,2,8) cosi' coincidono col fondo e il blit resta opaco/veloce.
+        margin = int(20 * scale) + 4  # bordo piu' esterno (inflate 20*scale)
+        key = (rect.width, rect.height, round(scale, 3))
+        cached = getattr(self, "_cabinet_cache", None)
+        if cached is None or cached[0] != key:
+            surf_w = rect.width + margin * 2
+            surf_h = rect.height + margin * 2
+            # Surface OPACA: il blit per-pixel-alpha (SRCALPHA) di una surface grande
+            # e' ~10x piu' caro su GPU software (swiftshader/ARM) del blit opaco. Gli
+            # angoli arrotondati esterni vengono riempiti col colore di sfondo (2,2,8)
+            # cosi' coincidono col fondo dello slot e il blit resta opaco/veloce.
+            surf = pygame.Surface((surf_w, surf_h))
+            surf.fill((2, 2, 8))
+            local = pygame.Rect(margin, margin, rect.width, rect.height)
+            pygame.draw.rect(surf, (0, 0, 0), local.inflate(20*scale, 20*scale), border_radius=int(32*scale))
+            pygame.draw.rect(surf, (255, 215, 0), local.inflate(12*scale, 12*scale), border_radius=int(30*scale))
+            pygame.draw.rect(surf, (180, 140, 20), local.inflate(6*scale, 6*scale), border_radius=int(28*scale))
+            pygame.draw.rect(surf, (15, 15, 25), local, border_radius=int(26*scale))
+            surf = surf.convert()
+            self._cabinet_cache = (key, surf, margin)
+            cached = self._cabinet_cache
+        _, surf, margin = cached
+        self.screen.blit(surf, (rect.left - margin, rect.top - margin))
 
     def _draw_jackpot_panel(self, cab_rect, scale, ox, oy):
         neon = self._get_neon_color()
@@ -407,6 +498,30 @@ class SlotClassicGame(BaseMinigame):
         pygame.draw.rect(self.screen, (5, 5, 10), j_rect, border_radius=int(15*scale))
         pygame.draw.rect(self.screen, neon, j_rect, int(2*scale), border_radius=int(15*scale))
         self._draw_text_centered(f"JACKPOT: {int(self.progressive_jackpot)}", self._font("Impact", 38*scale), j_rect.center, neon)
+
+    def _get_symbol_tile(self, sym, rw, sh):
+        """Tile OPACA (fondo rullo + simbolo centrato) per Android. Il blit
+        per-pixel-alpha dei 15 simboli/frame era il costo dominante (~18ms su GPU
+        software). Pre-componendo il simbolo su una tile opaca del colore del rullo
+        (15,15,45) il blit diventa opaco (veloce) e le tile, contigue e dello stesso
+        colore, riempiono la colonna senza giunte visibili."""
+        if not hasattr(self, "_tile_cache"):
+            self._tile_cache = {}
+        key = (sym, rw, sh)
+        tile = self._tile_cache.get(key)
+        if tile is None:
+            tile = pygame.Surface((rw, sh))
+            tile.fill((15, 15, 45))
+            img = self.symbols_images.get(sym)
+            if img:
+                iw, ih = img.get_size()
+                fit = min(rw * 0.85 / iw, sh * 0.85 / ih)
+                tw, th = max(1, int(iw * fit)), max(1, int(ih * fit))
+                scaled = pygame.transform.smoothscale(img, (tw, th))
+                tile.blit(scaled, ((rw - tw) // 2, (sh - th) // 2))
+            tile = tile.convert()
+            self._tile_cache[key] = tile
+        return tile
 
     def _draw_reels(self, area, scale):
         rw, sh = area.width // self.num_reels, area.height // 3
@@ -418,30 +533,37 @@ class SlotClassicGame(BaseMinigame):
             visual_pos = self.reels_pos[i] + self.reels_overshoot[i]
             off_y = (visual_pos - int(visual_pos)) * sh
             st_idx = int(visual_pos)
-            
+
             self.screen.set_clip(pygame.Rect(rx, area.top, rw, area.height))
-            for j in range(-1, 4):
-                sym = self.reel_strips[i][(st_idx + j) % len(self.reel_strips[i])]
-                img = self.symbols_images.get(sym)
-                if img:
-                    cache_key = (sym, int(rw * 0.85), int(sh * 0.85))
-                    if cache_key not in self._symbols_cache:
-                        iw, ih = img.get_size()
-                        fit = min(cache_key[1]/iw, cache_key[2]/ih)
-                        self._symbols_cache[cache_key] = pygame.transform.smoothscale(img, (int(iw*fit), int(ih*fit)))
-                    
-                    s_img = self._symbols_cache[cache_key]
-                    tw, th = s_img.get_size()
-                    px, py = rx + (rw-tw)//2, area.top + (j*sh) - off_y + (sh-th)//2
-                    
-                    if self.reels_speed[i] > 10:
-                        # Effetto Stretch Dinamico (Cartoon Motion Blur)
-                        stretch = 1.0 + (self.reels_speed[i] / 40.0)
-                        s_img = pygame.transform.smoothscale(s_img, (tw, int(th * stretch)))
-                        self.screen.blit(s_img, (px, py - (s_img.get_height() - th) // 2))
-                    else: 
-                        self.screen.blit(s_img, (px, py))
-            
+            if _ANDROID:
+                # Android: tile opache (fondo rullo + simbolo) -> blit opachi veloci.
+                for j in range(-1, 4):
+                    sym = self.reel_strips[i][(st_idx + j) % len(self.reel_strips[i])]
+                    tile = self._get_symbol_tile(sym, rw, sh)
+                    self.screen.blit(tile, (rx, int(area.top + (j * sh) - off_y)))
+            else:
+                for j in range(-1, 4):
+                    sym = self.reel_strips[i][(st_idx + j) % len(self.reel_strips[i])]
+                    img = self.symbols_images.get(sym)
+                    if img:
+                        cache_key = (sym, int(rw * 0.85), int(sh * 0.85))
+                        if cache_key not in self._symbols_cache:
+                            iw, ih = img.get_size()
+                            fit = min(cache_key[1]/iw, cache_key[2]/ih)
+                            self._symbols_cache[cache_key] = pygame.transform.smoothscale(img, (int(iw*fit), int(ih*fit)))
+
+                        s_img = self._symbols_cache[cache_key]
+                        tw, th = s_img.get_size()
+                        px, py = rx + (rw-tw)//2, area.top + (j*sh) - off_y + (sh-th)//2
+
+                        if self.reels_speed[i] > 10:
+                            # Effetto Stretch Dinamico (Cartoon Motion Blur) — desktop only.
+                            stretch = 1.0 + (self.reels_speed[i] / 40.0)
+                            s_img = pygame.transform.smoothscale(s_img, (tw, int(th * stretch)))
+                            self.screen.blit(s_img, (px, py - (s_img.get_height() - th) // 2))
+                        else:
+                            self.screen.blit(s_img, (px, py))
+
             self.screen.set_clip(None)
             if i < self.num_reels-1:
                 # Divisori rulli netti
@@ -450,8 +572,17 @@ class SlotClassicGame(BaseMinigame):
     def _draw_overlay_and_ui(self, sw, sh, scale, area, ox, oy, cab_rect):
         py = area.centery
         if self.winning_line_alpha > 0:
-            glow = pygame.Surface((area.width, 24*scale), pygame.SRCALPHA)
-            pygame.draw.rect(glow, (255, 255, 0, self.winning_line_alpha // 2), glow.get_rect())
+            # Striscia gialla cachata una volta; il pulsare e' gestito con set_alpha
+            # (niente Surface SRCALPHA + draw.rect ricreati ogni frame).
+            gw, gh = int(area.width), int(24 * scale)
+            cached = getattr(self, "_winline_glow_cache", None)
+            if cached is None or cached[0] != (gw, gh):
+                glow = pygame.Surface((gw, gh)).convert()
+                glow.fill((255, 255, 0))
+                self._winline_glow_cache = ((gw, gh), glow)
+                cached = self._winline_glow_cache
+            glow = cached[1]
+            glow.set_alpha(self.winning_line_alpha // 2)
             self.screen.blit(glow, (area.left, py - 12*scale))
         pygame.draw.line(self.screen, (0, 0, 0), (area.left, py), (area.right, py), int(4*scale))
         pygame.draw.line(self.screen, (255, 255, 255), (area.left, py), (area.right, py), int(2*scale))
@@ -460,8 +591,7 @@ class SlotClassicGame(BaseMinigame):
             self._draw_comic_win(sw, area.top - 50*scale, scale)
             
         if self.credits < MIN_BET and not any(self.spinning) and self.free_spins_left <= 0:
-            overlay = pygame.Surface((sw, sh), pygame.SRCALPHA); overlay.fill((0,0,0,230))
-            self.screen.blit(overlay, (0,0))
+            self.screen.blit(self._get_dim_overlay(sw, sh, (0, 0, 0, 230)), (0, 0))
             self._draw_text_comic(self._("game_over"), self._font("Impact", 110*scale), (sw//2, sh//2), (255, 0, 0))
             
         self._draw_ui(sw, sh, scale, cab_rect)
@@ -484,14 +614,41 @@ class SlotClassicGame(BaseMinigame):
         pygame.draw.polygon(self.screen, (0, 0, 0), points, int(3*scale))
         self._draw_text_comic(text, font, center, (255, 255, 255))
 
-    def _draw_text_comic(self, text, font, center, color):
+    def _get_comic_text_surface(self, text, font, color):
+        """Compone UNA volta il testo fumetto (outline nero + riempimento) su una
+        singola Surface trasparente e la cacha. Senza cache questo metodo renderizza
+        il font ~50-120 volte per frame (loop di offset NxN) per OGNI bottone/etichetta:
+        e' il piu' grosso costo per-frame su Android. Con cache un'etichetta statica
+        (es. "GIOCA", "+", "ESCI") diventa un singolo blit dopo il primo frame."""
+        if not hasattr(self, "_comic_text_cache"):
+            self._comic_text_cache = {}
         thickness = int(max(2, 4 * (font.get_height() / 100)))
+        # Chiave: testo, altezza font (cattura scale + win_text_scale), colore, spessore.
+        key = (text, font.get_height(), color, thickness)
+        cached = self._comic_text_cache.get(key)
+        if cached is not None:
+            return cached
+
+        # Guard anti-crescita: il testo vincita pulsa attraverso molte altezze font.
+        if len(self._comic_text_cache) > 256:
+            self._comic_text_cache.clear()
+        base = font.render(text, True, color)
+        outline = font.render(text, True, (0, 0, 0))
+        bw, bh = base.get_size()
+        # Surface composita con margine per l'outline su tutti i lati.
+        comp = pygame.Surface((bw + thickness * 2, bh + thickness * 2), pygame.SRCALPHA)
+        cx, cy = thickness, thickness
         for dx in range(-thickness, thickness + 1):
             for dy in range(-thickness, thickness + 1):
-                if dx*dx + dy*dy <= thickness*thickness:
-                    surf = font.render(text, True, (0, 0, 0))
-                    self.screen.blit(surf, surf.get_rect(center=(center[0]+dx, center[1]+dy)))
-        surf = font.render(text, True, color)
+                if dx * dx + dy * dy <= thickness * thickness:
+                    comp.blit(outline, (cx + dx, cy + dy))
+        comp.blit(base, (cx, cy))
+        comp = comp.convert_alpha()
+        self._comic_text_cache[key] = comp
+        return comp
+
+    def _draw_text_comic(self, text, font, center, color):
+        surf = self._get_comic_text_surface(text, font, color)
         self.screen.blit(surf, surf.get_rect(center=center))
 
     def _draw_ui(self, sw, sh, scale, cab_rect):
@@ -580,12 +737,37 @@ class SlotClassicGame(BaseMinigame):
         pass
 
     def _draw_text_centered(self, text, font, center, color=(255, 255, 255)):
-        surf = font.render(text, True, color)
+        # Cache per (testo, altezza, colore): cache-hit quando la stringa non cambia
+        # (es. JACKPOT tra uno spin e l'altro, titolo paytable). Sicura su entrambe.
+        if not hasattr(self, "_plain_text_cache"):
+            self._plain_text_cache = {}
+        key = (text, font.get_height(), color)
+        surf = self._plain_text_cache.get(key)
+        if surf is None:
+            # Guard anti-crescita: il valore JACKPOT cambia tra spin, quindi le chiavi
+            # si accumulano lentamente. Svuota se il dizionario diventa troppo grande.
+            if len(self._plain_text_cache) > 256:
+                self._plain_text_cache.clear()
+            surf = font.render(text, True, color).convert_alpha()
+            self._plain_text_cache[key] = surf
         self.screen.blit(surf, surf.get_rect(center=center))
 
+    def _get_dim_overlay(self, sw, sh, rgba):
+        """Overlay fullscreen semi-trasparente cachato per (dimensione, colore+alpha).
+        Ricrearne uno SRCALPHA fullscreen + fill OGNI frame costa ~10x su Android."""
+        if not hasattr(self, "_dim_overlay_cache"):
+            self._dim_overlay_cache = {}
+        key = (sw, sh, rgba)
+        ov = self._dim_overlay_cache.get(key)
+        if ov is None:
+            ov = pygame.Surface((sw, sh), pygame.SRCALPHA)
+            ov.fill(rgba)
+            ov = ov.convert_alpha()
+            self._dim_overlay_cache[key] = ov
+        return ov
+
     def _draw_paytable_overlay(self, sw, sh, scale):
-        ov = pygame.Surface((sw, sh), pygame.SRCALPHA); ov.fill((5, 5, 10, 245))
-        self.screen.blit(ov, (0,0))
+        self.screen.blit(self._get_dim_overlay(sw, sh, (5, 5, 10, 245)), (0, 0))
         f_title = self._font("Impact", 65*scale)
         self._draw_text_comic("TABELLA PAGAMENTI", f_title, (sw//2, 80*scale), (255, 215, 0))
         

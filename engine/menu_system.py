@@ -96,6 +96,7 @@ class MenuSystem:
         self.is_fullscreen = False
         self.music_volume = 1.0
         self.sfx_volume = 1.0
+        self.vibration_enabled = True
 
         self.buttons: list[MenuButton] = []
         self.sliders: list[MenuSlider] = []
@@ -230,6 +231,29 @@ class MenuSystem:
                 return None
             self._preview_raw_cache[key] = surf
         return surf
+
+    def _load_preview_raw(self, scene_dir) -> "pygame.Surface | None":
+        """Carica l'immagine di anteprima di una scena per le card del menu.
+        Preferisce la thumbnail leggera (_preview.jpg) generata in
+        pacchettizzazione: ~80KB vs background full-res fino a 20MB/67MB-RAM.
+        Fallback al background full-res quando la thumbnail non esiste
+        (es. esecuzione desktop da sorgente non pacchettizzato)."""
+        thumb = scene_dir / "_preview.jpg"
+        if thumb.exists():
+            s = self._load_raw_cached(thumb)
+            if s is not None:
+                return s
+        # Fallback: leggi il nome del background reale da scene.json
+        bg_file = "background.png"
+        s_cfg_p = scene_dir / "scene.json"
+        if s_cfg_p.exists():
+            try:
+                with open(s_cfg_p, "r", encoding="utf-8") as sf:
+                    bg_file = json.load(sf).get("background", "background.png")
+            except Exception:
+                pass
+        bg_p = scene_dir / bg_file
+        return self._load_raw_cached(bg_p) if bg_p.exists() else None
 
     def change_state(self, new_state: str, **kwargs) -> None:
         """Cambia lo stato del menu e rigenera i componenti (bottoni/slider)."""
@@ -406,8 +430,7 @@ class MenuSystem:
                             scenes = cfg.get("scenes", [])
                             if scenes:
                                 first_scene_id = scenes[0].get("id")
-                                bg_p = ld / first_scene_id / "background.png"
-                                raw = self._load_raw_cached(bg_p) if bg_p.exists() else None
+                                raw = self._load_preview_raw(ld / first_scene_id)
                                 if raw is not None:
                                     preview = pygame.transform.smoothscale(raw, (bw, bh))
                         except Exception: pass
@@ -484,7 +507,10 @@ class MenuSystem:
             ]
             # Su Android la risoluzione NON è modificabile: si adatta sempre al
             # dispositivo. Niente toggle risoluzione/fullscreen (sempre fullscreen).
-            if not is_android_runtime():
+            # Il feedback aptico (vibrazione) ha senso solo su touch/Android.
+            if is_android_runtime():
+                items.append(("opt_vibration", "toggle_vibration", "ON" if self.vibration_enabled else "OFF"))
+            else:
                 items.append(("label_resolution", "toggle_res", self.current_res))
                 items.append(("label_fullscreen", "toggle_fs", "ON" if self.is_fullscreen else "OFF"))
             
@@ -558,6 +584,63 @@ class MenuSystem:
                 delattr(self, "_last_focus_data")
 
     
+    def _draw_flashlight(self, screen: pygame.Surface, sw: int, sh: int,
+                         f_pos: tuple[int, int], f_radius: int) -> None:
+        """Velo scuro con foro a torcia (semitrasparente per natura: non opacizzabile).
+
+        PERF: la versione originale, OGNI frame, allocava una Surface SRCALPHA
+        fullscreen, la riempiva e ridisegnava ~140 cerchi in un loop Python, poi
+        la blittava intera. Su pygame ARM/swiftshader questo e' un killer.
+
+        Qui:
+          - il GRADIENTE del foro (l'output del loop di cerchi) e' una piccola
+            Surface SRCALPHA (2*raggio) cachata e ricostruita solo se cambia il
+            raggio: e' l'unica parte costosa, ora fatta una volta sola.
+          - il velo fullscreen e' una Surface persistente: invece di riallocarla
+            e ridisegnarla ogni frame, si ripristina a (0,0,0,250) SOLO la regione
+            precedentemente forata, poi si "punzona" il nuovo foro con
+            BLEND_RGBA_MIN (prende l'alpha minima -> identico al disegnare cerchi
+            neri ad alpha decrescente sopra un fondo pieno a 250).
+        I pixel risultanti sono IDENTICI all'originale su entrambe le piattaforme.
+        """
+        # (Ri)costruzione del foro-gradiente in cache (solo se cambia il raggio)
+        if getattr(self, "_flash_hole_radius", None) != f_radius and f_radius > 0:
+            d = f_radius * 2
+            hole = pygame.Surface((d, d), pygame.SRCALPHA)
+            hole.fill((0, 0, 0, 250))
+            c = (f_radius, f_radius)
+            for r in range(f_radius, 0, -2):
+                alpha = int(250 * (r / f_radius) ** 1.2)
+                pygame.draw.circle(hole, (0, 0, 0, alpha), c, r)
+            self._flash_hole = hole
+            self._flash_hole_radius = f_radius
+
+        # (Ri)costruzione del velo fullscreen persistente (solo su resize)
+        if getattr(self, "_flash_ov_size", None) != (sw, sh):
+            ov = pygame.Surface((sw, sh), pygame.SRCALPHA)
+            ov.fill((0, 0, 0, 250))
+            self._flash_ov = ov
+            self._flash_ov_size = (sw, sh)
+            self._flash_prev_rect = None
+
+        ov = self._flash_ov
+        hole = getattr(self, "_flash_hole", None)
+        if ov is None or hole is None:
+            return
+
+        # Ripristina al buio pieno solo la zona forata nel frame precedente
+        prev = getattr(self, "_flash_prev_rect", None)
+        if prev is not None:
+            ov.fill((0, 0, 0, 250), prev)
+
+        # Punzona il nuovo foro (BLEND_RGBA_MIN == minimo per-pixel dell'alpha)
+        d = f_radius * 2
+        dst = pygame.Rect(f_pos[0] - f_radius, f_pos[1] - f_radius, d, d)
+        ov.blit(hole, dst, special_flags=pygame.BLEND_RGBA_MIN)
+        self._flash_prev_rect = dst
+
+        screen.blit(ov, (0, 0))
+
     def _draw_magnifier(self, screen: pygame.Surface) -> None:
         """Effetto Lente d'Ingrandimento professionale per temi Mystery/Investigativi."""
         try:
@@ -726,7 +809,7 @@ class MenuSystem:
 
         
         sw, sh = screen.get_size()
-        
+
         # Lista differita per i tooltips (per gestire correttamente lo Z-index)
         tooltip_queue = []
 
@@ -735,14 +818,9 @@ class MenuSystem:
 
         # ââ 1. Effetto Torcia (Flashlight)
         if theme.has_flashlight():
-            dark_ov = pygame.Surface((sw, sh), pygame.SRCALPHA)
-            dark_ov.fill((0, 0, 0, 250))
             f_pos = theme.flashlight_pos(sw, sh)
             f_radius = sm.scale_value(theme.fx("flashlight_radius", 280))
-            for r in range(f_radius, 0, -2):
-                alpha = int(250 * (r / f_radius)**1.2)
-                pygame.draw.circle(dark_ov, (0, 0, 0, alpha), f_pos, r)
-            screen.blit(dark_ov, (0, 0))
+            self._draw_flashlight(screen, sw, sh, f_pos, f_radius)
 
         # ── 1.5 Titolo dello Stato
         self.skin.draw_title(self, screen)
@@ -750,7 +828,7 @@ class MenuSystem:
         # ââ 2. Render Bottoni (Con supporto Carosello)
         for b in self.buttons:
             rect = sm.scale_rect(b.ref_rect.x, b.ref_rect.y, b.ref_rect.w, b.ref_rect.h)
-            
+
             # Se il bottone non Ã¨ fisso (es. Back), applichiamo lo scroll
             is_fixed = (b.ref_rect.x < 100 and b.ref_rect.y < 120)
             if not is_fixed:
@@ -795,7 +873,12 @@ class MenuSystem:
                 # vengono BAKED una volta nell'immagine cacheata (opaca), così per
                 # frame si fa un solo blit OPACO (i blit SRCALPHA per-card erano
                 # lentissimi su pygame ARM e rallentavano la selezione scena).
-                size = (draw_rect.w, draw_rect.h)
+                # Dimensione QUANTIZZATA (step 6px): lo zoom carosello + lo scroll
+                # variano draw_rect.w/h di pochi pixel ogni frame; senza quantizzazione
+                # la preview veniva RI-SMOOTHSCALATA (immagine grande) OGNI frame -> il
+                # collo di bottiglia del menu scene (~15ms/card). Quantizzando, a riposo
+                # e' un cache-hit; lo scarto (<=3px, immagine centrata) e' impercettibile.
+                size = (max(8, round(draw_rect.w / 6) * 6), max(8, round(draw_rect.h / 6) * 6))
                 if b._scaled_img is None or b._scaled_img_size != size:
                     base = pygame.transform.smoothscale(b.image, size).convert()
                     ov_col = theme.color("scene_overlay_normal")
@@ -807,23 +890,51 @@ class MenuSystem:
                         sp = pygame.Surface(size, pygame.SRCALPHA)
                         sp.fill((120, 80, 20, sa))
                         base.blit(sp, (0, 0))
+                    # Bordo NORMALE bakato nella preview cachata.
+                    pygame.draw.rect(base, theme.color3("scene_border_normal"),
+                                     (0, 0, size[0], size[1]), width=2, border_radius=theme.border_radius())
+                    if self._android:
+                        # ETICHETTA bakata nella preview (testo statico): il blit
+                        # per-pixel-alpha delle surface di testo OGNI frame era il costo
+                        # residuo del menu scena su GPU mobile (~12ms). Bakandola, per
+                        # frame resta un SOLO blit opaco. Hover-color trascurabile su touch.
+                        cx = size[0] // 2
+                        if is_locked:
+                            lf = theme.get_font(theme.font_size_lock(), sm)
+                            lsurf = lf.render("[LOCKED]", True, theme.color3("lock_text"))
+                            base.blit(lsurf, lsurf.get_rect(center=(cx, size[1] // 2)))
+                        nf = theme.get_font(theme.font_size_scene(), sm)
+                        ncol = theme.color3("text_locked") if is_locked else theme.color3("text_normal")
+                        if theme.has_text_shadow():
+                            sc = theme._effects.get("text_shadow_color", [0, 0, 0, 120])
+                            shs = nf.render(b.text, True, (sc[0], sc[1], sc[2]))
+                            sr = shs.get_rect(midbottom=(cx, size[1] - 10)); sr.x += 1; sr.y += 1
+                            base.blit(shs, sr)
+                        nsurf = nf.render(b.text, True, ncol)
+                        base.blit(nsurf, nsurf.get_rect(midbottom=(cx, size[1] - 10)))
                     b._scaled_img = base
                     b._scaled_img_size = size
-                screen.blit(b._scaled_img, draw_rect)
-                bc = theme.color3("scene_border_hover") if b.hovered else theme.color3("scene_border_normal")
-                pygame.draw.rect(screen, bc, draw_rect, width=2, border_radius=theme.border_radius())
-                
-                if is_locked:
-                    lock_font = theme.get_font(theme.font_size_lock(), sm)
-                    lock_surf = lock_font.render("[LOCKED]", True, theme.color3("lock_text"))
-                    screen.blit(lock_surf, lock_surf.get_rect(center=draw_rect.center))
-                
-                if b.icon_surf:
+                screen.blit(b._scaled_img, b._scaled_img.get_rect(center=draw_rect.center))
+                if b.hovered:
+                    pygame.draw.rect(screen, theme.color3("scene_border_hover"), draw_rect,
+                                     width=2, border_radius=theme.border_radius())
+
+                if not self._android:
+                    # Desktop: etichetta dal vivo (colore hover; desktop non e' FPS-bound).
+                    if is_locked:
+                        lock_font = theme.get_font(theme.font_size_lock(), sm)
+                        lock_surf = lock_font.render("[LOCKED]", True, theme.color3("lock_text"))
+                        screen.blit(lock_surf, lock_surf.get_rect(center=draw_rect.center))
+                    if b.icon_surf:
+                        ico_scaled = self._scale_icon_cached(b, draw_rect, sm)
+                        screen.blit(ico_scaled, ico_scaled.get_rect(center=draw_rect.center))
+                    else:
+                        font = theme.get_font(theme.font_size_scene(), sm)
+                        theme.draw_text(screen, b.text, font, draw_rect, b.hovered, is_locked, anchor="midbottom", hover_t=b.hover_time)
+                elif b.icon_surf:
+                    # Android: card con icona (caso raro) -> blit icona dal vivo.
                     ico_scaled = self._scale_icon_cached(b, draw_rect, sm)
                     screen.blit(ico_scaled, ico_scaled.get_rect(center=draw_rect.center))
-                else:
-                    font = theme.get_font(theme.font_size_scene(), sm)
-                    theme.draw_text(screen, b.text, font, draw_rect, b.hovered, is_locked, anchor="midbottom", hover_t=b.hover_time)
             else:
                 # Bottone Standard/Icona
                 theme.draw_btn_bg(screen, draw_rect, b.hovered, is_locked, hover_t=b.hover_time)
@@ -840,13 +951,27 @@ class MenuSystem:
                         # Layout Unificato Premium: Icona a sinistra (colonna dedicata), Valore a destra
                         ico_scaled = self._scale_icon_cached(b, draw_rect, sm)
                         # Allineamento dell'icona all'interno della prima colonna (120px)
-                        screen.blit(ico_scaled, ico_scaled.get_rect(midleft=(draw_rect.left + sm.scale_value(20), draw_rect.centery)))
-                        
+                        _ipos = (draw_rect.left + sm.scale_value(20), draw_rect.centery)
+                        if self._android:
+                            # Chip opaco (come main menu): blit opaco veloce invece del
+                            # blit SRCALPHA dell'icona; il riquadro coincide col fondo riga.
+                            _fill = theme.android_btn_fill(is_locked, b.hover_time)
+                            _ok = (ico_scaled.get_width(), ico_scaled.get_height(), tuple(_fill))
+                            if getattr(b, "_op_icon_key", None) != _ok:
+                                _chip = pygame.Surface(ico_scaled.get_size())
+                                _chip.fill(_fill)
+                                _chip.blit(ico_scaled, (0, 0))
+                                b._op_icon = _chip.convert()
+                                b._op_icon_key = _ok
+                            screen.blit(b._op_icon, b._op_icon.get_rect(midleft=_ipos))
+                        else:
+                            screen.blit(ico_scaled, ico_scaled.get_rect(midleft=_ipos))
+
                         # Valore testuale allineato a destra del blocco riga
                         # Valore testuale allineato a destra con "Pillola" ad alto contrasto (Solo se c'Ã¨ testo)
                         if b.text:
                             val_font = theme.get_font(theme.font_size_label() + 10, sm)
-                            val_surf = val_font.render(b.text, True, theme.color3("text_normal"))
+                            val_surf = theme.render_cached(val_font, b.text, theme.color3("text_normal"))
                             
                             # Calcolo centro della colonna destra (area valori)
                             right_col_x = draw_rect.left + sm.scale_value(120) 
@@ -964,7 +1089,23 @@ class MenuSystem:
                                 # Blit con BLEND_ADD: somma solo i canali RGB, preservando l'icona sottostante
                                 ico_scaled.blit(refl_surf, (0, 0), special_flags=pygame.BLEND_ADD)
 
-                        screen.blit(ico_scaled, ico_scaled.get_rect(center=draw_rect.center))
+                        if self._android:
+                            # Blit OPACO: l'icona viene composta UNA volta su un chip
+                            # del colore ESATTO del fondo bottone (android_btn_fill).
+                            # Il blit per-pixel-alpha dell'icona era ~9ms/bottone su GPU
+                            # mobile (costo dominante del menu); opaco e' ~10x piu' veloce
+                            # e visivamente identico (il chip ha lo stesso colore del fondo).
+                            fill = theme.android_btn_fill(is_locked, b.hover_time)
+                            okey = (ico_scaled.get_width(), ico_scaled.get_height(), tuple(fill))
+                            if getattr(b, "_op_icon_key", None) != okey:
+                                _chip = pygame.Surface(ico_scaled.get_size())
+                                _chip.fill(fill)
+                                _chip.blit(ico_scaled, (0, 0))
+                                b._op_icon = _chip.convert()
+                                b._op_icon_key = okey
+                            screen.blit(b._op_icon, b._op_icon.get_rect(center=draw_rect.center))
+                        else:
+                            screen.blit(ico_scaled, ico_scaled.get_rect(center=draw_rect.center))
                     
                     # Tooltip Pop-in: Differito alla fine per Z-index perfetto
                     tt_text = getattr(b, "tooltip_text", b.text)
@@ -1014,9 +1155,13 @@ class MenuSystem:
             ico_surf = theme.get_icon(s.action)
             if ico_surf:
                 ih = sm.scale_value(72) if theme.is_icons_only() else int(rect.h * 1.5)
-                ico_scaled = pygame.transform.smoothscale(ico_surf, (ih, ih))
-                # Allineamento dell'icona all'interno della prima colonna (offset 100px rispetto allo slider)
-                screen.blit(ico_scaled, ico_scaled.get_rect(midleft=(rect.left - sm.scale_value(100), rect.centery)))
+                # Cache dello smoothscale sull'oggetto slider: prima si ri-scalava
+                # l'icona OGNI frame (smoothscale costoso su ARM). La dimensione e'
+                # stabile -> si ri-scala solo a cambio risoluzione.
+                if getattr(s, "_ico_scaled", None) is None or getattr(s, "_ico_key", None) != ih:
+                    s._ico_scaled = pygame.transform.smoothscale(ico_surf, (ih, ih)).convert_alpha()
+                    s._ico_key = ih
+                screen.blit(s._ico_scaled, s._ico_scaled.get_rect(midleft=(rect.left - sm.scale_value(100), rect.centery)))
 
             # Track
             pygame.draw.rect(screen, theme.color3("slider_bg") if "slider_bg" in theme._colors else (40, 40, 40), rect, border_radius=rect.h // 2)
@@ -1089,20 +1234,13 @@ class MenuSystem:
         """Helper per caricare l'anteprima di una scena."""
         try:
             import pygame
-            scene_dir = lvl_path / scene_id
-            s_cfg_p = scene_dir / "scene.json"
-            if s_cfg_p.exists():
-                with open(s_cfg_p, "r", encoding="utf-8") as sf:
-                    s_cfg = json.load(sf)
-                bg_file = s_cfg.get("background", "background.png")
-                bg_full_path = scene_dir / bg_file
-                raw = self._load_raw_cached(bg_full_path) if bg_full_path.exists() else None
-                if raw is not None:
-                    preview = pygame.transform.smoothscale(raw, (w, h))
-                    if not is_unlocked:
-                        try: preview = pygame.transform.grayscale(preview)
-                        except: pass
-                    return preview
+            raw = self._load_preview_raw(lvl_path / scene_id)
+            if raw is not None:
+                preview = pygame.transform.smoothscale(raw, (w, h))
+                if not is_unlocked:
+                    try: preview = pygame.transform.grayscale(preview)
+                    except: pass
+                return preview
         except: pass
         return None
 
@@ -1216,13 +1354,30 @@ class MenuSystem:
         new_w = int(iw * scale)
         new_h = int(ih * scale)
 
-        return pygame.transform.smoothscale(icon, (new_w, new_h))
+        scaled = pygame.transform.smoothscale(icon, (new_w, new_h))
+        # convert_alpha(): l'icona scalata viene blittata OGNI frame. Senza conversione
+        # al formato display il blit per-pixel-alpha e' molto piu' lento su GPU mobile
+        # (era ~9ms/bottone, il costo dominante del menu su Android). Pixel identici.
+        try:
+            scaled = scaled.convert_alpha()
+        except Exception:
+            pass
+        return scaled
+
+    @staticmethod
+    def _icon_key(rect: pygame.Rect) -> tuple:
+        """Chiave di cache icona quantizzata (step 4px). Lo zoom carosello e lo
+        scroll variano di continuo draw_rect.w/h di pochi pixel: senza quantizzazione
+        la cache mancava OGNI frame e si ri-eseguiva lo smoothscale (e glow/ombra)
+        per ogni bottone -> crollo FPS. Quantizzando, durante il movimento si ha
+        quasi sempre cache-hit; lo scarto di scala (<=4px, icona centrata) e' impercettibile."""
+        return ((rect.w // 4) * 4, (rect.h // 4) * 4)
 
     def _scale_icon_cached(self, b: "MenuButton", rect: pygame.Rect, sm) -> pygame.Surface:
         """Come _scale_icon ma memorizza il risultato sul bottone: evita lo
-        smoothscale ad ogni frame (costoso su pygame ARM). La chiave include la
-        dimensione del box, così il ridimensionamento avviene solo quando cambia."""
-        key = (rect.w, rect.h)
+        smoothscale ad ogni frame (costoso su pygame ARM). La chiave (quantizzata)
+        fa ri-scalare solo a cambio dimensione reale, non per l'oscillazione zoom."""
+        key = self._icon_key(rect)
         if b._scaled_icon is None or b._scaled_icon_key != key:
             b._scaled_icon = self._scale_icon(b.icon_surf, rect, sm)
             b._scaled_icon_key = key
@@ -1230,15 +1385,16 @@ class MenuSystem:
 
     def _icon_fx(self, b: "MenuButton", rect: pygame.Rect, sm):
         """Ritorna (icona, glow, ombra) in cache per la dimensione del box.
-        Glow/ombra sono superfici sfocate a forma d'icona (vedi MenuTheme);
-        si ricostruiscono solo quando l'icona viene riscalata."""
-        key = (rect.w, rect.h)
+        Glow/ombra (superfici sfocate, 2 smoothscale ciascuna) si costruiscono SOLO
+        su desktop: su Android non vengono mai disegnate (vedi gate not self._android
+        nel chiamante), quindi costruirle sarebbe lavoro sprecato per ogni bottone."""
+        key = self._icon_key(rect)
         if b._scaled_icon is None or b._scaled_icon_key != key:
             b._scaled_icon = self._scale_icon(b.icon_surf, rect, sm)
             b._scaled_icon_key = key
             b._icon_glow = None
             b._icon_shadow = None
-        if b._icon_glow is None and b._scaled_icon is not None:
+        if not self._android and b._icon_glow is None and b._scaled_icon is not None:
             try:
                 gc = self.theme.color3("btn_glow_color") if "btn_glow_color" in self.theme._colors else (255, 235, 180)
                 b._icon_glow = MenuTheme.make_glow(b._scaled_icon, gc)

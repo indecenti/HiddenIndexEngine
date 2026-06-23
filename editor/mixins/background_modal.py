@@ -82,7 +82,7 @@ class BackgroundModalMixin:
             try:
                 with open(cat_path, "r", encoding="utf-8") as f:
                     self._bg_catalog = json.load(f)
-            except: self._bg_catalog = {}
+            except Exception: self._bg_catalog = {}
         else: self._bg_catalog = {}
 
     def _bg_save_catalog(self):
@@ -129,7 +129,7 @@ class BackgroundModalMixin:
                         try:
                             # Caricamento da cache disco
                             thumb = pygame.image.load(str(thumb_path)).convert_alpha()
-                        except:
+                        except Exception:
                             # Se la cache è corrotta, la eliminiamo per rigenerarla
                             thumb_path.unlink(missing_ok=True)
                     
@@ -281,7 +281,7 @@ class BackgroundModalMixin:
             r = tk.Tk(); r.withdraw()
             r.clipboard_clear(); r.clipboard_append(text)
             r.update(); r.destroy()
-        except: pass
+        except Exception: pass
 
     def _get_clipboard(self):
         try:
@@ -289,7 +289,7 @@ class BackgroundModalMixin:
             r = tk.Tk(); r.withdraw()
             res = r.clipboard_get()
             r.destroy(); return res
-        except: return ""
+        except Exception: return ""
 
     def _bg_modal_click(self, mx, my, w, h):
         if not self._bg_modal: return
@@ -355,8 +355,10 @@ class BackgroundModalMixin:
                         self._bg_editing_name = name; self._bg_name_buffer = Path(name).stem
                         self._bg_cursor = len(self._bg_name_buffer)
                         return
-                    
-                    # Edit Tags
+
+                    # Edit Tags (il box e' renderizzato a iy + 245, vedi _r_background_modal)
+                    if _in_rect((mx, my), (ix + 10, iy + 245, item_w - 20, 30)):
+                        self._bg_confirm_rename(); self._bg_confirm_tags()
                         self._bg_editing_tags = name
                         self._bg_tags_buffer = "" # Ora è solo il campo di ricerca
                         self._bg_cursor = 0
@@ -379,7 +381,7 @@ class BackgroundModalMixin:
                 with self._bg_thumb_lock:
                     if old_name in self._bg_thumbnails: self._bg_thumbnails[new_name] = self._bg_thumbnails.pop(old_name)
                 self._bg_update_filter()
-            except: pass
+            except Exception: pass
         self._bg_editing_name = None
 
     def _bg_confirm_tags(self):
@@ -413,7 +415,7 @@ class BackgroundModalMixin:
                 try:
                     self.bg_surf = pygame.image.load(str(dest)).convert()
                     self._bg_cache_surf = None; self._fit_canvas(); self.scene_dirty = True
-                except: pass
+                except Exception: pass
             else:
                 self.bg_surf = None 
                 self._fit_canvas(); self.scene_dirty = True
@@ -449,7 +451,7 @@ class BackgroundModalMixin:
             if t_name.lower().endswith((".jpg", ".jpeg", ".png", ".bmp")):
                 threading.Thread(target=self._bg_load_thumbnails_task, daemon=True).start()
             self._status(self._TR("modal_status_loaded").format(t_name), OK_C, 3)
-        except: pass
+        except Exception: pass
 
     def _bg_modal_wheel(self, dy):
         if not self._bg_modal: return

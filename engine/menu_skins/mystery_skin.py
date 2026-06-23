@@ -21,6 +21,10 @@ class MysterySkin(DefaultSkin):
         super().__init__(theme)
         self._dust: list[dict] = []
         self._vig = None
+        # Cache dei glow del pulviscolo, keyed da (raggio, colore). Evita di
+        # allocare+disegnare una nuova Surface SRCALPHA per ogni mote ogni frame
+        # (era ~density blit ricostruiti per-frame nel path di disegno).
+        self._mote_cache: dict = {}
 
     def draw_background_pre(self, ms, screen, sw, sh) -> None:
         if self.fx_on(ms, "vignette"):
@@ -70,6 +74,18 @@ class MysterySkin(DefaultSkin):
         p["x"] = random.random()
         p["y"] = -0.02
 
+    def _mote_glow(self, rr, col):
+        # Glow del mote pre-renderizzato a alpha pieno (255). L'alpha variabile
+        # per-frame viene applicato via set_alpha sul blit -> stessi pixel del
+        # disegno diretto ma senza alloc+draw ogni frame.
+        key = (rr, col[0], col[1], col[2])
+        g = self._mote_cache.get(key)
+        if g is None:
+            g = pygame.Surface((rr * 4, rr * 4), pygame.SRCALPHA)
+            pygame.draw.circle(g, (col[0], col[1], col[2], 255), (rr * 2, rr * 2), rr)
+            self._mote_cache[key] = g
+        return g
+
     def draw_overlay(self, ms, screen, sw, sh) -> None:
         if not self._dust:
             return
@@ -80,8 +96,8 @@ class MysterySkin(DefaultSkin):
             if a <= 0:
                 continue
             rr = p["r"]
-            g = pygame.Surface((rr * 4, rr * 4), pygame.SRCALPHA)
-            pygame.draw.circle(g, (col[0], col[1], col[2], a), (rr * 2, rr * 2), rr)
+            g = self._mote_glow(rr, col)
+            g.set_alpha(a)
             screen.blit(g, (int(p["x"] * sw), int(p["y"] * sh)))
 
     def draw_title(self, ms, screen) -> None:

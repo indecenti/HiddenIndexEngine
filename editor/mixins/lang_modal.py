@@ -4,7 +4,6 @@ editor/mixins/lang_modal.py
 LangModalMixin — editor traduzioni multi-lingua: logica + rendering.
 """
 
-import time
 import pygame
 from editor.constants import (
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC,
@@ -71,6 +70,7 @@ class LangModalMixin:
             
         self._lang_scroll = 0
         self._lang_dirty  = False
+        self._lang_confirm_close = False  # guardia chiusura con modifiche non salvate
         self._lang_modal  = True
         self._lang_cursor = len(self._lang_buf)
         self._lang_all_sel = False
@@ -196,6 +196,17 @@ class LangModalMixin:
         
         self._lang_scroll = 0
 
+    def _lang_try_close(self) -> bool:
+        """Chiude il modale traduzioni. Con modifiche non salvate richiede una seconda
+        conferma (prima volta ritorna False senza chiudere), evitando perdita silenziosa."""
+        if getattr(self, "_lang_dirty", False) and not getattr(self, "_lang_confirm_close", False):
+            self._lang_confirm_close = True
+            self._status("Traduzioni non salvate: premi di nuovo per scartare, oppure SALVA", (230, 170, 60), 4)
+            return False
+        self._lang_confirm_close = False
+        self._lang_modal = False
+        return True
+
     def _lang_commit(self):
         if not self._lang_sel or not self._lang_filtered_keys:
             return
@@ -226,8 +237,8 @@ class LangModalMixin:
             return
 
         if not self._lang_sel:
-            if ev.key == pygame.K_ESCAPE: 
-                self._lang_modal = False
+            if ev.key == pygame.K_ESCAPE:
+                self._lang_try_close()
 
             return
 
@@ -241,7 +252,7 @@ class LangModalMixin:
                 self._lang_buf = ""
                 self._lang_all_sel = False
             else:
-                self._lang_modal = False
+                self._lang_try_close()
 
         
         elif ev.key == pygame.K_RETURN:
@@ -311,7 +322,7 @@ class LangModalMixin:
                 root.clipboard_clear()
                 root.clipboard_append(self._lang_buf)
                 root.update(); root.destroy()
-            except: pass
+            except Exception: pass
 
         elif ctrl and ev.key == pygame.K_v:
             # Incolla da appunti
@@ -328,7 +339,7 @@ class LangModalMixin:
                     else:
                         self._lang_buf = self._lang_buf[:self._lang_cursor] + clipped + self._lang_buf[self._lang_cursor:]
                         self._lang_cursor += len(clipped)
-            except: pass
+            except Exception: pass
 
         elif ev.unicode and ev.unicode.isprintable() and not ctrl:
             if self._lang_all_sel:
@@ -354,8 +365,7 @@ class LangModalMixin:
             self._lang_save(); return
         if _in_rect((mx, my_raw), close_r):
             if self._lang_sel: self._lang_commit()
-            self._lang_modal = False
-
+            self._lang_try_close()
             return
 
         if not is_fx:

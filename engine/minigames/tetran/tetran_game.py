@@ -71,12 +71,91 @@ class TetranGame(BaseMinigame):
         # Cache font (evita SysFont ogni frame: lento su Android)
         self._font_cache: dict[int, pygame.font.Font] = {}
 
+        # --- Cache di rendering per-frame (sicure su entrambe le piattaforme) ---
+        # Cache testo: (text, int(size), color) -> Surface gia' renderizzata.
+        # font.render e' tra le op piu' care su ARM: mai ri-renderizzare lo
+        # stesso testo ogni frame.
+        self._text_cache: dict[tuple, pygame.Surface] = {}
+        # Cache blocchi scalati: (color, bs, alpha) -> Surface scalata+convertita.
+        # Evita .copy()+transform.scale per ogni blocco di ogni frame.
+        self._block_cache: dict[tuple, pygame.Surface] = {}
+        # Cache pannelli UI: (w, h, color, radius) -> Surface semitrasparente.
+        self._panel_cache: dict[tuple, pygame.Surface] = {}
+        # Cache chrome scalato (border, hold-box, next-box): firma -> Surface.
+        self._scaled_ui_cache: dict[tuple, pygame.Surface] = {}
+
     def _font(self, size: int) -> pygame.font.Font:
         f = self._font_cache.get(size)
         if f is None:
             f = pygame.font.SysFont("Arial", max(8, size), bold=True)
             self._font_cache[size] = f
         return f
+
+    def _text(self, text: str, size: int, color) -> pygame.Surface:
+        """Restituisce una Surface testo cachata per (testo, dimensione, colore).
+        Quando la stringa non cambia e' un cache-hit: niente font.render."""
+        key = (text, int(size), color)
+        surf = self._text_cache.get(key)
+        if surf is None:
+            # Cap difensivo: score/multiplier/combo/tempo generano stringhe
+            # sempre nuove, quindi la cache cresce illimitata. Sopra soglia la
+            # svuotiamo (le entry verranno ri-renderizzate alla bisogna).
+            if len(self._text_cache) > 200:
+                self._text_cache.clear()
+            surf = self._font(int(size)).render(text, True, color)
+            self._text_cache[key] = surf
+        return surf
+
+    def _scaled_block(self, color: str, bs: int, alpha: int = 255) -> pygame.Surface:
+        """Blocco scalato (e convertito) cachato per (color, bs, alpha).
+        Evita .copy()+transform.scale ad ogni blocco di ogni frame.
+
+        LEZIONE SLOT (misurata su device): il blit di una Surface SRCALPHA
+        GRANDE/ripetuto ogni frame e' ~10x piu' caro su GPU mobile/software del
+        blit OPACO. Qui i PNG dei blocchi sono quadrati pieni (alpha 255, niente
+        angoli trasparenti): con alpha==255 la trasparenza per-pixel NON serve.
+        Su Android, per i ~200 blit di blocchi (griglia + pezzo attivo + preview)
+        di ogni frame, usiamo una Surface OPACA (.convert()) invece di
+        .convert_alpha(): output byte-identico (sorgente totalmente opaca) ma blit
+        molto piu' veloce. Il ghost (alpha<255) resta SRCALPHA: gli serve davvero
+        la trasparenza. Sul desktop il ramo originale (.convert_alpha()) e'
+        invariato per garantire pixel identici."""
+        key = (color, bs, alpha)
+        surf = self._block_cache.get(key)
+        if surf is None:
+            base = pygame.transform.scale(self.assets['blocks'][color], (bs, bs))
+            if alpha >= 255 and self._android:
+                # Ramo Android opaco: blit veloce, stessi pixel (sorgente piena).
+                surf = base.convert()
+            else:
+                surf = base.convert_alpha()
+                if alpha < 255:
+                    surf.set_alpha(alpha)
+            self._block_cache[key] = surf
+        return surf
+
+    def _panel(self, w: int, h: int, color, radius: int, panel_alpha: int) -> pygame.Surface:
+        """Pannello UI semitrasparente cachato. Il chrome dei pannelli non cambia
+        tra i frame: lo renderizziamo una volta e blittiamo la Surface."""
+        key = (w, h, color, radius)
+        surf = self._panel_cache.get(key)
+        if surf is None:
+            surf = pygame.Surface((w, h), pygame.SRCALPHA)
+            pygame.draw.rect(surf, (*color, panel_alpha), (0, 0, w, h), border_radius=radius)
+            pygame.draw.rect(surf, (120, 120, 160, 255), (0, 0, w, h), 2, border_radius=radius)
+            surf = surf.convert_alpha()
+            self._panel_cache[key] = surf
+        return surf
+
+    def _scaled_ui(self, name: str, w: int, h: int) -> pygame.Surface:
+        """Asset UI statico (border, box hold/next) scalato e cachato per
+        dimensione. Si ri-scala solo su resize (cambio firma)."""
+        key = (name, w, h)
+        surf = self._scaled_ui_cache.get(key)
+        if surf is None:
+            surf = pygame.transform.scale(self.assets['ui'][name], (w, h)).convert_alpha()
+            self._scaled_ui_cache[key] = surf
+        return surf
 
     def _load_assets(self) -> None:
         base_path = Path(get_resource_path("engine", "minigames", "tetran", "assets"))
@@ -334,7 +413,7 @@ class TetranGame(BaseMinigame):
         ox, oy = int(round((sw - gw) / 2)), int(round((sh - gh) / 2))
 
         if 'ui' in self.assets:
-            border = pygame.transform.scale(self.assets['ui']['border'], (gw + 20, gh + 20))
+            border = self._scaled_ui('border', gw + 20, gh + 20)
             self.screen.blit(border, (ox - 10, oy - 10))
 
         # Ghost Piece
@@ -357,15 +436,20 @@ class TetranGame(BaseMinigame):
                              special=self.current_piece['special'])
 
         # Floating Texts
-        font_ft = self._font(int(round(20 * scale)))
+        ft_size = int(round(20 * scale))
         for ft in self.floating_texts:
             alpha = int(255 * (ft['life'] / 1.5))
-            text_surf = font_ft.render(ft['text'], True, ft['color'])
+            # La stringa del testo non cambia per la sua durata: cache-hit.
+            text_surf = self._text(ft['text'], ft_size, ft['color'])
             text_surf.set_alpha(alpha)
             # Coord x,y sono in unità di griglia, le convertiamo in pixel
             tx = ox + ft['x'] * bs
             ty = oy + ft['y'] * bs
             self.screen.blit(text_surf, (tx, ty))
+            # Aliasing difensivo: set_alpha muta la Surface cachata CONDIVISA.
+            # La stessa entry puo' essere riusata altrove (testi UI / game over)
+            # che la vogliono opaca: ripristiniamo subito l'opacita' piena.
+            text_surf.set_alpha(255)
 
         self._draw_ui_overlay(ox, oy, gw, bs, scale)
 
@@ -378,21 +462,21 @@ class TetranGame(BaseMinigame):
             self._draw_game_over_overlay(sw, sh, scale)
 
     def _draw_game_over_overlay(self, sw, sh, scale):
-        # Overlay scuro
-        overlay = pygame.Surface((sw, sh), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 200))
+        # Overlay scuro: fullscreen SRCALPHA cachato (niente ri-alloc/fill ogni
+        # frame, ~10x piu' caro su Android).
+        overlay = self._scaled_ui_cache.get(('go_overlay', sw, sh))
+        if overlay is None:
+            overlay = pygame.Surface((sw, sh), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 200))
+            overlay = overlay.convert_alpha()
+            self._scaled_ui_cache[('go_overlay', sw, sh)] = overlay
         self.screen.blit(overlay, (0, 0))
-        
-        # Font
-        font_big = self._font(int(round(60 * scale)))
-        font_mid = self._font(int(round(32 * scale)))
-        font_small = self._font(int(round(20 * scale)))
-        
-        # Testi
-        title = font_big.render("GAME OVER", True, (255, 50, 50))
-        score_txt = font_mid.render(f"Punteggio Finale: {self.score}", True, (255, 255, 255))
-        exit_txt = font_small.render("Premi un tasto per uscire", True, (180, 180, 180))
-        
+
+        # Testi (cachati per stringa/dimensione/colore)
+        title = self._text("GAME OVER", int(round(60 * scale)), (255, 50, 50))
+        score_txt = self._text(f"Punteggio Finale: {self.score}", int(round(32 * scale)), (255, 255, 255))
+        exit_txt = self._text("Premi un tasto per uscire", int(round(20 * scale)), (180, 180, 180))
+
         # Centratura
         self.screen.blit(title, ((sw - title.get_width()) // 2, sh // 2 - 80))
         self.screen.blit(score_txt, ((sw - score_txt.get_width()) // 2, sh // 2))
@@ -400,13 +484,15 @@ class TetranGame(BaseMinigame):
 
     def _draw_block(self, x, y, color, ox, oy, bs, special='none', alpha=255):
         if y < 0: return
-        img = self.assets['blocks'][color].copy()
-        if alpha < 255: img.set_alpha(alpha)
-        img_scaled = pygame.transform.scale(img, (bs, bs))
+        # Blocco scalato+convertito cachato: niente .copy()+transform.scale per
+        # ogni blocco di ogni frame (fino a ~200 blocchi/frame).
+        img_scaled = self._scaled_block(color, bs, alpha)
         self.screen.blit(img_scaled, (ox + x * bs, oy + y * bs))
-        
-        # Effetto Sparkle per blocchi speciali
-        if special != 'none':
+
+        # Effetto Sparkle per blocchi speciali (FX ambient: solo desktop).
+        # Su Android allocare una Surface SRCALPHA per ogni sparkle di ogni
+        # blocco speciale ogni frame affonda gli FPS.
+        if special != 'none' and not self._android:
             t = time.time()
             base_seed = int((x * 37 + y * 23) % 100)
             for i in range(4):
@@ -425,51 +511,53 @@ class TetranGame(BaseMinigame):
                 if cell: self._draw_block(px + x, py + y, color, ox, oy, bs, special, alpha)
 
     def _draw_ui_overlay(self, ox, oy, gw, bs, scale):
-        # Font e Dimensioni dinamiche
-        font_main = self._font(int(round(28 * scale)))
-        font_small = self._font(int(round(18 * scale)))
+        # Dimensioni dinamiche
+        main_size = int(round(28 * scale))
+        small_size = int(round(18 * scale))
         panel_alpha = 190
-        
+        radius = int(12 * scale)
+
         # Buffer orizzontale (distanza dashboard dalla griglia)
         h_margin = int(round(50 * scale))
         dash_w = int(round(200 * scale))
-        
+
         def draw_panel(rect, color=(20, 20, 30)):
-            s = pygame.Surface((rect[2], rect[3]), pygame.SRCALPHA)
-            pygame.draw.rect(s, (*color, panel_alpha), (0, 0, rect[2], rect[3]), border_radius=int(12 * scale))
-            pygame.draw.rect(s, (120, 120, 160, 255), (0, 0, rect[2], rect[3]), 2, border_radius=int(12 * scale))
+            # Pannello cachato per (w, h, color, radius): chrome statico, niente
+            # Surface SRCALPHA + draw.rect ad ogni frame.
+            s = self._panel(rect[2], rect[3], color, radius, panel_alpha)
             self.screen.blit(s, (rect[0], rect[1]))
 
         # --- Dashboard Sinistra (Tempo e Hold) ---
         dash_left_x = ox - dash_w - h_margin
-        
+
         # Pannello Tempo
         t_panel_h = int(round(80 * scale))
         draw_panel((dash_left_x, oy, dash_w, t_panel_h))
         t_time = self._("time_left").format(time=int(self.time_left))
-        
+
         # Effetto "Ansia" sotto i 10 secondi
         time_color = (255, 255, 255)
-        current_font = font_main
+        time_size = main_size
         if self.time_left < 10:
             time_color = (255, 50, 50)
-            # Pulsazione: ingrandimento dinamico
-            pulse = 1.0 + 0.15 * math.sin(time.time() * 10)
-            p_size = int(round(28 * scale * pulse))
-            current_font = self._font(p_size)
+            if not self._android:
+                # Pulsazione: ingrandimento dinamico (FX ambient, solo desktop:
+                # il p_size variabile ogni frame batterebbe la cache testo).
+                pulse = 1.0 + 0.15 * math.sin(time.time() * 10)
+                time_size = int(round(28 * scale * pulse))
             if int(time.time() * 5) % 2 == 0: # Flicker
                 time_color = (255, 200, 200)
 
-        time_surf = current_font.render(t_time, True, time_color)
+        time_surf = self._text(t_time, time_size, time_color)
         self.screen.blit(time_surf, (dash_left_x + (dash_w - time_surf.get_width()) // 2, oy + (t_panel_h - time_surf.get_height()) // 2))
-        
+
         # Pannello Hold
         hold_y = oy + t_panel_h + int(round(20 * scale))
         hold_panel_h = int(round(200 * scale))
         draw_panel((dash_left_x, hold_y, dash_w, hold_panel_h))
         if 'ui' in self.assets:
             box_size = int(round(140 * scale))
-            self.screen.blit(pygame.transform.scale(self.assets['ui']['hold'], (box_size, box_size)), 
+            self.screen.blit(self._scaled_ui('hold', box_size, box_size),
                             (dash_left_x + (dash_w - box_size) // 2, hold_y + 40))
             if self.held_piece_type:
                 # Spostato molto più in basso (+95) per liberare la scritta "HOLD"
@@ -477,16 +565,16 @@ class TetranGame(BaseMinigame):
 
         # --- Dashboard Destra (Score, Multiplier e Next) ---
         dash_right_x = ox + gw + h_margin
-        
+
         # Pannello Score
         s_panel_h = int(round(120 * scale))
         draw_panel((dash_right_x, oy, dash_w, s_panel_h))
-        self.screen.blit(font_small.render("SCORE", True, (200, 200, 240)), (dash_right_x + 20, oy + 12))
-        score_val = font_main.render(str(self.score), True, (255, 255, 255))
+        self.screen.blit(self._text("SCORE", small_size, (200, 200, 240)), (dash_right_x + 20, oy + 12))
+        score_val = self._text(str(self.score), main_size, (255, 255, 255))
         self.screen.blit(score_val, (dash_right_x + 20, oy + 42))
-        
+
         mult_color = (255, int(max(0, 255 - self.multiplier * 20)), 0)
-        mult_text = font_main.render(f"x{round(self.multiplier, 1)}", True, mult_color)
+        mult_text = self._text(f"x{round(self.multiplier, 1)}", main_size, mult_color)
         self.screen.blit(mult_text, (dash_right_x + 20, oy + 78))
 
         # Pannello Next
@@ -495,24 +583,26 @@ class TetranGame(BaseMinigame):
         draw_panel((dash_right_x, next_y, dash_w, next_panel_h))
         if 'ui' in self.assets:
             box_size = int(round(140 * scale))
-            self.screen.blit(pygame.transform.scale(self.assets['ui']['next'], (box_size, box_size)), 
+            self.screen.blit(self._scaled_ui('next', box_size, box_size),
                             (dash_right_x + (dash_w - box_size) // 2, next_y + 40))
             # Spostato molto più in basso (+95) per liberare la scritta "NEXT"
             self._draw_preview(self.next_piece_type, dash_right_x + (dash_w - box_size) // 2 + 30, next_y + 95, bs * 0.6)
-        
+
         # Combo Indicator
         if self.combo_count > 1:
             combo_y = next_y + next_panel_h + int(round(20 * scale))
             draw_panel((dash_right_x, combo_y, dash_w, int(round(70 * scale))), color=(35, 55, 45))
-            combo_text = font_main.render(f"COMBO x{self.combo_count}", True, (0, 255, 180))
+            combo_text = self._text(f"COMBO x{self.combo_count}", main_size, (0, 255, 180))
             self.screen.blit(combo_text, (dash_right_x + (dash_w - combo_text.get_width()) // 2, combo_y + (int(round(70*scale)) - combo_text.get_height()) // 2))
 
     def _draw_preview(self, p_type, px, py, bs):
         data = TETROMINOS[p_type]
+        # Quantizza la dimensione a int per il cache-hit del blocco scalato.
+        ibs = int(bs)
+        img = self._scaled_block(data['color'], ibs)
         for y, row in enumerate(data['shape']):
             for x, cell in enumerate(row):
                 if cell:
-                    img = pygame.transform.scale(self.assets['blocks'][data['color']], (int(bs), int(bs)))
                     self.screen.blit(img, (px + x * bs, py + y * bs))
 
     def _play_sfx(self, key):
@@ -539,6 +629,13 @@ class TetranGame(BaseMinigame):
         self._setup_touch()
 
     def on_resize(self) -> None:
+        # Le cache di rendering sono keyed da dimensioni in pixel: su resize la
+        # scala cambia, quindi le svuotiamo per ri-generare alla nuova taglia
+        # ed evitare crescita illimitata di memoria.
+        self._text_cache.clear()
+        self._block_cache.clear()
+        self._panel_cache.clear()
+        self._scaled_ui_cache.clear()
         self._setup_touch()
 
     def _setup_touch(self) -> None:

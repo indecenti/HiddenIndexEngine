@@ -5,7 +5,6 @@ RenderCanvasMixin — disegno canvas: griglia, background, overlay oggetti,
                     placement preview, toolbar.
 """
 
-import math
 import pygame
 
 from editor.constants import (
@@ -37,8 +36,17 @@ class RenderCanvasMixin:
         self.screen.set_clip(cr)
 
         # --- DIRTY CANVAS SYSTEM ---
+        # La cache statica salta gli oggetti selezionati (li disegna il pass dinamico):
+        # se la selezione cambia, la cache va rigenerata, altrimenti un oggetto appena
+        # deselezionato resta invisibile finché un'altra azione non la ricostruisce.
+        # Check sistemico: copre TUTTI i punti che modificano la selezione.
+        sel_sig = (self.selected_idx, tuple(self.selected_indices))
+        if getattr(self, "_canvas_cache_sel_sig", None) != sel_sig:
+            self._canvas_cache_dirty = True
+            self._canvas_cache_sel_sig = sel_sig
+
         # Se la cache è sporca o non esiste, la rigeneriamo
-        if (self._canvas_cache_dirty or self._canvas_cache_surf is None or 
+        if (self._canvas_cache_dirty or self._canvas_cache_surf is None or
             self._canvas_cache_surf.get_size() != cr.size):
             
             if self._canvas_cache_surf is None or self._canvas_cache_surf.get_size() != cr.size:
@@ -769,7 +777,6 @@ class RenderCanvasMixin:
         return False
 
     def _r_toolbar(self, cr):
-        from editor.constants import UI_TIPS
         mx, my_raw = pygame.mouse.get_pos()
         layout = self._get_toolbar_layout()
         for item in layout:

@@ -117,6 +117,22 @@ class InputHandlersMixin:
             self._preset_key(ev); return
         if self._img_editor_active:
             return
+        # Modali senza editing di testo: assorbono comunque l'input affinche' le
+        # scorciatoie globali (mode 1/2/3/4, Canc, Esc, Ctrl+...) non raggiungano
+        # la scena sottostante mentre il modale e' aperto.
+        if getattr(self, "_minigame_modal", False):
+            if ev.key == pygame.K_ESCAPE:
+                self._minigame_modal = False
+            return
+        if getattr(self, "_scatter_modal_open", False):
+            if ev.key == pygame.K_ESCAPE:
+                self._scatter_modal_open = False
+            return
+        if getattr(self, "_confirm_leave_modal", False):
+            if ev.key == pygame.K_ESCAPE:
+                self._confirm_leave_modal = False
+                self._pending_action = None
+            return
 
         # ── 2. SHORTCUT GLOBALI (Ctrl+S, Ctrl+Z, ...) ─────────────────────────────
         # Funzionano anche se siamo in modalità ricerca o editing proprietà,
@@ -198,22 +214,25 @@ class InputHandlersMixin:
             if ev.key == pygame.K_1:
                 self.mode = MODE_CIRCLE; self._cancel_rect()
                 self.selected_idx = None; self.selected_indices = []
-                self.sel_effect_idx = None; self._editing_prop = None; return
+                self.sel_effect_idx = None; self._editing_prop = None
+                self._mark_dirty(); return
             if ev.key == pygame.K_2:
                 self.mode = MODE_RECT; self._cancel_rect()
                 self.selected_idx = None; self.selected_indices = []
-                self.sel_effect_idx = None; self._editing_prop = None; return
+                self.sel_effect_idx = None; self._editing_prop = None
+                self._mark_dirty(); return
             if ev.key == pygame.K_4:
                 self.mode = MODE_SCATTER; self._cancel_rect()
                 self.selected_idx = None; self.selected_indices = []
                 self.sel_effect_idx = None; self._editing_prop = None
                 self._status("Piazza Cluster (4 oggetti random)", ACCENT, 2)
-                return
+                self._mark_dirty(); return
             if ev.key == pygame.K_3:
                 if self.effects_catalog_sel:
                     self.mode = MODE_EFFECT_PLACE; self._cancel_rect()
                     self.selected_idx = None; self.selected_indices = []
                     self.sel_effect_idx = None; self._editing_prop = None
+                    self._mark_dirty()
                     self._status(f"Piazza effetto: {self.effects_catalog_sel}", FX_C, 2)
                 else:
                     # Se non c'è selezione, apri la tab effetti per facilitare l'utente
@@ -330,21 +349,6 @@ class InputHandlersMixin:
     # SHORTCUT HELPERS
     # ─────────────────────────────────────────────────────────────────────────
 
-    def _select_next_all(self):
-        """Ctrl+A — cicla la selezione su tutti gli oggetti della scena."""
-        objs = self.scene_data.get("objects", [])
-        if not objs:
-            self._status("Nessun oggetto in scena", WARN_C, 2)
-            return
-        if self.selected_idx is None:
-            self.selected_idx = 0
-        else:
-            self.selected_idx = (self.selected_idx + 1) % len(objs)
-        name = objs[self.selected_idx].get("catalog_id", "?")
-        self._status(
-            f"[{self.selected_idx + 1}/{len(objs)}]  {name}", ACCENT, 2
-        )
-
     def _focus_catalog_search(self):
         """/ — porta il focus sulla barra di ricerca del catalogo."""
         if not self.scene_path:
@@ -433,7 +437,7 @@ class InputHandlersMixin:
         if self.mode == MODE_EFFECT_PLACE:
             self.mode = MODE_SELECT
             self.sel_effect_idx = None
-        elif self._rect_placing:
+        elif self._rect_placing or getattr(self, "_circle_placing", False):
             self._cancel_rect()
         elif getattr(self, "sel_effect_idx", None) is not None:
             self.sel_effect_idx = None
@@ -649,6 +653,12 @@ class InputHandlersMixin:
         
         # --- LOGICA RESIZE INTERATTIVO ---
         from editor.constants import PANEL_MIN_W, PANEL_MAX_W
+        # Auto-heal: se il tasto sinistro non è più premuto (mouseup perso fuori
+        # dalla finestra), annulla un resize pannello rimasto "appiccicato".
+        if (getattr(self, "_resizing_l", False) or getattr(self, "_resizing_r", False)) \
+                and not pygame.mouse.get_pressed(num_buttons=3)[0]:
+            self._resizing_l = False
+            self._resizing_r = False
         if getattr(self, "_resizing_l", False):
             self.panel_l_w = _clamp(mx, PANEL_MIN_W, PANEL_MAX_W)
             return
@@ -1079,6 +1089,10 @@ class InputHandlersMixin:
         self._tab_cycle_pos = (self._tab_cycle_pos + 1) % len(self._tab_cycle_hits)
         self.selected_idx   = self._tab_cycle_hits[self._tab_cycle_pos]
         self.r_tab = TAB_PROPS
+        # La cache statica del canvas salta gli oggetti selezionati: cambiando
+        # selezione va invalidata, altrimenti il precedente oggetto deselezionato
+        # sparisce dal canvas (assente sia dalla cache che dal passaggio dinamico).
+        self._mark_dirty()
 
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -2179,15 +2193,6 @@ class InputHandlersMixin:
         self._mark_dirty()
         return True
 
-    def _delete_effect_sel(self):
-        idx = getattr(self, "sel_effect_idx", None)
-        if idx is not None and idx < len(self.scene_data.get("effects", [])):
-            self._push_undo()
-            self.scene_data["effects"].pop(idx)
-            self.sel_effect_idx = None
-            self.scene_dirty = True
-            self._mark_dirty()
-            self._status("Effetto rimosso", WARN_C, 2)
     # ─────────────────────────────────────────────────────────────────────────
     # MENU ACTIONS
     # ─────────────────────────────────────────────────────────────────────────

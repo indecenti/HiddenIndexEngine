@@ -43,8 +43,6 @@ import json
 import logging
 import math
 import sqlite3
-import time
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
@@ -385,20 +383,6 @@ def _connect(base_path: Path) -> sqlite3.Connection:
     con.execute("PRAGMA synchronous = NORMAL")
     _ensure_schema(con)
     return con
-
-
-def has_cache(bg_sha256: str, model_tier: int, base_path: Path) -> bool:
-    p = db_path(base_path)
-    if not p.exists(): return False
-    con = sqlite3.connect(str(p))
-    try:
-        row = con.execute(
-            "SELECT 1 FROM bg_analysis WHERE bg_sha256=? AND model_tier=? AND schema_ver=?",
-            (bg_sha256, model_tier, SCHEMA_VER)
-        ).fetchone()
-        return row is not None
-    finally:
-        con.close()
 
 
 def save(bg, model_tier: int, base_path: Path,

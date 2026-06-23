@@ -11,9 +11,14 @@ import pygame
 from pathlib import Path
 from typing import List, Optional, Tuple
 from engine.minigames.minigame_base import BaseMinigame
-from engine.utils import get_logger, get_resource_path
+from engine.utils import get_logger, get_resource_path, is_android_runtime
 
 log = get_logger(__name__)
+
+# Flag Android a livello modulo: gli FX ricchi (glow, particelle SRCALPHA,
+# smoothscale per-frame) vengono degradati SOLO su Android per guadagnare FPS.
+# Il desktop resta visivamente identico.
+_ANDROID = is_android_runtime()
 
 # Costanti Comic Style (Sincronizzate con Tower)
 ARCADE_RED = (255, 30, 80)
@@ -46,7 +51,14 @@ class AEParticle:
         draw_y = int(round(self.pos.y))
         size = int(round(self.size * s))
         if size < 1: size = 1
-        
+
+        # Su Android evitiamo una Surface SRCALPHA per particella per frame
+        # (allocazione + blit costosi su ARM): disegniamo il cerchio opaco
+        # direttamente sullo schermo. Il fade per-alpha resta solo su desktop.
+        if _ANDROID:
+            pygame.draw.circle(screen, self.color, (draw_x, draw_y), size)
+            return
+
         surf = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
         pygame.draw.circle(surf, (*self.color, int(self.alpha)), (size, size), size)
         screen.blit(surf, (draw_x - size, draw_y - size))
@@ -156,7 +168,13 @@ class Card:
         current_w = max(1, int(self.WIDTH * final_scale * s * flip_scale))
         current_h = int(self.HEIGHT * final_scale * s)
         
-        final_surf = pygame.transform.smoothscale(actual_surf, (current_w, current_h))
+        # Su Android usiamo scale (nearest) invece di smoothscale: le carte sono
+        # in movimento/animate, la differenza visiva e' trascurabile ma il costo
+        # per-frame su ARM (12 carte) e' molto inferiore. Desktop resta smoothscale.
+        if _ANDROID:
+            final_surf = pygame.transform.scale(actual_surf, (current_w, current_h))
+        else:
+            final_surf = pygame.transform.smoothscale(actual_surf, (current_w, current_h))
         if self.error_pulse > 0:
             glow = pygame.Surface(final_surf.get_size(), pygame.SRCALPHA)
             glow.fill((255, 30, 80, int(150 * self.error_pulse)))
@@ -179,7 +197,9 @@ class Card:
             pygame.draw.rect(screen, (0, 0, 0, 70), shadow_rect, border_radius=10)
 
         # 2. Glow reattivo (ora dietro la carta)
-        if (self.is_selected or self.is_hovered) and flip_scale > 0.5:
+        # Su Android lo saltiamo: per ogni carta selezionata/hover crea una
+        # Surface SRCALPHA + loop di draw.rect ogni frame (costoso su ARM).
+        if (self.is_selected or self.is_hovered) and flip_scale > 0.5 and not _ANDROID:
             glow_color = (0, 255, 255) if self.is_selected else (220, 255, 255)
             glow_range = int((10 if self.is_hovered and not self.is_selected else 15) * flip_scale)
             
@@ -227,6 +247,14 @@ class ArcadeElevenGame(BaseMinigame):
         self.time_bonus, self.total_score = 0, 0
         self.f_comic = None
 
+        # Cache di rendering: font (evita SysFont per-frame), testi gia'
+        # renderizzati (keyed da testo,size,colore) e chrome statico.
+        self._font_cache: dict = {}
+        self._text_cache: dict = {}
+        self._logo_cache: Optional[Tuple[tuple, pygame.Surface]] = None
+        self._grad_bg_cache: Optional[Tuple[tuple, pygame.Surface]] = None
+        self._intro_panel_cache: Optional[Tuple[tuple, pygame.Surface]] = None
+
     def start(self) -> None:
         self.load_local_strings(get_resource_path("engine", "minigames", "arcade_eleven", "strings"))
         self._load_cards()
@@ -257,6 +285,9 @@ class ArcadeElevenGame(BaseMinigame):
                 darken = pygame.Surface((sw, sh), pygame.SRCALPHA)
                 darken.fill((0, 0, 0, 70))
                 self.bg_surf.blit(darken, (0, 0))
+                # convert() una volta: lo sfondo viene blittato ogni frame, la
+                # surface convertita rende il blit molto piu' veloce (specie ARM).
+                self.bg_surf = self.bg_surf.convert()
         except Exception as e:
             log.error(f"Errore caricamento background: {e}")
 
@@ -505,6 +536,92 @@ class ArcadeElevenGame(BaseMinigame):
         self.neon_cycle += dt * 2
         self.timer_anim += dt
 
+    def _get_grad_bg(self, sw, sh) -> pygame.Surface:
+        """Gradiente di fallback statico, renderizzato una volta su Surface e
+        riusato (ri-renderizzato solo su cambio risoluzione)."""
+        key = (sw, sh)
+        cached = self._grad_bg_cache
+        if cached is not None and cached[0] == key:
+            return cached[1]
+        bg = pygame.Surface((sw, sh)).convert()
+        for i in range(sh):
+            c = (15 + i // 40, 15 + i // 70, 35 + i // 30)
+            pygame.draw.line(bg, c, (0, i), (sw, i))
+        self._grad_bg_cache = (key, bg)
+        return bg
+
+    def _get_intro_overlay(self, sw, sh, s) -> pygame.Surface:
+        """Composita statica dell'intro (fondo scuro + pannello glassmorphism +
+        istruzioni wrappate) renderizzata una volta e riusata. Si rigenera solo
+        su cambio risoluzione/scala. Il fade viene applicato dal chiamante con
+        set_alpha; qui il fondo usa alpha 178 (== 255*0.7 del codice originale)."""
+        key = (sw, sh, round(s, 4))
+        cached = self._intro_panel_cache
+        if cached is not None and cached[0] == key:
+            return cached[1]
+
+        overlay = pygame.Surface((sw, sh), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 178))
+
+        p_w, p_h = 800 * s, 350 * s
+        panel_rect = pygame.Rect(sw//2 - p_w//2, sh//2 - p_h//2, p_w, p_h)
+
+        # Pannello Glassmorphism Premium
+        pygame.draw.rect(overlay, (20, 40, 60, 180), panel_rect, border_radius=20)
+        pygame.draw.rect(overlay, (0, 255, 255, 120), panel_rect, 2, border_radius=20)
+
+        instr_font = self._font("Segoe UI", int(26 * s))
+
+        # --- SISTEMA DI WRAPPING TESTO ---
+        text = self._("arcade_eleven_instructions")
+        words = text.split(' ')
+        lines = []
+        current_line = []
+
+        max_w = p_w - 80 * s
+        for word in words:
+            test_line = ' '.join(current_line + [word])
+            w, _ = instr_font.size(test_line)
+            if w < max_w:
+                current_line.append(word)
+            else:
+                lines.append(' '.join(current_line))
+                current_line = [word]
+        lines.append(' '.join(current_line))
+
+        # Renderizzazione righe centrate
+        y_off = sh // 2 - (len(lines) * 35 * s) // 2 - 20 * s
+        for line in lines:
+            line_surf = instr_font.render(line, True, (255, 255, 255))
+            overlay.blit(line_surf, (sw//2 - line_surf.get_width()//2, y_off))
+            y_off += 40 * s
+
+        self._intro_panel_cache = (key, overlay)
+        return overlay
+
+    def _font(self, name: str, size, bold: bool = False, italic: bool = False) -> pygame.font.Font:
+        """Font cacheato: evita pygame.font.SysFont ogni frame (lento su Android)."""
+        key = (name, int(size), bold, italic)
+        f = self._font_cache.get(key)
+        if f is None:
+            f = pygame.font.SysFont(name, max(8, int(size)), bold=bold, italic=italic)
+            self._font_cache[key] = f
+        return f
+
+    def _render_text(self, font: pygame.font.Font, text: str, color) -> pygame.Surface:
+        """Surface di testo cacheata keyed da (id_font, testo, colore).
+        Quando il testo non cambia (es. titolo, label) e' un cache-hit: niente
+        font.render per frame. Per testi che cambiano (es. score) si rigenera
+        solo quando la stringa cambia."""
+        key = (id(font), text, color)
+        surf = self._text_cache.get(key)
+        if surf is None:
+            if len(self._text_cache) > 200:
+                self._text_cache.clear()
+            surf = font.render(text, True, color)
+            self._text_cache[key] = surf
+        return surf
+
     def draw(self) -> None:
         sw, sh = self.screen.get_size()
         s = self.scaling_manager.scale
@@ -517,9 +634,8 @@ class ArcadeElevenGame(BaseMinigame):
         if self.bg_surf:
             self.screen.blit(self.bg_surf, (0, 0))
         else:
-            for i in range(sh):
-                c = (15 + i//40, 15 + i//70, 35 + i//30)
-                pygame.draw.line(self.screen, c, (0, i), (sw, i))
+            # Gradiente di fallback cachato: prima era sh draw.line OGNI frame.
+            self.screen.blit(self._get_grad_bg(sw, sh), (0, 0))
             
         # Particelle
         for p in self.particles:
@@ -529,19 +645,19 @@ class ArcadeElevenGame(BaseMinigame):
         for c in self.grid:
             if c: c.draw(self.screen, s, shake_off)
 
-        # HUD - Titolo Neon in alto a sinistra
-        self.f_tit = pygame.font.SysFont("Verdana", int(28 * s), bold=True)
-        self.f_ui = pygame.font.SysFont("Impact", int(22 * s))
-        
+        # HUD - Titolo Neon in alto a sinistra (font cacheati, non SysFont per-frame)
+        self.f_tit = self._font("Verdana", int(28 * s), bold=True)
+        self.f_ui = self._font("Impact", int(22 * s))
+
         # Disegno Titolo con Stile Crystal (Unificato - Titolo Statico)
         title_text = self._("mg_title", "ARCADE ELEVEN").upper()
         self._draw_logo_text(title_text, 50*s, 15*s, s, self.f_tit, (0, 255, 255))
-        
-        
-        # Punti - In alto a destra
+
+
+        # Punti - In alto a destra (cache keyed da stringa: hit finche' lo score non cambia)
         score_label = self._("arcade_eleven_score", "SCORE")
         score_text = f"{score_label}: {self.score}"
-        score_surf = self.f_ui.render(score_text, True, GOLD) # Usiamo GOLD per uniformità
+        score_surf = self._render_text(self.f_ui, score_text, GOLD) # Usiamo GOLD per uniformità
         self.screen.blit(score_surf, (sw - score_surf.get_width() - 40 * s + shake_x, 25 * s + shake_y))
 
         # Timer - In basso a destra
@@ -549,55 +665,60 @@ class ArcadeElevenGame(BaseMinigame):
             t_label = self._("arcade_eleven_time_label", "TIME")
             time_text = f"{t_label}: {int(self.game_time)}s"
             t_color = (200, 200, 255) if self.game_time < 60 else (255, 100, 100)
-            time_surf = self.f_ui.render(time_text, True, t_color)
+            time_surf = self._render_text(self.f_ui, time_text, t_color)
             self.screen.blit(time_surf, (sw - time_surf.get_width() - 40 * s + shake_x, sh - time_surf.get_height() - 25 * s + shake_y))
         
         # Overlays
         if self.intro_alpha > 0:
-            overlay = pygame.Surface((sw, sh), pygame.SRCALPHA)
-            overlay.fill((0, 0, 0, int(self.intro_alpha * 0.7)))
-            
-            p_w, p_h = 800 * s, 350 * s
-            panel_rect = pygame.Rect(sw//2 - p_w//2, sh//2 - p_h//2, p_w, p_h)
-            
-            # Pannello Glassmorphism Premium
-            pygame.draw.rect(overlay, (20, 40, 60, 180), panel_rect, border_radius=20)
-            pygame.draw.rect(overlay, (0, 255, 255, 120), panel_rect, 2, border_radius=20)
-            
-            instr_font = pygame.font.SysFont("Segoe UI", int(26 * s))
-            
-            # --- SISTEMA DI WRAPPING TESTO ---
-            text = self._("arcade_eleven_instructions")
-            words = text.split(' ')
-            lines = []
-            current_line = []
-            
-            max_w = p_w - 80 * s
-            for word in words:
-                test_line = ' '.join(current_line + [word])
-                w, _ = instr_font.size(test_line)
-                if w < max_w:
-                    current_line.append(word)
-                else:
-                    lines.append(' '.join(current_line))
-                    current_line = [word]
-            lines.append(' '.join(current_line))
-            
-            # Renderizzazione righe centrate
-            y_off = sh // 2 - (len(lines) * 35 * s) // 2 - 20 * s
-            for line in lines:
-                line_surf = instr_font.render(line, True, (255, 255, 255))
-                overlay.blit(line_surf, (sw//2 - line_surf.get_width()//2, y_off))
-                y_off += 40 * s
-            
-            # Messaggio pulsante
-            msg_font = pygame.font.SysFont("Segoe UI", int(22 * s), italic=True, bold=True)
-            pulsate = abs(math.sin(pygame.time.get_ticks() * 0.005))
-            msg_color = (200 + 55 * pulsate, 200 + 55 * pulsate, 200 + 55 * pulsate)
-            msg = msg_font.render(self._("arcade_eleven_click_to_start"), True, msg_color)
-            overlay.blit(msg, (sw//2 - msg.get_width()//2, sh//2 + 100 * s))
-            
-            self.screen.blit(overlay, (0, 0))
+            if _ANDROID:
+                # Android: composita statica (fondo scuro + pannello + istruzioni
+                # wrappate) cachata una volta sola; il fade e' reso con set_alpha
+                # sull'intera composita. Evita SysFont + re-wrap + render-per-riga
+                # ogni frame (costo proibitivo su ARM).
+                overlay = self._get_intro_overlay(sw, sh, s)
+                overlay.set_alpha(int(self.intro_alpha))
+                self.screen.blit(overlay, (0, 0))
+                msg_font = self._font("Segoe UI", int(22 * s), bold=True, italic=True)
+                pulsate = abs(math.sin(pygame.time.get_ticks() * 0.005))
+                msg_color = (200 + 55 * pulsate, 200 + 55 * pulsate, 200 + 55 * pulsate)
+                msg = msg_font.render(self._("arcade_eleven_click_to_start"), True, msg_color)
+                msg.set_alpha(int(self.intro_alpha))
+                self.screen.blit(msg, (sw//2 - msg.get_width()//2, sh//2 + 100 * s))
+            else:
+                # Desktop: ricostruzione per-frame fedele all'originale (solo il
+                # fondo scuro sfuma con intro_alpha; pannello e testo restano nitidi).
+                overlay = pygame.Surface((sw, sh), pygame.SRCALPHA)
+                overlay.fill((0, 0, 0, int(self.intro_alpha * 0.7)))
+                p_w, p_h = 800 * s, 350 * s
+                panel_rect = pygame.Rect(sw//2 - p_w//2, sh//2 - p_h//2, p_w, p_h)
+                pygame.draw.rect(overlay, (20, 40, 60, 180), panel_rect, border_radius=20)
+                pygame.draw.rect(overlay, (0, 255, 255, 120), panel_rect, 2, border_radius=20)
+                instr_font = pygame.font.SysFont("Segoe UI", int(26 * s))
+                text = self._("arcade_eleven_instructions")
+                words = text.split(' ')
+                lines = []
+                current_line = []
+                max_w = p_w - 80 * s
+                for word in words:
+                    test_line = ' '.join(current_line + [word])
+                    w, _ = instr_font.size(test_line)
+                    if w < max_w:
+                        current_line.append(word)
+                    else:
+                        lines.append(' '.join(current_line))
+                        current_line = [word]
+                lines.append(' '.join(current_line))
+                y_off = sh // 2 - (len(lines) * 35 * s) // 2 - 20 * s
+                for line in lines:
+                    line_surf = instr_font.render(line, True, (255, 255, 255))
+                    overlay.blit(line_surf, (sw//2 - line_surf.get_width()//2, y_off))
+                    y_off += 40 * s
+                msg_font = pygame.font.SysFont("Segoe UI", int(22 * s), italic=True, bold=True)
+                pulsate = abs(math.sin(pygame.time.get_ticks() * 0.005))
+                msg_color = (200 + 55 * pulsate, 200 + 55 * pulsate, 200 + 55 * pulsate)
+                msg = msg_font.render(self._("arcade_eleven_click_to_start"), True, msg_color)
+                overlay.blit(msg, (sw//2 - msg.get_width()//2, sh//2 + 100 * s))
+                self.screen.blit(overlay, (0, 0))
 
         if self.phase == "VICTORY":
             self._draw_comic_overlay(self._("arcade_eleven_win"), COMIC_YELLOW)
@@ -608,42 +729,104 @@ class ArcadeElevenGame(BaseMinigame):
         if self.phase == "SUMMARY": self._draw_results_summary(sw, sh, s)
 
     def _draw_results_summary(self, sw, sh, s):
-        ov = pygame.Surface((sw, sh), pygame.SRCALPHA); ov.fill((0, 0, 0, 220)); self.screen.blit(ov, (0, 0))
+        # Velo scuro fullscreen blittato OGNI frame per tutta la fase SUMMARY.
+        # Desktop: SRCALPHA alpha 220 (identico all'originale, pixel invariati).
+        # Android: il blit di una SRCALPHA fullscreen per-frame e' ~10x piu' caro
+        # del blit opaco su GPU mobile/software; ad alpha 220 il gioco sottostante
+        # e' coperto al ~86%, quindi usiamo un velo OPACO near-black (.convert())
+        # visivamente quasi indistinguibile ma molto piu' veloce su ARM.
+        cached = getattr(self, "_summary_veil_cache", None)
+        key = (sw, sh, _ANDROID)
+        if cached is None or cached[0] != key:
+            if _ANDROID:
+                veil = pygame.Surface((sw, sh))
+                veil.fill((0, 0, 0))
+                veil = veil.convert()
+            else:
+                veil = pygame.Surface((sw, sh), pygame.SRCALPHA)
+                veil.fill((0, 0, 0, 220))
+            self._summary_veil_cache = (key, veil)
+            cached = self._summary_veil_cache
+        self.screen.blit(cached[1], (0, 0))
         self._draw_comic_overlay("RESULTS", COMIC_YELLOW) # Titolo in alto
-        
+
         y = sh//2 - 50*s
         items = [("BASE SCORE:", self.score), ("SPEED BONUS:", self.time_bonus), ("WIN BONUS:", 1000), ("TOTAL:", self.total_score)]
         for i, (label, val) in enumerate(items):
             c = GOLD if "TOTAL" in label else (255, 255, 255)
             fs = int(24*s) if "TOTAL" not in label else int(32*s)
-            font = pygame.font.SysFont("Impact", fs)
-            self.screen.blit(font.render(f"{label} {val}", True, (0,0,0)), (sw//2 - 198*s, y + 2*s))
-            self.screen.blit(font.render(f"{label} {val}", True, c), (sw//2 - 200*s, y))
+            # Font e testi cacheati (evita SysFont + render per item ogni frame)
+            font = self._font("Impact", fs)
+            txt = f"{label} {val}"
+            self.screen.blit(self._render_text(font, txt, (0, 0, 0)), (sw//2 - 198*s, y + 2*s))
+            self.screen.blit(self._render_text(font, txt, c), (sw//2 - 200*s, y))
             y += 50*s
-        
-        msg = pygame.font.SysFont("Verdana", int(18*s), italic=True).render("CLICK TO CONTINUE", True, (200, 200, 200))
+
+        msg = self._render_text(self._font("Verdana", int(18*s), italic=True), "CLICK TO CONTINUE", (200, 200, 200))
         self.screen.blit(msg, (sw//2 - msg.get_width()//2, sh - 60*s))
 
     def _draw_logo_text(self, text, x, y, s, font, color):
-        # Outline sottile e pulito per massima leggibilità
-        for dx, dy in [(-1,-1), (1,-1), (-1,1), (1,1)]:
-            ts = font.render(text, True, (0, 0, 0))
-            self.screen.blit(ts, (int(x + dx*s), int(y + dy*s)))
-        self.screen.blit(font.render(text, True, color), (int(x), int(y)))
+        # Outline: prima renderizzava il font 5 volte OGNI frame (4 offset neri
+        # + 1 colore). Ora le due render (nero + colore) sono cachate e riusate;
+        # i blit restano alle posizioni ESATTE dell'originale (offset dx*s), quindi
+        # il risultato e' pixel-identico su desktop e Android, senza font.render
+        # per frame finche' testo/colore/font non cambiano.
+        key = (id(font), text, color)
+        cached = self._logo_cache
+        if cached is None or cached[0] != key:
+            ts_black = font.render(text, True, (0, 0, 0))
+            ts_color = font.render(text, True, color)
+            self._logo_cache = (key, ts_black, ts_color)
+            cached = self._logo_cache
+        _, ts_black, ts_color = cached
+        for dx, dy in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:
+            self.screen.blit(ts_black, (int(x + dx * s), int(y + dy * s)))
+        self.screen.blit(ts_color, (int(x), int(y)))
+
+    def _get_comic_veil(self, sw, sh) -> pygame.Surface:
+        """Velo scuro 0,0,0,180 a tutto schermo, cachato (costante)."""
+        cached = getattr(self, "_comic_veil_cache", None)
+        if cached is None or cached[0] != (sw, sh):
+            veil = pygame.Surface((sw, sh), pygame.SRCALPHA)
+            veil.fill((0, 0, 0, 180))
+            self._comic_veil_cache = ((sw, sh), veil)
+            cached = self._comic_veil_cache
+        return cached[1]
+
+    def _get_comic_outline(self, text: str, s: float) -> pygame.Surface:
+        """Bordo nero inchiostrato 8-way pre-renderizzato su una singola Surface
+        trasparente e cachato per testo. Prima venivano fatti 8 font.render +
+        8 rotozoom OGNI frame; ora la composita dell'outline esiste una volta e
+        viene (eventualmente) ruotata una sola volta a runtime."""
+        cache = getattr(self, "_comic_outline_cache", None)
+        if cache is None:
+            cache = {}
+            self._comic_outline_cache = cache
+        off = max(1, int(round(s)))
+        key = (text, off)
+        comp = cache.get(key)
+        if comp is None:
+            ts_border = self.f_comic.render(text, True, (0, 0, 0))
+            bw, bh = ts_border.get_size()
+            pad = 4 * off
+            comp = pygame.Surface((bw + pad * 2, bh + pad * 2), pygame.SRCALPHA)
+            cx, cy = pad, pad
+            for dx, dy in [(-3, -3), (3, -3), (-3, 3), (3, 3), (0, -4), (0, 4), (-4, 0), (4, 0)]:
+                comp.blit(ts_border, (cx + dx * off, cy + dy * off))
+            cache[key] = comp
+        return comp
 
     def _draw_comic_overlay(self, text: str, base_color: tuple):
         sw, sh = self.screen.get_size()
         s = self.scaling_manager.scale
         t = self.timer_anim
-        
+
         # Animazione Burst / Shake (Identica a Tower)
         sc = 1.8 + math.sin(t * 10) * 0.05
         rot = math.sin(t * 5) * 2
-        
-        # Overlay sfondo
-        overlay = pygame.Surface((sw, sh), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 180))
-        self.screen.blit(overlay, (0, 0))
+
+        # Overlay sfondo (velo cachato)
+        self.screen.blit(self._get_comic_veil(sw, sh), (0, 0))
 
         # Colore Strobe
         color = base_color
@@ -652,14 +835,28 @@ class ArcadeElevenGame(BaseMinigame):
         else:
             color = COMIC_YELLOW if (t * 20) % 2 < 1 else COMIC_ORANGE
 
-        # 1. Bordo Nero Inchiostrato (Ink Outline 8-way)
-        for dx, dy in [(-3,-3), (3,-3), (-3,3), (3,3), (0,-4), (0,4), (-4,0), (4,0)]:
-            ts_border = self.f_comic.render(text, True, (0, 0, 0))
-            rt_border = pygame.transform.rotozoom(ts_border, rot, sc)
-            self.screen.blit(rt_border, (sw//2 - rt_border.get_width()//2 + dx*s, 
-                                         sh//2 - rt_border.get_height()//2 + dy*s))
+        # Testo principale: surface cachata per (testo,colore) -> cache-hit sui
+        # due colori dello strobe (niente font.render per frame).
+        ts = self._render_text(self.f_comic, text, color)
 
-        # 2. Testo Principale
-        ts = self.f_comic.render(text, True, color)
-        rt = pygame.transform.rotozoom(ts, rot, sc)
-        self.screen.blit(rt, (sw//2 - rt.get_width()//2, sh//2 - rt.get_height()//2))
+        if _ANDROID:
+            # Su Android saltiamo i rotozoom per-frame (molto cari su ARM) e i 9
+            # font.render: usiamo l'outline composito cachato + testo statico
+            # centrato. L'animazione burst/shake e' un FX desktop-only.
+            outline = self._get_comic_outline(text, s)
+            self.screen.blit(outline, (sw//2 - outline.get_width()//2,
+                                       sh//2 - outline.get_height()//2))
+            self.screen.blit(ts, (sw//2 - ts.get_width()//2, sh//2 - ts.get_height()//2))
+        else:
+            # DESKTOP: percorso originale IDENTICO (8 copie del bordo offsettate
+            # in screen-space dopo il rotozoom). Il render del bordo nero e' pero'
+            # cachato per (testo) via _render_text: niente 8 render/frame, solo
+            # 9 rotozoom (necessari per l'animazione). Risultato visivamente
+            # invariato rispetto al codice originale.
+            ts_border = self._render_text(self.f_comic, text, (0, 0, 0))
+            for dx, dy in [(-3, -3), (3, -3), (-3, 3), (3, 3), (0, -4), (0, 4), (-4, 0), (4, 0)]:
+                rt_border = pygame.transform.rotozoom(ts_border, rot, sc)
+                self.screen.blit(rt_border, (sw//2 - rt_border.get_width()//2 + dx*s,
+                                             sh//2 - rt_border.get_height()//2 + dy*s))
+            rt = pygame.transform.rotozoom(ts, rot, sc)
+            self.screen.blit(rt, (sw//2 - rt.get_width()//2, sh//2 - rt.get_height()//2))

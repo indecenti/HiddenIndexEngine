@@ -75,35 +75,3 @@ def evolved_trim(surf: pygame.Surface, noise_threshold: int = 2) -> pygame.Surfa
     
     logging.info(f"[IMG_LOGIC] Trim evoluto: {w}x{h} -> {new_w}x{new_h} (Rimosse {num_features - np.sum(mask_valid)} impurità)")
     return final_surf
-
-def get_viewport_render(surf: pygame.Surface, view_w: int, view_h: int, zoom: float, pan: list) -> pygame.Surface:
-    """
-    Ritorna una porzione dell'immagine renderizzata per il viewport (Photoshop style).
-    Ottimizzato per non scalare l'intera immagine se enorme.
-    """
-    iw, ih = surf.get_size()
-    
-    # Scala totale
-    total_scale = zoom
-    
-    # Dimensioni desiderate nel viewport
-    sw, sh = int(iw * total_scale), int(ih * total_scale)
-    
-    # Se l'immagine è piccola e lo zoom è basso, usiamo smoothscale semplice
-    # Altrimenti dovremmo fare un sub-surface blit e poi scale
-    # Per ora implementiamo una versione robusta
-    try:
-        if total_scale == 1.0:
-            return surf.copy()
-        
-        # Clamp dimensioni minime
-        sw = max(1, sw)
-        sh = max(1, sh)
-        
-        if total_scale > 1.0:
-            return pygame.transform.scale(surf, (sw, sh))
-        else:
-            return pygame.transform.smoothscale(surf, (sw, sh))
-    except Exception as e:
-        logging.error(f"[IMG_LOGIC] Viewport render error: {e}")
-        return surf

@@ -19,6 +19,7 @@ class CyberNeonSkin(DefaultSkin):
     def __init__(self, theme) -> None:
         super().__init__(theme)
         self._scan = None
+        self._grid = None
 
     def draw_background_pre(self, ms, screen, sw, sh) -> None:
         if self.fx_on(ms, "grid") and not self.reduced(ms):
@@ -27,29 +28,39 @@ class CyberNeonSkin(DefaultSkin):
     def _draw_grid(self, screen, sw, sh) -> None:
         col = self.theme.background("grid_color", [0, 170, 200])
         glow = self.theme.background("glow_color", [255, 0, 255])
-        surf = pygame.Surface((sw, sh), pygame.SRCALPHA)
-        horizon = int(sh * 0.46)
-        # Alone neon all'orizzonte
-        for i in range(6):
-            t = i / 5
-            r = int(sw * 0.5 * (0.3 + 0.7 * t))
-            a = int(20 * (1.0 - t))
-            if a > 0 and r > 0:
-                pygame.draw.circle(surf, (glow[0], glow[1], glow[2], a), (sw // 2, horizon), r)
-        c = (col[0], col[1], col[2])
-        # Orizzontali che si infittiscono verso il basso (prospettiva)
-        rows = 16
-        for i in range(rows + 1):
-            t = i / rows
-            y = horizon + int((sh - horizon) * (t * t))
-            a = int(80 * (0.25 + 0.75 * t))
-            pygame.draw.line(surf, (c[0], c[1], c[2], a), (0, y), (sw, y), 1)
-        # Verticali a ventaglio verso il punto di fuga
-        cols = 16
-        for i in range(cols + 1):
-            bx = sw * i / cols
-            pygame.draw.line(surf, (c[0], c[1], c[2], 45), (bx, sh), (sw / 2, horizon), 1)
-        screen.blit(surf, (0, 0))
+        # CACHE: la griglia (alone neon + ~33 linee in prospettiva) e' STATICA per
+        # dimensione/colori, ma senza cache allocava una Surface SRCALPHA FULLSCREEN
+        # e faceva ~40 draw OGNI frame -> grosso costo sul blit/alloc su GPU mobile.
+        # E' un overlay semitrasparente per natura (alone alpha sopra lo sfondo), quindi
+        # resta SRCALPHA ma lo componiamo UNA volta e poi blittiamo soltanto.
+        key = (sw, sh, tuple(col[:3]), tuple(glow[:3]))
+        cached = self._grid
+        if cached is None or cached[0] != key:
+            surf = pygame.Surface((sw, sh), pygame.SRCALPHA)
+            horizon = int(sh * 0.46)
+            # Alone neon all'orizzonte
+            for i in range(6):
+                t = i / 5
+                r = int(sw * 0.5 * (0.3 + 0.7 * t))
+                a = int(20 * (1.0 - t))
+                if a > 0 and r > 0:
+                    pygame.draw.circle(surf, (glow[0], glow[1], glow[2], a), (sw // 2, horizon), r)
+            c = (col[0], col[1], col[2])
+            # Orizzontali che si infittiscono verso il basso (prospettiva)
+            rows = 16
+            for i in range(rows + 1):
+                t = i / rows
+                y = horizon + int((sh - horizon) * (t * t))
+                a = int(80 * (0.25 + 0.75 * t))
+                pygame.draw.line(surf, (c[0], c[1], c[2], a), (0, y), (sw, y), 1)
+            # Verticali a ventaglio verso il punto di fuga
+            cols = 16
+            for i in range(cols + 1):
+                bx = sw * i / cols
+                pygame.draw.line(surf, (c[0], c[1], c[2], 45), (bx, sh), (sw / 2, horizon), 1)
+            self._grid = (key, surf)
+            cached = self._grid
+        screen.blit(cached[1], (0, 0))
 
     def draw_overlay(self, ms, screen, sw, sh) -> None:
         if self.fx_on(ms, "scanline") and not self.reduced(ms):
@@ -91,18 +102,32 @@ class CyberNeonSkin(DefaultSkin):
         font = theme.get_font_role("title", size, sm)
         spacing = sm.scale_value(int((theme._typography.get("title", {}) or {}).get("spacing", 3)))
         up = text.upper()
-        white = theme.render_spaced(font, up, (255, 255, 255), spacing)
-        cx = screen.get_width() // 2 - white.get_width() // 2
-        ty = sm.scale_value(theme.layout("title_y_offset", 100))
         off = sm.scale_value(2)
-        # Aberrazione cromatica: ciano e magenta sfalsati + nucleo bianco
-        cyan = theme.render_spaced(font, up, (0, 255, 255), spacing)
-        mag = theme.render_spaced(font, up, (255, 0, 255), spacing)
-        cyan.set_alpha(160)
-        mag.set_alpha(160)
-        screen.blit(cyan, (cx - off, ty))
-        screen.blit(mag, (cx + off, ty))
-        screen.blit(white, (cx, ty))
+
+        # CACHE: il titolo (aberrazione cromatica ciano+magenta+bianco) e' statico per
+        # stato/dimensione. Senza cache faceva ~45-51 font.render PER FRAME (render_spaced
+        # per-glifo x3) -> grosso contributo a menu_sys 30-68ms. Lo componiamo UNA volta.
+        key = (up, spacing, off, font.get_height())
+        cached = getattr(self, "_title_cache", None)
+        if cached is None or cached[0] != key:
+            white = theme.render_spaced(font, up, (255, 255, 255), spacing)
+            cyan = theme.render_spaced(font, up, (0, 255, 255), spacing)
+            mag = theme.render_spaced(font, up, (255, 0, 255), spacing)
+            cyan.set_alpha(160)
+            mag.set_alpha(160)
+            w = white.get_width() + 2 * off
+            h = white.get_height()
+            comp = pygame.Surface((max(1, w), max(1, h)), pygame.SRCALPHA)
+            comp.blit(cyan, (0, 0))
+            comp.blit(mag, (2 * off, 0))
+            comp.blit(white, (off, 0))
+            self._title_cache = (key, comp)
+            cached = self._title_cache
+
+        comp = cached[1]
+        cx = screen.get_width() // 2 - comp.get_width() // 2
+        ty = sm.scale_value(theme.layout("title_y_offset", 100))
+        screen.blit(comp, (cx, ty))
 
     def button_jitter(self, ms, b):
         if not (self.fx_on(ms, "glitch") and not self.reduced(ms)):

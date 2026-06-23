@@ -99,6 +99,7 @@
   "hud_found": "GEFUNDEN",
   "hud_left": "ÜBRIG",
   "hud_paused": "PAUSE",
+  "hud_hint": "TIPP",
   "hud_score": "PUNKTE",
   "hud_time": "ZEIT",
   "label_fullscreen": "Schermo:",

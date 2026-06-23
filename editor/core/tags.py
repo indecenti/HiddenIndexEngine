@@ -39,25 +39,17 @@ class TagManager:
             self.tags = {}
 
     def save(self):
-        """Salva la tassonomia su disco in modo atomico."""
+        """Salva la tassonomia su disco in modo atomico (single os.replace + fsync)."""
         try:
-            self.taxonomy_path.parent.mkdir(parents=True, exist_ok=True)
-            temp_path = self.taxonomy_path.with_suffix(".tmp")
-            data = {
-                "version": self.version,
-                "tags": self.tags
-            }
-            with open(temp_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            
-            import os
-            if self.taxonomy_path.exists():
-                bak_path = self.taxonomy_path.with_suffix(".bak")
-                if bak_path.exists(): os.remove(bak_path)
-                os.rename(self.taxonomy_path, bak_path)
-            
-            os.rename(temp_path, self.taxonomy_path)
-            logger.info(f"[TagManager] Registro salvato: {len(self.tags)} tag.")
+            # Usa la scrittura crash-safe condivisa del motore invece del doppio
+            # rename fatto a mano (che lasciava una finestra senza file vivo e non
+            # recuperava mai dal .bak).
+            from engine.utils import safe_write_json
+            data = {"version": self.version, "tags": self.tags}
+            if safe_write_json(self.taxonomy_path, data, indent=2, ensure_ascii=False):
+                logger.info(f"[TagManager] Registro salvato: {len(self.tags)} tag.")
+            else:
+                logger.error("[TagManager] Salvataggio tassonomia fallito (safe_write_json)")
         except Exception as e:
             logger.error(f"[TagManager] Errore salvataggio tassonomia: {e}")
 
@@ -82,7 +74,7 @@ class TagManager:
                         if isinstance(item, dict):
                             for t in item.get("tags", []):
                                 found_tags.add(t.strip().lower())
-            except: pass
+            except Exception: pass
 
         # 3. Cataloghi dei Giochi
         games_dir = self.base_path / "games"
@@ -116,7 +108,7 @@ class TagManager:
                 for obj in objs:
                     for t in obj.get("tags", []):
                         tag_set.add(t.strip().lower())
-        except: pass
+        except Exception: pass
 
     def get_all_tag_ids(self) -> List[str]:
         return sorted(list(self.tags.keys()))
