@@ -6,7 +6,6 @@ TagModalMixin — dialogo per la modifica dei tag di un oggetto del catalogo.
 
 import pygame
 import logging
-from pathlib import Path
 
 from editor.constants import (
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC,
@@ -39,37 +38,38 @@ class TagModalMixin:
         self._tag_modal_active = True
         self._tag_modal_searching = True # Focus immediato sulla ricerca
         self._tag_modal_dirty = False
-        self._tag_modal_suggestions = self.tag_manager.get_suggestions("")
+        # limit alto: il default (20) impedisce di vedere/assegnare i tag oltre il 20esimo.
+        self._tag_modal_suggestions = self.tag_manager.get_suggestions("", limit=10000)
 
     def _tag_modal_key(self, ev):
         if ev.key == pygame.K_ESCAPE:
             self._tag_modal_active = False
             return
         if ev.key == pygame.K_RETURN:
-            if self._tag_modal_searching:
-                self._tag_modal_searching = False
-            else:
-                self._tag_modal_commit()
-            return
-        
-        if self._tag_modal_searching:
-            if ev.key == pygame.K_BACKSPACE:
-                self._tag_modal_search = self._tag_modal_search[:-1]
-                self._tag_modal_scroll = 0
-                self._tag_modal_suggestions = self.tag_manager.get_suggestions(self._tag_modal_search)
-            elif ev.unicode and ev.unicode.isprintable() and ev.unicode not in ",;":
-                self._tag_modal_search += ev.unicode.lower()
-                self._tag_modal_scroll = 0
-                self._tag_modal_suggestions = self.tag_manager.get_suggestions(self._tag_modal_search)
-            
-            if ev.key == pygame.K_RETURN and self._tag_modal_search:
-                # CREAZIONE DINAMICA: se premi invio, aggiungiamo il tag (creandolo se serve)
+            if self._tag_modal_searching and self._tag_modal_search:
+                # CREAZIONE DINAMICA: invio crea/recupera il tag e lo assegna.
                 new_tag = self.tag_manager.ensure_tag(self._tag_modal_search)
                 if new_tag and new_tag not in self._tag_modal_current_tags:
                     self._tag_modal_current_tags.add(new_tag)
                     self._tag_modal_dirty = True
-                    self._tag_modal_search = ""
-                    self._tag_modal_suggestions = self.tag_manager.get_suggestions("")
+                self._tag_modal_search = ""
+                self._tag_modal_scroll = 0
+                self._tag_modal_suggestions = self.tag_manager.get_suggestions("", limit=10000)
+            elif self._tag_modal_searching:
+                self._tag_modal_searching = False
+            else:
+                self._tag_modal_commit()
+            return
+
+        if self._tag_modal_searching:
+            if ev.key == pygame.K_BACKSPACE:
+                self._tag_modal_search = self._tag_modal_search[:-1]
+                self._tag_modal_scroll = 0
+                self._tag_modal_suggestions = self.tag_manager.get_suggestions(self._tag_modal_search, limit=10000)
+            elif ev.unicode and ev.unicode.isprintable() and ev.unicode not in ",;":
+                self._tag_modal_search += ev.unicode.lower()
+                self._tag_modal_scroll = 0
+                self._tag_modal_suggestions = self.tag_manager.get_suggestions(self._tag_modal_search, limit=10000)
         else:
             if ev.key == pygame.K_SLASH:
                 self._tag_modal_searching = True

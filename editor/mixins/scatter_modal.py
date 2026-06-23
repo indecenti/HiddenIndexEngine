@@ -16,7 +16,6 @@ canvas (overlay disegnato da render_canvas) finche l'utente non clicca Applica.
 import logging
 import time
 from collections import Counter
-from pathlib import Path
 
 import pygame
 
@@ -245,26 +244,32 @@ class ScatterModalMixin:
 
     def _scatter_load_model(self):
         """Carica/sostituisce il modello in base alla scelta tier corrente."""
+        import threading
         from editor.tools.scatter_models import get_best_model
-        force = self._scatter_force_tier_int()
-        try:
-            self._scatter_model = get_best_model(self.base_path,
-                                                  force_tier=force,
-                                                  quick_benchmark=False)
-            self._scatter_model_tier_active = self._scatter_model.tier
-            log.info(f"[SCATTER] Modello attivo: tier={self._scatter_model.tier} ({self._scatter_model.name})")
-        except FileNotFoundError as e:
-            # Modello richiesto manca: notifica + fallback
-            self._scatter_status_msg = f"Modello mancante: scaricalo dal pulsante"
-            self._scatter_status_color = WARN_C
-            self._scatter_model = None
-            self._scatter_model_tier_active = 0
-        except Exception as e:
-            log.exception("Caricamento modello fallito")
-            self._scatter_status_msg = f"Errore modello: {e}"
-            self._scatter_status_color = ERR_C
-            self._scatter_model = None
-            self._scatter_model_tier_active = 0
+        if getattr(self, "_scatter_model_lock", None) is None:
+            self._scatter_model_lock = threading.Lock()
+        # Serializza il thread di preload e il caricamento on-demand: evita due build
+        # ONNX concorrenti e l'assegnazione incoerente di self._scatter_model.
+        with self._scatter_model_lock:
+            force = self._scatter_force_tier_int()
+            try:
+                self._scatter_model = get_best_model(self.base_path,
+                                                      force_tier=force,
+                                                      quick_benchmark=False)
+                self._scatter_model_tier_active = self._scatter_model.tier
+                log.info(f"[SCATTER] Modello attivo: tier={self._scatter_model.tier} ({self._scatter_model.name})")
+            except FileNotFoundError as e:
+                # Modello richiesto manca: notifica + fallback
+                self._scatter_status_msg = f"Modello mancante: scaricalo dal pulsante"
+                self._scatter_status_color = WARN_C
+                self._scatter_model = None
+                self._scatter_model_tier_active = 0
+            except Exception as e:
+                log.exception("Caricamento modello fallito")
+                self._scatter_status_msg = f"Errore modello: {e}"
+                self._scatter_status_color = ERR_C
+                self._scatter_model = None
+                self._scatter_model_tier_active = 0
 
     def _scatter_download_model(self, tier: int):
         """Scarica il modello del tier richiesto (blocking, con status messages).
@@ -298,7 +303,6 @@ class ScatterModalMixin:
                 pass
 
             def cb_multi(name, d, total):
-                nonlocal last_pct
                 cb_single(d, total, name)
 
             ok = download_ultra(self.base_path, progress_cb=cb_multi)
@@ -670,7 +674,7 @@ class ScatterModalMixin:
         _draw_text(self.screen, "Distribuisci su layer", "sm", TXT_DIM, LBL_X, y + 8)
         # 3 checkbox: LOW / MID / HIGH
         layer_opts = [
-            ("objects_low", "LOW", layer_color("objects_low") if False else (160, 110, 80)),
+            ("objects_low", "LOW", (160, 110, 80)),
             ("objects_mid", "MID", (110, 160, 110)),
             ("objects_high", "HIGH", (110, 130, 200)),
         ]

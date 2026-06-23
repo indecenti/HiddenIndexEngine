@@ -41,9 +41,21 @@ class MiniPongGame(BaseMinigame):
         
         self.state_timer = 0.0
         self.scanline_surf = None
-        
+
         # Cache per le surface dei numeri (per evitare di ricrearle ogni frame)
         self.digit_surfaces: Dict[int, pygame.Surface] = {}
+        # Cache delle cifre gia' scalate, keyed da (digit, size): evita lo
+        # scale per-frame nel hot loop dei punteggi (caro su ARM/Android).
+        self._scaled_digit_cache: Dict[tuple, pygame.Surface] = {}
+        # Cache delle Surface di testo renderizzate (font.render e' tra le op
+        # piu' care su Android): keyed da (text, int_size, color).
+        self._text_cache: Dict[tuple, pygame.Surface] = {}
+        # Cache dei font SysFont per (nome, dimensione, bold): SysFont e' costoso
+        # se costruito ogni frame.
+        self._font_cache: Dict[tuple, pygame.font.Font] = {}
+        # Surface opaca scura riusata per l'overlay finale (niente SRCALPHA
+        # fullscreen ricreata ogni frame).
+        self._end_overlay_surf = None
 
     def start(self) -> None:
         self.player_score = 0
@@ -61,7 +73,10 @@ class MiniPongGame(BaseMinigame):
                 for x, char in enumerate(row):
                     if char == 'X':
                         surf.set_at((x, y), cfg.COLOR_MAIN)
-            self.digit_surfaces[val] = surf
+            # convert_alpha una volta: blit ripetuti enormemente piu' veloci.
+            self.digit_surfaces[val] = surf.convert_alpha()
+        # La cache delle cifre scalate va invalidata se ricreiamo le sorgenti.
+        self._scaled_digit_cache.clear()
 
     def _create_scanlines(self):
         # Su Android niente scanline (blit full-screen SRCALPHA per frame troppo lento).
@@ -69,9 +84,42 @@ class MiniPongGame(BaseMinigame):
             self.scanline_surf = None
             return
         sw, sh = self.screen.get_size()
-        self.scanline_surf = pygame.Surface((sw, sh), pygame.SRCALPHA)
+        surf = pygame.Surface((sw, sh), pygame.SRCALPHA)
         for y in range(0, sh, 3):
-            pygame.draw.line(self.scanline_surf, (0, 0, 0, 35), (0, y), (sw, y))
+            pygame.draw.line(surf, (0, 0, 0, 35), (0, y), (sw, y))
+        # convert_alpha: questa surface viene blittata ogni frame.
+        self.scanline_surf = surf.convert_alpha()
+
+    def _get_font(self, name: str, size: int, bold: bool = False) -> pygame.font.Font:
+        """Ritorna un SysFont cachato per (nome, dimensione, bold)."""
+        key = (name, size, bold)
+        font = self._font_cache.get(key)
+        if font is None:
+            font = pygame.font.SysFont(name, size, bold=bold)
+            self._font_cache[key] = font
+        return font
+
+    def _get_text_surface(self, font_key: tuple, text: str, color: tuple) -> pygame.Surface:
+        """Ritorna una Surface di testo renderizzata e cachata.
+
+        La chiave include font (nome/size/bold), testo e colore: quando nulla
+        cambia e' un cache-hit e si evita la costosa font.render per-frame.
+        """
+        cache_key = (font_key, text, color)
+        surf = self._text_cache.get(cache_key)
+        if surf is None:
+            font = self._get_font(*font_key)
+            surf = font.render(text, True, color).convert_alpha()
+            self._text_cache[cache_key] = surf
+        return surf
+
+    def on_resize(self) -> None:
+        # Alla variazione di risoluzione invalido le cache dipendenti dalla
+        # scala/dimensione schermo e ricostruisco le scanline.
+        self._scaled_digit_cache.clear()
+        self._text_cache.clear()
+        self._end_overlay_surf = None
+        self._create_scanlines()
 
     def _reset_ball(self, to_player: bool = True) -> None:
         self.ball_pos = pygame.Vector2(cfg.REF_W / 2, cfg.REF_H / 2)
@@ -209,24 +257,29 @@ class MiniPongGame(BaseMinigame):
 
     def _draw_end_overlay(self) -> None:
         sw, sh = self.screen.get_size()
-        overlay = pygame.Surface((sw, sh), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 200))
+        # Overlay scuro: una Surface opaca riusata con set_alpha invece di
+        # ricreare una SRCALPHA fullscreen + fill ogni frame (~10x su Android).
+        overlay = self._end_overlay_surf
+        if overlay is None or overlay.get_size() != (sw, sh):
+            overlay = pygame.Surface((sw, sh)).convert()
+            overlay.fill((0, 0, 0))
+            overlay.set_alpha(200)
+            self._end_overlay_surf = overlay
         self.screen.blit(overlay, (0, 0))
-        
+
         success = self.player_score >= cfg.WIN_LIMIT
         msg_key = "pong_win" if success else "pong_lose"
-        text = self._(msg_key)
-        
+        text = self._(msg_key).upper()
+
         color = (100, 255, 100) if success else (255, 100, 100)
-        font = pygame.font.SysFont("Segoe UI", self.scaling_manager.scale_value(80), bold=True)
-        surf = font.render(text.upper(), True, color)
-        rect = surf.get_rect(center=(sw//2, sh//2))
-        
-        # Effetto pulsante
+        font_key = ("Segoe UI", self.scaling_manager.scale_value(80), True)
+
+        # Effetto pulsante: seleziona tra due Surface cachate (colore vs bianco)
+        # invece di ri-renderizzare il font ogni frame.
         pulsate = abs(math.sin(pygame.time.get_ticks() * 0.005))
-        if pulsate > 0.8:
-            surf = font.render(text.upper(), True, (255, 255, 255))
-            
+        draw_color = (255, 255, 255) if pulsate > 0.8 else color
+        surf = self._get_text_surface(font_key, text, draw_color)
+        rect = surf.get_rect(center=(sw//2, sh//2))
         self.screen.blit(surf, rect)
 
     def _draw_center_line(self) -> None:
@@ -260,14 +313,33 @@ class MiniPongGame(BaseMinigame):
         for char in s_score:
             digit = int(char)
             if digit in self.digit_surfaces:
-                orig_surf = self.digit_surfaces[digit]
-                # Scalo l'intera cifra con Nearest Neighbor per pixel perfetti
-                scaled_digit = pygame.transform.scale(orig_surf, size)
+                # Scalo l'intera cifra con Nearest Neighbor per pixel perfetti.
+                # Cache keyed da (digit, size): lo scale avviene una sola volta
+                # per dimensione (la chiave cambia solo su resize), non ogni frame.
+                cache_key = (digit, size)
+                scaled_digit = self._scaled_digit_cache.get(cache_key)
+                if scaled_digit is None:
+                    orig_surf = self.digit_surfaces[digit]
+                    scaled = pygame.transform.scale(orig_surf, size)
+                    if self._android:
+                        # Su Android la cifra viene composta su una tile OPACA
+                        # riempita col colore di sfondo (lo schermo e' gia'
+                        # COLOR_BG sotto i punteggi): blit opaco per-frame ~10x
+                        # piu' veloce dell'SRCALPHA. Pixel identici perche' il
+                        # fondo e' noto e costante. Sul desktop resta SRCALPHA.
+                        tile = pygame.Surface(size)
+                        tile.fill(cfg.COLOR_BG)
+                        tile.blit(scaled, (0, 0))
+                        scaled_digit = tile.convert()
+                    else:
+                        scaled_digit = scaled.convert_alpha()
+                    self._scaled_digit_cache[cache_key] = scaled_digit
                 self.screen.blit(scaled_digit, (int(round(curr_x)), int(round(y))))
                 curr_x += size[0] + (size[0]//3) # Spazio proporzionale
 
     def _draw_text_overlay(self, text: str, y_off: int) -> None:
-        font = pygame.font.SysFont("Arial", self.scaling_manager.scale_value(25))
-        surf = font.render(text, True, (150, 150, 150))
-        self.screen.blit(surf, (self.screen.get_width()//2 - surf.get_width()//2, 
+        # Font e Surface cachati: niente SysFont + font.render per-frame.
+        font_key = ("Arial", self.scaling_manager.scale_value(25), False)
+        surf = self._get_text_surface(font_key, text, (150, 150, 150))
+        self.screen.blit(surf, (self.screen.get_width()//2 - surf.get_width()//2,
                                 self.screen.get_height()//2 + self.scaling_manager.scale_value(y_off)))

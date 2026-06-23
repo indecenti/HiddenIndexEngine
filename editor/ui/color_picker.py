@@ -114,6 +114,10 @@ def ask_color(screen: pygame.Surface, bg_surf: pygame.Surface = None,
         
         for ev in pygame.event.get():
             if ev.type == pygame.QUIT:
+                # Ri-posta l'evento: questo loop bloccante consuma tutta la coda,
+                # quindi senza re-post l'intento di chiusura andrebbe perso e l'app
+                # non si chiuderebbe. Il main loop dell'editor lo gestira'.
+                pygame.event.post(pygame.event.Event(pygame.QUIT))
                 running = False
             elif ev.type == pygame.MOUSEBUTTONDOWN:
                 if ev.button == 1:

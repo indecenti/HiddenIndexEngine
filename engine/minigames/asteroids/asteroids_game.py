@@ -252,6 +252,32 @@ class AsteroidsGame(BaseMinigame):
         self.font_main = None
         self.font_score = None
 
+        # Cache di rendering del testo: keyed da (id_font, testo, colore).
+        # font.render e' una delle op piu' care su ARM; rendiamo ogni stringa
+        # una sola volta e blittiamo la Surface gia' pronta (cache-hit quando
+        # testo/colore non cambiano, es. lo score quando il punteggio e' fermo).
+        self._text_cache = {}
+        # Raggi scalati pre-calcolati (scale_value e' costante per dimensione di
+        # riferimento data; evitiamo la chiamata per ogni bullet/particella).
+        self._bullet_radius = 2
+        self._particle_radius = 1
+
+    def _render_text(self, font: pygame.font.Font, text: str, color: tuple) -> pygame.Surface:
+        """Ritorna una Surface di testo cachata (render una sola volta)."""
+        key = (id(font), text, color)
+        surf = self._text_cache.get(key)
+        if surf is None:
+            if len(self._text_cache) > 200:
+                self._text_cache.clear()
+            surf = font.render(text, True, color).convert_alpha()
+            self._text_cache[key] = surf
+        return surf
+
+    def _refresh_scaled_values(self) -> None:
+        """Pre-calcola i raggi scalati (costanti finche' non cambia lo scale)."""
+        self._bullet_radius = self.scaling_manager.scale_value(2)
+        self._particle_radius = self.scaling_manager.scale_value(1)
+
     def start(self) -> None:
         self.score = 0
         self.lives = cfg.INITIAL_LIVES
@@ -287,12 +313,21 @@ class AsteroidsGame(BaseMinigame):
                        glyph="up", color=(120, 255, 170))
 
     def on_resize(self) -> None:
+        # Al cambio risoluzione vanno rigenerati: font (dimensione legata allo scale)
+        # + Surface FX cachate (scanline/raggi) + layout dei controlli touch. Prima
+        # esistevano DUE on_resize e il secondo shadowava questo, saltando il touch.
+        self._prepare_fonts()
+        self._setup_fx_surfaces()
         self._setup_touch()
 
     def _prepare_fonts(self):
         # Carica un font monospazio o arcade se disponibile, altrimenti sistema
         self.font_main = pygame.font.SysFont("Courier New", self.scaling_manager.scale_value(40), bold=True)
         self.font_score = pygame.font.SysFont("Courier New", self.scaling_manager.scale_value(25))
+        # I font sono stati ricreati (dimensione legata allo scale): le Surface
+        # di testo cachate non sono piu' valide e i raggi scalati vanno aggiornati.
+        self._text_cache = {}
+        self._refresh_scaled_values()
 
     def _spawn_level(self):
         self.level += 1
@@ -597,10 +632,13 @@ class AsteroidsGame(BaseMinigame):
     def draw(self) -> None:
         self.screen.fill(cfg.COLOR_BG)
         
-        # Disegna Proiettili
+        # Disegna Proiettili (raggio scalato pre-calcolato: niente scale_value
+        # per ogni bullet ogni frame)
+        bullet_radius = self._bullet_radius
+        ref_to_screen = self.scaling_manager.ref_to_screen
         for b in self.bullets:
-            sp = self.scaling_manager.ref_to_screen(b.pos.x, b.pos.y)
-            pygame.draw.circle(self.screen, cfg.COLOR_WHITE, sp, self.scaling_manager.scale_value(2))
+            sp = ref_to_screen(b.pos.x, b.pos.y)
+            pygame.draw.circle(self.screen, cfg.COLOR_WHITE, sp, bullet_radius)
 
         # Disegna Asteroidi
         for a in self.asteroids:
@@ -615,11 +653,12 @@ class AsteroidsGame(BaseMinigame):
             alpha = int(f.life * 255)
             self._draw_poly(f.pos, f.points, f.angle, (alpha, alpha, alpha))
 
-        # Disegna Particelle
+        # Disegna Particelle (raggio scalato pre-calcolato)
+        particle_radius = self._particle_radius
         for p in self.particles:
             alpha = int((p.life / 0.6) * 255)
-            sp = self.scaling_manager.ref_to_screen(p.pos.x, p.pos.y)
-            pygame.draw.circle(self.screen, (alpha, alpha, alpha), sp, self.scaling_manager.scale_value(1))
+            sp = ref_to_screen(p.pos.x, p.pos.y)
+            pygame.draw.circle(self.screen, (alpha, alpha, alpha), sp, particle_radius)
 
         # Disegna Nave
         if self.ship:
@@ -654,7 +693,17 @@ class AsteroidsGame(BaseMinigame):
             shifted_points.append(sp)
         
         if len(shifted_points) >= 2:
-            # Effetto BLOOM/GLOW (Vector Style)
+            if self._android:
+                # Su Android le primitive anti-aliased (aaline/aalines) e il
+                # pass di glow sono costose negli hot loop: disegniamo solo la
+                # linea piena, niente glow ne' AA (Rule #6/#7). Il desktop resta
+                # identico (ramo else).
+                if len(shifted_points) == 2:
+                    pygame.draw.line(self.screen, color, shifted_points[0], shifted_points[1], 2)
+                else:
+                    pygame.draw.lines(self.screen, color, True, shifted_points, 2)
+                return
+            # Effetto BLOOM/GLOW (Vector Style) - solo desktop
             # Disegna una versione più spessa e trasparente sotto
             glow_color = (color[0]//4, color[1]//4, color[2]//4)
             if len(shifted_points) == 2:
@@ -667,9 +716,11 @@ class AsteroidsGame(BaseMinigame):
                 pygame.draw.aalines(self.screen, color, True, shifted_points)
 
     def _draw_ui(self):
-        # Score (allineato a destra in coordinate di riferimento)
+        # Score (allineato a destra in coordinate di riferimento).
+        # Cache per stringa: quando il punteggio non cambia e' un cache-hit e
+        # non ri-renderizziamo il font ogni frame.
         score_text = self._("asteroids_score").format(score=self.score)
-        score_surf = self.font_score.render(score_text, True, cfg.COLOR_WHITE)
+        score_surf = self._render_text(self.font_score, score_text, cfg.COLOR_WHITE)
         
         # Calcoliamo la posizione partendo dal margine destro di riferimento (1280)
         # e la convertiamo in pixel schermo per il blit
@@ -696,11 +747,8 @@ class AsteroidsGame(BaseMinigame):
             self._draw_centered_text("PRESS ANY KEY TO EXIT", 30, self.font_score)
 
     def _draw_centered_text(self, text: str, y_offset: int, font: pygame.font.Font):
-        surf = font.render(text, True, cfg.COLOR_WHITE)
+        # Testi di START/GAMEOVER: statici, cachati (render una sola volta).
+        surf = self._render_text(font, text, cfg.COLOR_WHITE)
         x = self.screen.get_width() // 2 - surf.get_width() // 2
         y = self.screen.get_height() // 2 - surf.get_height() // 2 + int(round(self.scaling_manager.scale_value(y_offset)))
         self.screen.blit(surf, (x, y))
-
-    def on_resize(self) -> None:
-        self._prepare_fonts()
-        self._setup_fx_surfaces()

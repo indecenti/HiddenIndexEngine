@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 from engine.utils import get_logger, warp_surface, apply_grayscale, is_android_runtime, get_resource_path
+from engine import haptics
 from engine.scaling_manager import ScalingManager
 from engine.save_manager import SaveManager
 from engine.transition_manager import TransitionManager, TransitionType
@@ -66,7 +67,11 @@ class EngineCore:
         self.is_fullscreen = cli_args.fullscreen or config.getboolean("engine", "fullscreen", fallback=False)
         self.music_volume = config.getfloat("engine", "music_volume", fallback=1.0)
         self.sfx_volume = config.getfloat("engine", "sfx_volume", fallback=1.0)
-        
+        # Feedback aptico: abilitato di default. La preferenza e' letta/persistita via
+        # SaveManager (store scrivibile anche su Android), non via config.ini che su
+        # Android e' in una dir read-only. Inizializzato dopo la creazione del save.
+        self.vibration_enabled = True
+
         self.logger.info(f"Inizializzazione gioco '{game_id}': {self.res_w}x{self.res_h} (FS:{self.is_fullscreen})")
         
         # Forza centratura finestra su Windows/Linux/Mac
@@ -75,15 +80,18 @@ class EngineCore:
         # Hint SDL renderer ottimizzati per Android (devono essere settati PRIMA di
         # pygame.init / set_mode). Su Windows queste variabili sono ignorate.
         if is_android_runtime():
-            # '0' = nearest neighbor (max FPS, lieve pixelosità — accettabile su
-            # mobile DPI alti). '1' = linear, '2' = anisotropic (lenti su Android).
-            os.environ.setdefault('SDL_HINT_RENDER_SCALE_QUALITY', '0')
+            # '1' = bilinear (default per un HOG: gli oggetti e il testo upscalati
+            # dalla risoluzione interna restano morbidi invece di "scalettare").
+            # '0' = nearest (più nitido sui pixel ma stairstepping su icone/glow,
+            # difetto fatale per un genere "del guardare"). Su GLES2 il bilinear è
+            # quasi gratis. '2' = anisotropic (lento su Android).
+            os.environ.setdefault('SDL_HINT_RENDER_SCALE_QUALITY', '1')
             # Forza l'uso del renderer hardware-accelerated (OpenGL ES)
             os.environ.setdefault('SDL_HINT_RENDER_DRIVER', 'opengles2')
             # Batching dei draw calls per ridurre overhead per chiamata
             os.environ.setdefault('SDL_HINT_RENDER_BATCHING', '1')
-            # Non comprimere texture su upload → meno CPU, più memoria GPU (OK)
-            os.environ.setdefault('SDL_HINT_RENDER_TEXTURE_FILTERING', 'nearest')
+            # Filtro texture lineare coerente con lo scale quality (no stairstepping)
+            os.environ.setdefault('SDL_HINT_RENDER_TEXTURE_FILTERING', 'linear')
             # Evita inizializzazione moduli pygame non usati
             os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 
@@ -131,7 +139,10 @@ class EngineCore:
         # potrebbero servire per drag/hover in alcune scene/minigiochi.
         if is_android_runtime():
             pygame.event.set_blocked([
-                pygame.MULTIGESTURE,    # pinch-zoom multi-touch (non usato)
+                # MULTIGESTURE bloccato di proposito: il pinch-zoom e' implementato via
+                # eventi FINGER* (vedi _handle_finger_*), non tramite MULTIGESTURE. NON
+                # riabilitarlo: creerebbe un secondo flusso di zoom in conflitto.
+                pygame.MULTIGESTURE,
                 pygame.JOYAXISMOTION,
                 pygame.JOYHATMOTION,
                 pygame.JOYBALLMOTION,
@@ -169,6 +180,9 @@ class EngineCore:
         self._reconfigure_safe_area()
 
         self.save_manager = SaveManager(self.game_id)
+        # Preferenza vibrazione dallo store persistente (scrivibile su Android).
+        self.vibration_enabled = bool(self.save_manager.get_progress("vibration_enabled", True))
+        haptics.set_enabled(self.vibration_enabled)
         
         reduced = config.getboolean("engine", "reduced_animations", fallback=False)
         self.transition_manager = TransitionManager(reduced_animations=reduced)
@@ -242,6 +256,7 @@ class EngineCore:
         self.menu_system.is_fullscreen = self.is_fullscreen
         self.menu_system.music_volume = self.music_volume
         self.menu_system.sfx_volume = self.sfx_volume
+        self.menu_system.vibration_enabled = self.vibration_enabled
         
         # Se non ci sono livelli sbloccati, sblocchiamo il primo disponibile (nuovo gioco)
         self._ensure_first_level_unlocked()
@@ -329,7 +344,27 @@ class EngineCore:
 
         # Inizio gesto touch (per swipe del cassetto HUD su Android)
         self._touch_start = None
-        
+
+        # ── Gesti touch multi-dito: pinch-to-zoom + pan (ispezione scena) ────────
+        # Tracciamo le dita via eventi FINGER* (multitouch reale). Le regole d'oro:
+        #   - un gesto a 2 dita NON deve mai generare un tap/penalità (snap-find) né
+        #     aprire/chiudere il cassetto HUD;
+        #   - lo zoom è centrato sul punto medio delle dita (pinch naturale);
+        #   - a una dita, quando si è ingranditi, il trascinamento fa pan (non tap).
+        self._touch_points: dict[int, tuple[float, float]] = {}  # finger_id -> px interni
+        self._gesture_active = False   # 2+ dita a contatto adesso
+        self._gesture_seen = False     # gesto multitouch in corso (True finché restano dita)
+        self._pinch_ref_dist = 0.0
+        self._pinch_ref_zoom = 1.0
+        self._pinch_last_centroid = (0.0, 0.0)
+        self._one_finger_panning = False  # drag a una dita mentre si è ingranditi
+
+        # ── Onboarding first-run (solo Android): coachmark una tantum che insegna
+        # pinch-to-zoom, lista oggetti e maniglia HUD. Persistito via SaveManager
+        # (store scrivibile su Android, a differenza di config.ini).
+        self._coach_active = self._is_android and not self.save_manager.get_progress("coach_seen", False)
+        self._coach_timer = 0.0
+
         if getattr(cli_args, "minigame", None):
             self.logger.info(f"MODALITÀ TEST: Avvio istantaneo minigioco {cli_args.minigame}")
             success = self.minigame_manager.start_minigame(
@@ -427,6 +462,12 @@ class EngineCore:
             bw, bh = self._current_bg_surface.get_size()
             bg_scale = getattr(self, '_current_bg_scale', 1.0)
             self.scaling_manager.set_background(bw, bh, bg_scale)
+            # Il pan è un offset in pixel-schermo legato alla geometria precedente:
+            # dopo un resize (split-screen/foldable/cutout su Android, o cambio
+            # risoluzione su desktop) lo azzeriamo per non far "saltare" la vista.
+            self.scaling_manager.reset_pan_zoom()
+            if hasattr(self, '_touch_points'):
+                self._reset_touch_state()
             self.logger.debug(f"Background scena ri-scalato: {bw}x{bh} @ {bg_scale}")
         
         # Aggiorna HUD
@@ -558,7 +599,12 @@ class EngineCore:
             t = self._scene_intro_timer / self._scene_intro_dur
             z_fact = 1.0 + (t ** 3 * 0.25)
 
-        hit = self.click_detector.detect(pos[0], pos[1], self._current_scene_objects, scenic_factor=z_fact)
+        # Tolleranza tap fat-finger solo su touch (~7mm); il mouse desktop resta preciso.
+        slop = self.res_h * 0.045 if self._is_android else 0.0
+        hit = self.click_detector.detect(
+            pos[0], pos[1], self._current_scene_objects,
+            scenic_factor=z_fact, slop_screen=slop,
+        )
         if hit:
             trigger = getattr(hit, "minigame_trigger", None)
             self.logger.debug(f"[CLICK] Hit: {hit.instance_id} (trigger: {trigger is not None})")
@@ -588,34 +634,164 @@ class EngineCore:
                     return
 
             if hit.is_goal:
-                if self.hud.is_target_active(hit.instance_id):
-                    self.level_manager.register_found(hit.instance_id)
-                    if hit.detection_type == "rect":
-                        cx = hit.x + hit.width / 2
-                        cy = hit.y + hit.height / 2
-                    else:
-                        cx = hit.x
-                        cy = hit.y
-                    is_last_object = self.level_manager._found_count() == self.level_manager._total_count()
-                    if is_last_object:
-                        self.audio.play_sfx("engine/assets/sounds/victory.mp3")
-                        self.effects.spawn_final_found_effect(cx, cy)
-                        self.effects.shake_screen(duration=1.2, intensity=10.0)
-                    else:
-                        self.audio.play_sfx("engine/assets/sounds/bling1.mp3")
-                        self.effects.spawn_found_effect(cx, cy)
+                # Registra il ritrovamento per QUALSIASI obiettivo valido non ancora
+                # trovato, anche se fuori dalla finestra visibile della HUD
+                # (_max_visible): prima un goal corretto oltre il 7° elemento veniva
+                # erroneamente trattato come errore e penalizzato.
+                self.level_manager.register_found(hit.instance_id)
+                if hit.detection_type == "rect":
+                    cx = hit.x + hit.width / 2
+                    cy = hit.y + hit.height / 2
                 else:
-                    self.audio.play_sfx("engine/assets/sounds/error4.mp3")
-                    self.logger.debug("Mancato: oggetto non in HUD")
-                    penalty = self.level_manager.register_miss()
-                    bx, by = self.scaling_manager.screen_to_bg(*pos)
-                    self.effects.spawn_score_popup(bx, by, penalty)
+                    cx = hit.x
+                    cy = hit.y
+                is_last_object = self.level_manager._found_count() == self.level_manager._total_count()
+                if is_last_object:
+                    self.audio.play_sfx("engine/assets/sounds/victory.mp3")
+                    self.effects.spawn_final_found_effect(cx, cy)
+                    self.effects.shake_screen(duration=1.2, intensity=10.0)
+                    haptics.success_strong()
+                else:
+                    self.audio.play_sfx("engine/assets/sounds/bling1.mp3")
+                    self.effects.spawn_found_effect(cx, cy)
+                    haptics.found()
         else:
             self.audio.play_sfx("engine/assets/sounds/error4.mp3")
+            haptics.miss()
             penalty = self.level_manager.register_miss()
             bx, by = self.scaling_manager.screen_to_bg(*pos)
             self.effects.spawn_score_popup(bx, by, penalty)
             self.logger.debug("Mancato / Click a vuoto")
+
+    # ── Gesti touch multi-dito: pinch-to-zoom + pan (ispezione scena) ────────
+    def _finger_xy(self, event) -> tuple[float, float]:
+        """Coordinate del tocco in pixel interni. Gli eventi FINGER* portano
+        coordinate normalizzate 0..1: le scaliamo alla risoluzione interna, coerente
+        con le coordinate mouse usate dal resto del motore."""
+        return (event.x * self.res_w, event.y * self.res_h)
+
+    @staticmethod
+    def _finger_id(event):
+        return getattr(event, "finger_id", getattr(event, "finger", 0))
+
+    def _pinch_metrics(self) -> tuple[float, tuple[float, float]]:
+        """Distanza e punto medio (centroid) delle prime due dita a contatto."""
+        ids = sorted(self._touch_points.keys())[:2]
+        (x1, y1), (x2, y2) = self._touch_points[ids[0]], self._touch_points[ids[1]]
+        return math.hypot(x2 - x1, y2 - y1), ((x1 + x2) / 2.0, (y1 + y2) / 2.0)
+
+    def _begin_pinch(self) -> None:
+        dist, centroid = self._pinch_metrics()
+        self._pinch_ref_dist = max(1.0, dist)
+        self._pinch_ref_zoom = self.scaling_manager.zoom
+        self._pinch_last_centroid = centroid
+
+    def _handle_finger_down(self, event) -> None:
+        if self.state != EngineState.SCENE:
+            return
+        self._touch_points[self._finger_id(event)] = self._finger_xy(event)
+        if len(self._touch_points) >= 2:
+            # Secondo dito: entra in modalità gesto. Annulla ogni tap/pan in sospeso
+            # così il pinch non genera mai un find/penalità né tocca il cassetto HUD.
+            self._gesture_active = True
+            self._gesture_seen = True
+            self._touch_start = None
+            self._one_finger_panning = False
+            self._begin_pinch()
+
+    def _handle_finger_motion(self, event) -> None:
+        if self.state != EngineState.SCENE:
+            return
+        fid = self._finger_id(event)
+        if fid in self._touch_points:
+            self._touch_points[fid] = self._finger_xy(event)
+        # Durante l'intro zoom scenica la camera resta ferma (lo scenic è ancorato
+        # al centro schermo: applicarvi sopra pan/zoom separerebbe sfondo e oggetti).
+        if self._gesture_active and len(self._touch_points) >= 2 and self._scene_intro_timer <= 0:
+            dist, centroid = self._pinch_metrics()
+            # Pan: la scena segue lo spostamento del punto medio delle dita.
+            dx = centroid[0] - self._pinch_last_centroid[0]
+            dy = centroid[1] - self._pinch_last_centroid[1]
+            if dx or dy:
+                self.scaling_manager.pan_by(dx, dy)
+            self._pinch_last_centroid = centroid
+            # Zoom centrato sul punto medio (pinch naturale).
+            if self._pinch_ref_dist > 0:
+                new_zoom = self._pinch_ref_zoom * (dist / self._pinch_ref_dist)
+                self.scaling_manager.zoom_at(new_zoom, centroid[0], centroid[1])
+
+    def _handle_finger_up(self, event) -> None:
+        self._touch_points.pop(self._finger_id(event), None)
+        if len(self._touch_points) < 2:
+            self._gesture_active = False
+        if not self._touch_points:
+            # Fine sequenza di tocco: azzera lo stato gesto multitouch.
+            # NON azzeriamo qui _one_finger_panning: per il dito primario SDL accoda
+            # FINGERUP PRIMA del MOUSEBUTTONUP emulato, quindi il flag deve restare
+            # armato finché il MOUSEBUTTONUP non lo legge e lo consuma (ramo UP).
+            # Viene comunque azzerato all'inizio del prossimo tocco e da _reset_touch_state.
+            self._gesture_seen = False
+
+    def _reset_touch_state(self) -> None:
+        """Azzera tutto lo stato di tocco/gesto. Da chiamare a inizio scena per non
+        ereditare dita/flag dalla scena precedente (evita tap/find persi o spuri)."""
+        self._touch_points.clear()
+        self._gesture_active = False
+        self._gesture_seen = False
+        self._one_finger_panning = False
+        self._touch_start = None
+
+    def _dismiss_coach(self) -> None:
+        """Chiude il coachmark di onboarding e segna che e' stato visto (persistente)."""
+        if not self._coach_active:
+            return
+        self._coach_active = False
+        try:
+            self.save_manager.set_progress("coach_seen", True)
+        except Exception:
+            pass
+
+    def _activate_manual_hint(self, popup_pos) -> None:
+        """Attiva un hint manuale (da pulsante UI). popup_pos serve solo per il
+        popup del costo nelle scene senza torcia."""
+        if self.level_manager.get_available_hints() > 0:
+            is_flashlight = self._current_scene_data and getattr(self._current_scene_data, 'flashlight', False)
+            success, penalty = self.hint.use_manual_hint(self._current_scene_objects, suppress_fx=False)
+            if success:
+                self.audio.play_sfx("engine/assets/sounds/click_Low.wav")
+                self.level_manager.apply_score_penalty(penalty)
+                self.level_manager.consume_hint_from_rewards()
+                if is_flashlight:
+                    self._hint_flash_timer = 5.0
+                    self.logger.info("Hint Flash attivato per 5 secondi (torcia presente)")
+                else:
+                    bx, by = self.scaling_manager.screen_to_bg(*popup_pos)
+                    self.effects.spawn_score_popup(bx, by, penalty)
+                    self.logger.info(f"Hint usato (bottone): penalità {penalty} pt")
+        else:
+            self.audio.play_sfx("engine/assets/sounds/error4.mp3")
+            self.logger.warning("Tentativo di usare hint ma quantità disponibile è 0!")
+
+    def _handle_scene_tap(self, pos) -> None:
+        """Tap PULITO (no gesto, no pan, no swipe) in scena su Android: instrada su
+        hint / maniglia HUD / pausa, altrimenti click sull'oggetto. Chiamato dal
+        rilascio così un pinch che inizia su un pulsante non lo attiva per sbaglio."""
+        hint_rect = self.hud.get_mobile_hint_rect()
+        if hint_rect and hint_rect.collidepoint(pos):
+            self._activate_manual_hint(pos)
+            return
+        if self.hud.is_handle_clicked(pos):
+            self.hud.toggle_drawer()
+            self.audio.play_sfx("engine/assets/sounds/click_Low.wav")
+            return
+        if self.hud.is_pause_button_clicked(pos):
+            self.audio.play_sfx("engine/assets/sounds/click_Low.wav")
+            self._toggle_pause()
+            return
+        # Tap sulla barra HUD aperta: ignora (non penalizza).
+        if self.hud.is_drawer_open() and self.hud.get_hud_rect().collidepoint(pos):
+            return
+        self._process_scene_click(pos)
 
     def _handle_events(self) -> None:
         """Smista gli input di Pygame."""
@@ -657,6 +833,16 @@ class EngineCore:
                 if self.state in [EngineState.MENU, EngineState.PAUSE]:
                     self.menu_system.handle_scroll(event.y)
 
+            # Gesti multitouch in scena (pinch-to-zoom + pan). Gli eventi mouse
+            # emulati da SDL continuano a gestire il tap a una dita; questi tracciano
+            # le dita reali e pilotano la camera senza generare tap/penalità.
+            elif event.type == pygame.FINGERDOWN:
+                self._handle_finger_down(event)
+            elif event.type == pygame.FINGERMOTION:
+                self._handle_finger_motion(event)
+            elif event.type == pygame.FINGERUP:
+                self._handle_finger_up(event)
+
             if self.state == EngineState.MINIGAME:
                 # Se il minigioco intercetta un click sul tasto Pausa, attiva la pausa globale
                 if self.minigame_manager.handle_event(event):
@@ -671,7 +857,7 @@ class EngineCore:
                         if action and action != "none":
                             self.audio.play_sfx("engine/assets/sounds/click_Low.wav")
                         elif action == "none":
-                            self.audio.play_sfx("engine/assets/sounds/UI_Forbidden.wav") # Feedback per bloccato
+                            self.audio.play_sfx("engine/assets/sounds/error4.mp3") # Feedback per bloccato
                         
                         if action:
                             if action == "goto_levels":
@@ -746,21 +932,61 @@ class EngineCore:
                             elif action == "toggle_fs":
                                 new_fs = not self.is_fullscreen
                                 self._apply_display_settings(self.res_w, self.res_h, new_fs)
-                        
+                            elif action == "toggle_vibration":
+                                self.vibration_enabled = not self.vibration_enabled
+                                haptics.set_enabled(self.vibration_enabled)
+                                self.menu_system.vibration_enabled = self.vibration_enabled
+                                self._persist_vibration_setting()
+                                if self.vibration_enabled:
+                                    haptics.tick()  # conferma tattile dell'attivazione
+                                self.menu_system.build_buttons(has_save=self._has_progress())
+
                         # Aggiornamento parametri menu dinamici (res/lang/ecc)
                         if action and action.startswith("goto"):
                             self.menu_system.build_buttons(has_save=self._has_progress())
 
                     elif self.state == EngineState.SCENE:
+                        if self._is_android:
+                            # Android: tap e gesti risolti al RILASCIO / via FINGER.
+                            # Sul DOWN nessuna azione one-shot (hint/maniglia/pausa/
+                            # oggetto): così un pinch che inizia su un pulsante non lo
+                            # attiva e uno swipe/pan non genera mai find o penalità.
+                            if self._gesture_seen or self._gesture_active:
+                                continue  # gesto multitouch in corso: ignora il mouse emulato
+                            # I bubble modali hanno la priorità (anche sul coachmark).
+                            is_visible = self.level_manager.is_any_bubble_visible()
+                            is_pending_intro = self._scene_intro_timer > 0 and self.level_manager.has_start_scene_bubbles()
+                            if is_visible or is_pending_intro:
+                                if is_visible:
+                                    for fx in self._current_scene_effects:
+                                        if fx.type == "bubble_tip" and getattr(fx, "_visible", False):
+                                            if hasattr(self, "_last_bubble_btns"):
+                                                for b_fx, b_rect in self._last_bubble_btns:
+                                                    if b_fx == fx and b_rect.collidepoint(event.pos):
+                                                        fx._visible = False
+                                                        self.audio.play_sfx("engine/assets/sounds/click_Low.wav")
+                                                        break
+                                continue
+                            # Onboarding: la prima interazione CHIUDE il coachmark e
+                            # viene CONSUMATA (continue): NON deve valere come tap di
+                            # gioco. Il gameplay parte dal tocco successivo.
+                            if self._coach_active:
+                                self._dismiss_coach()
+                                continue
+                            # Memorizza l'inizio del tocco: tap vs swipe risolti al rilascio.
+                            # Reset del flag pan a inizio tocco (backstop nel caso raro in
+                            # cui un MOUSEBUTTONUP precedente fosse andato perso).
+                            self._one_finger_panning = False
+                            self._touch_start = event.pos
+                            continue
+
+                        # ── Desktop (mouse): azione immediata sul DOWN ──
                         # --- GESTIONE BUBBLE TIPS ---
                         is_visible = self.level_manager.is_any_bubble_visible()
                         is_pending_intro = self._scene_intro_timer > 0 and self.level_manager.has_start_scene_bubbles()
-
                         if is_visible or is_pending_intro:
-                            # Se è visibile, gestiamo il click sul pulsante "OK"
                             if is_visible:
                                 clicked_any = False
-                                sm = self.scaling_manager
                                 for fx in self._current_scene_effects:
                                     if fx.type == "bubble_tip" and getattr(fx, "_visible", False):
                                         if hasattr(self, "_last_bubble_btns"):
@@ -771,66 +997,23 @@ class EngineCore:
                                                     clicked_any = True
                                                     break
                                         if clicked_any: break
-                            
-                            # Se una bubble è visibile o sta per apparire, ignoriamo ogni altro input di gioco
                             continue
 
-                        # Controlla click su pulsante hint. Su Android il pulsante
-                        # vive dentro la barra HUD (rettangolo fornito dall'HUD);
-                        # su desktop è il box in alto a destra (_hint_button_rect).
-                        if self._is_android:
-                            _hint_rect = self.hud.get_mobile_hint_rect()
-                        else:
-                            _hint_rect = getattr(self, '_hint_button_rect', None)
+                        # Pulsante hint (desktop: box in alto a destra)
+                        _hint_rect = getattr(self, '_hint_button_rect', None)
                         if _hint_rect and _hint_rect.collidepoint(event.pos):
-                            # [FIX] Controllo disponibilità hint prima dell'uso
-                            if self.level_manager.get_available_hints() > 0:
-                                # Nuova Logica: Hint Flash per scene con torcia
-                                is_flashlight = self._current_scene_data and getattr(self._current_scene_data, 'flashlight', False)
-                                
-                                success, penalty = self.hint.use_manual_hint(
-                                    self._current_scene_objects, 
-                                    suppress_fx=False
-                                )
-                                
-                                if success:
-                                    self.audio.play_sfx("engine/assets/sounds/click_Low.wav")
-                                    self.level_manager.apply_score_penalty(penalty)
-                                    self.level_manager.consume_hint_from_rewards()  # Decrementa conteggio HUD
-                                    
-                                    if is_flashlight:
-                                        self._hint_flash_timer = 5.0
-                                        self.logger.info("Hint Flash attivato per 5 secondi (torcia presente)")
-                                    else:
-                                        # Popup vicino al mouse per il costo dell'hint standard
-                                        bx, by = self.scaling_manager.screen_to_bg(*event.pos)
-                                        self.effects.spawn_score_popup(bx, by, penalty)
-                                        self.logger.info(f"Hint usato (bottone): penalità {penalty} pt")
-                            else:
-                                self.audio.play_sfx("engine/assets/sounds/UI_Forbidden.wav")
-                                self.logger.warning("Tentativo di usare hint ma quantità disponibile è 0!")
+                            self._activate_manual_hint(event.pos)
                             continue
 
-                        # Maniglia del cassetto HUD (Android): tocco = apri/chiudi
-                        if self.hud.is_handle_clicked(event.pos):
-                            self.hud.toggle_drawer()
-                            self.audio.play_sfx("engine/assets/sounds/click_Low.wav")
-                            continue
-                        # Memorizza inizio gesto per rilevare lo swipe al rilascio
-                        self._touch_start = event.pos
-
-                        # Controlla click su pulsante PAUSE in alto a sinistra
+                        # Pulsante pausa
                         if self.hud.is_pause_button_clicked(event.pos):
                             self.audio.play_sfx("engine/assets/sounds/click_Low.wav")
                             self._toggle_pause()
                             continue
 
-                        # Click sull'oggetto: su desktop scatta subito (DOWN); su
-                        # Android lo gestiamo al RILASCIO, per distinguere un TAP da
-                        # uno SWIPE del cassetto HUD e NON penalizzare lo swipe.
-                        if not self._is_android:
-                            self._process_scene_click(event.pos)
-                                
+                        # Click sull'oggetto (immediato su desktop)
+                        self._process_scene_click(event.pos)
+
                     elif self.state == EngineState.RESULTS:
                         # Delega al ResultsScreen il controllo del click (gestisce layout e animazione)
                         if self.results_screen.check_click(event.pos):
@@ -838,23 +1021,23 @@ class EngineCore:
                             self.transition_manager.start_transition(TransitionType.FADE_TO_BLACK, on_midpoint=self._advance_scene)
             
             elif event.type == pygame.MOUSEBUTTONUP:
-                # Android: al rilascio distinguiamo SWIPE (cassetto HUD) da TAP
-                # (click oggetto). Lo swipe NON penalizza; il tap fa il click.
-                if event.button == 1 and self.state == EngineState.SCENE and self._touch_start is not None:
-                    sp = self._touch_start
-                    self._touch_start = None
-                    dx = event.pos[0] - sp[0]
-                    dy = event.pos[1] - sp[1]
-                    moved = (dx * dx + dy * dy) ** 0.5
-                    swiped = self.hud.handle_swipe(sp, event.pos)
-                    if not swiped and moved < self.res_h * 0.045:
-                        # È un tap. L'HUD si apre SOLO con la maniglia (freccia) o con
-                        # lo swipe verso l'alto dal bordo: un tap normale, anche nella
-                        # fascia bassa, deve colpire gli oggetti (che la HUD coprirebbe).
-                        # Un tap sulla barra HUD aperta è ignorato (non penalizza).
-                        on_open_bar = self.hud.is_drawer_open() and self.hud.get_hud_rect().collidepoint(sp)
-                        if not on_open_bar:
-                            self._process_scene_click(sp)
+                # Android, scena: al rilascio distinguiamo SWIPE (cassetto HUD), PAN e
+                # gesto da TAP. Solo un tap pulito instrada su hint/maniglia/pausa o
+                # click oggetto; gesti e pan non generano MAI find/penalità/toggle.
+                if event.button == 1 and self._is_android and self.state == EngineState.SCENE:
+                    if self._gesture_seen or self._one_finger_panning or self._touch_start is None:
+                        # Coda di un gesto (pinch/pan) o tocco già consumato: niente tap.
+                        self._one_finger_panning = False
+                        self._touch_start = None
+                    else:
+                        sp = self._touch_start
+                        self._touch_start = None
+                        dx = event.pos[0] - sp[0]
+                        dy = event.pos[1] - sp[1]
+                        moved = (dx * dx + dy * dy) ** 0.5
+                        swiped = self.hud.handle_swipe(sp, event.pos)
+                        if not swiped and moved < self.res_h * 0.045:
+                            self._handle_scene_tap(sp)
                 if event.button == 1: # Left click
                     if self.state in [EngineState.MENU, EngineState.PAUSE]:
                         # Salva volume se siamo usciti dal trascinamento
@@ -874,7 +1057,24 @@ class EngineCore:
                         
             elif event.type == pygame.MOUSEMOTION:
                 self.hud.on_mouse_activity()
-                    
+                # Drag a una dita mentre si è ingranditi -> pan della scena (no tap,
+                # no penalità). Solo touch/Android e solo con zoom attivo, così a
+                # zoom 1.0 lo swipe del cassetto HUD resta invariato.
+                if (self._is_android and self.state == EngineState.SCENE
+                        and not self._gesture_active and not self._gesture_seen
+                        and self.scaling_manager.is_zoomed()
+                        and event.buttons and event.buttons[0]
+                        and self._touch_start is not None):
+                    # Slop: avvia il pan solo oltre soglia, identica al tap. Un tap
+                    # fermo con micro-jitter resta un tap (find), non diventa pan.
+                    tdx = event.pos[0] - self._touch_start[0]
+                    tdy = event.pos[1] - self._touch_start[1]
+                    if self._one_finger_panning or (tdx * tdx + tdy * tdy) ** 0.5 > self.res_h * 0.045:
+                        self._one_finger_panning = True
+                        rel = getattr(event, "rel", (0, 0))
+                        if rel[0] or rel[1]:
+                            self.scaling_manager.pan_by(rel[0], rel[1])
+
             elif event.type == SCENE_COMPLETE:
                 self.logger.info("Ho ricevuto SCENE_COMPLETE. Transizione ai risultati...")
                 self._last_result = getattr(event, "result", None)
@@ -961,7 +1161,7 @@ class EngineCore:
                             else:
                                 self.logger.debug("Hint non disponibile (cooldown o nessun oggetto da cercare)")
                     else:
-                        self.audio.play_sfx("engine/assets/sounds/UI_Forbidden.wav")
+                        self.audio.play_sfx("engine/assets/sounds/error4.mp3")
                         self.logger.warning("Tasto H: Nessun hint disponibile!")
 
                 elif event.key == pygame.K_t and self.state == EngineState.SCENE:
@@ -993,39 +1193,49 @@ class EngineCore:
         
         # Sincronizza tutti i manager con la nuova risoluzione
         self._handle_resize(w, h)
-        
-        # Scrivi persistenza su config.ini
-        import configparser
-        from engine.utils import get_base_path
+
+        # Persistenza display sul path scrivibile (Android-safe, vedi _persist_config).
         self.config.set("engine", "resolution_w", str(w))
         self.config.set("engine", "resolution_h", str(h))
         self.config.set("engine", "fullscreen", "1" if fullscreen else "0")
-        try:
-            with open(get_base_path() / "config.ini", "w") as f:
-                self.config.write(f)
-            self.logger.debug("Configurazione display salvata in config.ini")
-        except Exception as e:
-            self.logger.error(f"Errore durante il salvataggio della configurazione: {e}")
+        self._persist_config("display")
 
         # Se c'era resize_pending, lo abbiamo evaso con _handle_resize
         self.scaling_manager.consume_resize()
+
+    def _persist_config(self, what: str = "config") -> None:
+        """Scrive self.config sul path config UTENTE scrivibile.
+
+        Su Android e' ANDROID_PRIVATE/saves/config.ini: get_base_path()/config.ini
+        (dir di unpack dell'app) e' READ-ONLY, scrivervi fallirebbe e la preferenza
+        andrebbe persa al riavvio. Su desktop e' il config.ini nella root (immutato).
+        I default bundlati restano in get_base_path()/config.ini e vengono caricati
+        da main.py PRIMA di questo file utente (che li sovrascrive)."""
+        from engine.utils import get_user_config_path
+        try:
+            with open(get_user_config_path(), "w", encoding="utf-8") as f:
+                self.config.write(f)
+            self.logger.debug(f"Configurazione '{what}' salvata in {get_user_config_path()}")
+        except Exception as e:
+            self.logger.error(f"Errore salvataggio configurazione '{what}': {e}")
 
     def _apply_audio_settings(self, music_vol: float, sfx_vol: float) -> None:
         """Applica e persiste i settaggi audio."""
         self.audio.set_music_volume(music_vol)
         self.audio.set_sfx_volume(sfx_vol)
-        
-        # Scrivi persistenza su config.ini
-        import configparser
-        from engine.utils import get_base_path
+
         self.config.set("engine", "music_volume", f"{music_vol:.2f}")
         self.config.set("engine", "sfx_volume", f"{sfx_vol:.2f}")
+        self._persist_config("audio")
+
+    def _persist_vibration_setting(self) -> None:
+        """Persiste l'impostazione vibrazione via SaveManager (store scrivibile anche
+        su Android, a differenza di config.ini)."""
         try:
-            with open(get_base_path() / "config.ini", "w") as f:
-                self.config.write(f)
-            self.logger.debug(f"Volumi (M:{music_vol}, S:{sfx_vol}) salvati in config.ini")
+            self.save_manager.set_progress("vibration_enabled", bool(self.vibration_enabled))
+            self.logger.debug(f"Vibrazione salvata: {self.vibration_enabled}")
         except Exception as e:
-            self.logger.error(f"Errore durante il salvataggio del volume: {e}")
+            self.logger.error(f"Errore salvataggio impostazione vibrazione: {e}")
 
     def _update(self, dt: float) -> None:
         """Aggiorna la logica corrente (delegate to state)."""
@@ -1051,6 +1261,13 @@ class EngineCore:
         elif self.state == EngineState.SCENE:
             self.effects.update(dt)
             self.fx_renderer.update(dt) # Sincronizzazione tempo per jittering e vibrazioni
+
+            # Onboarding coachmark: auto-dismiss dopo qualche secondo (oltre al
+            # dismiss sulla prima interazione).
+            if self._coach_active:
+                self._coach_timer += dt
+                if self._coach_timer > 7.0:
+                    self._dismiss_coach()
             
             # Update FX e gestisci audio typewriter sincronizzato
             from engine.effect_renderer import update_effect_state
@@ -1178,7 +1395,10 @@ class EngineCore:
         if self._current_bg_surface:
             bw, bh = self._current_bg_surface.get_size()
             self.scaling_manager.set_background(bw, bh, self._current_bg_scale)
-            
+
+        # Nuova scena: azzera lo zoom/pan di ispezione ereditato dalla precedente.
+        self.scaling_manager.reset_pan_zoom()
+        self._reset_touch_state()
         self.hud.setup(self._current_scene_objects, self.level_manager.time_elapsed)
         self._play_scene_music(scene_data)
         self.state = EngineState.SCENE
@@ -1261,6 +1481,8 @@ class EngineCore:
                 self.logger.info(
                     f"Background avanzamento: {bw}x{bh}, scale={self._current_bg_scale}"
                 )
+            self.scaling_manager.reset_pan_zoom()
+            self._reset_touch_state()
             self.hud.setup(self._current_scene_objects, self.level_manager.time_elapsed)
             self._play_scene_music(next_scene)
             self.state = EngineState.SCENE
@@ -1311,6 +1533,9 @@ class EngineCore:
             self.scaling_manager.set_background(bw, bh, self._current_bg_scale)
             self.logger.debug(f"[GAME] Background: {bw}x{bh}, scene_scale={self._current_bg_scale}")
 
+        # Nuova scena: azzera lo zoom/pan di ispezione.
+        self.scaling_manager.reset_pan_zoom()
+        self._reset_touch_state()
         # Attivazione HUD
         self.hud.setup(self._current_scene_objects, self.level_manager.time_elapsed)
         self._play_scene_music(scene_data)
@@ -1388,6 +1613,28 @@ class EngineCore:
             sh_x, sh_y = self.effects.shake_offset
             self.screen.blit(glow_surf, (pos[0] + sh_x, pos[1] + sh_y))
 
+    def _get_hint_glow(self, qr: int, b: float) -> "pygame.Surface":
+        """Alone hint (disco oro + 2 anelli) CACHATO per (raggio quantizzato, intensita').
+        Evita l'alloc di una Surface SRCALPHA + 3 draw.circle a OGNI frame durante
+        l'evidenziazione dell'indizio in scena. set_alpha non e' usabile (la surface ha
+        alpha per-pixel), quindi l'intensita' e' bakata nella key (poche varianti)."""
+        cache = getattr(self, "_hint_glow_cache", None)
+        if cache is None:
+            cache = self._hint_glow_cache = {}
+        key = (qr, b)
+        g = cache.get(key)
+        if g is None:
+            if len(cache) > 48:
+                cache.clear()
+            g = pygame.Surface((qr * 2, qr * 2), pygame.SRCALPHA)
+            pygame.draw.circle(g, (255, 220, 60, int(70 * b)), (qr, qr), qr)
+            rw = max(4, qr // 6)
+            pygame.draw.circle(g, (255, 230, 80, int(235 * b)), (qr, qr), qr, width=rw)
+            pygame.draw.circle(g, (255, 250, 200, int(180 * b)), (qr, qr), max(1, qr - rw), width=max(2, rw // 2))
+            g = g.convert_alpha()
+            cache[key] = g
+        return g
+
     def _hud_font(self, family: str, size: int, bold: bool = False, italic: bool = False) -> pygame.font.Font:
         """Restituisce un SysFont cacheato per evitare di ricrearlo ogni frame."""
         key = (family, size, bold, italic)
@@ -1396,6 +1643,67 @@ class EngineCore:
             font = pygame.font.SysFont(family, size, bold=bold, italic=italic)
             self._hud_font_cache[key] = font
         return font
+
+    def _draw_coachmark(self) -> None:
+        """Overlay di onboarding (una tantum, Android): insegna pinch-zoom, lista a
+        icone e maniglia HUD. Non blocca l'input: si chiude alla prima interazione
+        o dopo qualche secondo."""
+        sm = self.scaling_manager
+        W, H = self.res_w, self.res_h
+        gold = (255, 215, 0)
+        white = (235, 238, 245)
+
+        veil = pygame.Surface((W, H), pygame.SRCALPHA)
+        veil.fill((0, 0, 0, 150))
+        self.screen.blit(veil, (0, 0))
+
+        title = self.lang.get("coach_title", "COME GIOCARE")
+        lines = [
+            self.lang.get("coach_zoom", "Pizzica con due dita per ingrandire la scena"),
+            self.lang.get("coach_find", "Tocca gli oggetti della lista per trovarli"),
+            self.lang.get("coach_drawer", "Trascina la maniglia in basso per la lista"),
+        ]
+        dismiss = self.lang.get("coach_dismiss", "Tocca per iniziare")
+
+        title_f = self._hud_font("segoeui", sm.scale_value(40), bold=True)
+        line_f = self._hud_font("segoeui", sm.scale_value(26))
+        dismiss_f = self._hud_font("segoeui", sm.scale_value(22), bold=True)
+
+        t_surf = title_f.render(title, True, gold)
+        line_surfs = [line_f.render(s, True, white) for s in lines]
+        d_surf = dismiss_f.render(dismiss, True, (180, 200, 255))
+
+        pad = sm.scale_value(28)
+        gap = sm.scale_value(16)
+        line_h = line_f.get_height()
+        content_w = max([t_surf.get_width()] + [s.get_width() for s in line_surfs] + [d_surf.get_width()])
+        content_h = (t_surf.get_height() + gap
+                     + len(line_surfs) * (line_h + gap // 2)
+                     + gap + d_surf.get_height())
+        panel_w = content_w + pad * 2
+        panel_h = content_h + pad * 2
+        px = (W - panel_w) // 2
+        py = (H - panel_h) // 2
+
+        panel = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
+        radius = sm.scale_value(18)
+        pygame.draw.rect(panel, (18, 22, 34, 235), (0, 0, panel_w, panel_h), border_radius=radius)
+        pygame.draw.rect(panel, (90, 110, 150, 220), (0, 0, panel_w, panel_h),
+                         max(2, sm.scale_value(2)), border_radius=radius)
+        self.screen.blit(panel, (px, py))
+
+        cy = py + pad
+        self.screen.blit(t_surf, (px + (panel_w - t_surf.get_width()) // 2, cy))
+        cy += t_surf.get_height() + gap
+        for s in line_surfs:
+            self.screen.blit(s, (px + (panel_w - s.get_width()) // 2, cy))
+            cy += line_h + gap // 2
+
+        a = int(160 + abs(math.sin(pygame.time.get_ticks() * 0.004)) * 95)
+        d2 = d_surf.copy()
+        d2.set_alpha(a)
+        self.screen.blit(d2, (px + (panel_w - d_surf.get_width()) // 2,
+                              py + panel_h - pad - d_surf.get_height()))
 
     def _draw_hint_count(self) -> None:
         """Disegna conteggio hint con design glassmorphism premium."""
@@ -1744,8 +2052,14 @@ class EngineCore:
 
             original_screen = self.screen
             if is_intro_zooming:
-                render_target = pygame.Surface(original_screen.get_size())
-                render_target.fill((0, 0, 0))
+                # Render-target PERSISTENTE (riusato): evita di allocare una Surface
+                # full-screen ad ogni frame per i 3s di intro di ogni scena.
+                rt = getattr(self, "_intro_render_target", None)
+                if rt is None or rt.get_size() != original_screen.get_size():
+                    rt = pygame.Surface(original_screen.get_size())
+                    self._intro_render_target = rt
+                rt.fill((0, 0, 0))
+                render_target = rt
                 self.screen = render_target
             else:
                 self.screen.fill((0, 0, 0))  # Sfondo nero (letterbox)
@@ -1783,16 +2097,33 @@ class EngineCore:
             
             # Priorità 2: Immagine Statica (Scene)
             elif hasattr(self, '_current_bg_surface') and self._current_bg_surface:
+                # Rettangolo EFFETTIVO (camera zoom/pan + intro scenic) per il blit.
                 bx, by, bw, bh = sm.get_scenic_params(scenic_factor)
                 bx, by, bw, bh = int(bx), int(by), int(bw), int(bh)
 
-                std_bw, std_bh = int(sm._bg_screen_w), int(sm._bg_screen_h)
+                # Cache BASE (senza camera): smoothscale una sola volta per scena.
+                base_w, base_h = sm.base_bg_screen_size()
+                if not hasattr(self, '_base_bg_scaled') or self._base_bg_params != (base_w, base_h, self._current_bg_surface):
+                    self._base_bg_scaled = pygame.transform.smoothscale(self._current_bg_surface, (base_w, base_h))
+                    self._base_bg_params = (base_w, base_h, self._current_bg_surface)
+                    self._zoom_bg_scaled = None
+                    self._zoom_bg_key = None
 
-                if not hasattr(self, '_base_bg_scaled') or self._base_bg_params != (std_bw, std_bh, self._current_bg_surface):
-                    self._base_bg_scaled = pygame.transform.smoothscale(self._current_bg_surface, (std_bw, std_bh))
-                    self._base_bg_params = (std_bw, std_bh, self._current_bg_surface)
-                
-                scaled_bg = self._base_bg_scaled if scenic_factor == 1.0 else pygame.transform.scale(self._base_bg_scaled, (bw, bh))
+                if (bw, bh) == (base_w, base_h):
+                    scaled_bg = self._base_bg_scaled
+                else:
+                    # Versione zoomata/scenica: si ricostruisce solo quando cambia la
+                    # dimensione (zoom o intro), NON durante il pan a zoom costante.
+                    # Scaliamo dal BG ORIGINALE a piena risoluzione (non dalla versione
+                    # gia' ridotta a fit): ingrandendo per ispezionare si preserva il
+                    # dettaglio, che e' lo scopo della feature in un HOG.
+                    if getattr(self, '_zoom_bg_key', None) != (bw, bh):
+                        self._zoom_bg_scaled = pygame.transform.smoothscale(
+                            self._current_bg_surface, (max(1, bw), max(1, bh))
+                        )
+                        self._zoom_bg_key = (bw, bh)
+                    scaled_bg = self._zoom_bg_scaled
+
                 sh_x, sh_y = self.effects.shake_offset
                 self.screen.blit(scaled_bg, (bx + sh_x, by + sh_y))
 
@@ -1830,18 +2161,18 @@ class EngineCore:
                 icon_w = max(1, int(hit_w_bg * sm._bg_display_scale * scenic_factor * obj_scale))
                 icon_h = max(1, int(hit_h_bg * sm._bg_display_scale * scenic_factor * obj_scale))
 
-                # Clamp dimensioni per evitare artefatti da over-scaling
-                # Non superare 3000px per evitare memory overhead e artefatti visivi
-                MAX_ICON_DIM = 3000
+                # Clamp dimensioni per evitare smoothscale enormi. Su Android lo
+                # schermo interno e' ~540p (max zoom 3x ~1600px): cap piu' basso.
+                MAX_ICON_DIM = 1600 if self._is_android else 3000
                 draw_w = min(icon_w, MAX_ICON_DIM)
                 draw_h = min(icon_h, MAX_ICON_DIM)
-
-                # Se la dimensione richiesta era troppo grande, avvisiamo in log
-                if icon_w > MAX_ICON_DIM or icon_h > MAX_ICON_DIM:
-                    self.logger.warning(
-                        "Icon too large for '%s': requested %dx%d, clamped to %dx%d",
-                        obj.catalog_id, icon_w, icon_h, draw_w, draw_h
-                    )
+                # Quantizza la dimensione su Android: durante il pinch-zoom
+                # _bg_display_scale varia in continuo; senza snap la cache di TUTTI
+                # gli oggetti si invaliderebbe ogni frame (smoothscale+warp x9/frame).
+                if self._is_android:
+                    _q = 8
+                    draw_w = max(1, (draw_w // _q) * _q)
+                    draw_h = max(1, (draw_h // _q) * _q)
 
                 # --- Ottimizzazione: Cache dell'Oggetto ---
                 obj_params = (
@@ -1878,20 +2209,25 @@ class EngineCore:
                     # --- FILTRO BIANCO E NERO (Grayscale) ---
                     if getattr(obj, "grayscale", False):
                         gs_f = getattr(obj, "grayscale_factor", 1.0)
-                        self.logger.info(f"[RENDER] Grayscale active for {obj.instance_id} (factor={gs_f})")
                         render_surf = apply_grayscale(render_surf, gs_f)
 
-                    
                     # 4. Filtro Colore (per-pixel multipliers)
                     if tuple(obj.color_filter) != (255, 255, 255):
                         tint = pygame.Surface(render_surf.get_size(), pygame.SRCALPHA)
                         tint.fill((*obj.color_filter, 255))
                         render_surf.blit(tint, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
 
+                    # Converti al formato display una volta sola: i blit per-frame
+                    # successivi (cache hit) sono cosi' molto piu' veloci su ARM.
+                    try:
+                        render_surf = render_surf.convert_alpha()
+                    except Exception:
+                        pass
+
                     # 5. Opacitá (Surface-level alpha) - Per ultima per evitare double-multiplication
                     if obj.alpha < 255:
                         render_surf.set_alpha(obj.alpha)
-                    
+
                     obj._cached_surface = render_surf
                     obj._cached_params = obj_params
                     obj._warp_offset = (warp_dx, warp_dy)
@@ -1937,13 +2273,23 @@ class EngineCore:
                         _pulse = 0.5 + 0.5 * math.sin(pygame.time.get_ticks() * 0.010)
                         _rad = int(_base * (1.0 + 0.25 * _pulse))
                         _aa = min(1.0, _gi)
-                        _gs = pygame.Surface((_rad * 2, _rad * 2), pygame.SRCALPHA)
-                        # Disco translucido + anello spesso luminoso (oro)
-                        pygame.draw.circle(_gs, (255, 220, 60, int(70 * _aa * (0.6 + 0.4 * _pulse))), (_rad, _rad), _rad)
-                        _rw = max(4, _rad // 6)
-                        pygame.draw.circle(_gs, (255, 230, 80, int(235 * _aa)), (_rad, _rad), _rad, width=_rw)
-                        pygame.draw.circle(_gs, (255, 250, 200, int(180 * _aa)), (_rad, _rad), max(1, _rad - _rw), width=max(2, _rw // 2))
-                        self.screen.blit(_gs, (int(_scx + _shk[0]) - _rad, int(_scy + _shk[1]) - _rad))
+                        if self._is_android:
+                            # Alone CACHATO per (raggio quantizzato, intensita'): prima si
+                            # allocava una Surface SRCALPHA + 3 draw.circle (disco grande +
+                            # 2 anelli) OGNI frame durante l'evidenziazione -> caro su GPU
+                            # mobile. Ora i cerchi si disegnano una volta sola; il "pulse"
+                            # resta dato dal raggio (quantizzato) e dall'intensita'.
+                            _qr = max(4, (_rad // 6) * 6)
+                            _gs = self._get_hint_glow(_qr, round(_aa, 2))
+                            self.screen.blit(_gs, (int(_scx + _shk[0]) - _qr, int(_scy + _shk[1]) - _qr))
+                        else:
+                            _gs = pygame.Surface((_rad * 2, _rad * 2), pygame.SRCALPHA)
+                            # Disco translucido + anello spesso luminoso (oro)
+                            pygame.draw.circle(_gs, (255, 220, 60, int(70 * _aa * (0.6 + 0.4 * _pulse))), (_rad, _rad), _rad)
+                            _rw = max(4, _rad // 6)
+                            pygame.draw.circle(_gs, (255, 230, 80, int(235 * _aa)), (_rad, _rad), _rad, width=_rw)
+                            pygame.draw.circle(_gs, (255, 250, 200, int(180 * _aa)), (_rad, _rad), max(1, _rad - _rw), width=max(2, _rw // 2))
+                            self.screen.blit(_gs, (int(_scx + _shk[0]) - _rad, int(_scy + _shk[1]) - _rad))
             self._psec("scn_obj", _tsc); _tsc = _tsc_m.perf_counter()
 
             env_fx = [f for f in self._current_scene_effects if getattr(f, "type", "") != "bubble_tip"]
@@ -1965,7 +2311,11 @@ class EngineCore:
                 # Trasforma l'intero render_target come un'unica immagine unita e centralo!
                 tw = int(render_target.get_width() * zoom_factor)
                 th = int(render_target.get_height() * zoom_factor)
-                scaled_rt = pygame.transform.smoothscale(render_target, (tw, th))
+                # Su Android scale (nearest, veloce): il movimento di zoom maschera
+                # l'aliasing; smoothscale full-screen per frame e' troppo caro su ARM.
+                scaled_rt = (pygame.transform.scale(render_target, (tw, th))
+                             if self._is_android
+                             else pygame.transform.smoothscale(render_target, (tw, th)))
                 
                 cx = self.screen.get_width() // 2
                 cy = self.screen.get_height() // 2
@@ -2005,7 +2355,12 @@ class EngineCore:
 
             # Disegna indicatore target animato (su richiesta)
             self._draw_hint_indicator()
-            
+
+            # Onboarding coachmark (solo Android, una tantum). Non sovrapporlo a un
+            # bubble intro modale: in quel caso resta attivo ma non disegnato.
+            if self._coach_active and not self.level_manager.is_any_bubble_visible():
+                self._draw_coachmark()
+
             # Overlay Lockdown per Anti-Spam
             if self._spam_lock_timer > 0:
                 lock_surf = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
@@ -2014,14 +2369,12 @@ class EngineCore:
                 self.screen.blit(lock_surf, (0, 0))
             
         elif self.state == EngineState.PAUSE:
-            # Pausa: oscuramento TOTALE per evitare "cheating" (vedere la scena a tempo fermo)
-            self.screen.fill((10, 10, 15)) # Sfondo molto scuro (quasi nero)
-            
-            # Overlay vignetting per profondità e premium feel
-            overlay = pygame.Surface((self.res_w, self.res_h), pygame.SRCALPHA)
-            pygame.draw.rect(overlay, (0, 0, 0, 120), (0, 0, self.res_w, self.res_h))
-            self.screen.blit(overlay, (0, 0))
-            
+            # Pausa: oscuramento TOTALE per evitare "cheating" (vedere la scena a tempo fermo).
+            # Un SINGOLO fill opaco col colore gia' combinato (prima: fill (10,10,15) + overlay
+            # SRCALPHA (0,0,0,120) ricreato e blittato A TUTTO SCHERMO OGNI frame -> ~220ms e 4 FPS
+            # su GPU mobile). Il fill copre comunque tutta la scena, quindi l'overlay era inutile.
+            self.screen.fill((5, 5, 8))
+
             # Il menu system disegna i bottoni (Riprendi, Impostazioni, Esci) sopra l'oscuramento
             self.menu_system.draw(self.screen)
             

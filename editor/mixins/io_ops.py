@@ -131,6 +131,10 @@ class IoOpsMixin:
         used_icon_names sono i nomi file PNG (es. 'anarchy_slab.png').
         """
         used_catalog_ids: set[str] = set()
+        # Flag di sicurezza: se una scena non è leggibile, la lista degli asset usati
+        # è incompleta e il cleanup orfani va saltato per non cancellare PNG ancora
+        # referenziati da una scena corrotta.
+        self._assets_scan_incomplete = False
         catalog_map = {c["id"]: c for c in self.catalog}
 
         # Scena corrente in memoria (include le modifiche non ancora su disco)
@@ -153,8 +157,11 @@ class IoOpsMixin:
                         cid = o.get("catalog_id") or o.get("id")
                         if cid:
                             used_catalog_ids.add(cid)
-                except Exception:
-                    pass
+                except Exception as e:
+                    # Scena illeggibile: marca la scansione come incompleta cosi' il
+                    # cleanup orfani verra' saltato (non possiamo sapere cosa usa).
+                    self._assets_scan_incomplete = True
+                    logging.warning(f"[ASSET] Scena non leggibile durante scan asset: {s_json} ({e})")
 
         # Risolve catalog_id → nome file icona
         used_icon_names: set[str] = set()
@@ -426,29 +433,39 @@ class IoOpsMixin:
         #    Scansiona TUTTE le scene (inclusa quella corrente in memoria) per determinare
         #    quali file sono ancora necessari. Confronta per NOME FILE ICONA, non per
         #    catalog_id, per evitare falsi positivi quando id ≠ nome file.
-        game_objects_p = self.game_path / "objects"
+        # Le tre sottocartelle corrispondono agli stili harvestati (objects,
+        # objects_lineart, objects_cartoon): tutte vanno ripulite, non solo objects/.
+        ASSET_SUBFOLDERS = ["objects", "objects_lineart", "objects_cartoon"]
         engine_assets_p = self.base_path / "engine" / "assets"
 
         used_catalog_ids, used_icon_names = self._collect_used_assets(data)
 
+        scan_incomplete = getattr(self, "_assets_scan_incomplete", False)
+        if scan_incomplete:
+            logging.warning("[ASSET] Scansione scene incompleta: cleanup orfani SALTATO per sicurezza.")
+
         from engine.utils import safe_delete
         removed_count = 0
-        for f in game_objects_p.glob("*.png"):
-            if f.name not in used_icon_names:
-                # Rimuove solo se il file esiste nel master engine (è recuperabile).
-                # Soft-delete tramite cestino .editor_trash/ — recuperabile per 7 giorni.
-                exists_in_engine = any((engine_assets_p / sub / f.name).exists()
-                                     for sub in ["objects", "objects_lineart"])
-                if exists_in_engine:
-                    if safe_delete(f, reason="autoclean_orphan_png"):
-                        removed_count += 1
-                        logging.info(f"[ASSET] Rimosso PNG orfano dalla cartella di gioco: {f.name}")
-                    else:
-                        logging.warning(f"[ASSET] Cleanup PNG fallito per '{f.name}'")
+        for sub in ([] if scan_incomplete else ASSET_SUBFOLDERS):
+            game_sub_p = self.game_path / sub
+            if not game_sub_p.exists():
+                continue
+            for f in game_sub_p.glob("*.png"):
+                if f.name not in used_icon_names:
+                    # Rimuove solo se il file esiste nel master engine (è recuperabile).
+                    # Soft-delete tramite cestino .editor_trash/ — recuperabile per 7 giorni.
+                    exists_in_engine = any((engine_assets_p / s / f.name).exists()
+                                         for s in ASSET_SUBFOLDERS)
+                    if exists_in_engine:
+                        if safe_delete(f, reason="autoclean_orphan_png"):
+                            removed_count += 1
+                            logging.info(f"[ASSET] Rimosso PNG orfano dalla cartella di gioco: {sub}/{f.name}")
+                        else:
+                            logging.warning(f"[ASSET] Cleanup PNG fallito per '{sub}/{f.name}'")
 
         # Rimuove anche le entry orfane dal catalogo JSON di gioco
         game_cat_path = self.game_path / "objects_catalog.json"
-        if game_cat_path.exists():
+        if game_cat_path.exists() and not scan_incomplete:
             try:
                 with open(game_cat_path, "r", encoding="utf-8") as f:
                     game_cat = json.load(f)
@@ -481,7 +498,7 @@ class IoOpsMixin:
                     s_data = json.load(f_j)
                     for mpath in s_data.get("music", []):
                         used_music_names.add(Path(mpath).name)
-            except: pass
+            except Exception: pass
 
         # Aggiungi musiche della scena corrente (ancora in memoria)
         for mpath in data.get("music", []):
@@ -835,10 +852,11 @@ class IoOpsMixin:
                 if master_p:
                     path = master_p
                 else:
-                    self._img_cache[key] = None
+                    # NON cachiamo il fallimento: un file mancante potrebbe esistere
+                    # tra pochi ms (harvest/copia). Negativizzarlo per sempre lo
+                    # renderebbe invisibile fino al cambio gioco.
                     return None
             else:
-                self._img_cache[key] = None
                 return None
         try:
             raw = pygame.image.load(str(path))
@@ -856,7 +874,6 @@ class IoOpsMixin:
             self._img_cache[key] = scaled
             return scaled
         except Exception:
-            self._img_cache[key] = None
             return None
 
     def _delete_catalog_asset(self, cat_id: str):
@@ -1002,7 +1019,7 @@ class IoOpsMixin:
                                     logging.info(f"[EDITOR] PNG '{icon_rel}' condivisa da: {o.get('id')}")
                                     break
                             if is_shared: break
-                        except: continue
+                        except Exception: continue
                     
                     if icon_path.exists() and not is_shared:
                         try:

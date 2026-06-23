@@ -18,7 +18,6 @@ Nessuna dipendenza esterna: usa urllib.request della stdlib.
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import urllib.error
@@ -77,6 +76,16 @@ def download_url(url: str, dest: Path,
                             progress_cb(downloaded, total)
                         except Exception:
                             pass
+        # Validazione: un download troncato (server/proxy che chiude lo stream senza
+        # errore) non deve essere promosso a file finale, altrimenti resta cachato
+        # come "completo" per sempre. Scarta il .part e fallisci cosi' si riprova.
+        if total > 0 and downloaded != total:
+            log.error(f"[DOWNLOAD] troncato {url}: {downloaded}/{total} bytes")
+            try:
+                tmp.unlink(missing_ok=True)
+            except Exception:
+                pass
+            return False
         # Atomic rename
         os.replace(tmp, dest)
         log.info(f"[DOWNLOAD] OK {dest} ({downloaded} bytes)")
@@ -140,19 +149,6 @@ def download_clip_visual(base_path: Path,
         log.info(f"[DOWNLOAD] CLIP gia' presente: {dest}")
         return dest
     url = hf_url(MODEL_CLIP_VISUAL["hf_repo"], MODEL_CLIP_VISUAL["hf_file"])
-    ok = download_url(url, dest, progress_cb=progress_cb, timeout=300)
-    return dest if ok else None
-
-
-def download_clip_text(base_path: Path,
-                       progress_cb: Optional[Callable[[int, int], None]] = None,
-                       force: bool = False) -> Optional[Path]:
-    """Scarica CLIP ViT-B/32 text FP16 (~127MB) per object profiling."""
-    dest = clip_text_path(base_path)
-    if dest.exists() and not force:
-        log.info(f"[DOWNLOAD] CLIP text gia' presente: {dest}")
-        return dest
-    url = hf_url(MODEL_CLIP_TEXT["hf_repo"], MODEL_CLIP_TEXT["hf_file"])
     ok = download_url(url, dest, progress_cb=progress_cb, timeout=300)
     return dest if ok else None
 

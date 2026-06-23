@@ -30,7 +30,6 @@ from pathlib import Path
 from typing import Optional
 
 import pygame
-import math
 
 # ── Costanti e UI primitives ─────────────────────────────────────────────────
 from editor.constants import (
@@ -333,8 +332,6 @@ class LevelEditor(
         self._canvas_cache_dirty: bool = True
         self._last_canvas_rect = pygame.Rect(0,0,0,0)
 
-        # ── Language editor ──────────────────────────────────────────────────
-        self.LANGS          = list(LANGS)   # da constants.LANGS
         # ── Menu State ───────────────────────────────────────────────────────
         self._active_menu: Optional[str] = None  # Nome del menu aperto (es. "File")
         self._menu_bounds: dict = {}             # pos dei pulsanti menu per hit-test
@@ -349,7 +346,7 @@ class LevelEditor(
         self._loading: bool = False
         
         # Inizializza dati extra (recent_scenes, modals, etc)
-        self._build_processes: list[subprocess.Popen] = []
+        self._build_processes: list = []
         self._img_editor_init_state()
         self._init_extra_data(initial_game)
         self._icon_modal_init()
@@ -402,7 +399,6 @@ class LevelEditor(
         try:
             # Carica solo l'header dell'immagine se possibile, o usa la cache immagini
             # Se l'immagine è già nella cache di io_ops, la usiamo
-            from editor.constants import REF_W
             # Usiamo una dimensione fittizia piccola per _load_img per minimizzare l'impatto
             cached_img = self._load_img(ip, (100, 100))
             if cached_img:
@@ -479,23 +475,29 @@ class LevelEditor(
     # ─────────────────────────────────────────────────────────────────────────
 
     def run(self):
-        while self.running:
-            self.clock.tick(60)
-            phase = "events"
-            try:
-                self._handle_events()
-                phase = "update"
-                self._update()
-                phase = "render"
-                self._render()
-                phase = "flip"
-                pygame.display.flip()
-            except Exception:
-                import logging
-                logging.getLogger("crash").critical(
-                    "Crash nel main loop (fase=%s)", phase, exc_info=True
-                )
-                raise
+        try:
+            while self.running:
+                self.clock.tick(60)
+                phase = "events"
+                try:
+                    self._handle_events()
+                    phase = "update"
+                    self._update()
+                    phase = "render"
+                    self._render()
+                    phase = "flip"
+                    pygame.display.flip()
+                except Exception:
+                    import logging
+                    logging.getLogger("crash").critical(
+                        "Crash nel main loop (fase=%s)", phase, exc_info=True
+                    )
+                    raise
+        finally:
+            # Chiusura pulita: termina i processi di build pendenti e libera pygame.
+            # Questo e' l'UNICO punto in cui pygame.quit() deve essere chiamato.
+            self._cleanup_processes()
+            pygame.quit()
 
     def _with_loading(self, action, *args, **kwargs):
         """
@@ -525,14 +527,9 @@ class LevelEditor(
             self._render()
             pygame.display.flip()
             pygame.event.pump()
-        
-        # Cleanup processi pendenti
-        self._cleanup_processes()
-        pygame.quit()
 
     def _cleanup_processes(self):
         """Chiude forzatamente eventuali dialog o processi di build aperti."""
-        import subprocess
         for proc in self._build_processes:
             if proc.poll() is None:  # Se è ancora in esecuzione
                 try:
@@ -541,7 +538,7 @@ class LevelEditor(
                 except Exception:
                     try:
                         proc.kill()
-                    except:
+                    except Exception:
                         pass
         self._build_processes.clear()
 
@@ -581,7 +578,6 @@ class LevelEditor(
             self._r_tag_modal(w, h)
         # Modali globali (funzionano sia in dashboard che in editor)
         if getattr(self, "_music_modal", False):
-            self._music_modal_modal_active = True # Segnaposto se serve
             self._r_music_modal(w, h)
         if getattr(self, "_minigame_modal", False):
             self._r_minigame_modal(w, h)
@@ -676,7 +672,10 @@ def main():
     parser.add_argument("--fullscreen", action="store_true", help="Forza fullscreen per EngineCore")
     parser.add_argument("--build-ui", nargs=4, metavar=('GAME', 'VER', 'DIR', 'STAT'), help="Avvia UI di build")
     parser.add_argument("--build-manager", nargs=4, metavar=('GAME', 'VER', 'DIR', 'STAT'), help="Avvia il build manager vero e proprio")
+    parser.add_argument("--android-build-ui", nargs=4, metavar=('GAME', 'VER', 'DIR', 'STAT'), help="Avvia UI di build APK Android")
+    parser.add_argument("--android-build-manager", nargs=4, metavar=('GAME', 'VER', 'DIR', 'STAT'), help="Avvia il build manager APK Android")
     parser.add_argument("--no-zip", action="store_true", help="Salta la creazione dello ZIP in build_manager")
+    parser.add_argument("--release", action="store_true", help="Build APK release firmata (usato da --android-build-manager)")
     args = parser.parse_args()
 
     # Routing dei processi secondari (essenziale per l'EXE PyInstaller)
@@ -703,12 +702,27 @@ def main():
         from editor.build_manager import run_build
         # Assicura PYTHONPATH per PyInstaller sub-proc
         exit_code = run_build(
-            args.build_manager[0], args.build_manager[1], 
-            args.build_manager[2], args.build_manager[3], 
+            args.build_manager[0], args.build_manager[1],
+            args.build_manager[2], args.build_manager[3],
             create_zip=not args.no_zip
         )
         _sys.exit(exit_code)
-        
+
+    if args.android_build_ui:
+        from editor.android_build_ui import show_android_build_progress
+        show_android_build_progress(*args.android_build_ui)
+        return
+
+    if args.android_build_manager:
+        import sys as _sys
+        from editor.android_build_manager import run_apk_build
+        exit_code = run_apk_build(
+            args.android_build_manager[0], args.android_build_manager[1],
+            args.android_build_manager[2], args.android_build_manager[3],
+            release=args.release,
+        )
+        _sys.exit(exit_code)
+
     from engine.utils import get_base_path
     base = get_base_path()
     editor = LevelEditor(base_path=base, initial_game=args.game)

@@ -9,7 +9,12 @@ import pygame
 import math
 from typing import Callable, Optional
 
-from engine.utils import get_logger
+from engine.utils import get_logger, is_android_runtime
+
+# Su GPU mobile/software gli overlay SRCALPHA fullscreen per-frame e la CIRCLE_BURST
+# (cerchi enormi + particelle) sono molto cari: degradiamo/ottimizziamo su Android.
+_ANDROID = is_android_runtime()
+
 
 class TransitionType:
     FADE_TO_BLACK = "fade"
@@ -47,6 +52,19 @@ class TransitionManager:
         self.on_complete_callback: Optional[Callable[[], None]] = None
         
         self._overlay_surface: Optional[pygame.Surface] = None
+        self._solid_cache: dict = {}
+
+    def _get_solid(self, w: int, h: int, rgb: tuple) -> pygame.Surface:
+        """Surface OPACA cachata di un colore. Per i fade usiamo opaco + set_alpha
+        (alpha di superficie) invece di una Surface SRCALPHA riempita e blittata
+        per-pixel ogni frame: molto piu' veloce su GPU mobile."""
+        key = (w, h, rgb)
+        s = self._solid_cache.get(key)
+        if s is None:
+            s = pygame.Surface((w, h)).convert()
+            s.fill(rgb)
+            self._solid_cache[key] = s
+        return s
 
     def _get_overlay(self, w: int, h: int) -> pygame.Surface:
         """Inizializza una surface proxy hardware con trasparenza per i fade."""
@@ -69,7 +87,14 @@ class TransitionManager:
         if self.state != TransitionState.IDLE:
              self.logger.warning("Richiesta transizione ignorata: evento engine in corso.")
              return
-             
+
+        # Su Android la CIRCLE_BURST (4 cerchi grandi quanto ~1.5x lo schermo + 40
+        # particelle su una Surface SRCALPHA fullscreen, OGNI frame, con la scena ancora
+        # disegnata dietro) fa crollare gli FPS all'apertura dei minigiochi. La
+        # degradiamo a un fade semplice, mantenendo lo stesso timing/callback.
+        if _ANDROID and t_type == TransitionType.CIRCLE_BURST:
+            t_type = TransitionType.FADE_TO_BLACK
+
         self.trans_type = t_type
         # Se richiesto nelle config globali si dimezzano i framerate d'azione
         multiplier = 0.5 if self.reduced_animations else 1.0
@@ -138,20 +163,16 @@ class TransitionManager:
         cy = self.cy if self.cy >= 0 else h // 2
         
         if self.trans_type in (TransitionType.FADE_TO_BLACK, TransitionType.RIPPLE):
-            overlay = self._get_overlay(w, h)
-            overlay.fill((0, 0, 0, 0))
-            
             alpha = self.progress if self.state == TransitionState.OUT else (1.0 - self.progress)
-            overlay.fill((0, 0, 0, int(alpha * 255)))
-            screen.blit(overlay, (0, 0))
+            s = self._get_solid(w, h, (0, 0, 0))
+            s.set_alpha(int(alpha * 255))
+            screen.blit(s, (0, 0))
 
         elif self.trans_type == TransitionType.FLASH:
-            overlay = self._get_overlay(w, h)
-            overlay.fill((0, 0, 0, 0))
-            
             alpha = self.progress if self.state == TransitionState.OUT else (1.0 - self.progress)
-            overlay.fill((255, 255, 255, int(alpha * 255)))
-            screen.blit(overlay, (0, 0))
+            s = self._get_solid(w, h, (255, 255, 255))
+            s.set_alpha(int(alpha * 255))
+            screen.blit(s, (0, 0))
 
         elif self.trans_type == TransitionType.CIRCLE_BURST:
             overlay = self._get_overlay(w, h)

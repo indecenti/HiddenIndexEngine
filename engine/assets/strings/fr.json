@@ -99,6 +99,7 @@
   "hud_found": "TROUVE'",
   "hud_left": "RESTANTS",
   "hud_paused": "PAUSE",
+  "hud_hint": "INDICE",
   "hud_score": "SCORE",
   "hud_time": "TEMPS",
   "label_fullscreen": "Schermo:",

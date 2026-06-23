@@ -13,7 +13,6 @@ import sys
 import json
 import shutil
 import tempfile
-import logging
 import subprocess
 import threading
 import time
@@ -285,7 +284,7 @@ def _run_pyinstaller_with_timeout(
             if proc:
                 try:
                     proc.kill()
-                except:
+                except Exception:
                     pass
             return 1
 
@@ -544,6 +543,13 @@ def build_game(
             "--exclude-module=jupyter",
         ]
 
+        # Hidden imports obbligatori (import dinamici invisibili all'analisi statica):
+        # cv2 (background MP4), numpy, scipy.ndimage (warp prospettico). Stessa fonte
+        # unica usata dalla build dell'editor, cosi' i giochi spediti li risolvono sempre.
+        from editor.pyinstaller_common import BASE_HIDDEN_IMPORTS
+        for h in BASE_HIDDEN_IMPORTS:
+            pyinstaller_args.append(f"--hidden-import={h}")
+
         # Inserisce i minigiochi come hidden imports (import dinamici)
         for mg_id in used_minigames:
             pyinstaller_args.append(f"--hidden-import=engine.minigames.{mg_id}.{mg_id}_game")
@@ -624,7 +630,7 @@ def build_game(
                 subprocess.run(["taskkill", "/F", "/IM", f"{game_id}.exe", "/T"], 
                                capture_output=True, timeout=2)
                 logger.debug(f"[Cleanup] Chiusura eventuali istanze di {game_id}.exe")
-            except: pass
+            except Exception: pass
         
         # Cleanup AGGRESSIVO di residui di build precedenti
         # 1. Rimuove la vecchia sottocartella 'main/' se esiste

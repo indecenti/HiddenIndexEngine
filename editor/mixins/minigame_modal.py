@@ -7,7 +7,6 @@ Scansiona dynamicamente la cartella engine/minigames/ per trovare i manifest.
 
 import json
 import pygame
-from pathlib import Path
 from editor.constants import (
     PANEL, BORDER, BTN, BTN_AC, BTN_HO, ACCENT,
     TXT, TXT_HI, TXT_DIM, OK_C, ERR_C
@@ -49,7 +48,7 @@ class MinigameModalMixin:
                                             data["description"] = sdata.get("mg_description", data.get("description", ""))
                                             # Priorità: mg_title -> nome (dal manifest)
                                             data["name"] = sdata.get("mg_title", data.get("name", data["id"]))
-                                    except:
+                                    except Exception:
                                         pass
                                         
                                 self._available_minigames.append(data)
@@ -58,6 +57,14 @@ class MinigameModalMixin:
 
     def _r_minigame_modal(self, w, h):
         """Rendering della modale di selezione minigioco."""
+        # Guardia: senza un oggetto valido selezionato la modale non ha contesto
+        # (la selezione puo' essere stata azzerata/eliminata mentre era aperta).
+        idx = getattr(self, "selected_idx", None)
+        objs = self.scene_data.get("objects", []) if isinstance(getattr(self, "scene_data", None), dict) else []
+        if idx is None or not (0 <= idx < len(objs)):
+            self._minigame_modal = False
+            return
+
         mw, mh = 800, 600
         mx0, my0 = (w - mw) // 2, (h - mh) // 2
         
@@ -169,6 +176,11 @@ class MinigameModalMixin:
 
     def _minigame_click(self, mx, my):
         """Gestione click nella modale minigiochi."""
+        idx = getattr(self, "selected_idx", None)
+        objs = self.scene_data.get("objects", []) if isinstance(getattr(self, "scene_data", None), dict) else []
+        if idx is None or not (0 <= idx < len(objs)):
+            self._minigame_modal = False
+            return
         if _in_rect((mx, my), getattr(self, "_minigame_close_rect", pygame.Rect(0,0,0,0))):
             self._minigame_modal = False
             return

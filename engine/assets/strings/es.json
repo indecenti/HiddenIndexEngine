@@ -99,6 +99,7 @@
   "hud_found": "ENCONTRADO",
   "hud_left": "RESTANTES",
   "hud_paused": "PAUSA",
+  "hud_hint": "PISTA",
   "hud_score": "PUNTOS",
   "hud_time": "TIEMPO",
   "label_fullscreen": "Schermo:",

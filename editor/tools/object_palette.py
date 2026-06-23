@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import json
 import logging
-import math
 import sqlite3
 import time
 from dataclasses import dataclass
@@ -190,11 +189,13 @@ def compute_palette_extended(icon_path: Path, k: int = PALETTE_K) -> Optional[li
 def ensure_palette_columns(base_path: Path):
     """Aggiunge colonne palette_ext (TEXT) e palette_version (TEXT) se mancanti."""
     p = base_path / OBJ_PROFILES_DB
-    if not p.exists():
-        log.warning(f"[PALETTE] {p} non esiste, build profiles prima")
-        return
+    p.parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(str(p))
     try:
+        # Garantisce la tabella base anche se build_profiles non e' ancora girato:
+        # senza, il DB resterebbe uno zombie senza tabella e le palette andrebbero perse.
+        from editor.tools.object_profiles import _ensure_schema
+        _ensure_schema(con)
         cur = con.cursor()
         cur.execute("PRAGMA table_info(object_profile)")
         cols = {row[1] for row in cur.fetchall()}
@@ -217,8 +218,11 @@ def save_palette(base_path: Path, catalog_id: str, style: str,
                   clusters: list[ColorCluster]):
     """Persiste palette estesa per un oggetto. UPSERT semplice."""
     p = base_path / OBJ_PROFILES_DB
+    p.parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(str(p))
     try:
+        from editor.tools.object_profiles import _ensure_schema
+        _ensure_schema(con)
         payload = json.dumps([
             {"h": c.h, "s": c.s, "v": c.v, "w": c.w, "var": c.var}
             for c in clusters

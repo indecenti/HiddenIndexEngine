@@ -232,68 +232,82 @@ class ResultsScreen:
         draw_y = (panel_y - int(30 * cs)) + offset_y
 
         radius = max(6, int(BORDER_RADIUS * cs))
-        panel = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
-        pygame.draw.rect(panel, (*COLOR_BG, 252), (0, 0, panel_w, panel_h), border_radius=radius)
-        pygame.draw.rect(panel, COLOR_BORDER, (0, 0, panel_w, panel_h), max(1, int(2 * cs)), border_radius=radius)
+        # CACHE del pannello: la composizione (Surface SRCALPHA + ~6 font.render +
+        # disegni) avveniva OGNI frame -> costosa su GPU mobile. Il contenuto cambia
+        # solo durante l'animazione (conteggio punteggio, pop stelle, fade "perfect",
+        # fade pulsante). Lo ricomponiamo solo quando la firma del contenuto cambia;
+        # a riposo (animazione finita) e' un singolo blit. set_alpha + posizione
+        # drop-down restano applicati per frame (cheap).
+        p_alpha = int(255 * max(0, min(1, (self.animation_timer - 1.2) * 2)))
+        sig = (panel_w, panel_h, round(cs, 3), self.is_failed, self.display_score, self.stars,
+               tuple(round(t, 2) for t in self.star_pop_timers), p_alpha, alpha,
+               self.objects_found, self.total_objects, int(self.time_elapsed))
+        if getattr(self, "_panel_sig", None) != sig or getattr(self, "_panel_cache", None) is None:
+            panel = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
+            pygame.draw.rect(panel, (*COLOR_BG, 252), (0, 0, panel_w, panel_h), border_radius=radius)
+            pygame.draw.rect(panel, COLOR_BORDER, (0, 0, panel_w, panel_h), max(1, int(2 * cs)), border_radius=radius)
 
-        margin = int(40 * cs)
-        curr_y = int(40 * cs)
+            margin = int(40 * cs)
+            curr_y = int(40 * cs)
 
-        # LOCALIZZAZIONE TITOLO
-        t_key = "MISSION_FAILED" if self.is_failed else "MISSION_COMPLETE"
-        title_str = self.lang(t_key).upper()
-        t_col = COLOR_DANGER if self.is_failed else COLOR_SUCCESS
-        title_surf = self._font("georgia", 34, cs).render(title_str, True, t_col)
-        if title_surf.get_width() > panel_w - margin:
-            sc = (panel_w - margin) / title_surf.get_width()
-            title_surf = pygame.transform.smoothscale(title_surf, (int(title_surf.get_width() * sc), int(title_surf.get_height() * sc)))
-        panel.blit(title_surf, ((panel_w - title_surf.get_width()) // 2, curr_y))
+            # LOCALIZZAZIONE TITOLO
+            t_key = "MISSION_FAILED" if self.is_failed else "MISSION_COMPLETE"
+            title_str = self.lang(t_key).upper()
+            t_col = COLOR_DANGER if self.is_failed else COLOR_SUCCESS
+            title_surf = self._font("georgia", 34, cs).render(title_str, True, t_col)
+            if title_surf.get_width() > panel_w - margin:
+                sc = (panel_w - margin) / title_surf.get_width()
+                title_surf = pygame.transform.smoothscale(title_surf, (int(title_surf.get_width() * sc), int(title_surf.get_height() * sc)))
+            panel.blit(title_surf, ((panel_w - title_surf.get_width()) // 2, curr_y))
 
-        curr_y += int(65 * cs)
-        label_surf = self._font("georgia_it", 20, cs).render(self.lang("TOTAL_SCORE").upper(), True, COLOR_ACCENT)
-        label_surf.set_alpha(150)
-        panel.blit(label_surf, ((panel_w - label_surf.get_width()) // 2, curr_y))
-
-        curr_y += int(35 * cs)
-        score_surf = self._font("georgia", 54, cs).render(f"{self.display_score}", True, COLOR_ACCENT)
-        if score_surf.get_width() > panel_w - int(80 * cs):
-            sc = (panel_w - int(80 * cs)) / score_surf.get_width()
-            score_surf = pygame.transform.smoothscale(score_surf, (int(score_surf.get_width() * sc), int(score_surf.get_height() * sc)))
-        panel.blit(score_surf, ((panel_w - score_surf.get_width()) // 2, curr_y))
-
-        curr_y += int(95 * cs)
-        star_spacing = int(100 * cs)
-        star_size = int(35 * cs)
-        for i in range(3):
-            sx = (panel_w // 2) + (i - 1) * star_spacing
-            p_timer = self.star_pop_timers[i]
-            if i < self.stars and p_timer > 0:
-                pop = min(1.0, p_timer / self.star_pop_duration)
-                sc = math.sin(pop * math.pi * 0.8) * 1.25 if pop < 1.0 else 1.0
-                self._draw_star(panel, sx, curr_y, int(star_size * sc), COLOR_ACCENT)
-            else:
-                self._draw_star(panel, sx, curr_y, star_size, (40, 40, 50), 80)
-
-        if self.objects_found == self.total_objects and not self.is_failed and self.total_objects > 0:
             curr_y += int(65 * cs)
-            p_alpha = int(255 * max(0, min(1, (self.animation_timer - 1.2) * 2)))
-            if p_alpha > 0:
-                p_text = self._font("georgia_it", 20, cs).render(f"— {self.lang('PERFECT_SCORE').upper()} —", True, COLOR_SUCCESS)
-                p_text.set_alpha(p_alpha)
-                panel.blit(p_text, ((panel_w - p_text.get_width()) // 2, curr_y))
+            label_surf = self._font("georgia_it", 20, cs).render(self.lang("TOTAL_SCORE").upper(), True, COLOR_ACCENT)
+            label_surf.set_alpha(150)
+            panel.blit(label_surf, ((panel_w - label_surf.get_width()) // 2, curr_y))
 
-        sep_y = panel_h - int(170 * cs)
-        pygame.draw.line(panel, (60, 60, 75), (int(100 * cs), sep_y), (panel_w - int(100 * cs), sep_y), 1)
+            curr_y += int(35 * cs)
+            score_surf = self._font("georgia", 54, cs).render(f"{self.display_score}", True, COLOR_ACCENT)
+            if score_surf.get_width() > panel_w - int(80 * cs):
+                sc = (panel_w - int(80 * cs)) / score_surf.get_width()
+                score_surf = pygame.transform.smoothscale(score_surf, (int(score_surf.get_width() * sc), int(score_surf.get_height() * sc)))
+            panel.blit(score_surf, ((panel_w - score_surf.get_width()) // 2, curr_y))
 
-        self._draw_stat(panel, self.lang("TIME_ELAPSED"), f"{int(self.time_elapsed // 60)}:{int(self.time_elapsed % 60):02d}", sep_y + int(35 * cs), int(100 * cs), panel_w - int(200 * cs), cs)
-        self._draw_stat(panel, self.lang("OBJECTS_FOUND"), f"{self.objects_found} / {self.total_objects}", sep_y + int(75 * cs), int(100 * cs), panel_w - int(200 * cs), cs)
+            curr_y += int(95 * cs)
+            star_spacing = int(100 * cs)
+            star_size = int(35 * cs)
+            for i in range(3):
+                sx = (panel_w // 2) + (i - 1) * star_spacing
+                p_timer = self.star_pop_timers[i]
+                if i < self.stars and p_timer > 0:
+                    pop = min(1.0, p_timer / self.star_pop_duration)
+                    sc = math.sin(pop * math.pi * 0.8) * 1.25 if pop < 1.0 else 1.0
+                    self._draw_star(panel, sx, curr_y, int(star_size * sc), COLOR_ACCENT)
+                else:
+                    self._draw_star(panel, sx, curr_y, star_size, (40, 40, 50), 80)
 
-        # Pulsante localizzato (grande, touch-friendly)
-        btn_rect = self.get_continue_button_rect(0, 0, panel_w, panel_h, cs)
-        pygame.draw.rect(panel, (*COLOR_ACCENT, alpha), btn_rect, border_radius=max(6, int(12 * cs)))
-        txt = self._font("arial_b", 20, cs).render(self.lang("CONTINUE"), True, (20, 20, 30))
-        panel.blit(txt, (btn_rect.centerx - txt.get_width() // 2, btn_rect.centery - txt.get_height() // 2))
+            if self.objects_found == self.total_objects and not self.is_failed and self.total_objects > 0:
+                curr_y += int(65 * cs)
+                if p_alpha > 0:
+                    p_text = self._font("georgia_it", 20, cs).render(f"— {self.lang('PERFECT_SCORE').upper()} —", True, COLOR_SUCCESS)
+                    p_text.set_alpha(p_alpha)
+                    panel.blit(p_text, ((panel_w - p_text.get_width()) // 2, curr_y))
 
+            sep_y = panel_h - int(170 * cs)
+            pygame.draw.line(panel, (60, 60, 75), (int(100 * cs), sep_y), (panel_w - int(100 * cs), sep_y), 1)
+
+            self._draw_stat(panel, self.lang("TIME_ELAPSED"), f"{int(self.time_elapsed // 60)}:{int(self.time_elapsed % 60):02d}", sep_y + int(35 * cs), int(100 * cs), panel_w - int(200 * cs), cs)
+            self._draw_stat(panel, self.lang("OBJECTS_FOUND"), f"{self.objects_found} / {self.total_objects}", sep_y + int(75 * cs), int(100 * cs), panel_w - int(200 * cs), cs)
+
+            # Pulsante localizzato (grande, touch-friendly)
+            btn_rect = self.get_continue_button_rect(0, 0, panel_w, panel_h, cs)
+            pygame.draw.rect(panel, (*COLOR_ACCENT, alpha), btn_rect, border_radius=max(6, int(12 * cs)))
+            txt = self._font("arial_b", 20, cs).render(self.lang("CONTINUE"), True, (20, 20, 30))
+            panel.blit(txt, (btn_rect.centerx - txt.get_width() // 2, btn_rect.centery - txt.get_height() // 2))
+
+            self._panel_cache = panel
+            self._panel_sig = sig
+
+        panel = self._panel_cache
         panel.set_alpha(alpha)
         surface.blit(panel, (panel_x, draw_y))
 

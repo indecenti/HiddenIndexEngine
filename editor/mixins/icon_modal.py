@@ -4,7 +4,6 @@ editor/mixins/icon_modal.py
 IconModalMixin — Gestione selezione e conversione icone di gioco.
 """
 
-import os
 import shutil
 import logging
 from pathlib import Path
@@ -171,7 +170,7 @@ class IconModalMixin:
                     # Resize per la grid
                     surf = pygame.transform.smoothscale(full_surf, (img_rect.width, img_rect.height))
                     self._icon_cache[cache_key] = surf
-                except:
+                except Exception:
                     self._icon_cache[cache_key] = None
                     self._icon_dims[cache_key] = (0, 0)
             

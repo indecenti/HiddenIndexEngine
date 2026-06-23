@@ -794,6 +794,13 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
             counts: dict[str, int] = {}
             for raw in sdata.get("objects", []):
                 cid = raw["catalog_id"]
+                # Mirroring scene_loader: scarta gli oggetti il cui catalog_id non
+                # esiste nel catalogo. Esportarli (icon vuoto, is_goal=True) creerebbe
+                # un goal invisibile che il runtime conta ma non disegna, rendendo la
+                # scena non completabile.
+                if get_object_by_id(catalog, cid) is None:
+                    print(f"  [WARN] oggetto scartato (catalog_id assente): {cid}")
+                    continue
                 counts[cid] = counts.get(cid, 0) + 1
                 iid = cid if counts[cid] == 1 else f"{cid}_{counts[cid]}"
                 obj = _build_object(raw, iid, catalog)

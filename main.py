@@ -68,7 +68,7 @@ if _is_android():
     sys.excepthook = _android_crash_handler
 
 
-from engine.utils import setup_logging, get_base_path, get_logger
+from engine.utils import setup_logging, get_base_path, get_user_config_path, get_logger
 from engine.core import EngineCore
 
 def main() -> None:
@@ -85,14 +85,30 @@ def main() -> None:
     parser.add_argument("--lang", type=str, help="Forza la lingua (it, en, es, fr, de)")
     args = parser.parse_args()
     
-    # Lettura config.ini
-    config_path = get_base_path() / "config.ini"
+    # Lettura config.ini: prima i DEFAULT bundlati (get_base_path, read-only su
+    # Android), poi gli OVERRIDE utente dal path scrivibile (get_user_config_path)
+    # che li sovrascrive. Su desktop i due path coincidono (un unico file in root).
+    base_config_path = get_base_path() / "config.ini"
+    user_config_path = get_user_config_path()
     config = configparser.ConfigParser()
-    
-    if config_path.exists():
-        config.read(config_path, encoding="utf-8")
+
+    read_targets, seen = [], set()
+    for p in (base_config_path, user_config_path):
+        try:
+            key = p.resolve()
+        except Exception:
+            key = p
+        if p.exists() and key not in seen:
+            seen.add(key)
+            read_targets.append(p)
+
+    if read_targets:
+        config.read(read_targets, encoding="utf-8")  # l'ultimo (utente) ha precedenza
+        logger.info(f"Config letta da: {[str(p) for p in read_targets]}")
     else:
-        logger.warning(f"File {config_path} non trovato. Fallback sui default integrati.")
+        logger.warning(f"Nessun config.ini trovato ({base_config_path}). Default integrati.")
+
+    if not config.has_section("engine"):
         config.add_section("engine")
         config.set("engine", "default_game", "")
         

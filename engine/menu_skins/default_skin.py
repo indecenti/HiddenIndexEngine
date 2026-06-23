@@ -12,10 +12,27 @@ import math
 import pygame
 
 from .base import MenuSkin
+from engine.utils import is_android_runtime
+
+# Flag runtime: il caching qui sotto e' visivamente neutro (stessi pixel) e resta
+# attivo su entrambe le piattaforme; il flag e' disponibile per eventuali rami
+# gated, ma su questo skin non alteriamo l'aspetto desktop.
+_ANDROID = is_android_runtime()
 
 
 class DefaultSkin(MenuSkin):
     id = "default"
+
+    def __init__(self, theme) -> None:
+        super().__init__(theme)
+        # Cache surface SRCALPHA grandi/costose ricostruite per-frame: l'aurora
+        # (fullscreen-width, statica) e le ombre sfocate dei chip vetro (blur
+        # costoso ma statico per dimensione). Il blit di una SRCALPHA grande ogni
+        # frame e' caro su GPU mobile; ricostruirla con molte draw + blur lo e'
+        # ancora di piu'. Cachiamo una volta e ri-blittiamo, invalidando su resize.
+        self._aurora_cache = None      # tuple(key) -> Surface
+        self._aurora_key = None
+        self._chip_shadow_cache = {}   # (w, h, rad) -> Surface sfocata (statica)
 
     def draw_background_pre(self, ms, screen, sw, sh) -> None:
         theme = self.theme
@@ -29,18 +46,27 @@ class DefaultSkin(MenuSkin):
         h = int(sh * 0.42)
         if h <= 0 or sw <= 0:
             return
-        surf = pygame.Surface((sw, h), pygame.SRCALPHA)
-        cx = sw // 2
-        # Molti strati a alpha basso: falloff morbido, niente anelli visibili.
-        layers = 14
-        for i in range(layers):
-            t = i / (layers - 1)
-            r = int((sw * 0.62) * (0.18 + 0.82 * t))
-            a = int(11 * (1.0 - t))
-            if a <= 0 or r <= 0:
-                continue
-            pygame.draw.circle(surf, (col[0], col[1], col[2], a), (cx, 0), r)
-        screen.blit(surf, (0, 0))
+        # L'aurora e' STATICA (dipende solo da dimensione + colore): la costruivamo
+        # da zero ogni frame (Surface SRCALPHA fullscreen-width + 14 draw.circle).
+        # La cachiamo una volta e ri-blittiamo; invalida su resize/colore. Resta
+        # SRCALPHA (e' un velo additivo sul fondo) ma il blit cachato e' visivamente
+        # identico su desktop e Android.
+        key = (sw, h, int(col[0]), int(col[1]), int(col[2]))
+        if self._aurora_key != key or self._aurora_cache is None:
+            surf = pygame.Surface((sw, h), pygame.SRCALPHA)
+            cx = sw // 2
+            # Molti strati a alpha basso: falloff morbido, niente anelli visibili.
+            layers = 14
+            for i in range(layers):
+                t = i / (layers - 1)
+                r = int((sw * 0.62) * (0.18 + 0.82 * t))
+                a = int(11 * (1.0 - t))
+                if a <= 0 or r <= 0:
+                    continue
+                pygame.draw.circle(surf, (col[0], col[1], col[2], a), (cx, 0), r)
+            self._aurora_cache = surf
+            self._aurora_key = key
+        screen.blit(self._aurora_cache, (0, 0))
 
     def _draw_fireflies(self, screen, sw, sh) -> None:
         col = self.theme.particles_cfg("color", [188, 212, 245])
@@ -74,11 +100,29 @@ class DefaultSkin(MenuSkin):
         pad = int(min(draw_rect.w, draw_rect.h) * 0.10)
         chip = draw_rect.inflate(pad * 2, pad * 2)
         rad = max(14, int(min(chip.w, chip.h) * 0.30))
-        # Ombra morbida del chip (silhouette sfocata)
+        if _ANDROID:
+            # Android: chip OPACO (un draw.rect pieno + bordo). L'ombra sfocata e il
+            # vetro erano DUE Surface SRCALPHA per bottone OGNI frame: il blit
+            # per-pixel-alpha e' molto caro su GPU mobile. Qui niente alpha, solo
+            # due draw.rect diretti -> leggibile e rapidissimo.
+            pygame.draw.rect(screen, (24, 28, 38), chip, border_radius=rad)
+            bc = theme.color3("btn_border_hover") if ht > 0.01 else theme.color3("btn_border_normal")
+            pygame.draw.rect(screen, bc, chip, width=2, border_radius=rad)
+            return
+        # Ombra morbida del chip (silhouette sfocata). E' STATICA per dimensione
+        # (non dipende da hover): la ricostruivamo + sfocavamo (theme.blur = due
+        # smoothscale) per ogni bottone OGNI frame. La cachiamo per (w, h, rad);
+        # blur identico, blit invariato. Cache piccola (poche taglie di chip).
         m = 16
-        sh = pygame.Surface((chip.w + m * 2, chip.h + m * 2), pygame.SRCALPHA)
-        pygame.draw.rect(sh, (0, 0, 0, 85), (m, m, chip.w, chip.h), border_radius=rad)
-        sh = theme.blur(sh, 0.22)
+        skey = (chip.w, chip.h, rad)
+        sh = self._chip_shadow_cache.get(skey)
+        if sh is None:
+            shadow = pygame.Surface((chip.w + m * 2, chip.h + m * 2), pygame.SRCALPHA)
+            pygame.draw.rect(shadow, (0, 0, 0, 85), (m, m, chip.w, chip.h), border_radius=rad)
+            sh = theme.blur(shadow, 0.22)
+            if len(self._chip_shadow_cache) > 32:
+                self._chip_shadow_cache.clear()  # guardia: evita crescita illimitata
+            self._chip_shadow_cache[skey] = sh
         screen.blit(sh, (chip.x - m, chip.y - m + 6))
         # Fondo vetro + bordo (accentato in hover) + riflesso superiore
         glass = pygame.Surface((chip.w, chip.h), pygame.SRCALPHA)

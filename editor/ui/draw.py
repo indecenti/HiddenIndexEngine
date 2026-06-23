@@ -66,7 +66,7 @@ def _get_icon(icon_id):
             surf = pygame.image.load(str(path)).convert_alpha()
             _ICON_CACHE[icon_id] = surf
             return surf
-        except: pass
+        except Exception: pass
     return None
 
 

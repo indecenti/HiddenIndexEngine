@@ -13,6 +13,9 @@ import random
 import pygame
 
 from .default_skin import DefaultSkin
+from engine.utils import is_android_runtime
+
+_ANDROID = is_android_runtime()
 
 _CONFETTI_PALETTE = [
     (255, 122, 162),
@@ -29,6 +32,12 @@ class KidsSkin(DefaultSkin):
     def __init__(self, theme) -> None:
         super().__init__(theme)
         self._confetti: list[dict] = []
+        # Cache degli elementi statici del sole (alone + raggi base non ruotati),
+        # ricreati solo al cambio di dimensione/colore. Evita alloc SRCALPHA +
+        # molte draw ogni frame nel path di disegno dello sfondo.
+        self._sun_cache_key = None
+        self._sun_halo = None
+        self._sun_ray_base = None
 
     # ── Sfondo: cielo + sole ─────────────────────────────────────────────────
     def draw_background_pre(self, ms, screen, sw, sh) -> None:
@@ -54,18 +63,48 @@ class KidsSkin(DefaultSkin):
     def _draw_sun(self, screen, sw, sh, col) -> None:
         cx, cy = int(sw * 0.86), int(sh * 0.15)
         r = max(8, int(min(sw, sh) * 0.09))
-        ray = pygame.Surface((r * 5, r * 5), pygame.SRCALPHA)
+        self._ensure_sun_cache(r, col)
         ang = self._t * 0.4
+        if _ANDROID:
+            # Su mobile l'alloc SRCALPHA r*5 + 8 line ogni frame e' costosa:
+            # ruotiamo la superficie raggi gia' pronta (un solo transform). La
+            # rasterizzazione delle linee differisce di un pelo dall'originale,
+            # quindi questo ramo e' gated; il desktop resta identico.
+            ray = pygame.transform.rotate(self._sun_ray_base, -math.degrees(ang))
+            rrect = ray.get_rect(center=(cx, cy))
+            screen.blit(ray, rrect.topleft)
+        else:
+            # Desktop: comportamento originale, raggi ridisegnati per-frame.
+            ray = pygame.Surface((r * 5, r * 5), pygame.SRCALPHA)
+            cc = (r * 2.5, r * 2.5)
+            for i in range(8):
+                a = ang + i * (math.pi / 4)
+                pygame.draw.line(ray, (col[0], col[1], col[2], 110), cc,
+                                 (cc[0] + math.cos(a) * r * 2.3, cc[1] + math.sin(a) * r * 2.3), 5)
+            screen.blit(ray, (cx - int(r * 2.5), cy - int(r * 2.5)))
+        # L'alone e' un cerchio statico: cache pura, pixel-identica ovunque.
+        screen.blit(self._sun_halo, (cx - int(r * 1.5), cy - int(r * 1.5)))
+        pygame.draw.circle(screen, tuple(col), (cx, cy), r)
+
+    def _ensure_sun_cache(self, r, col) -> None:
+        # Ricostruisce alone e raggi-base solo se cambia dimensione o colore.
+        key = (r, col[0], col[1], col[2])
+        if key == self._sun_cache_key:
+            return
+        self._sun_cache_key = key
+        # Alone statico (cerchio morbido), identico ogni frame -> cache pura.
+        halo = pygame.Surface((r * 3, r * 3), pygame.SRCALPHA)
+        pygame.draw.circle(halo, (col[0], col[1], col[2], 60),
+                           (int(r * 1.5), int(r * 1.5)), int(r * 1.4))
+        self._sun_halo = halo
+        # Raggi base ad angolo 0: la rotazione per-frame avviene su questa copia.
+        ray = pygame.Surface((r * 5, r * 5), pygame.SRCALPHA)
         cc = (r * 2.5, r * 2.5)
         for i in range(8):
-            a = ang + i * (math.pi / 4)
+            a = i * (math.pi / 4)
             pygame.draw.line(ray, (col[0], col[1], col[2], 110), cc,
                              (cc[0] + math.cos(a) * r * 2.3, cc[1] + math.sin(a) * r * 2.3), 5)
-        screen.blit(ray, (cx - int(r * 2.5), cy - int(r * 2.5)))
-        halo = pygame.Surface((r * 3, r * 3), pygame.SRCALPHA)
-        pygame.draw.circle(halo, (col[0], col[1], col[2], 60), (int(r * 1.5), int(r * 1.5)), int(r * 1.4))
-        screen.blit(halo, (cx - int(r * 1.5), cy - int(r * 1.5)))
-        pygame.draw.circle(screen, tuple(col), (cx, cy), r)
+        self._sun_ray_base = ray
 
     _ARRANGE_STATES = ("main", "pause")
 

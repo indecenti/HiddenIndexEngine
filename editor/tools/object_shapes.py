@@ -185,11 +185,13 @@ OBJ_PROFILES_DB = "engine/data/object_profiles.db"
 def ensure_shape_columns(base_path: Path):
     """Aggiunge colonne shape_* a object_profile (se non esistono)."""
     p = base_path / OBJ_PROFILES_DB
-    if not p.exists():
-        log.warning(f"[SHAPES] {p} non esiste, build profiles prima")
-        return
+    p.parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(str(p))
     cur = con.cursor()
+    # Garantisce la tabella base anche se build_profiles non e' ancora girato
+    # (altrimenti 'no such table: object_profile' o precompute silenziosamente perso).
+    from editor.tools.object_profiles import _ensure_schema
+    _ensure_schema(con)
     # Check colonne esistenti
     cur.execute("PRAGMA table_info(object_profile)")
     cols = {row[1] for row in cur.fetchall()}

@@ -43,6 +43,11 @@ class ScalingManager:
         self._zoom: float = 1.0
 
         # Background mapping (aggiornato per ogni scena)
+        # I campi _bg_* sono il mapping EFFETTIVO (base + camera zoom/pan): tutti i
+        # consumatori (bg_to_screen, screen_to_bg, scale_bg_value, get_scenic_params,
+        # rendering oggetti/effetti, hit-test) usano questi e rispettano quindi lo
+        # zoom/pan interattivo senza modifiche. I campi _base_bg_* tengono il mapping
+        # SENZA camera, usato per ricalcolare l'effettivo e per la cache del BG.
         self._bg_orig_w: int = REF_W
         self._bg_orig_h: int = REF_H
         self._bg_json_scale: float = 1.0
@@ -51,6 +56,17 @@ class ScalingManager:
         self._bg_screen_y: float = 0.0
         self._bg_screen_w: float = float(REF_W)
         self._bg_screen_h: float = float(REF_H)
+
+        self._base_bg_display_scale: float = 1.0
+        self._base_bg_screen_x: float = 0.0
+        self._base_bg_screen_y: float = 0.0
+        self._base_bg_screen_w: float = float(REF_W)
+        self._base_bg_screen_h: float = float(REF_H)
+
+        # Limiti camera (zoom interattivo per ispezione HOG). Min 1.0: non si
+        # rimpicciolisce oltre il fit; max 3.0 adeguato a target mid-range.
+        self._zoom_min: float = 1.0
+        self._zoom_max: float = 3.0
 
         # Cache Surface scalate (path -> Surface)
         self._surface_cache: collections.OrderedDict[str, pygame.Surface] = collections.OrderedDict()
@@ -248,21 +264,28 @@ class ScalingManager:
 
         # Scala per adattarsi allo schermo (letterbox: prende il minimo)
         fit_scale = min(self._screen_w / logical_w, self._screen_h / logical_h)
-        self._bg_display_scale = fit_scale * bg_scale
+        self._base_bg_display_scale = fit_scale * bg_scale
 
-        # Dimensioni a schermo e posizione centrata
+        # Dimensioni a schermo e posizione centrata (mapping BASE, senza camera)
         display_w = logical_w * fit_scale
         display_h = logical_h * fit_scale
-        self._bg_screen_x = (self._screen_w - display_w) / 2
-        self._bg_screen_y = (self._screen_h - display_h) / 2
-        self._bg_screen_w = display_w
-        self._bg_screen_h = display_h
+        self._base_bg_screen_x = (self._screen_w - display_w) / 2
+        self._base_bg_screen_y = (self._screen_h - display_h) / 2
+        self._base_bg_screen_w = display_w
+        self._base_bg_screen_h = display_h
+
+        # Applica la camera corrente per ottenere il mapping effettivo.
+        self._recompute_camera()
 
         log.debug(
             "Background %dx%d (scale=%.2f) → display %.0fx%.0f @ (%.0f, %.0f)",
             bg_w, bg_h, bg_scale, display_w, display_h,
-            self._bg_screen_x, self._bg_screen_y,
+            self._base_bg_screen_x, self._base_bg_screen_y,
         )
+
+    def base_bg_screen_size(self) -> tuple[int, int]:
+        """Dimensione del background a schermo SENZA camera (per la cache del BG)."""
+        return int(round(self._base_bg_screen_w)), int(round(self._base_bg_screen_h))
 
     def bg_to_screen(self, bx: float, by: float) -> tuple[float, float]:
         """Coordinate background (px del file) → coordinate schermo."""
@@ -296,6 +319,13 @@ class ScalingManager:
         """Scala un valore scalare (raggio, dimensione) da bg-space a pixel schermo."""
         return v * self._bg_display_scale
 
+    def screen_dist_to_bg(self, d_screen: float, scenic_factor: float = 1.0) -> float:
+        """Converte una distanza in pixel schermo nell'equivalente in spazio
+        background. Inverso di scale_bg_value, con eventuale zoom scenico.
+        Usato per la tolleranza tap (fat-finger) del rilevamento oggetti."""
+        denom = self._bg_display_scale * (scenic_factor if scenic_factor else 1.0)
+        return d_screen / denom if denom else d_screen
+
     def get_scenic_params(self, factor: float) -> tuple[float, float, float, float]:
         """Ritorna (x, y, w, h) per il background applicando uno zoom scenico centrato."""
         w = self._bg_screen_w * factor
@@ -320,17 +350,78 @@ class ScalingManager:
     # Pan / Zoom scena
     # ------------------------------------------------------------------
 
+    def _recompute_camera(self) -> None:
+        """Ricalcola il mapping background→schermo EFFETTIVO applicando la camera
+        (zoom attorno al centro schermo + pan) al mapping base. Clampa il pan in
+        modo che il background copra sempre lo schermo quando è ingrandito, e resti
+        centrato quando lo zoom è 1.0 (niente bande nere extra né scena alla deriva)."""
+        z = self._zoom
+        cx, cy = self._screen_w / 2.0, self._screen_h / 2.0
+
+        bw = self._base_bg_screen_w * z
+        bh = self._base_bg_screen_h * z
+        # Posizione del top-left del bg con solo lo zoom (pan = 0)
+        x0 = cx + (self._base_bg_screen_x - cx) * z
+        y0 = cy + (self._base_bg_screen_y - cy) * z
+
+        # Range ammesso per il top-left: se il bg è più grande dello schermo può
+        # scorrere fino a mostrarne i bordi; altrimenti resta centrato.
+        if bw >= self._screen_w:
+            lo_x, hi_x = self._screen_w - bw, 0.0
+        else:
+            lo_x = hi_x = (self._screen_w - bw) / 2.0
+        if bh >= self._screen_h:
+            lo_y, hi_y = self._screen_h - bh, 0.0
+        else:
+            lo_y = hi_y = (self._screen_h - bh) / 2.0
+
+        eff_x = min(hi_x, max(lo_x, x0 + self._pan_x))
+        eff_y = min(hi_y, max(lo_y, y0 + self._pan_y))
+        # Ri-normalizza il pan al valore clampato (così i delta successivi sono coerenti)
+        self._pan_x = eff_x - x0
+        self._pan_y = eff_y - y0
+
+        self._bg_display_scale = self._base_bg_display_scale * z
+        self._bg_screen_x = eff_x
+        self._bg_screen_y = eff_y
+        self._bg_screen_w = bw
+        self._bg_screen_h = bh
+
     def set_pan(self, px: float, py: float) -> None:
         self._pan_x = px
         self._pan_y = py
+        self._recompute_camera()
+
+    def pan_by(self, dx: float, dy: float) -> None:
+        """Trascina la scena di (dx, dy) pixel schermo (clamp ai bordi automatico)."""
+        self._pan_x += dx
+        self._pan_y += dy
+        self._recompute_camera()
 
     def set_zoom(self, zoom: float) -> None:
-        self._zoom = max(0.5, min(zoom, 4.0))
+        self._zoom = max(self._zoom_min, min(zoom, self._zoom_max))
+        self._recompute_camera()
+
+    def zoom_at(self, zoom: float, focus_x: float, focus_y: float) -> None:
+        """Imposta lo zoom mantenendo fermo sotto le dita il punto schermo
+        (focus_x, focus_y): è il comportamento naturale del pinch-to-zoom."""
+        bgx, bgy = self.screen_to_bg(focus_x, focus_y)
+        self._zoom = max(self._zoom_min, min(zoom, self._zoom_max))
+        self._recompute_camera()
+        # Sposta il pan per riportare il punto-mondo sotto al focus.
+        nx, ny = self.bg_to_screen(bgx, bgy)
+        self._pan_x += (focus_x - nx)
+        self._pan_y += (focus_y - ny)
+        self._recompute_camera()
+
+    def is_zoomed(self) -> bool:
+        return self._zoom > 1.001
 
     def reset_pan_zoom(self) -> None:
         self._pan_x = 0.0
         self._pan_y = 0.0
         self._zoom = 1.0
+        self._recompute_camera()
 
     # ------------------------------------------------------------------
     # Cache Surface scalate

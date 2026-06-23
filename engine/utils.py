@@ -127,6 +127,21 @@ def get_writable_path(*parts: str) -> Path:
     return path
 
 
+def get_user_config_path() -> Path:
+    """Path del config.ini SCRIVIBILE con le preferenze utente (volumi, display).
+
+    Desktop: get_base_path()/config.ini (posizione storica, immutata).
+    Android: get_writable_path("config.ini") -> ANDROID_PRIVATE/saves/config.ini,
+    perche' la dir di unpack dell'app (get_base_path()) e' READ-ONLY a runtime: una
+    scrittura li' fallisce e le preferenze andrebbero perse ad ogni riavvio.
+
+    All'avvio (main.py) i default bundlati vanno letti da get_base_path()/config.ini
+    e POI sovrascritti da questo file utente (se esiste)."""
+    if is_android_runtime():
+        return get_writable_path("config.ini")
+    return get_base_path() / "config.ini"
+
+
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------

@@ -111,6 +111,9 @@ class BuildWatchdog(threading.Thread):
                         f"Build bloccato: progresso fermo a {current_progress}% "
                         f"per {inactive:.0f}s (timeout: {self.timeout}s)"
                     )
+                    # Finalizza il fallimento, altrimenti la UI resta in attesa fino
+                    # al proprio POLLING_TIMEOUT (90 min) ignorando lo stallo.
+                    status["success"] = False
                     with open(self.status_file, "w", encoding="utf-8") as f:
                         json.dump(status, f, indent=2)
             except Exception as e:

@@ -87,17 +87,19 @@ class VideoModalMixin:
             logging.error(f"Cartella background non trovata: {self._vid_dir}")
 
     def _vid_load_catalog(self):
-        cat_path = self._vid_dir / "backgrounds_catalog.json"
+        cat_path = self._vid_dir / "videos_catalog.json"
         if cat_path.exists():
             try:
                 with open(cat_path, "r", encoding="utf-8") as f:
                     self._vid_catalog = json.load(f)
-            except: self._vid_catalog = {}
+            except Exception: self._vid_catalog = {}
         else: self._vid_catalog = {}
 
     def _vid_load_thumbnails_task(self):
         """Cerca e carica miniature correlate ai video (es. video.jpg per video.mp4)."""
         for name in self._vid_all_files:
+            if not getattr(self, "_vid_modal", False):
+                break  # modale chiuso: non continuare a decodificare i video (CPU/IO leak)
             if name in self._vid_thumbnails: continue
             # Prova varianti: nome intero + .jpg, o stem + .jpg
             p = Path(name)
@@ -117,7 +119,7 @@ class VideoModalMixin:
                             self._vid_thumbnails[name] = thumb
                         found = True
                         break
-                    except: pass
+                    except Exception: pass
             
             # Fallback: Estrazione frame con OpenCV
             if not found:
@@ -133,10 +135,13 @@ class VideoModalMixin:
                         with self._vid_thumb_lock:
                             self._vid_thumbnails[name] = thumb
                     cap.release()
-                except: pass
+                except Exception: pass
 
     def _vid_save_catalog(self):
-        cat_path = self._vid_dir / "backgrounds_catalog.json"
+        # File distinto da quello degli sfondi: condividere backgrounds_catalog.json
+        # (stessa cartella, schemi tag incompatibili) faceva sovrascrivere a vicenda
+        # i due modali. I video usano il proprio catalogo.
+        cat_path = self._vid_dir / "videos_catalog.json"
         try:
             self._vid_dir.mkdir(parents=True, exist_ok=True)
             with open(cat_path, "w", encoding="utf-8") as f:
@@ -378,7 +383,7 @@ class VideoModalMixin:
                 self._vid_save_catalog()
                 idx = self._vid_all_files.index(old_name); self._vid_all_files[idx] = new_name
                 self._vid_update_filter()
-            except: pass
+            except Exception: pass
         self._vid_editing_name = None
 
     def _vid_confirm_tags(self):
@@ -410,11 +415,14 @@ class VideoModalMixin:
         try:
             p = self._vid_dir / name
             if p.exists():
-                import os; os.remove(str(p))
-                if name in self._vid_all_files: self._vid_all_files.remove(name)
-                if name in self._vid_catalog: del self._vid_catalog[name]
-                self._vid_save_catalog(); self._vid_update_filter()
-        except: pass
+                # Soft-delete nel cestino .editor_trash (recuperabile 7gg), come musica/sfondi.
+                from engine.utils import safe_delete
+                if safe_delete(p, reason="user_delete_video"):
+                    if name in self._vid_all_files: self._vid_all_files.remove(name)
+                    if name in self._vid_catalog: del self._vid_catalog[name]
+                    self._vid_save_catalog(); self._vid_update_filter()
+        except Exception as e:
+            logging.warning(f"[VIDEO] Delete fallita per '{name}': {e}")
         self._vid_delete_pending = None
 
     def _vid_handle_drop(self, path_str: str):
@@ -432,7 +440,7 @@ class VideoModalMixin:
             v_rows = (800 - 190) // 140
             self._vid_scroll = max(0, len(self._vid_files) - v_rows)
             self._status(self._TR("modal_status_loaded").format(t_name), OK_C, 3)
-        except: pass
+        except Exception: pass
 
     def _vid_modal_wheel(self, dy):
         if not getattr(self, "_vid_modal", False): return

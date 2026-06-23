@@ -17,7 +17,11 @@ from typing import Any
 
 import pygame
 
-from engine.utils import get_resource_path, get_logger
+from engine.utils import get_resource_path, get_logger, is_android_runtime
+
+# Su Android ombre/glow dei bottoni (Surface SRCALPHA per bottone per frame) sono
+# disattivati: costo per-frame inutile su GPU/CPU mobile, impatto estetico minimo.
+_ANDROID = is_android_runtime()
 
 logger = get_logger(__name__)
 
@@ -578,6 +582,36 @@ class MenuTheme:
     # Rendering helpers
     # ─────────────────────────────────────────────────────────────────────────
 
+    def render_cached(self, font: pygame.font.Font, text: str, color) -> pygame.Surface:
+        """font.render cacheato per (font, testo, colore). font.render e' una delle
+        op piu' care su ARM/GPU-software ed era richiamata OGNI frame per ogni label
+        di bottone/card (es. menu scene: ~8 render/frame). A riposo (testo/colore
+        invariati) e' un cache-hit -> niente render per-frame. Pixel identici."""
+        c = getattr(self, "_txt_render_cache", None)
+        if c is None:
+            c = self._txt_render_cache = {}
+        key = (id(font), text, tuple(color) if not isinstance(color, (tuple, list)) else tuple(color))
+        surf = c.get(key)
+        if surf is None:
+            if len(c) > 256:
+                c.clear()
+            surf = font.render(text, True, color)
+            c[key] = surf
+        return surf
+
+    def android_btn_fill(self, locked: bool, hover_t: float):
+        """Colore OPACO di fondo bottone su Android (no glassmorphism SRCALPHA).
+        Esposto cosi' che il chip opaco dell'icona (menu_system) usi lo STESSO colore
+        del fondo bottone: il riquadro icona resta invisibile sul fondo dello stesso
+        colore, ma il blit dell'icona diventa opaco (molto piu' veloce su GPU mobile)."""
+        if self.is_glass():
+            if locked:
+                return (22, 24, 30)
+            return self.lerp_color((30, 34, 44), (54, 62, 82), round(hover_t, 2))
+        if locked:
+            return self.color3("btn_locked")
+        return self.lerp_color(self.color3("btn_normal"), self.color3("btn_hover"), hover_t)
+
     def draw_btn_bg(self, screen: pygame.Surface, rect: pygame.Rect,
                     hovered: bool, locked: bool, hover_t: float = 0.0) -> None:
         """Disegna il background di un bottone con supporto per bordi e no-fill."""
@@ -600,47 +634,85 @@ class MenuTheme:
                 pw, ph
             )
 
-        # Ombra
-        if self.has_shadow():
+        # Ombra (saltata su Android: Surface SRCALPHA per bottone/frame).
+        # La Surface SRCALPHA resta semitrasparente (overlay vero, NON puo'
+        # diventare opaca), ma alloc+draw.rect sono CACHATI per
+        # (w, h, alpha, radius): a runtime resta solo un blit. Caching
+        # visivamente-neutro (stessi pixel) -> sicuro su entrambe le piattaforme.
+        if self.has_shadow() and not _ANDROID:
             off = self._effects.get("btn_shadow_offset", [3, 3])
             sc = self._effects.get("btn_shadow_color", [0, 0, 0, 120])
             # L'ombra può intensificarsi con l'hover
             alpha = int(sc[3] * (1.0 + hover_t * 0.3)) if len(sc) > 3 else 120
-            shadow_surf = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
-            pygame.draw.rect(shadow_surf, (*sc[:3], alpha),
-                             (0, 0, rect.w, rect.h), border_radius=radius)
+            sck = (rect.w, rect.h, alpha, radius, tuple(sc[:3]))
+            shc = getattr(self, "_shadow_cache", None)
+            if shc is None:
+                shc = self._shadow_cache = {}
+            shadow_surf = shc.get(sck)
+            if shadow_surf is None:
+                shadow_surf = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
+                pygame.draw.rect(shadow_surf, (*sc[:3], alpha),
+                                 (0, 0, rect.w, rect.h), border_radius=radius)
+                if len(shc) > 48:
+                    shc.pop(next(iter(shc)))
+                shc[sck] = shadow_surf
             screen.blit(shadow_surf, (rect.x + off[0], rect.y + off[1]))
 
-        # Glow (attivo su hover)
-        if not locked and hover_t > 0 and self.has_glow():
+        # Glow (attivo su hover; saltato su Android). Stessa logica: overlay
+        # SRCALPHA additivo che resta semitrasparente, ma alloc+draw.rect
+        # cachati per (w, h, glow_alpha, radius) -> a runtime solo un blit.
+        if not locked and hover_t > 0 and self.has_glow() and not _ANDROID:
             gc = self._effects.get("btn_glow_color", [255, 255, 255, 60])
             gr = int(self._effects.get("btn_glow_radius", 8))
             # Intensità basata su hover_t
             glow_alpha = int(gc[3] * hover_t) if len(gc) > 3 else int(60 * hover_t)
-            glow_surf = pygame.Surface((rect.w + gr * 2, rect.h + gr * 2), pygame.SRCALPHA)
-            pygame.draw.rect(glow_surf, (*gc[:3], glow_alpha),
-                             (0, 0, rect.w + gr * 2, rect.h + gr * 2),
-                             border_radius=radius + gr)
+            gw, gh = rect.w + gr * 2, rect.h + gr * 2
+            glk = (gw, gh, glow_alpha, radius + gr, tuple(gc[:3]))
+            glc = getattr(self, "_glow_cache", None)
+            if glc is None:
+                glc = self._glow_cache = {}
+            glow_surf = glc.get(glk)
+            if glow_surf is None:
+                glow_surf = pygame.Surface((gw, gh), pygame.SRCALPHA)
+                pygame.draw.rect(glow_surf, (*gc[:3], glow_alpha),
+                                 (0, 0, gw, gh), border_radius=radius + gr)
+                if len(glc) > 48:
+                    glc.pop(next(iter(glc)))
+                glc[glk] = glow_surf
             screen.blit(glow_surf, (rect.x - gr, rect.y - gr))
 
         # Background principale (riempimento)
-        if glass:
-            # Effetto Glassmorfismo: semi-trasparente con riflesso
+        if glass and _ANDROID:
+            # Android: niente glassmorphism SRCALPHA. Il blit per-pixel-alpha della
+            # surface vetro PER OGNI bottone OGNI frame era il costo dominante del
+            # menu su GPU mobile (~10ms/bottone, come il cabinet dello slot). Fondo
+            # OPACO solido a contrasto: leggibile, e un draw.rect diretto e' rapidissimo.
+            pygame.draw.rect(screen, self.android_btn_fill(locked, hover_t), rect, border_radius=radius)
+        elif glass:
+            # Desktop: Effetto Glassmorfismo semi-trasparente con riflesso. La surface
+            # SRCALPHA e' CACHATA per (dimensione, hover, locked, radius): a riposo
+            # (hover_t=0) e' una sola entry per dimensione -> niente alloc+draw per frame.
             glass_base = self._effects.get("glass_color", [255, 255, 255, 40])
             glass_hover = self._effects.get("glass_hover", [255, 255, 255, 70])
-            bg = self.lerp_color(tuple(glass_base), tuple(glass_hover), hover_t)
-            
-            gsurf = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
-            pygame.draw.rect(gsurf, bg, (0, 0, rect.w, rect.h), border_radius=radius)
-            
-            # Riflesso diagonale "premium"
-            if not locked:
-                refl_col = (255, 255, 255, int(50 * (1.0 + hover_t)))
-                pygame.draw.line(gsurf, refl_col, (5, 5), (rect.w // 2, 5), 1)
-                pygame.draw.line(gsurf, refl_col, (5, 5), (5, rect.h // 2), 1)
-                
+            ht_q = round(hover_t, 2)
+            bg = self.lerp_color(tuple(glass_base), tuple(glass_hover), ht_q)
+            ck = (rect.w, rect.h, ht_q, bool(locked), radius)
+            gc = getattr(self, "_glass_cache", None)
+            if gc is None:
+                gc = self._glass_cache = {}
+            gsurf = gc.get(ck)
+            if gsurf is None:
+                gsurf = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
+                pygame.draw.rect(gsurf, bg, (0, 0, rect.w, rect.h), border_radius=radius)
+                if not locked:
+                    refl_col = (255, 255, 255, int(50 * (1.0 + ht_q)))
+                    pygame.draw.line(gsurf, refl_col, (5, 5), (rect.w // 2, 5), 1)
+                    pygame.draw.line(gsurf, refl_col, (5, 5), (5, rect.h // 2), 1)
+                if len(gc) > 48:
+                    gc.pop(next(iter(gc)))
+                gc[ck] = gsurf
             screen.blit(gsurf, rect)
-            
+
         else:
             if locked:
                 bg = self.color3("btn_locked")
@@ -715,17 +787,17 @@ class MenuTheme:
         if self.has_text_shadow():
             off = self._effects.get("text_shadow_offset", [1, 1])
             sc = self._effects.get("text_shadow_color", [0, 0, 0, 120])
-            sh_surf = font.render(text, True, (sc[0], sc[1], sc[2]))
+            sh_surf = self.render_cached(font, text, (sc[0], sc[1], sc[2]))
             if alpha_mod < 1.0:
                 sh_surf.set_alpha(int(255 * alpha_mod * sc[3] / 255) if len(sc) > 3 else 255)
-            
+
             sh_r = get_t_rect(sh_surf, rect, anchor)
             sh_r.x += off[0]
             sh_r.y += off[1]
             screen.blit(sh_surf, sh_r)
 
         # Testo principale
-        t_surf = font.render(text, True, col)
+        t_surf = self.render_cached(font, text, col)
         if alpha_mod < 1.0:
             t_surf.set_alpha(int(255 * alpha_mod))
 

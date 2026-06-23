@@ -551,6 +551,33 @@ class SpotDifferencesGame(BaseMinigame):
             self._font_cache[key] = f
         return f
 
+    def _outline_surface(self, text: str, font: pygame.font.Font, color: tuple,
+                         outline_color: tuple, thickness: int) -> pygame.Surface:
+        """Compone testo + bordo spesso UNA volta su una surface trasparente e
+        la cacha. Evita di ri-renderizzare il font e di blittarlo NxN volte ogni
+        frame (il loop di outline costa fino a ~113 blit/frame con thickness 6).
+        Il risultato e' una singola Surface composita gia' convertita."""
+        if not hasattr(self, "_outline_cache"):
+            self._outline_cache = {}
+        # La chiave include l'identita' del font (id) oltre all'altezza per
+        # evitare collisioni tra font diversi con la stessa get_height().
+        key = (text, id(font), font.get_height(), color, outline_color, thickness)
+        surf = self._outline_cache.get(key)
+        if surf is None:
+            base = font.render(text, True, color)
+            out = font.render(text, True, outline_color)
+            w, h = base.get_size()
+            pad = thickness
+            comp = pygame.Surface((w + pad * 2, h + pad * 2), pygame.SRCALPHA)
+            for dx in range(-thickness, thickness + 1):
+                for dy in range(-thickness, thickness + 1):
+                    if dx * dx + dy * dy <= thickness * thickness:
+                        comp.blit(out, (pad + dx, pad + dy))
+            comp.blit(base, (pad, pad))
+            surf = comp.convert_alpha()
+            self._outline_cache[key] = surf
+        return surf
+
     def draw(self) -> None:
         # Screen Shake (Cura UX)
         draw_offset_x = 0
@@ -581,8 +608,11 @@ class SpotDifferencesGame(BaseMinigame):
             self._draw_animated_obj(obj, i, is_right=False)
 
         # Disegna oggetti - Lato Destro
+        # Lookup via set (O(1)) invece di scansione di lista per ogni oggetto
+        # ogni frame; semantica identica, la lista resta intatta per la logica.
+        diff_set = frozenset(self.differences_indices)
         for i, obj in enumerate(self.objects_to_draw):
-            if i in self.differences_indices:
+            if i in diff_set:
                 if i in self.found_indices:
                     self._draw_animated_obj(obj, i, is_right=True)
             else:
@@ -621,9 +651,27 @@ class SpotDifferencesGame(BaseMinigame):
         font_v = self._font("Impact", 110*self.scaling_manager.scale)
         font_sub = self._font("Impact", 40*self.scaling_manager.scale)
         
-        # Sfondo semitrasparente per far risaltare il popup
-        dark = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-        dark.fill((0, 0, 0, 160))
+        # Sfondo semitrasparente per far risaltare il popup.
+        # Cachato: ricreare una Surface SRCALPHA fullscreen + fill ogni frame
+        # costa ~10x su Android. Si rigenera solo al cambio dimensione schermo.
+        size = self.screen.get_size()
+        dark = getattr(self, "_dark_overlay", None)
+        if dark is None or dark.get_size() != size:
+            if getattr(self, "_android", False):
+                # Android: il velo ha alpha COSTANTE (160 ovunque), quindi non
+                # serve l'alpha per-pixel. Una Surface OPACA con set_alpha
+                # (alpha per-surface) blitta molto piu' veloce della SRCALPHA
+                # fullscreen sui blitter software/mobile, ed e' visivamente
+                # IDENTICA (nero uniforme al 160% sul render sottostante).
+                dark = pygame.Surface(size).convert()
+                dark.fill((0, 0, 0))
+                dark.set_alpha(160)
+            else:
+                # Desktop: comportamento ORIGINALE pixel-fedele (SRCALPHA).
+                dark = pygame.Surface(size, pygame.SRCALPHA)
+                dark.fill((0, 0, 0, 160))
+                dark = dark.convert_alpha()
+            self._dark_overlay = dark
         self.screen.blit(dark, (0, 0))
         
         cx, cy = self.screen.get_width() // 2, self.screen.get_height() // 2 - 40
@@ -690,10 +738,21 @@ class SpotDifferencesGame(BaseMinigame):
             scale = 1.0 + 0.3 * (1.0 - abs(t - 0.5) * 2) 
             
         # Disegna Oggetto
-        if scale != 1.0 or angle != 0:
+        if scale != 1.0:
+            # Animazione "trovato" in corso (pochi oggetti, breve): rotozoom live.
             scaled_img = pygame.transform.rotozoom(img, angle, scale)
             new_rect = scaled_img.get_rect(center=draw_rect.center)
             self.screen.blit(scaled_img, new_rect)
+        elif angle != 0:
+            # L'angolo e' costante per oggetto: la rotazione e' identica ogni
+            # frame. Cachala una volta (rotozoom per-frame su 100+ oggetti x 2
+            # pannelli era il killer FPS principale su Android).
+            rot = obj.get("_rot_img")
+            if rot is None:
+                rot = pygame.transform.rotozoom(img, angle, 1.0).convert_alpha()
+                obj["_rot_img"] = rot
+            new_rect = rot.get_rect(center=draw_rect.center)
+            self.screen.blit(rot, new_rect)
         else:
             self.screen.blit(img, draw_rect)
             
@@ -796,30 +855,47 @@ class SpotDifferencesGame(BaseMinigame):
         self._draw_text_with_outline(f"SCORE: {self.total_score}", font_main, (safe_left, text_y), (255, 255, 255), (0,0,0), 3)
 
     def _draw_zoomed_text_with_outline(self, text: str, font: pygame.font.Font, pos: Tuple[int, int], color: tuple, outline_color: tuple, thickness: int, zoom: float):
-        """Disegna testo scalato per l'effetto ansia, evitando il ricreare SysFont che causa stuttering."""
-        surf = font.render(text, True, color)
-        out_surf = font.render(text, True, outline_color)
-        
-        if zoom != 1.0:
-            surf = pygame.transform.smoothscale(surf, (int(surf.get_width() * zoom), int(surf.get_height() * zoom)))
-            out_surf = pygame.transform.smoothscale(out_surf, (int(out_surf.get_width() * zoom), int(out_surf.get_height() * zoom)))
-            
-        rect = surf.get_rect(center=pos)
-        
-        for dx in range(-thickness, thickness + 1):
-            for dy in range(-thickness, thickness + 1):
-                if dx*dx + dy*dy <= thickness*thickness:
-                    self.screen.blit(out_surf, rect.move(dx, dy))
-        self.screen.blit(surf, rect)
+        """Disegna testo scalato per l'effetto ansia (timer in ultimi 10s).
+
+        Su Android: path ottimizzato che parte dalla composita cachata
+        (cache-hit per stringa) e applica UN solo scale (nearest) invece di
+        2x font.render + 2x scale + loop di outline ogni frame.
+        ATTENZIONE: precomporre l'outline PRIMA dello scale fa scalare anche
+        lo spessore del bordo con lo zoom, quindi il bordo cambia spessore.
+
+        Su desktop: ripristina il comportamento ORIGINALE pixel-fedele, dove
+        l'outline e' blittato a offset +/-thickness DOPO lo scale, cosi' lo
+        spessore del bordo resta costante in pixel-schermo (non scala con lo
+        zoom ~1.8x)."""
+        if getattr(self, "_android", False):
+            comp = self._outline_surface(text, font, color, outline_color, thickness)
+            if zoom != 1.0:
+                new_size = (int(comp.get_width() * zoom), int(comp.get_height() * zoom))
+                comp = pygame.transform.scale(comp, new_size)
+            rect = comp.get_rect(center=pos)
+            self.screen.blit(comp, rect)
+        else:
+            # Comportamento ORIGINALE desktop: render separati, scale di
+            # entrambi, poi loop di outline a offset costanti DOPO lo scale.
+            surf = font.render(text, True, color)
+            out_surf = font.render(text, True, outline_color)
+
+            if zoom != 1.0:
+                surf = pygame.transform.smoothscale(surf, (int(surf.get_width() * zoom), int(surf.get_height() * zoom)))
+                out_surf = pygame.transform.smoothscale(out_surf, (int(out_surf.get_width() * zoom), int(out_surf.get_height() * zoom)))
+
+            rect = surf.get_rect(center=pos)
+
+            for dx in range(-thickness, thickness + 1):
+                for dy in range(-thickness, thickness + 1):
+                    if dx*dx + dy*dy <= thickness*thickness:
+                        self.screen.blit(out_surf, rect.move(dx, dy))
+            self.screen.blit(surf, rect)
 
     def _draw_text_with_outline(self, text: str, font: pygame.font.Font, pos: Tuple[int, int], color: tuple, outline_color: tuple, thickness: int):
-        """Disegna testo con bordo spesso stile adesivo/fumetto."""
-        surf = font.render(text, True, color)
-        out_surf = font.render(text, True, outline_color)
-        rect = surf.get_rect(center=pos)
-        
-        for dx in range(-thickness, thickness + 1):
-            for dy in range(-thickness, thickness + 1):
-                if dx*dx + dy*dy <= thickness*thickness:
-                    self.screen.blit(out_surf, rect.move(dx, dy))
-        self.screen.blit(surf, rect)
+        """Disegna testo con bordo spesso stile adesivo/fumetto.
+        Usa una Surface composita cachata: identica visivamente ma blitta UNA
+        sola surface invece di renderizzare il font NxN volte ogni frame."""
+        comp = self._outline_surface(text, font, color, outline_color, thickness)
+        rect = comp.get_rect(center=pos)
+        self.screen.blit(comp, rect)

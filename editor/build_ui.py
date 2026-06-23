@@ -9,10 +9,8 @@ Comunica col processo padre via file JSON di stato.
 
 import json
 import time
-import os
 import subprocess
 import sys
-import threading
 from pathlib import Path
 from tkinter import Tk, Frame, Label, Text, Button, messagebox, simpledialog, IntVar
 from tkinter import ttk
@@ -364,14 +362,23 @@ class BuildProgressWindow:
 
             if self.build_process:
                 try:
-                    print(f"[Cancel] Terminating process {self.build_process.pid}")
-                    self.build_process.terminate()
-                    # Attendi 5 secondi, poi kill se necessario
-                    try:
-                        self.build_process.wait(timeout=5)
-                    except subprocess.TimeoutExpired:
-                        print(f"[Cancel] Force killing process {self.build_process.pid}")
-                        self.build_process.kill()
+                    import sys
+                    pid = self.build_process.pid
+                    print(f"[Cancel] Terminating process tree {pid}")
+                    if sys.platform == "win32":
+                        # build_manager lancia a sua volta PyInstaller (e i suoi worker):
+                        # terminate() sul solo manager li lascerebbe orfani a girare e a
+                        # tenere lock sui file temporanei. /T termina l'intero albero.
+                        subprocess.run(
+                            ["taskkill", "/F", "/T", "/PID", str(pid)],
+                            capture_output=True,
+                        )
+                    else:
+                        self.build_process.terminate()
+                        try:
+                            self.build_process.wait(timeout=5)
+                        except subprocess.TimeoutExpired:
+                            self.build_process.kill()
                 except Exception as e:
                     print(f"[Cancel] Errore termination: {e}")
 

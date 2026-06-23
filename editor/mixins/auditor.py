@@ -120,6 +120,16 @@ class AuditorMixin:
         issues = self._auditor_issues
         game_path = self.base_path / "games" / self._auditor_game_id
 
+        # Catalogo del gioco IN AUDIT (non quello eventualmente aperto nell'editor):
+        # senza questo, _auditor_resolve_img userebbe self.catalog (gioco diverso o
+        # vuoto) e il controllo dei PNG mancanti verrebbe saltato silenziosamente.
+        try:
+            from editor.core.io import _load_catalog
+            self._auditor_catalog = _load_catalog(self._auditor_game_id)
+        except Exception as e:
+            logger.error(f"[AUDITOR] Catalogo di {self._auditor_game_id} non caricato: {e}")
+            self._auditor_catalog = getattr(self, "catalog", [])
+
         if not game_path.exists():
             issues.append(self._issue(
                 _SEV_ERR,
@@ -128,14 +138,18 @@ class AuditorMixin:
             ))
             return
 
-        # 1. game_config.json
-        self._scan_game_config(game_path, issues)
-
-        # 2. Catalogo oggetti locale
-        self._scan_catalog(game_path, issues)
-
-        # 3. Livelli e scene
-        self._scan_levels(game_path, issues)
+        # Ogni scansione e' isolata: un JSON malformato in una non deve far abortire
+        # l'intero audit (e crashare l'app), ma diventare un issue segnalato.
+        for label, scan_fn in (
+            ("game_config", lambda: self._scan_game_config(game_path, issues)),
+            ("catalogo", lambda: self._scan_catalog(game_path, issues)),
+            ("livelli/scene", lambda: self._scan_levels(game_path, issues)),
+        ):
+            try:
+                scan_fn()
+            except Exception as e:
+                logger.error(f"[AUDITOR] Errore scansione {label}: {e}")
+                issues.append(self._issue(_SEV_ERR, f"Audit interrotto in '{label}'", str(e)))
 
         if not issues:
             issues.append(self._issue(
@@ -197,8 +211,9 @@ class AuditorMixin:
 
         # Musica menu
         music_list = cfg.get("menu", {}).get("music", [])
-        if isinstance(music_list, str):
-            music_list = [music_list]
+        # Coercizione difensiva: la chiave puo' essere presente ma null o di tipo errato.
+        if not isinstance(music_list, list):
+            music_list = [music_list] if isinstance(music_list, str) else []
         for m in music_list:
             m_full = game_path / m
             if not m_full.exists():
@@ -338,7 +353,9 @@ class AuditorMixin:
         Cerca il path immagine relativo di cat_id nel catalogo in memoria.
         Restituisce None se non trovato (evita accessi disco ridondanti).
         """
-        cat = getattr(self, "catalog", [])
+        cat = getattr(self, "_auditor_catalog", None)
+        if cat is None:
+            cat = getattr(self, "catalog", [])
         for item in cat:
             if item.get("id") == cat_id:
                 return item.get("image") or item.get("icon") or None
@@ -361,6 +378,16 @@ class AuditorMixin:
             issue["repaired"] = True
             self._status(f"Riparato: {issue['title']}", OK_C, 3)
             logger.info(f"[AUDITOR] Issue riparata: {issue['title']}")
+            # Se il gioco riparato e' quello aperto nell'editor, lo stato in memoria
+            # e' ora disallineato dal disco: invalidiamo la cache scene e avvisiamo,
+            # cosi' l'utente ricarica prima che un salvataggio reintroduca la referenza.
+            if self._auditor_game_id == getattr(self, "game_name", None):
+                try:
+                    from editor.core.io import _SCENE_DATA_CACHE
+                    _SCENE_DATA_CACHE.clear()
+                except Exception:
+                    pass
+                self._status("Riparato: ricarica la scena/gioco per applicarlo nell'editor", WARN_C, 5)
         except Exception as e:
             logger.error(f"[AUDITOR] Errore riparazione: {e}")
             self._status(f"Errore riparazione: {e}", ERR_C, 4)

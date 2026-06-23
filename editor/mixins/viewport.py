@@ -10,7 +10,6 @@ from editor.constants import (
     TOP_BAR_H, STATUS_H, PANEL_MIN_W, PANEL_MAX_W,
     REF_W, REF_H,
 )
-from editor.ui.draw import _clamp
 
 
 class ViewportMixin:

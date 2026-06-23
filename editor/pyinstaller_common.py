@@ -236,41 +236,6 @@ def build_cli_args(entry_point: Path | str,
 
 
 # ---------------------------------------------------------------------------
-# Helper per .spec (Analysis() params dict)
-# ---------------------------------------------------------------------------
-
-def spec_analysis_kwargs(project_root: Path | str,
-                         *,
-                         extra_hidden: Iterable[str] = (),
-                         extra_excludes: Iterable[str] = (),
-                         limit_minigames: Iterable[str] | None = None) -> dict:
-    """
-    Restituisce un dict con i kwargs da passare a `Analysis(...)` dentro
-    uno .spec file. Centralizza hiddenimports + excludes + collect_all.
-    """
-    from PyInstaller.utils.hooks import collect_all  # type: ignore
-
-    datas: list = []
-    binaries: list = []
-    hidden = list(BASE_HIDDEN_IMPORTS)
-    hidden += discover_minigame_imports(project_root, limit_to=limit_minigames)
-    hidden += list(extra_hidden)
-
-    for pkg in BASE_COLLECT_ALL:
-        d, b, h = collect_all(pkg)
-        datas += d
-        binaries += b
-        hidden += h
-
-    return {
-        "datas": datas,
-        "binaries": binaries,
-        "hiddenimports": hidden,
-        "excludes": list(HEAVY_EXCLUDES) + list(extra_excludes),
-    }
-
-
-# ---------------------------------------------------------------------------
 # CLI di self-test (utile per CI: verifica che il file sia importabile e
 # che la discovery dei minigame funzioni).
 # ---------------------------------------------------------------------------

@@ -89,7 +89,7 @@ class MusicModalMixin:
             try:
                 with open(cat_path, "r", encoding="utf-8") as f:
                     self._music_catalog = json.load(f)
-            except: self._music_catalog = {}
+            except Exception: self._music_catalog = {}
         else: self._music_catalog = {}
 
     def _music_save_catalog(self):
@@ -118,7 +118,7 @@ class MusicModalMixin:
         self._music_search_active = False
         pygame.mixer.music.stop()
         try: pygame.mixer.music.unload()
-        except: pass
+        except Exception: pass
         self._music_playing = None
 
 
@@ -140,7 +140,7 @@ class MusicModalMixin:
                         self._music_catalog[name]["duration"] = dur
                         needs_save = True
                         del s # Forza rilascio memoria
-                    except: self._music_durations[name] = 0.0
+                    except Exception: self._music_durations[name] = 0.0
             if needs_save: self._music_save_catalog()
         finally:
             self._music_loading_durations = False
@@ -354,7 +354,7 @@ class MusicModalMixin:
                 self._music_save_catalog()
                 idx = self._music_all_files.index(old_name); self._music_all_files[idx] = new_name
                 self._music_update_filter()
-            except: pass
+            except Exception: pass
         self._music_editing_name = None
 
     def _music_confirm_tags(self):
@@ -408,7 +408,7 @@ class MusicModalMixin:
             mdir = self.game_path / "audio" / "music"; mdir.mkdir(parents=True, exist_ok=True)
             if not (mdir/name).exists():
                 try: shutil.copy2(str(self._music_dir/name), str(mdir/name))
-                except: pass
+                except Exception: pass
             mlist.append(name)
         self.scene_dirty = True
 
@@ -439,11 +439,13 @@ class MusicModalMixin:
             if t_name not in self._music_all_files:
                 self._music_all_files.append(t_name); self._music_all_files.sort(); self._music_update_filter()
             s = pygame.mixer.Sound(str(self._music_dir/t_name)); self._music_durations[t_name] = s.get_length()
-            
+            # Rigenera i nomi/tag visualizzati, altrimenti la nuova traccia mostra valori grezzi.
+            self._music_pre_cache_data()
+
             # Scorrimento automatico a fine lista
             v_rows = (800 - 160) // 125
             self._music_scroll = max(0, len(self._music_files) - v_rows)
-        except: pass
+        except Exception: pass
 
     def _music_modal_mup(self):
         """Fine trascinamento o seek."""
@@ -464,7 +466,7 @@ class MusicModalMixin:
             self._music_start_time = dur * ratio
             pygame.mixer.music.load(str(self._music_dir / self._music_playing))
             pygame.mixer.music.play(start=self._music_start_time)
-        except: self._music_seeking = False
+        except Exception: self._music_seeking = False
 
     def _music_wheel(self, dy):
         if not getattr(self, "_music_modal", False): return
@@ -639,10 +641,10 @@ class MusicModalMixin:
         try:
             import tkinter as tk
             r = tk.Tk(); r.withdraw(); r.clipboard_clear(); r.clipboard_append(text); r.update(); r.destroy()
-        except: pass
+        except Exception: pass
 
     def _get_clipboard(self):
         try:
             import tkinter as tk
             r = tk.Tk(); r.withdraw(); res = r.clipboard_get(); r.destroy(); return res
-        except: return ""
+        except Exception: return ""

@@ -6,12 +6,9 @@ GameSelectMixin — schermata di selezione gioco/livello/scena:
 """
 
 import sys
-import os
-import shutil
 import time
 import json
 import subprocess
-import tempfile
 import logging
 import pygame
 import re
@@ -533,7 +530,7 @@ class GameSelectMixin:
                     with open(theme_p, "r", encoding="utf-8") as tf:
                         t_data = json.load(tf)
                         self._gs_edit_magnifier = t_data.get("effects", {}).get("magnifier_fx", False)
-                except: pass
+                except Exception: pass
             self._gs_update_previews("edit")
 
     def _gs_edit_level(self, idx: int):
@@ -600,7 +597,7 @@ class GameSelectMixin:
         try:
             pygame.mixer.music.stop()
             pygame.mixer.music.unload()
-        except: pass
+        except Exception: pass
         
         raw_name = self._gs_edit_buf.strip()
         if not raw_name:
@@ -702,7 +699,7 @@ class GameSelectMixin:
                             try:
                                 logger.info(f"Rimozione asset background rimosso: {old_p_del}")
                                 old_p_del.unlink(missing_ok=True)
-                            except: pass
+                            except Exception: pass
                     cfg["menu"]["background"] = ""
 
                 # Musica
@@ -750,7 +747,7 @@ class GameSelectMixin:
                             logger.error(f"Errore spostamento {fname} in audio/music: {e}")
                     
                     try: shutil.rmtree(temp_d)
-                    except: pass
+                    except Exception: pass
                 cfg["menu"]["music"] = music_list
                 cfg["ui_theme"] = getattr(self, "_gs_edit_theme_id", "default")
                 _save_json(cfg_p, cfg)
@@ -791,7 +788,7 @@ class GameSelectMixin:
                     if it.get("game") == old_id:
                         it["game"] = clean_id
                         it["path"] = it["path"].replace(str(old_p), str(new_p))
-                _save_json(self.base_path / ".editor_settings.json", {"recent_scenes": self.recent_scenes})
+                self._save_editor_setting("recent_scenes", self.recent_scenes)
 
             # --- BLOCCO LIVELLO ---
             elif self._gs_edit_mode == "level":
@@ -842,7 +839,7 @@ class GameSelectMixin:
                             try:
                                 logger.info(f"Rimozione asset scena rimosso: {old_p_del}")
                                 old_p_del.unlink(missing_ok=True)
-                            except: pass
+                            except Exception: pass
                     sd["background"] = ""
                 
                 _save_json(scn_p / "scene.json", sd)
@@ -878,7 +875,7 @@ class GameSelectMixin:
                             sd = json.load(f); m = sd.get("music", [])
                             if isinstance(m, str): used.add(m)
                             elif isinstance(m, list): used.update(m)
-                    except: pass
+                    except Exception: pass
         return used
 
     def _gs_harvest_theme(self, game_id: str, theme_id: str) -> None:
@@ -962,7 +959,7 @@ class GameSelectMixin:
                 s = pygame.image.load(bg_path).convert()
                 s = pygame.transform.smoothscale(s, (200, 112))
                 setattr(self, f"{p_prefix}bg_preview_surf", s)
-            except: pass
+            except Exception: pass
             
         # Video Preview (carica thumbnail .jpg se esiste)
         vid_path = getattr(self, f"{p_prefix}vid_path", "")
@@ -980,7 +977,7 @@ class GameSelectMixin:
                         setattr(self, f"{p_prefix}vid_preview_surf", s)
                         found = True
                         break
-                    except: pass
+                    except Exception: pass
             
             # Fallback: OpenCV frame capture
             if not found and p.exists():
@@ -996,7 +993,7 @@ class GameSelectMixin:
                         s = pygame.transform.smoothscale(surf, (200, 112))
                         setattr(self, f"{p_prefix}vid_preview_surf", s)
                     cap.release()
-                except: pass
+                except Exception: pass
 
     def _gs_confirm_new(self):
         def _perform():
@@ -1008,7 +1005,7 @@ class GameSelectMixin:
         try:
             pygame.mixer.music.stop()
             pygame.mixer.music.unload()
-        except: pass
+        except Exception: pass
         
         name = re.sub(r'[^\w\-]', '_', self._gs_new_buf.strip().replace(" ", "_"))
         if not name:
@@ -1089,7 +1086,7 @@ class GameSelectMixin:
                 for f in audio_dir.glob("*.mp3"):
                     if f.name not in all_active_music:
                         try: f.unlink()
-                        except: pass
+                        except Exception: pass
 
             _save_json(gpath / "game_config.json",
                        {
@@ -1134,7 +1131,7 @@ class GameSelectMixin:
                     try:
                         with open(eng_p, "r", encoding="utf-8-sig") as f:
                             eng_data = json.load(f)
-                    except: pass
+                    except Exception: pass
                 
                 # Crea il pool locale del gioco per questa lingua
                 local_data = {"game_title": name.replace("_", " ")}
@@ -1379,7 +1376,7 @@ if __name__ == "__main__":
                 # Pulisce i progetti recenti che contengono questo livello
                 lp = str(self._gs_del_path)
                 self.recent_scenes = [r for r in self.recent_scenes if lp not in r.get("path", "")]
-                _save_json(Path(".editor_settings.json"), {"recent_scenes": self.recent_scenes})
+                self._save_editor_setting("recent_scenes", self.recent_scenes)
 
                 # RIMOZIONE LOGICA DA game_config.json
                 if self.gs_sel_game is not None:
@@ -1405,7 +1402,7 @@ if __name__ == "__main__":
                 # 1. Pulisce questa specifica scena dai recenti
                 sp = str(self._gs_del_path)
                 self.recent_scenes = [r for r in self.recent_scenes if r.get("path") != sp]
-                _save_json(Path(".editor_settings.json"), {"recent_scenes": self.recent_scenes})
+                self._save_editor_setting("recent_scenes", self.recent_scenes)
 
                 # 2. RIMOZIONE LOGICA DA level_config.json (Fix Critico)
                 if self.gs_sel_level is not None:
@@ -1437,7 +1434,7 @@ if __name__ == "__main__":
             elif self._gs_del_mode == "game":
                 # Pulisce i progetti recenti prima di ricaricare tutto
                 self.recent_scenes = [r for r in self.recent_scenes if r.get("game") != self._gs_del_name]
-                _save_json(Path(".editor_settings.json"), {"recent_scenes": self.recent_scenes})
+                self._save_editor_setting("recent_scenes", self.recent_scenes)
 
                 # Pulisce default_game in config.ini se rimosso
                 c_ini_p = self.base_path / "config.ini"
@@ -2009,7 +2006,7 @@ if __name__ == "__main__":
         for i in range(3):
             cx2 = 30 + i * (col_w + 10)
             if cx2 <= mx <= cx2 + col_w:
-                h_item = 64 if i == 2 else 34
+                h_item = 64 if i == 2 else (50 if i == 1 else 34)
                 vis_count = max(1, col_h // h_item)
                 item_count = [len(self.gs_games), len(self.gs_cur_levels), len(self.gs_cur_scenes)][i]
                 max_scroll = max(0, item_count - vis_count)
@@ -2028,6 +2025,7 @@ if __name__ == "__main__":
                 self._gs_del_mode = None
                 self._gs_del_path = None
                 self._gs_del_name = ""
+                self._gs_del_stage = 0  # evita di ereditare uno stage stantio nel prossimo dialog
             return
         if hasattr(self, '_gs_edit_mode') and self._gs_edit_mode:
             mods = pygame.key.get_mods()
@@ -2060,7 +2058,7 @@ if __name__ == "__main__":
                             cur += len(pasted)
                         self._gs_edit_lang_bufs[af] = buf
                         self._gs_edit_cursors[af] = cur
-                    except: pass
+                    except Exception: pass
             elif ev.key == pygame.K_BACKSPACE:
                 if self._gs_edit_all_selected:
                     buf = ""; cur = 0; self._gs_edit_all_selected = False
@@ -2134,7 +2132,7 @@ if __name__ == "__main__":
                         import tkinter as tk
                         r = tk.Tk(); r.withdraw()
                         r.clipboard_clear(); r.clipboard_append(buf); r.destroy()
-                    except: pass
+                    except Exception: pass
                 elif ev.key == pygame.K_v:
                     try:
                         import tkinter as tk
@@ -2145,7 +2143,7 @@ if __name__ == "__main__":
                         else:
                             buf = buf[:cur] + pasted + buf[cur:]
                             cur += len(pasted)
-                    except: pass
+                    except Exception: pass
             elif ev.key == pygame.K_BACKSPACE:
                 if all_sel:
                     buf = ""; cur = 0; all_sel = False
@@ -2418,7 +2416,7 @@ if __name__ == "__main__":
             
             if not hasattr(self, "_gs_labels_cache"): self._gs_refresh_cache()
             try: label = self._gs_labels_cache[col_idx][i]
-            except: label = f"item_{i}"
+            except Exception: label = f"item_{i}"
             
             col = TXT_HI if (is_sel or hov) else TXT
             pad_w = 50
@@ -2483,7 +2481,7 @@ if __name__ == "__main__":
                             sub_txt = f"ID: {self.gs_cur_levels[i].get('id', '')}"
                             sub_col = (255, 255, 255) if (is_sel or hov) else (130, 135, 160)
                             _draw_text(self.screen, sub_txt, "xs", sub_col, tx, iy + v_off + 12, max_w=cw_safe - 160)
-                    except: pass
+                    except Exception: pass
             
             if col_idx in (0, 1, 2):
                 # Dimensioni pulsanti ottimizzate (Fitt's Law)
@@ -2948,7 +2946,7 @@ if __name__ == "__main__":
                         sur = pygame.image.load(str(icon_path)).convert_alpha()
                         self._img_cache[i_key] = pygame.transform.smoothscale(sur, (48, 48))
                     self.screen.blit(self._img_cache[i_key], _icon_prev_r.topleft)
-                except: pass
+                except Exception: pass
             else:
                 _draw_shape_icon(
                     self.screen,
