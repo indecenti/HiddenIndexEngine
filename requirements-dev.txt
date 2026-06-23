@@ -10,3 +10,7 @@ pyinstaller==6.20.0
 
 # Test (smoke test post-build, unit test su safe_write_json / safe_delete)
 pytest==9.0.2
+
+# MCP server di progetto (tools/hie_mcp_server.py). Serve SOLO per usare il
+# server come tool MCP da un client (es. Claude Code). Non finisce nelle build.
+mcp>=1.2.0

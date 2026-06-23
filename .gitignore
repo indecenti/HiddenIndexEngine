@@ -1,5 +1,8 @@
 # IDE / Editor
-.claude/
+# .claude/: ignora i file locali (settings.local.json, launch.json) ma versiona
+# le skill di progetto condivise in .claude/skills/.
+.claude/*
+!.claude/skills/
 .gemini/
 .vscode/
 .idea/

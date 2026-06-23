@@ -930,7 +930,7 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
         "version": version,
         "runtime_version": RUNTIME_VERSION,
         "ref": {"w": 1280, "h": 720},
-        "rules": engine_rules(),  # fonte unica: costanti lette dall'engine (vedi WEB_EXPORT_SYNC.md)
+        "rules": engine_rules(),  # fonte unica: costanti lette dall'engine (vedi docs/web/WEB_EXPORT_SYNC.md)
         "theme": _load_theme(base, game_id, game_config.get("ui_theme", "default")),
         "languages": languages,
         "strings": strings,
