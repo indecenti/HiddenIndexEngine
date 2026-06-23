@@ -9,7 +9,7 @@ l'exporter inietta in manifest.rules. Il runtime web li usa al posto di costanti
 hardcoded. Cosi' una modifica a una costante nell'engine si propaga al web al
 prossimo export, senza duplicazione da ricordare.
 
-Vedi WEB_EXPORT_SYNC.md (sezioni B e C).
+Vedi docs/web/WEB_EXPORT_SYNC.md (sezioni B e C).
 """
 
 from __future__ import annotations

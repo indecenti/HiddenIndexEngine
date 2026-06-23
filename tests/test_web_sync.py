@@ -23,7 +23,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME_DIR = ROOT / "editor" / "web_template" / "runtime"
-SYNC_DOC = ROOT / "WEB_EXPORT_SYNC.md"
+SYNC_DOC = ROOT / "docs" / "web" / "WEB_EXPORT_SYNC.md"
 
 
 def _engine_rules() -> dict:

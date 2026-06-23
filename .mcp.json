@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "hie": {
+      "command": "python",
+      "args": ["tools/hie_mcp_server.py"]
+    }
+  }
+}
