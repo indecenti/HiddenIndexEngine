@@ -143,6 +143,59 @@ def _aggregate_to_grid(arr: np.ndarray, cell_h: int, cell_w: int, cell_px: int,
         return reshaped.sum(axis=(1, 3))
 
 
+def _uniformity_reweight(cs: np.ndarray, color_uniformity: np.ndarray) -> np.ndarray:
+    """Premia il color-match nelle zone cromaticamente uniformi, senza saturare.
+
+    cs * (1 + 0.6*uniformita'*cs): in una zona uniforme che combacia, l'oggetto
+    SPARISCE, quindi il match va premiato. La versione precedente clippava il
+    risultato a 1.0, schiacciando molte celle ad alto cs allo stesso valore e
+    appiattendo la discriminazione tra le MIGLIORI posizioni di camuffamento.
+    Senza il tetto la funzione resta monotona in cs (valori distinti -> score
+    distinti), preservando l'ordinamento ai vertici; il camuffamento da clutter
+    (zone variegate) resta gestito dal termine edge.
+    """
+    return cs * (1.0 + 0.6 * color_uniformity * cs)
+
+
+def _center_prior_saliency(h: int, w: int) -> np.ndarray:
+    """Saliency di fallback (quando cv2.saliency e' assente): center-prior puro.
+
+    NON usa edge_density di proposito: lo score di piazzamento somma gia'
+    w_edge*edge_density, e una saliency ~edge faceva si' che il termine
+    w_sal*(1-saliency) penalizzasse esattamente le zone ad alto edge che w_edge
+    premia (camuffamento da clutter), annullandone in parte il contributo. Il
+    center-prior dipende SOLO dalla posizione (gli occhi tendono al centro),
+    quindi i due termini non si combattono. Restituisce (h, w) float32 in [0,1]:
+    1 al centro, ~0 agli angoli.
+    """
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    cy_c, cx_c = h / 2.0, w / 2.0
+    max_d = math.hypot(cy_c, cx_c)
+    return (1.0 - np.sqrt((yy - cy_c) ** 2 + (xx - cx_c) ** 2) / max_d).astype(np.float32)
+
+
+def _dominant_class_per_cell(semantic_raw: np.ndarray, cell_h: int, cell_w: int,
+                             cell_px: int) -> np.ndarray:
+    """Classe semantica dominante (moda) per cella.
+
+    NB: np.bincount per blocco (C-level) e' gia' il modo piu' veloce di calcolare
+    la moda qui. Le alternative full-numpy (offset+bincount, o block-sum per
+    classe) allocano l'intera immagine e a misura risultano PIU' lente del loop
+    (es. ~400ms vs ~70ms su un BG 5K). Estratto in funzione per testabilita' e per
+    separare lo scoring semantico (vettorizzato a parte nel chiamante).
+    Tie-break: a pari conteggio vince la classe con id piu' basso.
+    """
+    out = np.zeros((cell_h, cell_w), dtype=np.int32)
+    for cyi in range(cell_h):
+        for cxi in range(cell_w):
+            block = semantic_raw[cyi * cell_px:(cyi + 1) * cell_px,
+                                 cxi * cell_px:(cxi + 1) * cell_px]
+            flat = block.flatten()
+            if flat.size > 0:
+                out[cyi, cxi] = int(np.bincount(flat).argmax())
+    return out
+
+
 def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
                        base_path: Optional[Path] = None, use_cache: bool = True) -> BGAnalysis:
     """Pre-process del BG: edge density, saliency, palette locale, gradient orientation
@@ -233,14 +286,9 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
             log.warning(f"[SCATTER] saliency cv2 fallita ({e}), uso fallback classico")
             sal = None
     if sal is None:
-        # Fallback approssimato: combinazione di edge density + center-prior
-        # (gli occhi tendono a guardare al centro dell'immagine).
-        yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-        cy_c, cx_c = h / 2, w / 2
-        max_d = math.hypot(cy_c, cx_c)
-        center_prior = 1.0 - np.sqrt((yy - cy_c) ** 2 + (xx - cx_c) ** 2) / max_d
-        # Saliency approssimata: edge + center prior
-        sal = 0.5 * edges_f + 0.5 * center_prior
+        # Fallback (cv2.saliency assente): center-prior puro, senza la componente
+        # edge che prima si annullava con w_edge (vedi _center_prior_saliency).
+        sal = _center_prior_saliency(h, w)
     saliency = _aggregate_to_grid(sal, cell_h, cell_w, cell_px, "mean")
     smax = saliency.max() if saliency.max() > 1e-6 else 1.0
     saliency = saliency / smax
@@ -288,30 +336,24 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
             semantic_raw_full = semantic_raw    # expose alle metriche
             clip_raw = out.get("clip_grid")     # solo ULTRA
             if semantic_raw is not None:
-                # Aggrega: per cella, classe dominante
-                semantic_grid = np.zeros((cell_h, cell_w), dtype=np.int32)
-                semantic_score_grid = np.zeros((cell_h, cell_w), dtype=np.float32)
-                # Import constants
                 from editor.tools.scatter_models import (
                     ADE20K_FLOOR_LIKE, ADE20K_TABLE_LIKE, ADE20K_PROHIBITED,
                 )
                 preferred = ADE20K_FLOOR_LIKE | ADE20K_TABLE_LIKE
                 prohibited = ADE20K_PROHIBITED
-                for cyi in range(cell_h):
-                    for cxi in range(cell_w):
-                        block = semantic_raw[cyi*cell_px:(cyi+1)*cell_px,
-                                              cxi*cell_px:(cxi+1)*cell_px]
-                        # Class dominante (moda veloce via bincount)
-                        flat = block.flatten()
-                        if flat.size > 0:
-                            cls = int(np.bincount(flat).argmax())
-                            semantic_grid[cyi, cxi] = cls
-                            if cls in prohibited:
-                                semantic_score_grid[cyi, cxi] = -1.0  # VIETATO
-                            elif cls in preferred:
-                                semantic_score_grid[cyi, cxi] = 1.0   # ottimo
-                            else:
-                                semantic_score_grid[cyi, cxi] = 0.4   # neutro
+                # Classe dominante (moda) per cella, vettorizzata.
+                semantic_grid = _dominant_class_per_cell(
+                    semantic_raw, cell_h, cell_w, cell_px)
+                # score per cella: -1 vietato (cielo/muro), +1 preferito
+                # (pavimento/tavolo), 0.4 neutro. Il vietato PRECEDE il preferito
+                # (come l'if/elif originale): applico preferito poi vietato.
+                semantic_score_grid = np.full((cell_h, cell_w), 0.4, dtype=np.float32)
+                if preferred:
+                    semantic_score_grid[np.isin(
+                        semantic_grid, np.fromiter(preferred, dtype=np.int64))] = 1.0
+                if prohibited:
+                    semantic_score_grid[np.isin(
+                        semantic_grid, np.fromiter(prohibited, dtype=np.int64))] = -1.0
             if clip_raw is not None:
                 clip_grid = clip_raw  # (gy, gx, 512)
             if depth is not None:
@@ -1158,13 +1200,19 @@ class PlacedObject:
     visibility_score: float = 0.0
 
 
-def _build_score_matrix(
+def _build_base_score_matrix(
     bg: BGAnalysis,
     obj: ObjAnalysis,
     weights: dict,
-    occupied: np.ndarray,  # shape (cell_h, cell_w) float, decrementato dopo ogni piazzato
 ) -> np.ndarray:
-    """Calcola la matrice di score (cell_h, cell_w) per piazzare l'oggetto."""
+    """Parte OBJECT-INVARIANT della matrice di score (cell_h, cell_w).
+
+    Contiene tutti i termini che dipendono solo da (bg, obj, weights) e NON dallo
+    stato di piazzamento: e' quindi cacheabile per catalog_id ed e' la parte
+    COSTOSA (color similarity, profile, clip, shape-match). I termini per-tentativo
+    (anti-cluster w_cluster*occupied, jitter, veto semantico) sono aggiunti da
+    _build_score_matrix(). Nessuna estrazione random qui dentro.
+    """
     # ── COLOR SIMILARITY per cella ───────────────────────────────────────
     # Usa palette_ext (k=8 con frequency e variance) se disponibile,
     # altrimenti fallback alla palette top-3 storica.
@@ -1218,7 +1266,7 @@ def _build_score_matrix(
     # Boost moltiplicativo dove match e uniformita' sono entrambi alti; non
     # penalizza il camuffamento da clutter (gestito dal termine edge).
     if bg.color_uniformity is not None:
-        cs = np.clip(cs * (1.0 + 0.6 * bg.color_uniformity * cs), 0.0, 1.0)
+        cs = _uniformity_reweight(cs, bg.color_uniformity)
 
     # Orient match
     if abs(obj.edge_orient) > 1e-3:
@@ -1227,13 +1275,13 @@ def _build_score_matrix(
     else:
         om = np.zeros_like(bg.edge_density)
 
-    # Combine: pesi classici
+    # Combine: pesi classici (il termine anti-cluster w_cluster*occupied e' aggiunto
+    # da _build_score_matrix perche' dipende dallo stato di piazzamento corrente).
     s = (
         weights["w_edge"]   * bg.edge_density
         + weights["w_sal"]    * (1.0 - bg.saliency)
         + weights["w_color"]  * cs
         + weights["w_orient"] * om
-        + weights["w_cluster"] * occupied
     )
 
     # Bonus IA tier 2: piani orizzontali + bordi strutturali
@@ -1392,8 +1440,42 @@ def _build_score_matrix(
 
         s = s + weights["w_physics"] * physics
 
-    # Jitter random per spezzare il determinismo (entropia di sampling)
+    return s
+
+
+def _build_score_matrix(
+    bg: BGAnalysis,
+    obj: ObjAnalysis,
+    weights: dict,
+    occupied: np.ndarray,  # shape (cell_h, cell_w) float, decrementato dopo ogni piazzato
+    base: Optional[np.ndarray] = None,
+) -> np.ndarray:
+    """Matrice di score completa (cell_h, cell_w) per piazzare l'oggetto.
+
+    = parte object-invariant (base) + termini per-tentativo: anti-cluster
+    (w_cluster*occupied), jitter e veto semantico. Se `base` e' fornita (cache per
+    catalog_id nel loop di place_objects) la parte costosa non viene ricostruita;
+    il risultato e' identico a base=None. `base` non viene mai mutata (l'addizione
+    crea sempre un nuovo array).
+    """
+    s = base if base is not None else _build_base_score_matrix(bg, obj, weights)
+
+    # Anti-cluster: stato di piazzamento corrente (occupied basso = zona gia' presa).
+    s = s + weights["w_cluster"] * occupied
+
+    # Jitter random per spezzare il determinismo (entropia di sampling). Consuma
+    # esattamente 1 estrazione RNG per chiamata, come la versione monolitica
+    # precedente: la sequenza random (e quindi le piazzate a parita' di seed) resta
+    # invariata sia con base=None sia con base precalcolata.
     s = s + weights["jitter"] * np.random.random(s.shape)
+
+    # HARD VETO semantico: le celle proibite (cielo/muro, semantic_score==-1) non
+    # sono MAI valide, qualunque sia il match cromatico/clutter. Prima erano solo
+    # una penalita' additiva (-w_semantic) che un buon color match poteva superare,
+    # facendo "fluttuare" oggetti nel cielo. Applicato per ultimo cosi' nulla puo'
+    # risollevarle. Attivo solo in ULTRA (semantic_score disponibile).
+    if bg.semantic_score is not None:
+        s = np.where(bg.semantic_score <= -0.99, -1e9, s)
     return s
 
 
@@ -1597,6 +1679,13 @@ def place_objects(
     log.info(f"[SCATTER] density mode: count={count}, strength={anti_cluster_strength}, "
              f"overlap={overlap_margin_factor:.0%}, sigma={gauss_sigma_scale}, "
              f"sem_relax={semantic_relax}, max_attempts={max_total_attempts}")
+    # Cache della parte object-invariant della score matrix, per catalog_id.
+    # Entro un singolo place_objects i weights sono costanti: la base di un dato id
+    # non cambia tra i tentativi, quindi la calcoliamo una volta sola invece di
+    # ricostruirla a ogni tentativo (fino a max_total_attempts). E' il maggior
+    # risparmio del piazzamento perche' la base contiene i termini costosi
+    # (color similarity, profile, clip, shape-match).
+    base_score_cache: dict[str, np.ndarray] = {}
     total_attempts = 0
     reject_reasons = {"score_neg": 0, "overlap": 0, "too_big": 0}
     while len(placed) < count and total_attempts < max_total_attempts:
@@ -1641,7 +1730,13 @@ def place_objects(
         eff_radius = ref_radius * scale
 
         # ── SCORE MATRIX + zona stratificata ──────────────────────────────
-        score = _build_score_matrix(bg, obj_an, weights, occupied)
+        # Base object-invariant da cache (calcolata una volta per id), poi i
+        # termini per-tentativo (occupied/jitter/veto) aggiunti dal wrapper.
+        base_score = base_score_cache.get(cid)
+        if base_score is None:
+            base_score = _build_base_score_matrix(bg, obj_an, weights)
+            base_score_cache[cid] = base_score
+        score = _build_score_matrix(bg, obj_an, weights, occupied, base=base_score)
 
         # HARD MASK: escludi celle gia' "occupate" (occ < soglia) dalla scelta.
         # Soglia varia con density: piu' permissiva per density alta.
@@ -1955,7 +2050,10 @@ def place_objects(
         # l'oggetto si fonde. Mix limitato per non snaturarlo, opacita' invariata.
         # Disabilitato per line_art: lo stile e' B/N, l'hue del BG e' rumore.
         color_filter = (255, 255, 255)
-        if style != "line_art" and (obj_an.palette_ext or obj_an.palette) and alpha == 255:
+        # Il tint di camouflage va applicato ANCHE agli oggetti translucidi (vetro/
+        # cristallo, alpha<255): sono proprio quelli che si mimetizzano meglio se
+        # adottano l'hue del fondo. Il guard "alpha == 255" li escludeva a torto.
+        if style != "line_art" and (obj_an.palette_ext or obj_an.palette):
             loc = _sample_footprint_hsv(bg, x_min, y_min, x_max, y_max)
             if loc is not None:
                 bg_h, bg_s, bg_v = loc
@@ -2062,8 +2160,19 @@ def _swap_optimize(placed: list[PlacedObject], bg: BGAnalysis,
     scambiassero di posizione (x, y, rotation, scale, layer restano alla posizione).
     Se lo swap aumenta la somma dei visibility score, tienilo.
     """
+    # Memoizzazione: lo score di (catalog_id, cella) e' una funzione PURA del BG e
+    # della palette dell'oggetto, quindi NON cambia durante gli swap (gli oggetti
+    # cambiano cella ma lo score di "catalogo X alla cella (cy,cx)" e' invariante).
+    # Nel doppio loop le stesse coppie (oggetto, cella) vengono valutate molte volte
+    # (es. _score_at(an_i, cyi, cxi) per ogni j): memoizzare elimina le ricomputazioni
+    # ridondanti di _color_similarity restituendo float identici -> swap identici.
+    _score_cache: dict[tuple, float] = {}
+
     def _score_at(obj_an, cy, cx):
-        # Replica veloce della parte fondamentale del visibility score
+        key = (obj_an.catalog_id, cy, cx)
+        cached = _score_cache.get(key)
+        if cached is not None:
+            return cached
         s = 0.30 * float(bg.edge_density[cy, cx])
         s += 0.30 * float(1.0 - bg.saliency[cy, cx])
         s += 0.15 * _color_similarity(obj_an.palette,
@@ -2074,6 +2183,7 @@ def _swap_optimize(placed: list[PlacedObject], bg: BGAnalysis,
             s += 0.15 * float(bg.horizontal_score[cy, cx])
         if bg.semantic_score is not None:
             s += 0.10 * max(0.0, float(bg.semantic_score[cy, cx]))
+        _score_cache[key] = s
         return s
 
     improved_total = 0

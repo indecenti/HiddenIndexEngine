@@ -86,8 +86,11 @@ MODEL_CLIP_TEXT = {
 }
 
 # Soglie quick-benchmark per declassare (ms). Se inference > soglia, retrocedi al tier sotto.
+# NB: tier2 (Metric3D 616px + normals) e' piu' pesante di tier1 (Depth Anything 518px),
+# quindi deve avere un budget MAGGIORE, non minore: altrimenti il modello migliore
+# veniva declassato proprio sulle macchine dove tier1 passava.
 _BENCH_TIER1_MAX_MS = 1500
-_BENCH_TIER2_MAX_MS = 800
+_BENCH_TIER2_MAX_MS = 2500
 
 
 # ─────────────────────────────────────────────────────────────────────────────

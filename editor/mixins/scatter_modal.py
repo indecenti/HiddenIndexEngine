@@ -5,7 +5,7 @@ ScatterModalMixin - popover per auto-scatter intelligente.
 UI:
   - Dropdown Stile (real / cartoon / line art)
   - Dropdown Tag tema (filtra il pool)
-  - Slider Quantita (1-50)
+  - Slider Quantita (1-300)
   - Radio Difficolta (Facile / Medio / Difficile)
   - Bottoni: Genera Anteprima, Ripesca, Applica alla Scena, Chiudi
 

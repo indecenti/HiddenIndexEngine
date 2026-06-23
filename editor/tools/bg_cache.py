@@ -100,19 +100,22 @@ def compute_texture_entropy(rgb: np.ndarray, cell_h: int, cell_w: int, cell_px: 
         gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
     else:
         gray = (0.299 * rgb[..., 0] + 0.587 * rgb[..., 1] + 0.114 * rgb[..., 2]).astype(np.uint8)
-    out = np.zeros((cell_h, cell_w), dtype=np.float32)
-    bin_edges = np.linspace(0, 256, 9)
-    for cy in range(cell_h):
-        for cx in range(cell_w):
-            block = gray[cy*cell_px:(cy+1)*cell_px, cx*cell_px:(cx+1)*cell_px]
-            hist, _ = np.histogram(block, bins=bin_edges)
-            total = hist.sum()
-            if total > 0:
-                p = hist / total
-                p = p[p > 0]
-                ent = -(p * np.log2(p)).sum()
-                out[cy, cx] = ent / 3.0  # max entropy 8 bins = log2(8) = 3
-    return np.clip(out, 0.0, 1.0)
+    # Vettorizzato: il doppio loop Python con np.histogram per cella (cell_h*cell_w
+    # iterazioni, ~7000 su un BG 5K) e' sostituito da una quantizzazione in 8 bin +
+    # conteggio per cella in blocco. Il mapping (gray*8)//256 e' identico a
+    # np.histogram con edges linspace(0,256,9), quindi il risultato e' lo stesso.
+    h_eff, w_eff = cell_h * cell_px, cell_w * cell_px
+    g = gray[:h_eff, :w_eff].astype(np.int64)
+    binned = (g * 8) // 256  # 0..7
+    resh = binned.reshape(cell_h, cell_px, cell_w, cell_px)
+    counts = np.zeros((cell_h, cell_w, 8), dtype=np.float64)
+    for b in range(8):
+        counts[:, :, b] = (resh == b).sum(axis=(1, 3))
+    total = counts.sum(axis=2, keepdims=True)
+    p = np.where(total > 0, counts / np.where(total > 0, total, 1.0), 0.0)
+    logp = np.log2(np.where(p > 0, p, 1.0))  # log2(1)=0 dove p==0, niente nan
+    ent = -(p * logp).sum(axis=2) / 3.0  # max entropy 8 bin = log2(8) = 3
+    return np.clip(ent.astype(np.float32), 0.0, 1.0)
 
 
 def compute_local_complexity(rgb: np.ndarray, cell_h: int, cell_w: int, cell_px: int) -> np.ndarray:
@@ -159,6 +162,44 @@ def compute_hideability(edge_density: np.ndarray, saliency: np.ndarray,
     return np.clip(score, 0.0, 1.0).astype(np.float32)
 
 
+def _orient_accumulate(lines: np.ndarray, cell_h: int, cell_w: int,
+                       cell_px: int) -> np.ndarray:
+    """Accumula per cella la somma vettoriale (mod pi) degli angoli dei segmenti.
+
+    Versione vettorizzata della rasterizzazione: l'inner loop su k (fino a
+    ~length/(cell_px/2) passi per segmento, su migliaia di segmenti) e' sostituito
+    da np.add.at sui punti del segmento. Accumulatori float32 e stesso ordine/raggru-
+    ppamento aritmetico della versione precedente -> risultato bit-identico.
+    Restituisce (cell_h, cell_w) float32 in [-pi/2, pi/2], NaN dove no linee.
+    """
+    out = np.full((cell_h, cell_w), np.nan, dtype=np.float32)
+    sum_cos = np.zeros((cell_h, cell_w), dtype=np.float32)
+    sum_sin = np.zeros((cell_h, cell_w), dtype=np.float32)
+    weight = np.zeros((cell_h, cell_w), dtype=np.float32)
+    for line in lines.reshape(-1, 4):
+        x1, y1, x2, y2 = line
+        ang = math.atan2(y2 - y1, x2 - x1)
+        if ang > math.pi / 2: ang -= math.pi
+        if ang < -math.pi / 2: ang += math.pi
+        length = math.hypot(x2 - x1, y2 - y1)
+        steps = max(2, int(length / (cell_px / 2)))
+        t = np.arange(steps + 1) / steps
+        xs = (x1 + t * (x2 - x1)).astype(np.int64)
+        ys = (y1 + t * (y2 - y1)).astype(np.int64)
+        cxs = xs // cell_px
+        cys = ys // cell_px
+        valid = (cys >= 0) & (cys < cell_h) & (cxs >= 0) & (cxs < cell_w)
+        if not valid.any():
+            continue
+        cys = cys[valid]; cxs = cxs[valid]
+        np.add.at(sum_cos, (cys, cxs), math.cos(2 * ang) * length / steps)
+        np.add.at(sum_sin, (cys, cxs), math.sin(2 * ang) * length / steps)
+        np.add.at(weight, (cys, cxs), length / steps)
+    mask = weight > 1e-6
+    out[mask] = 0.5 * np.arctan2(sum_sin[mask], sum_cos[mask])
+    return out
+
+
 def compute_structural_orient(rgb: np.ndarray, cell_h: int, cell_w: int, cell_px: int) -> np.ndarray:
     """Per ogni cella, calcola angolo DOMINANTE delle linee strutturali via HoughLinesP.
 
@@ -174,31 +215,8 @@ def compute_structural_orient(rgb: np.ndarray, cell_h: int, cell_w: int, cell_px
                             minLineLength=cell_px, maxLineGap=cell_px // 2)
     if lines is None:
         return out
-    # Per ogni cella accumula somma vettoriale degli angoli (mod pi)
-    sum_cos = np.zeros((cell_h, cell_w), dtype=np.float32)
-    sum_sin = np.zeros((cell_h, cell_w), dtype=np.float32)
-    weight = np.zeros((cell_h, cell_w), dtype=np.float32)
-    for line in lines.reshape(-1, 4):
-        x1, y1, x2, y2 = line
-        ang = math.atan2(y2 - y1, x2 - x1)
-        # Mod pi (l'asse, non il vettore)
-        if ang > math.pi / 2: ang -= math.pi
-        if ang < -math.pi / 2: ang += math.pi
-        length = math.hypot(x2 - x1, y2 - y1)
-        # Rasterizza segmento e accumula per cella
-        steps = max(2, int(length / (cell_px / 2)))
-        for k in range(steps + 1):
-            t = k / steps
-            x = int(x1 + t * (x2 - x1))
-            y = int(y1 + t * (y2 - y1))
-            cx, cy = x // cell_px, y // cell_px
-            if 0 <= cy < cell_h and 0 <= cx < cell_w:
-                sum_cos[cy, cx] += math.cos(2 * ang) * length / steps
-                sum_sin[cy, cx] += math.sin(2 * ang) * length / steps
-                weight[cy, cx] += length / steps
-    mask = weight > 1e-6
-    out[mask] = 0.5 * np.arctan2(sum_sin[mask], sum_cos[mask])
-    return out
+    # Accumulo per cella vettorizzato (vedi _orient_accumulate).
+    return _orient_accumulate(lines, cell_h, cell_w, cell_px)
 
 
 def compute_anchor_points(rgb: np.ndarray, max_points: int = 300) -> list[tuple[int, int]]:
@@ -301,6 +319,16 @@ def compute_zone_palettes(rgb: np.ndarray, semantic: Optional[np.ndarray]) -> di
     else:
         # Fallback minimo
         return {}
+    # sklearn e' una dipendenza OPZIONALE non dichiarata: provala UNA volta sola
+    # (non a ogni iterazione) e, se assente, usa il fallback per tutte le classi.
+    # Prima l'import era dentro il loop e fuori dal try: se sklearn mancava,
+    # zone_palettes crashava interamente invece di degradare.
+    try:
+        from sklearn.cluster import KMeans
+        _have_kmeans = True
+    except Exception:
+        _have_kmeans = False
+
     out = {}
     unique_classes = np.unique(semantic)
     for cls in unique_classes:
@@ -313,16 +341,18 @@ def compute_zone_palettes(rgb: np.ndarray, semantic: Optional[np.ndarray]) -> di
         if len(pix) > 5000:
             idx = np.random.default_rng(42).choice(len(pix), 5000, replace=False)
             pix = pix[idx]
-        # K-means semplice (k=3)
-        from sklearn.cluster import KMeans  # disponibile? Fallback random
-        try:
-            km = KMeans(n_clusters=3, n_init=3, random_state=42)
-            km.fit(pix)
-            centers = km.cluster_centers_
-        except Exception:
-            # Random 3 pixel come fallback
+        # K-means semplice (k=3), fallback a 3 pixel random se sklearn assente/fallisce
+        centers = None
+        if _have_kmeans:
+            try:
+                km = KMeans(n_clusters=3, n_init=3, random_state=42)
+                km.fit(pix)
+                centers = km.cluster_centers_
+            except Exception:
+                centers = None
+        if centers is None:
             rng = np.random.default_rng(42)
-            idx3 = rng.choice(len(pix), 3, replace=False)
+            idx3 = rng.choice(len(pix), min(3, len(pix)), replace=False)
             centers = pix[idx3]
         out[cls_id] = [[float(c[0]), float(c[1]), float(c[2])] for c in centers]
     return out

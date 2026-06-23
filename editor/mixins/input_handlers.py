@@ -126,7 +126,9 @@ class InputHandlersMixin:
             return
         if getattr(self, "_scatter_modal_open", False):
             if ev.key == pygame.K_ESCAPE:
-                self._scatter_modal_open = False
+                # _scatter_close pulisce anche i ghost pendenti: chiudere mutando
+                # solo il flag lasciava i ghost renderizzati senza modo di applicarli.
+                self._scatter_close()
             return
         if getattr(self, "_confirm_leave_modal", False):
             if ev.key == pygame.K_ESCAPE:
