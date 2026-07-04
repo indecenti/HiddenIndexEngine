@@ -23,6 +23,10 @@ from engine.effect_renderer import (
 )
 
 
+# Alpha dell'overlay heatmap debug dello scatter (0..255)
+SCATTER_DEBUG_OVERLAY_ALPHA = 110
+
+
 class RenderCanvasMixin:
     """Rendering del canvas centrale e della toolbar."""
 
@@ -438,6 +442,75 @@ class RenderCanvasMixin:
         ghosts = getattr(self, "_scatter_ghosts", [])
         if ghosts:
             self._r_scatter_ghosts(ghosts)
+
+        # --- ZONE VIETATE + DEBUG OVERLAY (scatter) ------------------------
+        # Heatmap debug sotto, celle vietate sopra (rosso manuale, arancio
+        # volti). Visibili solo con modal scatter aperto o brush attivo.
+        if (getattr(self, "_scatter_modal_open", False)
+                or getattr(self, "_scatter_brush_active", False)):
+            try:
+                self._r_scatter_debug_overlay()
+                self._r_scatter_forbidden_overlay()
+            except Exception:
+                import logging
+                logging.getLogger("crash").warning(
+                    "Render overlay scatter fallito", exc_info=True)
+
+
+    def _r_scatter_debug_overlay(self):
+        """Heatmap debug (blu = score basso, rosso = alto) sopra il BG."""
+        m = getattr(self, "_scatter_debug_map", None)
+        if m is None or getattr(self, "_scatter_debug_mode", "off") == "off":
+            return
+        bg_an = getattr(self, "_scatter_bg_analysis", None)
+        if bg_an is None:
+            return
+        import numpy as np
+        # Cache della surface: ricostruita solo se cambia mappa o zoom
+        key = (self._scatter_debug_mode, round(self.zoom, 3), id(m))
+        surf = self._scatter_debug_surf if self._scatter_debug_surf_key == key else None
+        if surf is None:
+            v = np.clip(m, 0.0, 1.0)
+            rgb = np.zeros((v.shape[0], v.shape[1], 3), dtype=np.uint8)
+            rgb[..., 0] = (255 * v).astype(np.uint8)          # rosso = alto
+            rgb[..., 2] = (255 * (1.0 - v)).astype(np.uint8)  # blu = basso
+            small = pygame.surfarray.make_surface(rgb.swapaxes(0, 1))
+            cpx = bg_an.cell_px
+            w_px = max(1, self._scale(bg_an.cell_w * cpx))
+            h_px = max(1, self._scale(bg_an.cell_h * cpx))
+            surf = pygame.transform.scale(small, (w_px, h_px))
+            surf.set_alpha(SCATTER_DEBUG_OVERLAY_ALPHA)
+            self._scatter_debug_surf = surf
+            self._scatter_debug_surf_key = key
+        self.screen.blit(surf, self._r2s(0, 0))
+
+
+    def _r_scatter_forbidden_overlay(self):
+        """Overlay celle vietate: manuali (rosso) + face_mask auto (arancio)."""
+        manual = getattr(self, "_scatter_forbidden_cells", None) or set()
+        bg_an = getattr(self, "_scatter_bg_analysis", None)
+        face_mask = getattr(bg_an, "face_mask", None) if bg_an is not None else None
+        if not manual and face_mask is None:
+            return
+        cpx = self._scatter_cell_px()
+        cell_size = max(1, self._scale(cpx))
+
+        def _cell_rect(ccx: int, ccy: int) -> pygame.Rect:
+            sx, sy = self._r2s(ccx * cpx, ccy * cpx)
+            return pygame.Rect(sx, sy, cell_size, cell_size)
+
+        overlay_cell = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
+        # Volti auto (arancio, sotto le celle manuali)
+        if face_mask is not None:
+            overlay_cell.fill((255, 150, 40, 90))
+            ys, xs = face_mask.nonzero()
+            for ccy, ccx in zip(ys.tolist(), xs.tolist()):
+                self.screen.blit(overlay_cell, _cell_rect(ccx, ccy))
+        # Celle manuali (rosso)
+        if manual:
+            overlay_cell.fill((230, 50, 50, 90))
+            for (ccx, ccy) in manual:
+                self.screen.blit(overlay_cell, _cell_rect(ccx, ccy))
 
 
     def _r_scatter_ghosts(self, ghosts):

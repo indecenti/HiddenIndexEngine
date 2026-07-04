@@ -27,8 +27,9 @@ from typing import Callable, Optional
 
 from editor.tools.scatter_models import (
     MODEL_DEPTH_ANYTHING_SMALL, MODEL_METRIC3D_LARGE,
-    MODEL_SEGFORMER_ADE, MODEL_CLIP_VISUAL, MODEL_CLIP_TEXT,
+    MODEL_SEGFORMER_ADE, MODEL_CLIP_VISUAL, MODEL_CLIP_TEXT, MODEL_YUNET_FACE,
     models_dir, model_path_for, segformer_path, clip_path, clip_text_path,
+    yunet_path,
 )
 
 log = logging.getLogger(__name__)
@@ -150,6 +151,23 @@ def download_clip_visual(base_path: Path,
         return dest
     url = hf_url(MODEL_CLIP_VISUAL["hf_repo"], MODEL_CLIP_VISUAL["hf_file"])
     ok = download_url(url, dest, progress_cb=progress_cb, timeout=300)
+    return dest if ok else None
+
+
+def download_face_model(base_path: Path,
+                        progress_cb: Optional[Callable[[int, int], None]] = None,
+                        force: bool = False) -> Optional[Path]:
+    """Scarica YuNet face detector (~0.3MB) per le zone vietate dello scatter.
+
+    URL diretto (GitHub LFS via media.githubusercontent.com), override con env
+    SCATTER_YUNET_URL. Se fallisce, il chiamante degrada al fallback Haar.
+    """
+    dest = yunet_path(base_path)
+    if dest.exists() and not force:
+        log.info(f"[DOWNLOAD] YuNet gia' presente: {dest}")
+        return dest
+    url = os.environ.get("SCATTER_YUNET_URL", MODEL_YUNET_FACE["url"])
+    ok = download_url(url, dest, progress_cb=progress_cb, timeout=30)
     return dest if ok else None
 
 

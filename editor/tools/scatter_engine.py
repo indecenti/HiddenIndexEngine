@@ -43,6 +43,90 @@ CELL_PX = 48
 CATALOG_CACHE_DIR = ".editor_cache"
 CATALOG_CACHE_VERSION = 2  # v2: palette via k-means RGB (no HSV-SV), alpha>200
 
+# ── COSTANTI CAMOUFLAGE v3 ──────────────────────────────────────────────────
+# Score sentinella per le celle vietate (hard veto): nessun termine additivo
+# puo' risollevarle. Era un letterale -1e9 sparso in piu' punti.
+SCORE_VETO = -1e9
+# Soglia per riconoscere una cella vetata leggendo la score matrix (i termini
+# additivi possono spostare SCORE_VETO di qualche unita', mai di ordini di
+# grandezza).
+SCORE_VETO_THRESHOLD = -1e8
+# Normalizzazione ASSOLUTA dell'edge density: frazione di pixel Canny per cella
+# oltre la quale la cella e' "completamente busy". Sostituisce il max
+# per-griglia, che rendeva i punteggi non comparabili fra scene (su un BG
+# piatto la cella meno piatta veniva promossa a 1.0).
+EDGE_DENSITY_ABS_REF = 0.20
+# Normalizzazione robusta della saliency: percentile di riferimento del massimo
+# (la saliency resta relativa alla scena — l'attenzione E' una competizione
+# intra-scena — ma senza dipendere da un singolo outlier).
+SALIENCY_NORM_PERCENTILE = 0.95
+# Gate colore DURO: similarita' colore minima per cella, per difficolta'.
+# Sotto soglia la cella e' vetata per quell'oggetto: nessun altro termine
+# (edge, profile, clip...) puo' compensare un pessimo match cromatico.
+COLOR_GATE_MIN = {"easy": 0.35, "medium": 0.55, "hard": 0.68}
+# Zone piatte (bassa entropia texture + pochi edge): li' un oggetto salta
+# all'occhio, ammesso solo se quasi invisibile cromaticamente.
+FLAT_ENTROPY_MAX = 0.25
+FLAT_EDGE_MAX = 0.12
+FLAT_COLOR_MIN = 0.75
+# Relax deterministico del gate colore quando restano troppo poche celle valide.
+COLOR_GATE_MIN_CELLS = 40
+COLOR_GATE_MIN_FRAC = 0.03
+COLOR_GATE_RELAX_STEP = 0.08
+COLOR_GATE_FLOOR = 0.25
+# Verifica footprint in Lab (Delta-E 1976) post-selezione: oltre la soglia
+# l'oggetto "stacca" dai pixel reali sotto il footprint (la media di cella a
+# 48px puo' mentire su zone variegate). Cap rilassato linearmente col
+# progredire dei tentativi (attempts_frac) per non svuotare il piazzamento.
+DELTAE_MAX = {"easy": 45.0, "medium": 34.0, "hard": 26.0}
+DELTAE_RELAX_GAIN = 1.0
+DELTAE_PATCH_MAX_SIDE = 64  # lato max del subsample deterministico del patch
+# Veto saliency: frazione delle celle PIU' salienti vetata a runtime (le zone
+# dove l'occhio va per primo sono "in bella vista"). 0 = disattivo.
+SALIENCY_VETO_TOP_FRAC = {"easy": 0.0, "medium": 0.08, "hard": 0.15}
+# Guard anti over-veto: se le celle libere scendono sotto questa frazione della
+# griglia, la SOLA componente saliency viene droppata (mai volti/manuale/person).
+MIN_ALLOWED_CELLS_FRAC = 0.10
+# Tint di harmonization in Lab: quota di colore del footprint mixata nel
+# color_filter (il resto verso bianco = tint piu' leggero). Cresce con la
+# difficolta': hard fonde di piu'.
+TINT_MIX = {"easy": 0.15, "medium": 0.30, "hard": 0.45}
+TINT_MIN_L = 30.0       # clamp della L del footprint (no black-crush del tint)
+TINT_MIN_CHROMA = 12.0  # sotto: zona grigia -> mix dimezzato (no colore falso)
+# Banda di visibilita' su vs (= qualita' del nascondiglio, 0..1): [min, max]
+# per difficolta'. Il MAX e' il floor di risolvibilita' (audit #4): nessun
+# oggetto deve essere di fatto introvabile. Il MIN evita piazzamenti banali.
+VISIBILITY_BAND = {"easy": (0.05, 0.55), "medium": (0.20, 0.78), "hard": (0.35, 0.90)}
+VIS_BAND_RELAX_GAIN = 0.25  # allargamento banda proporzionale ad attempts_frac
+# Scala per profondita' (tier>=1): moltiplicatore da lontano (MIN) a vicino (MAX).
+DEPTH_SCALE_MIN = 0.85
+DEPTH_SCALE_MAX = 1.25
+# ── v3.1: anti-pile + scelta oggetto per zona ────────────────────────────────
+# Candidati oggetto valutati per tentativo: vince chi ha lo score migliore
+# nella macro-zona corrente (scelta color/size-aware invece di pesca cieca).
+OBJ_CANDIDATES_PER_ATTEMPT = 3
+# Pool pruning: un oggetto il cui gate colore fallisce anche al floor (nessuna
+# zona compatibile sul BG) viene tolto dal pool, purche' ne restino almeno N.
+POOL_MIN_AFTER_COLOR_PRUNE = 3
+# Cross-layer: le bbox dei layer gia' piazzati vengono ristrette di questa
+# frazione per lato ad alta densita' (prima la separazione era proprio OFF:
+# tre passate indipendenti si accatastavano sugli stessi hotspot).
+CROSS_LAYER_SHRINK_FRAC = 0.25
+# Veto "mezz'aria": celle piatte nella meta' superiore del BG con edge quasi
+# nullo nelle 2 celle sotto = cielo/vuoto, un oggetto ci fluttuerebbe.
+FLOATING_EDGE_BELOW_MAX = 0.06
+# ── v3.2: mismatch di croma nel color matching ───────────────────────────────
+# Un oggetto GRIGIO/metallico su una zona satura stacca (il percorso "gray"
+# ignora la hue e dava match alti ovunque il value combaciasse: toaster sugli
+# alberi). Penalita' proporzionale alla saturazione del BG oltre la soglia.
+GRAY_ON_SAT_PENALTY = 0.6
+CHROMA_NEUTRAL_SAT = 0.15   # sotto: cluster/cella considerati "grigi"
+GRAY_PENALTY_SAT_START = 0.25
+# Simmetrico: oggetto SATURO su zona quasi grigia (la hue del BG e' rumore,
+# il termine hue non vale nulla): il match si basa su sat/val con penalita'
+# proporzionale alla saturazione dell'oggetto.
+SAT_ON_GRAY_PENALTY = 0.35
+
 
 # ────────────────────────────────────────────────────────────────────────────
 # OPTIONAL OPENCV
@@ -97,6 +181,10 @@ class BGAnalysis:
     # ad ogni run dal BG, costo trascurabile).
     color_uniformity: Optional[np.ndarray] = None      # (cell_h, cell_w) 0..1, 1=zona cromaticamente uniforme
     hsv_full: Optional[np.ndarray] = None              # (H,W,3) HSV full-res per campionare il footprint reale
+    lab_full: Optional[np.ndarray] = None              # (H,W,3) Lab (OpenCV uint8) per verifica Delta-E footprint
+    # Zone vietate (v3): persistite in cache; unione in build_forbidden_mask().
+    face_mask: Optional[np.ndarray] = None             # (cell_h, cell_w) bool, celle con volti rilevati
+    depth_grid: Optional[np.ndarray] = None            # (cell_h, cell_w) 0..1 NEARNESS (1 = vicino alla camera)
 
 
 @dataclass
@@ -143,6 +231,59 @@ def _aggregate_to_grid(arr: np.ndarray, cell_h: int, cell_w: int, cell_px: int,
         return reshaped.sum(axis=(1, 3))
 
 
+def _uniformity_reweight(cs: np.ndarray, color_uniformity: np.ndarray) -> np.ndarray:
+    """Premia il color-match nelle zone cromaticamente uniformi, senza saturare.
+
+    cs * (1 + 0.6*uniformita'*cs): in una zona uniforme che combacia, l'oggetto
+    SPARISCE, quindi il match va premiato. La versione precedente clippava il
+    risultato a 1.0, schiacciando molte celle ad alto cs allo stesso valore e
+    appiattendo la discriminazione tra le MIGLIORI posizioni di camuffamento.
+    Senza il tetto la funzione resta monotona in cs (valori distinti -> score
+    distinti), preservando l'ordinamento ai vertici; il camuffamento da clutter
+    (zone variegate) resta gestito dal termine edge.
+    """
+    return cs * (1.0 + 0.6 * color_uniformity * cs)
+
+
+def _center_prior_saliency(h: int, w: int) -> np.ndarray:
+    """Saliency di fallback (quando cv2.saliency e' assente): center-prior puro.
+
+    NON usa edge_density di proposito: lo score di piazzamento somma gia'
+    w_edge*edge_density, e una saliency ~edge faceva si' che il termine
+    w_sal*(1-saliency) penalizzasse esattamente le zone ad alto edge che w_edge
+    premia (camuffamento da clutter), annullandone in parte il contributo. Il
+    center-prior dipende SOLO dalla posizione (gli occhi tendono al centro),
+    quindi i due termini non si combattono. Restituisce (h, w) float32 in [0,1]:
+    1 al centro, ~0 agli angoli.
+    """
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    cy_c, cx_c = h / 2.0, w / 2.0
+    max_d = math.hypot(cy_c, cx_c)
+    return (1.0 - np.sqrt((yy - cy_c) ** 2 + (xx - cx_c) ** 2) / max_d).astype(np.float32)
+
+
+def _dominant_class_per_cell(semantic_raw: np.ndarray, cell_h: int, cell_w: int,
+                             cell_px: int) -> np.ndarray:
+    """Classe semantica dominante (moda) per cella.
+
+    NB: np.bincount per blocco (C-level) e' gia' il modo piu' veloce di calcolare
+    la moda qui. Le alternative full-numpy (offset+bincount, o block-sum per
+    classe) allocano l'intera immagine e a misura risultano PIU' lente del loop
+    (es. ~400ms vs ~70ms su un BG 5K). Estratto in funzione per testabilita' e per
+    separare lo scoring semantico (vettorizzato a parte nel chiamante).
+    Tie-break: a pari conteggio vince la classe con id piu' basso.
+    """
+    out = np.zeros((cell_h, cell_w), dtype=np.int32)
+    for cyi in range(cell_h):
+        for cxi in range(cell_w):
+            block = semantic_raw[cyi * cell_px:(cyi + 1) * cell_px,
+                                 cxi * cell_px:(cxi + 1) * cell_px]
+            flat = block.flatten()
+            if flat.size > 0:
+                out[cyi, cxi] = int(np.bincount(flat).argmax())
+    return out
+
+
 def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
                        base_path: Optional[Path] = None, use_cache: bool = True) -> BGAnalysis:
     """Pre-process del BG: edge density, saliency, palette locale, gradient orientation
@@ -187,6 +328,8 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
                     structural_orient=cached.get("structural_orient"),
                     contours=cached.get("contours") or [],
                     bg_sha256=bg_sha,
+                    face_mask=cached.get("face_mask"),
+                    depth_grid=cached.get("depth_grid"),
                 )
                 _attach_runtime_color(analysis, rgb)
                 return analysis
@@ -215,9 +358,10 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
         edges_f = np.clip((gx + gy) / 255.0, 0, 1).astype(np.float32)
 
     edge_density = _aggregate_to_grid(edges_f, cell_h, cell_w, cell_px, "mean")
-    # Normalizzo 0..1 sul range osservato (più discriminante)
-    ed_max = edge_density.max() if edge_density.max() > 1e-6 else 1.0
-    edge_density = edge_density / ed_max
+    # Normalizzazione ASSOLUTA (v3): la scala e' fissa, non relativa al max della
+    # griglia. Un BG piatto resta piatto (prima la sua cella meno piatta veniva
+    # promossa a 1.0, falsando i confronti fra scene e i gate a soglia assoluta).
+    edge_density = np.clip(edge_density / EDGE_DENSITY_ABS_REF, 0.0, 1.0).astype(np.float32)
 
     # Saliency
     sal = None
@@ -233,17 +377,14 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
             log.warning(f"[SCATTER] saliency cv2 fallita ({e}), uso fallback classico")
             sal = None
     if sal is None:
-        # Fallback approssimato: combinazione di edge density + center-prior
-        # (gli occhi tendono a guardare al centro dell'immagine).
-        yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-        cy_c, cx_c = h / 2, w / 2
-        max_d = math.hypot(cy_c, cx_c)
-        center_prior = 1.0 - np.sqrt((yy - cy_c) ** 2 + (xx - cx_c) ** 2) / max_d
-        # Saliency approssimata: edge + center prior
-        sal = 0.5 * edges_f + 0.5 * center_prior
+        # Fallback (cv2.saliency assente): center-prior puro, senza la componente
+        # edge che prima si annullava con w_edge (vedi _center_prior_saliency).
+        sal = _center_prior_saliency(h, w)
     saliency = _aggregate_to_grid(sal, cell_h, cell_w, cell_px, "mean")
-    smax = saliency.max() if saliency.max() > 1e-6 else 1.0
-    saliency = saliency / smax
+    # Normalizzazione robusta (v3): riferimento = p95 invece del max, cosi' un
+    # singolo outlier non schiaccia tutta la mappa. Clip per il tail sopra p95.
+    smax = max(float(np.quantile(saliency, SALIENCY_NORM_PERCENTILE)), 1e-6)
+    saliency = np.clip(saliency / smax, 0.0, 1.0).astype(np.float32)
 
     # HSV per cella (per color matching)
     if _HAS_CV2:
@@ -275,6 +416,7 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
     semantic_grid = None
     semantic_score_grid = None
     clip_grid = None
+    depth_grid = None
     semantic_raw_full = None  # accessibile alle metriche avanzate
     model_tier = 0
     if ia_model is not None and getattr(ia_model, "tier", 0) >= 1:
@@ -288,30 +430,24 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
             semantic_raw_full = semantic_raw    # expose alle metriche
             clip_raw = out.get("clip_grid")     # solo ULTRA
             if semantic_raw is not None:
-                # Aggrega: per cella, classe dominante
-                semantic_grid = np.zeros((cell_h, cell_w), dtype=np.int32)
-                semantic_score_grid = np.zeros((cell_h, cell_w), dtype=np.float32)
-                # Import constants
                 from editor.tools.scatter_models import (
                     ADE20K_FLOOR_LIKE, ADE20K_TABLE_LIKE, ADE20K_PROHIBITED,
                 )
                 preferred = ADE20K_FLOOR_LIKE | ADE20K_TABLE_LIKE
                 prohibited = ADE20K_PROHIBITED
-                for cyi in range(cell_h):
-                    for cxi in range(cell_w):
-                        block = semantic_raw[cyi*cell_px:(cyi+1)*cell_px,
-                                              cxi*cell_px:(cxi+1)*cell_px]
-                        # Class dominante (moda veloce via bincount)
-                        flat = block.flatten()
-                        if flat.size > 0:
-                            cls = int(np.bincount(flat).argmax())
-                            semantic_grid[cyi, cxi] = cls
-                            if cls in prohibited:
-                                semantic_score_grid[cyi, cxi] = -1.0  # VIETATO
-                            elif cls in preferred:
-                                semantic_score_grid[cyi, cxi] = 1.0   # ottimo
-                            else:
-                                semantic_score_grid[cyi, cxi] = 0.4   # neutro
+                # Classe dominante (moda) per cella, vettorizzata.
+                semantic_grid = _dominant_class_per_cell(
+                    semantic_raw, cell_h, cell_w, cell_px)
+                # score per cella: -1 vietato (cielo/muro), +1 preferito
+                # (pavimento/tavolo), 0.4 neutro. Il vietato PRECEDE il preferito
+                # (come l'if/elif originale): applico preferito poi vietato.
+                semantic_score_grid = np.full((cell_h, cell_w), 0.4, dtype=np.float32)
+                if preferred:
+                    semantic_score_grid[np.isin(
+                        semantic_grid, np.fromiter(preferred, dtype=np.int64))] = 1.0
+                if prohibited:
+                    semantic_score_grid[np.isin(
+                        semantic_grid, np.fromiter(prohibited, dtype=np.int64))] = -1.0
             if clip_raw is not None:
                 clip_grid = clip_raw  # (gy, gx, 512)
             if depth is not None:
@@ -327,6 +463,17 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
                                                   cell_h, cell_w, cell_px, "mean")
                 ae_max = anchor_edge.max() if anchor_edge.max() > 1e-6 else 1.0
                 anchor_edge = (anchor_edge / ae_max).astype(np.float32)
+
+                # depth_grid (v3): profondita' per cella come NEARNESS 0..1
+                # (1 = vicino alla camera). Serve alla scala per profondita'.
+                # Tier 1 (Depth Anything) emette disparity-like: alto = vicino,
+                # gia' nel verso giusto. Tier 2/3 (Metric3D) emette depth
+                # metrica normalizzata: alto = lontano -> inverto.
+                dg = _aggregate_to_grid(depth.astype(np.float32),
+                                        cell_h, cell_w, cell_px, "mean")
+                if model_tier >= 2:
+                    dg = 1.0 - dg
+                depth_grid = np.clip(dg, 0.0, 1.0).astype(np.float32)
 
             if normals is not None and normals.ndim == 3:
                 # horizontal_score: normale che punta verso l'alto = piano orizzontale
@@ -388,6 +535,21 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
         log.warning(f"[SCATTER] metriche avanzate fallite: {e}")
         # tieni i defaults (gia' settati sopra)
 
+    # ── FACE DETECTION (v3): zone vietate, tier-indipendente ──────────────
+    face_mask = None
+    try:
+        from editor.tools.face_zones import detect_face_boxes, face_cell_mask
+        boxes = detect_face_boxes(rgb, base_path) if base_path is not None else []
+        if boxes:
+            # body_extend: sotto ogni volto veta anche il box corpo (busto/
+            # braccia dei personaggi in piedi), non solo la faccia.
+            face_mask = face_cell_mask(boxes, cell_w, cell_h, cell_px,
+                                       body_extend=True)
+            log.info(f"[SCATTER] face mask: {len(boxes)} volti, "
+                     f"{int(face_mask.sum())} celle vietate (corpo incluso)")
+    except Exception as e:
+        log.warning(f"[SCATTER] face detection fallita: {e}")
+
     dt = time.time() - t0
     log.info(f"[SCATTER] BG analysis done in {dt:.2f}s")
 
@@ -410,6 +572,8 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
         structural_orient=structural_orient,
         contours=contours,
         bg_sha256=bg_sha,
+        face_mask=face_mask,
+        depth_grid=depth_grid,
     )
 
     # ── SAVE CACHE ───────────────────────────────────────────────────────
@@ -423,7 +587,9 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
                            anchor_points=anchor_points,
                            zone_palettes=zone_palettes,
                            structural_orient=structural_orient,
-                           contours=contours)
+                           contours=contours,
+                           face_mask=face_mask,
+                           depth_grid=depth_grid)
         except Exception as e:
             log.warning(f"[SCATTER] BG cache save failed: {e}")
 
@@ -465,6 +631,10 @@ def _attach_runtime_color(analysis: "BGAnalysis", rgb: np.ndarray) -> None:
     try:
         hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV) if _HAS_CV2 else _rgb_to_hsv_np(rgb)
         analysis.hsv_full = hsv
+        # Lab full-res per la verifica Delta-E del footprint (v3). Solo con cv2:
+        # senza, la verifica degrada a no-op (lab_full resta None).
+        if _HAS_CV2:
+            analysis.lab_full = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB)
         ch, cw, cpx = analysis.cell_h, analysis.cell_w, analysis.cell_px
         sat_full = hsv[..., 1].astype(np.float32) / 255.0
         val_full = hsv[..., 2].astype(np.float32) / 255.0
@@ -503,6 +673,124 @@ def _sample_footprint_hsv(bg: "BGAnalysis", x0: float, y0: float,
     s = float(np.median(patch[:, 1])) / 255.0
     v = float(np.median(patch[:, 2])) / 255.0
     return (h, s, v)
+
+
+def _footprint_lab_median(bg: "BGAnalysis", x0: float, y0: float,
+                          x1: float, y1: float) -> Optional[tuple[float, float, float]]:
+    """Mediana Lab (L 0..100, a/b ~-128..127) del footprint, subsample deterministico."""
+    lab = bg.lab_full
+    if lab is None:
+        return None
+    H, W = lab.shape[:2]
+    xa = max(0, int(x0)); ya = max(0, int(y0))
+    xb = min(W, int(x1)); yb = min(H, int(y1))
+    if xb - xa < 2 or yb - ya < 2:
+        return None
+    sy = max(1, (yb - ya) // DELTAE_PATCH_MAX_SIDE)
+    sx = max(1, (xb - xa) // DELTAE_PATCH_MAX_SIDE)
+    patch = lab[ya:yb:sy, xa:xb:sx].reshape(-1, 3).astype(np.float32)
+    med = np.median(patch, axis=0)
+    return (float(med[0]) * (100.0 / 255.0),
+            float(med[1]) - 128.0,
+            float(med[2]) - 128.0)
+
+
+def _lab_harmonize_tint(bg: "BGAnalysis", x0: float, y0: float, x1: float, y1: float,
+                        difficulty: str) -> Optional[tuple[int, int, int]]:
+    """Tint di harmonization in Lab: colore del footprint mixato verso bianco.
+
+    Sostituisce il vecchio tint HSV (mix fisso max 0.35 dipendente dal delta
+    hue): qui il mix e' funzione della DIFFICOLTA' (hard fonde di piu') e il
+    target e' la mediana Lab reale del footprint, con clamp su L (niente tint
+    nero) e mix dimezzato su zone grigie (chroma bassa: iniettare colore
+    sarebbe un falso). Il contratto PlacedObject.color_filter (RGB
+    moltiplicativo applicato dall'engine) resta invariato: zero modifiche a
+    engine/web. Ritorna None se lab_full/cv2 mancano (fallback HSV storico).
+    """
+    if not _HAS_CV2:
+        return None
+    med = _footprint_lab_median(bg, x0, y0, x1, y1)
+    if med is None:
+        return None
+    fl, fa, fb = med
+    fl = max(fl, TINT_MIN_L)
+    mix = TINT_MIX.get(difficulty, TINT_MIX["medium"])
+    if math.hypot(fa, fb) < TINT_MIN_CHROMA:
+        mix *= 0.5
+    lab_px = np.uint8([[[int(round(fl * 255.0 / 100.0)),
+                         int(round(min(255.0, max(0.0, fa + 128.0)))),
+                         int(round(min(255.0, max(0.0, fb + 128.0))))]]])
+    rgb_px = cv2.cvtColor(lab_px, cv2.COLOR_LAB2RGB)[0, 0]
+    r, g, b = int(rgb_px[0]), int(rgb_px[1]), int(rgb_px[2])
+    # Mix verso bianco: stesso pattern di _hsv_to_tint_rgb (tint "leggero").
+    wr = int(mix * r + (1.0 - mix) * 255)
+    wg = int(mix * g + (1.0 - mix) * 255)
+    wb = int(mix * b + (1.0 - mix) * 255)
+    return (max(0, min(255, wr)), max(0, min(255, wg)), max(0, min(255, wb)))
+
+
+def _obj_dominant_rgb(obj: "ObjAnalysis") -> list[tuple[int, int, int]]:
+    """Colori dominanti dell'oggetto in RGB (per applicare il tint prima del
+    confronto Lab). Sorgente: cluster palette_ext con w >= 0.15 (fallback:
+    primo cluster, poi palette top-3 legacy). Senza cv2 ritorna [].
+    """
+    if not _HAS_CV2:
+        return []
+    src: list[tuple[float, float, float]] = []
+    if obj.palette_ext:
+        src = [(c["h"], c["s"], c["v"]) for c in obj.palette_ext
+               if c.get("w", 0.0) >= 0.15]
+        if not src:
+            c0 = obj.palette_ext[0]
+            src = [(c0["h"], c0["s"], c0["v"])]
+    elif obj.palette:
+        src = [tuple(p) for p in obj.palette[:3]]
+    out: list[tuple[int, int, int]] = []
+    for h, s, v in src:
+        hsv_px = np.uint8([[[int(h * 180) % 180, int(s * 255), int(v * 255)]]])
+        rgb_px = cv2.cvtColor(hsv_px, cv2.COLOR_HSV2RGB)[0, 0]
+        out.append((int(rgb_px[0]), int(rgb_px[1]), int(rgb_px[2])))
+    return out
+
+
+def _rgb_list_to_lab(rgbs: list[tuple[int, int, int]]
+                     ) -> list[tuple[float, float, float]]:
+    """RGB -> Lab VERO (L 0..100, a/b ~-128..127). Senza cv2 ritorna []."""
+    if not _HAS_CV2 or not rgbs:
+        return []
+    arr = np.uint8([[list(c) for c in rgbs]])  # (1, N, 3)
+    lab = cv2.cvtColor(arr, cv2.COLOR_RGB2LAB)[0].astype(np.float32)
+    # OpenCV Lab uint8: L in 0..255 (=L*255/100), a/b con offset +128.
+    return [(float(px[0]) * (100.0 / 255.0),
+             float(px[1]) - 128.0,
+             float(px[2]) - 128.0) for px in lab]
+
+
+def _obj_dominant_lab(obj: "ObjAnalysis") -> list[tuple[float, float, float]]:
+    """Colori dominanti dell'oggetto in Lab vero (senza tint)."""
+    return _rgb_list_to_lab(_obj_dominant_rgb(obj))
+
+
+def _footprint_delta_e(bg: "BGAnalysis",
+                       obj_labs: list[tuple[float, float, float]],
+                       x0: float, y0: float, x1: float, y1: float) -> Optional[float]:
+    """Delta-E 1976 minimo fra la mediana Lab del footprint reale e i colori
+    dominanti dell'oggetto (gia' in Lab vero, da _obj_dominant_lab).
+
+    Il patch full-res viene sottocampionato con stride deterministico a lato
+    max DELTAE_PATCH_MAX_SIDE (costo costante anche su footprint enormi).
+    Ritorna None (verifica non applicabile) se lab_full manca o il patch e'
+    degenere: il chiamante in quel caso NON rifiuta.
+    """
+    if not obj_labs:
+        return None
+    med = _footprint_lab_median(bg, x0, y0, x1, y1)
+    if med is None:
+        return None
+    bg_l, bg_a, bg_b = med
+    best = min(math.sqrt((bg_l - ol) ** 2 + (bg_a - oa) ** 2 + (bg_b - ob) ** 2)
+               for ol, oa, ob in obj_labs)
+    return float(best)
 
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -1049,6 +1337,34 @@ def _best_contour_for_cell(bg: BGAnalysis, obj_hu: list,
     return best, best_score
 
 
+def _visibility_score(bg: BGAnalysis, obj_an: ObjAnalysis, cy: int, cx: int,
+                      anchor_below_val: float, style: str) -> float:
+    """Qualita' del nascondiglio 0..~1 per la cella scelta (piu' alto = piu'
+    nascosto). Estratta dal loop di place_objects per l'enforcement della banda
+    di visibilita' e per i test. Per line_art il colore vale 0 (B/N): il peso
+    si sposta su edge. Pura e deterministica.
+    """
+    if style == "line_art":
+        vs = (
+            0.45 * float(bg.edge_density[cy, cx])
+            + 0.30 * float(1.0 - bg.saliency[cy, cx])
+            + 0.10 * anchor_below_val
+        )
+    else:
+        vs = (
+            0.30 * float(bg.edge_density[cy, cx])
+            + 0.30 * float(1.0 - bg.saliency[cy, cx])
+            + 0.15 * _color_similarity(obj_an.palette, float(bg.hue[cy, cx]),
+                                       float(bg.sat[cy, cx]), float(bg.val[cy, cx]))
+            + 0.10 * anchor_below_val
+        )
+    if bg.horizontal_score is not None:
+        vs += 0.15 * float(bg.horizontal_score[cy, cx])
+    else:
+        vs += 0.15 * 0.5  # neutro
+    return vs
+
+
 def _color_similarity(obj_palette: list[tuple[float, float, float]],
                       hue: float, sat: float, val: float) -> float:
     """Score 0..1 di quanto la palette dell'oggetto si fonde con la zona."""
@@ -1158,19 +1474,20 @@ class PlacedObject:
     visibility_score: float = 0.0
 
 
-def _build_score_matrix(
-    bg: BGAnalysis,
-    obj: ObjAnalysis,
-    weights: dict,
-    occupied: np.ndarray,  # shape (cell_h, cell_w) float, decrementato dopo ogni piazzato
-) -> np.ndarray:
-    """Calcola la matrice di score (cell_h, cell_w) per piazzare l'oggetto."""
-    # ── COLOR SIMILARITY per cella ───────────────────────────────────────
-    # Usa palette_ext (k=8 con frequency e variance) se disponibile,
-    # altrimenti fallback alla palette top-3 storica.
-    # Per ciascun cluster: hue ciclico + sat + val, score 0..1.
-    # Output per cella = somma PESATA dei score per frequency (preserva il
-    # contributo dei colori secondari invece di prendere solo il max).
+def _color_similarity_map(bg: BGAnalysis, obj: ObjAnalysis) -> np.ndarray:
+    """Similarita' colore PURA per cella (cell_h, cell_w), 0..1.
+
+    Usa palette_ext (k=8 con frequency e variance) se disponibile, altrimenti
+    fallback alla palette top-3 storica. Per ciascun cluster: hue ciclico +
+    sat + val, score 0..1. Output per cella = blend fra il match del colore
+    dominante e la somma pesata per frequency (preserva il contributo dei
+    colori secondari invece di prendere solo il max).
+
+    NB: NON applica _uniformity_reweight (lo fa _build_base_score_matrix, per
+    mantenere l'ordine delle operazioni bit-identico). Funzione pura e
+    deterministica: e' la sorgente sia del termine additivo w_color sia del
+    gate colore duro (_build_color_gate).
+    """
     cs = np.zeros_like(bg.edge_density)
     palette_iter = None
     if obj.palette_ext:
@@ -1188,15 +1505,7 @@ def _build_score_matrix(
             h = c["h"]; ss = c["s"]; vv = c["v"]; ww = c.get("w", 0.0)
             if ww < 0.01:  # cluster trascurabili
                 continue
-            d_h = np.minimum(np.abs(bg.hue - h), 1.0 - np.abs(bg.hue - h)) * 2.0
-            d_s = np.abs(bg.sat - ss)
-            d_v = np.abs(bg.val - vv)
-            # Per cluster grigi (sat bassa) hue irrilevante
-            if ss < 0.15:
-                score = 1.0 - (0.5 * d_s + 0.5 * d_v)
-            else:
-                score = 1.0 - (0.6 * d_h + 0.2 * d_s + 0.2 * d_v)
-            score = np.clip(score, 0.0, 1.0)
+            score = _cluster_color_score(bg, h, ss, vv)
             cs_w = cs_w + (ww / w_sum) * score
             if ww >= 0.15:
                 cs_dom = np.maximum(cs_dom, score)
@@ -1204,12 +1513,104 @@ def _build_score_matrix(
     else:
         # Fallback: palette top-3 senza pesi (legacy)
         for h, s, v in obj.palette:
-            d_h = np.minimum(np.abs(bg.hue - h), 1.0 - np.abs(bg.hue - h)) * 2.0
-            d_s = np.abs(bg.sat - s)
-            d_v = np.abs(bg.val - v)
-            score = 1.0 - (0.6 * d_h + 0.2 * d_s + 0.2 * d_v)
-            cs = np.maximum(cs, score)
+            cs = np.maximum(cs, _cluster_color_score(bg, h, s, v))
         cs = np.clip(cs, 0.0, 1.0)
+    return cs
+
+
+def _cluster_color_score(bg: BGAnalysis, h: float, ss: float, vv: float) -> np.ndarray:
+    """Match 0..1 di UN colore HSV dell'oggetto contro ogni cella del BG.
+
+    v3.2: mismatch di CROMA esplicito nei due sensi.
+      - Cluster grigio (ss < CHROMA_NEUTRAL_SAT): hue irrilevante, match su
+        sat/val MA penalita' crescente con la saturazione del BG (un grigio
+        su una zona satura stacca: il vecchio percorso dava match alti a un
+        toaster metallico sugli alberi verdi).
+      - Cluster saturo su cella quasi grigia: la hue del BG e' rumore, il
+        termine hue non discrimina; match su sat/val con penalita'
+        proporzionale alla saturazione dell'oggetto (un oggetto colorato su
+        una zona grigia stacca).
+    """
+    d_h = np.minimum(np.abs(bg.hue - h), 1.0 - np.abs(bg.hue - h)) * 2.0
+    d_s = np.abs(bg.sat - ss)
+    d_v = np.abs(bg.val - vv)
+    if ss < CHROMA_NEUTRAL_SAT:
+        score = 1.0 - (0.5 * d_s + 0.5 * d_v)
+        score = score - GRAY_ON_SAT_PENALTY * np.clip(
+            bg.sat - GRAY_PENALTY_SAT_START, 0.0, 1.0)
+    else:
+        score = 1.0 - (0.6 * d_h + 0.2 * d_s + 0.2 * d_v)
+        bg_gray = bg.sat < CHROMA_NEUTRAL_SAT
+        score_on_gray = 1.0 - (0.5 * d_s + 0.3 * d_v) - SAT_ON_GRAY_PENALTY * ss
+        score = np.where(bg_gray, score_on_gray, score)
+    return np.clip(score, 0.0, 1.0)
+
+
+def _build_color_gate(bg: BGAnalysis, obj: ObjAnalysis, weights: dict,
+                      difficulty: str) -> Optional[np.ndarray]:
+    """Maschera bool (cell_h, cell_w) di celle VIETATE per match colore scarso.
+
+    True = cella vetata per questo oggetto. Il gate rende reale il requisito
+    "l'oggetto atterra su una zona dello stesso colore": senza gate, un pessimo
+    match cromatico veniva compensato dagli altri termini additivi.
+
+      - Veto base: cs_raw < COLOR_GATE_MIN[difficulty].
+      - Sub-gate zone piatte: su celle a bassa entropia/edge (muro nudo, tavolo
+        vuoto) un oggetto e' in bella vista, ammesso solo se cs >= FLAT_COLOR_MIN.
+      - Relax deterministico: se le celle valide sono troppo poche, la soglia
+        scende a passi di COLOR_GATE_RELAX_STEP; sotto COLOR_GATE_FLOOR il gate
+        prova senza sub-gate piatto, e in ultima istanza si disattiva (None)
+        invece di svuotare il piazzamento.
+
+    Ritorna None (gate disattivo) se w_color <= 0 (es. line_art) o se anche il
+    relax completo lascerebbe troppo poche celle. Pura e RNG-free: cacheable
+    per catalog_id (stesso contratto di determinismo della base matrix).
+    """
+    if weights.get("w_color", 0.0) <= 0.0:
+        return None
+    cs_raw = _color_similarity_map(bg, obj)
+    n_cells = cs_raw.size
+    min_allowed = max(COLOR_GATE_MIN_CELLS, int(COLOR_GATE_MIN_FRAC * n_cells))
+
+    flat = None
+    if bg.texture_entropy is not None:
+        flat = ((bg.texture_entropy < FLAT_ENTROPY_MAX)
+                & (bg.edge_density < FLAT_EDGE_MAX))
+
+    thr = COLOR_GATE_MIN.get(difficulty, COLOR_GATE_MIN["medium"])
+    while thr >= COLOR_GATE_FLOOR:
+        veto = cs_raw < thr
+        if flat is not None:
+            veto = veto | (flat & (cs_raw < FLAT_COLOR_MIN))
+        if int((~veto).sum()) >= min_allowed:
+            return veto
+        thr -= COLOR_GATE_RELAX_STEP
+    # Ultimo tentativo: soglia al floor SENZA sub-gate piatto (e' spesso il
+    # sub-gate a svuotare BG molto uniformi).
+    veto = cs_raw < COLOR_GATE_FLOOR
+    if int((~veto).sum()) >= min_allowed:
+        log.debug(f"[SCATTER] color gate '{obj.catalog_id}': relax a floor senza flat-gate")
+        return veto
+    log.warning(f"[SCATTER] color gate '{obj.catalog_id}': nessuna soglia lascia "
+                f">={min_allowed} celle, gate disattivato")
+    return None
+
+
+def _build_base_score_matrix(
+    bg: BGAnalysis,
+    obj: ObjAnalysis,
+    weights: dict,
+) -> np.ndarray:
+    """Parte OBJECT-INVARIANT della matrice di score (cell_h, cell_w).
+
+    Contiene tutti i termini che dipendono solo da (bg, obj, weights) e NON dallo
+    stato di piazzamento: e' quindi cacheabile per catalog_id ed e' la parte
+    COSTOSA (color similarity, profile, clip, shape-match). I termini per-tentativo
+    (anti-cluster w_cluster*occupied, jitter, veto semantico) sono aggiunti da
+    _build_score_matrix(). Nessuna estrazione random qui dentro.
+    """
+    # ── COLOR SIMILARITY per cella (estratta in _color_similarity_map) ────
+    cs = _color_similarity_map(bg, obj)
 
     # ── CAMOUFLAGE PRECISO: premia le zone cromaticamente uniformi ──────────
     # La media per cella mente: una zona variegata puo' avere una media che
@@ -1218,7 +1619,7 @@ def _build_score_matrix(
     # Boost moltiplicativo dove match e uniformita' sono entrambi alti; non
     # penalizza il camuffamento da clutter (gestito dal termine edge).
     if bg.color_uniformity is not None:
-        cs = np.clip(cs * (1.0 + 0.6 * bg.color_uniformity * cs), 0.0, 1.0)
+        cs = _uniformity_reweight(cs, bg.color_uniformity)
 
     # Orient match
     if abs(obj.edge_orient) > 1e-3:
@@ -1227,13 +1628,13 @@ def _build_score_matrix(
     else:
         om = np.zeros_like(bg.edge_density)
 
-    # Combine: pesi classici
+    # Combine: pesi classici (il termine anti-cluster w_cluster*occupied e' aggiunto
+    # da _build_score_matrix perche' dipende dallo stato di piazzamento corrente).
     s = (
         weights["w_edge"]   * bg.edge_density
         + weights["w_sal"]    * (1.0 - bg.saliency)
         + weights["w_color"]  * cs
         + weights["w_orient"] * om
-        + weights["w_cluster"] * occupied
     )
 
     # Bonus IA tier 2: piani orizzontali + bordi strutturali
@@ -1244,8 +1645,12 @@ def _build_score_matrix(
 
     # Bonus IA tier 3 ULTRA: semantic (floor/table) e CLIP similarity
     if bg.semantic_score is not None and "w_semantic" in weights:
-        # semantic_score: -1 prohibited (sky/wall), 0.4 neutro, 1.0 preferred (floor/table)
-        s = s + weights["w_semantic"] * bg.semantic_score
+        # semantic_score: -1 prohibited (sky/wall), 0.4 neutro, 1.0 preferred.
+        # v3: rimappato in [0,1] prima del peso — un termine SIGNED [-1,1] in una
+        # somma di termini [0,1] aveva scala doppia e distorceva il ranking
+        # (audit #1). Il divieto delle zone prohibited e' gestito ESCLUSIVAMENTE
+        # dal veto duro in _build_score_matrix, non da questa penalita' additiva.
+        s = s + weights["w_semantic"] * (bg.semantic_score + 1.0) * 0.5
 
     # ── OBJECT PROFILE: affinity zero-shot oggetto -> classe ADE20K per cella ──
     # Mappa context_profile + bg.semantic (classe per cella) -> score matrix
@@ -1392,9 +1797,141 @@ def _build_score_matrix(
 
         s = s + weights["w_physics"] * physics
 
-    # Jitter random per spezzare il determinismo (entropia di sampling)
-    s = s + weights["jitter"] * np.random.random(s.shape)
     return s
+
+
+def _build_score_matrix(
+    bg: BGAnalysis,
+    obj: ObjAnalysis,
+    weights: dict,
+    occupied: np.ndarray,  # shape (cell_h, cell_w) float, decrementato dopo ogni piazzato
+    base: Optional[np.ndarray] = None,
+    forbidden_mask: Optional[np.ndarray] = None,
+    color_gate: Optional[np.ndarray] = None,
+) -> np.ndarray:
+    """Matrice di score completa (cell_h, cell_w) per piazzare l'oggetto.
+
+    = parte object-invariant (base) + termini per-tentativo: anti-cluster
+    (w_cluster*occupied), jitter e veti duri. Se `base` e' fornita (cache per
+    catalog_id nel loop di place_objects) la parte costosa non viene ricostruita;
+    il risultato e' identico a base=None. `base` non viene mai mutata (l'addizione
+    crea sempre un nuovo array).
+
+    forbidden_mask: bool (cell_h, cell_w), celle vietate object-invariant
+      (volti, zone dipinte a mano, classe person). Default None = nessun veto.
+    color_gate: bool (cell_h, cell_w), celle vietate per QUESTO oggetto perche'
+      il match cromatico e' sotto soglia (vedi _build_color_gate). Default None.
+    Entrambi applicati per ULTIMI, dopo ogni termine additivo: nulla puo'
+    risollevare una cella vetata.
+    """
+    s = base if base is not None else _build_base_score_matrix(bg, obj, weights)
+
+    # Anti-cluster: stato di piazzamento corrente (occupied basso = zona gia' presa).
+    s = s + weights["w_cluster"] * occupied
+
+    # Jitter random per spezzare il determinismo (entropia di sampling). Consuma
+    # esattamente 1 estrazione RNG per chiamata, come la versione monolitica
+    # precedente: la sequenza random (e quindi le piazzate a parita' di seed) resta
+    # invariata sia con base=None sia con base precalcolata.
+    s = s + weights["jitter"] * np.random.random(s.shape)
+
+    # HARD VETO semantico: le celle proibite (cielo/muro, semantic_score==-1) non
+    # sono MAI valide, qualunque sia il match cromatico/clutter. Prima erano solo
+    # una penalita' additiva (-w_semantic) che un buon color match poteva superare,
+    # facendo "fluttuare" oggetti nel cielo. Applicato per ultimo cosi' nulla puo'
+    # risollevarle. Attivo solo in ULTRA (semantic_score disponibile).
+    if bg.semantic_score is not None:
+        s = np.where(bg.semantic_score <= -0.99, SCORE_VETO, s)
+
+    # HARD VETO zone vietate (volti/manuale/person) e gate colore per-oggetto.
+    if forbidden_mask is not None:
+        s = np.where(forbidden_mask, SCORE_VETO, s)
+    if color_gate is not None:
+        s = np.where(color_gate, SCORE_VETO, s)
+    return s
+
+
+def compute_debug_maps(bg: BGAnalysis, obj: Optional[ObjAnalysis], weights: dict,
+                       forbidden_mask: Optional[np.ndarray],
+                       difficulty: str) -> dict[str, np.ndarray]:
+    """Mappe di debug (cell_h, cell_w) float 0..1 per overlay/QA. Pura, RNG-free.
+
+      score      : base score normalizzata 0..1 per l'oggetto dato (celle vetate
+                   = 0). Se obj e' None usa hideability_map (o zeri).
+      forbidden  : forbidden_mask come float (1 = vietata).
+      saliency   : bg.saliency.
+      color_gate : gate colore per l'oggetto come float (1 = vetata); zeri se
+                   gate disattivo o obj None.
+    """
+    shape = (bg.cell_h, bg.cell_w)
+    out: dict[str, np.ndarray] = {}
+
+    gate = None
+    if obj is not None:
+        gate = _build_color_gate(bg, obj, weights, difficulty)
+        base = _build_base_score_matrix(bg, obj, weights)
+        veto = np.zeros(shape, dtype=bool)
+        if bg.semantic_score is not None:
+            veto |= bg.semantic_score <= -0.99
+        if forbidden_mask is not None:
+            veto |= forbidden_mask.astype(bool)
+        if gate is not None:
+            veto |= gate
+        valid = base[~veto]
+        if valid.size > 0 and float(valid.max() - valid.min()) > 1e-6:
+            norm = (base - float(valid.min())) / float(valid.max() - valid.min())
+        else:
+            norm = np.zeros(shape, dtype=np.float32)
+        norm = np.clip(norm, 0.0, 1.0)
+        norm[veto] = 0.0
+        out["score"] = norm.astype(np.float32)
+    elif bg.hideability_map is not None:
+        out["score"] = bg.hideability_map.astype(np.float32)
+    else:
+        out["score"] = np.zeros(shape, dtype=np.float32)
+
+    if forbidden_mask is not None:
+        out["forbidden"] = forbidden_mask.astype(np.float32)
+    else:
+        out["forbidden"] = np.zeros(shape, dtype=np.float32)
+    out["saliency"] = bg.saliency.astype(np.float32)
+    out["color_gate"] = (gate.astype(np.float32) if gate is not None
+                         else np.zeros(shape, dtype=np.float32))
+    return out
+
+
+def build_forbidden_mask(bg: BGAnalysis,
+                         manual_cells: Optional[set[tuple[int, int]]] = None
+                         ) -> Optional[np.ndarray]:
+    """Maschera bool (cell_h, cell_w) delle celle SEMPRE vietate al piazzamento.
+
+    Unione di:
+      - bg.face_mask (volti rilevati, tutti i tier)
+      - celle dipinte a mano dal designer (manual_cells, coords (cx, cy),
+        bounds-checked)
+      - classe semantica "person" (tier 3; ridondante col veto semantico ma
+        tiene UNA maschera valida per tutti i tier e alimenta l'overlay debug)
+
+    Ritorna None se non c'e' nulla da vietare (fast-path per il chiamante).
+    Pura e deterministica.
+    """
+    mask = np.zeros((bg.cell_h, bg.cell_w), dtype=bool)
+    any_veto = False
+    if bg.face_mask is not None and bg.face_mask.shape == mask.shape:
+        mask |= bg.face_mask.astype(bool)
+        any_veto = any_veto or bool(bg.face_mask.any())
+    if manual_cells:
+        for (mcx, mcy) in manual_cells:
+            if 0 <= mcy < bg.cell_h and 0 <= mcx < bg.cell_w:
+                mask[mcy, mcx] = True
+                any_veto = True
+    if bg.semantic is not None:
+        from editor.tools.scatter_models import ADE20K_PERSON_LIKE
+        person = np.isin(bg.semantic, np.fromiter(ADE20K_PERSON_LIKE, dtype=np.int64))
+        if person.any():
+            mask |= person
+            any_veto = True
+    return mask if any_veto else None
 
 
 def place_objects(
@@ -1411,6 +1948,7 @@ def place_objects(
     ref_diag: float = 1469.0,  # diagonale REF 1280x720
     allowed_layers: Optional[list[str]] = None,
     edge_margin_px: int = 24,
+    forbidden_mask: Optional[np.ndarray] = None,
 ) -> list[PlacedObject]:
     """Pipeline completa di sampling.
 
@@ -1420,12 +1958,24 @@ def place_objects(
       allowed_layers: lista dei layer su cui distribuire (es. ["objects_low", "objects_mid"]).
                       Default: tutti e 3 (low/mid/high).
       edge_margin_px: margine di sicurezza dai bordi BG (in px).
+      forbidden_mask: bool (cell_h, cell_w), celle vietate object-invariant
+                      (volti + zone dipinte + person). None = nessun veto extra.
     """
     if seed is not None:
         random.seed(seed)
         np.random.seed(seed)
 
     weights = _get_weights(difficulty, style)
+
+    # Gate colore per-oggetto (RNG-free, dipende solo da bg/obj/weights/difficulty):
+    # cacheato per catalog_id, condiviso fra viability pre-screen, main loop e swap.
+    color_gate_cache: dict[str, Optional[np.ndarray]] = {}
+
+    def _color_gate_for(cid_: str) -> Optional[np.ndarray]:
+        if cid_ not in color_gate_cache:
+            color_gate_cache[cid_] = _build_color_gate(
+                bg, catalog_analyses[cid_], weights, difficulty)
+        return color_gate_cache[cid_]
 
     if not allowed_layers:
         allowed_layers = ["objects_low", "objects_mid", "objects_high"]
@@ -1438,6 +1988,76 @@ def place_objects(
     if not pool_ids:
         log.warning(f"[SCATTER] pool vuoto (style/tag '{tag_filter}')")
         return []
+
+    # ── VETO SALIENCY (v3): le celle in cima alla mappa di attenzione sono
+    # "in bella vista": vetate a runtime (non persistite), OR-ate nella
+    # forbidden mask cosi' propagano a ricorsione multi-layer e swap. Guard
+    # anti over-veto: se resterebbero troppo poche celle libere, si droppa la
+    # SOLA componente saliency (mai i veti volti/manuale/person). Idempotente:
+    # i sub-pass per layer ricalcolano la stessa unione.
+    sal_frac = SALIENCY_VETO_TOP_FRAC.get(difficulty, 0.0)
+    if sal_frac > 0.0:
+        thr_sal = float(np.quantile(bg.saliency, 1.0 - sal_frac))
+        sal_veto = bg.saliency >= thr_sal
+        combined = sal_veto if forbidden_mask is None else (forbidden_mask | sal_veto)
+        n_free = int((~combined).sum())
+        if n_free >= int(MIN_ALLOWED_CELLS_FRAC * combined.size):
+            forbidden_mask = combined
+        else:
+            log.info(f"[SCATTER] saliency veto droppato: lascerebbe solo "
+                     f"{n_free}/{combined.size} celle libere")
+
+    # ── VETO CIELO + "MEZZ'ARIA" (v3.1): a qualunque tier (il veto semantico
+    # cielo esiste solo in ULTRA). Due componenti, stessa guardia anti
+    # over-veto della saliency:
+    #   1. CIELO: regione piatta CONNESSA al bordo superiore del BG
+    #      (flood-fill 4-conn attraverso celle piatte). Becca anche gli
+    #      oggetti "cromaticamente compatibili" col cielo (carta bianca su
+    #      azzurro pallido) che il gate colore lascerebbe passare.
+    #   2. MEZZ'ARIA: celle piatte nella meta' superiore con edge quasi nullo
+    #      nelle 2 celle sottostanti (vuoto non connesso al top).
+    if bg.texture_entropy is not None:
+        flat_cells = ((bg.texture_entropy < FLAT_ENTROPY_MAX)
+                      & (bg.edge_density < FLAT_EDGE_MAX))
+        # 1) flood-fill dal bordo superiore attraverso le celle piatte
+        sky = np.zeros_like(flat_cells)
+        sky[0, :] = flat_cells[0, :]
+        _changed = True
+        while _changed:
+            grown = sky.copy()
+            grown[1:, :] |= sky[:-1, :] & flat_cells[1:, :]
+            grown[:-1, :] |= sky[1:, :] & flat_cells[:-1, :]
+            grown[:, 1:] |= sky[:, :-1] & flat_cells[:, 1:]
+            grown[:, :-1] |= sky[:, 1:] & flat_cells[:, :-1]
+            _changed = bool((grown != sky).any())
+            sky = grown
+        # Dilata di 1 cella: le celle di CONFINE del cielo (contorno nuvole,
+        # cima della silhouette alberi) hanno edge > 0 e fermano il flood, ma
+        # un oggetto li' e' visivamente "mezzo nel cielo".
+        if sky.any():
+            dil = sky.copy()
+            dil[1:, :] |= sky[:-1, :]
+            dil[:-1, :] |= sky[1:, :]
+            dil[:, 1:] |= sky[:, :-1]
+            dil[:, :-1] |= sky[:, 1:]
+            sky = dil
+        # 2) mezz'aria: piatto in alto senza appoggio sotto
+        below = np.zeros_like(bg.edge_density)
+        for _off in (1, 2):
+            _sh = np.roll(bg.edge_density, -_off, axis=0)
+            _sh[-_off:] = 0
+            below += _sh
+        below *= 0.5
+        floating = flat_cells & (below < FLOATING_EDGE_BELOW_MAX)
+        floating[bg.cell_h // 2:, :] = False  # solo meta' superiore
+        air_veto = sky | floating
+        if air_veto.any():
+            combined = air_veto if forbidden_mask is None else (forbidden_mask | air_veto)
+            n_free = int((~combined).sum())
+            if n_free >= int(MIN_ALLOWED_CELLS_FRAC * combined.size):
+                forbidden_mask = combined
+            else:
+                log.info("[SCATTER] veto cielo/mezz'aria droppato (troppe celle vietate)")
 
     n_layers = len(allowed_layers)
 
@@ -1454,7 +2074,9 @@ def place_objects(
         viability = {}
         for cid in pool_ids:
             try:
-                sc = _build_score_matrix(bg, catalog_analyses[cid], _w_no_jitter, _occ_full)
+                sc = _build_score_matrix(bg, catalog_analyses[cid], _w_no_jitter, _occ_full,
+                                         forbidden_mask=forbidden_mask,
+                                         color_gate=_color_gate_for(cid))
                 viability[cid] = float(sc.max())
             except Exception as e:
                 log.debug(f"[SCATTER] viability fail for {cid}: {e}")
@@ -1473,6 +2095,18 @@ def place_objects(
                 if kept:
                     pool_ids = kept
 
+        # ── POOL PRUNING COLORE (v3.1) ────────────────────────────────────
+        # Un oggetto il cui gate colore fallisce anche al floor (None con
+        # w_color > 0) non ha NESSUNA zona compatibile su questo BG: prima il
+        # gate si disattivava e l'oggetto finiva ovunque (es. giallo nel
+        # cielo). Ora viene tolto dal pool, purche' ne restino abbastanza.
+        if weights.get("w_color", 0.0) > 0.0 and len(pool_ids) > POOL_MIN_AFTER_COLOR_PRUNE:
+            no_match = [cid for cid in pool_ids if _color_gate_for(cid) is None]
+            if no_match and len(pool_ids) - len(no_match) >= POOL_MIN_AFTER_COLOR_PRUNE:
+                pool_ids = [cid for cid in pool_ids if cid not in set(no_match)]
+                log.info(f"[SCATTER] color prune: esclusi {len(no_match)} oggetti "
+                         f"senza zone compatibili ({', '.join(no_match[:5])}...)")
+
     # ── SPLIT PER LAYER ────────────────────────────────────────────────
     # Se ci sono piu' layer attivi, dividi count uniformemente e fai un pass
     # separato per ogni layer (occupied map indipendente per ciascuno).
@@ -1489,18 +2123,31 @@ def place_objects(
         layers_shuffled = list(zip(allowed_layers, counts_per_layer))
         random.shuffle(layers_shuffled)
         all_placed = []
-        # CROSS-LAYER SEPARATION: enforce solo a bassa densita' (dove c'e' spazio).
-        # Per density alta i 300 oggetti non ci stanno senza overlap, quindi tolleriamo.
+        # CROSS-LAYER SEPARATION (v3.1): SEMPRE attiva. Prima veniva spenta
+        # sopra 50 oggetti/layer e tre passate indipendenti si accatastavano
+        # sugli stessi hotspot (pile di oggetti sovrapposti). Ad alta densita'
+        # le bbox accumulate vengono RISTRETTE (CROSS_LAYER_SHRINK_FRAC per
+        # lato): overlap parziale tollerato, stacking totale no.
         count_per_layer = counts_per_layer[0] if counts_per_layer else 0
-        enforce_cross_layer = count_per_layer <= 50  # threshold empirico
+        shrink_cross = count_per_layer > 50
         cross_layer_bboxes = list(existing_bboxes or [])
-        log.info(f"[SCATTER] cross-layer separation: {'ON' if enforce_cross_layer else 'OFF (density alta)'}")
+        log.info(f"[SCATTER] cross-layer separation: ON"
+                 f"{' (bbox ristrette, density alta)' if shrink_cross else ''}")
+
+        def _shrunk(bb: tuple[float, float, float, float]
+                    ) -> tuple[float, float, float, float]:
+            if not shrink_cross:
+                return bb
+            x0, y0, x1, y1 = bb
+            dx = (x1 - x0) * CROSS_LAYER_SHRINK_FRAC
+            dy = (y1 - y0) * CROSS_LAYER_SHRINK_FRAC
+            return (x0 + dx, y0 + dy, x1 - dx, y1 - dy)
 
         for lid, lcount in layers_shuffled:
             if lcount <= 0:
                 continue
-            # Bboxes da passare: existing_globali + (se enforce) bbox layer gia' piazzati
-            sub_existing = list(cross_layer_bboxes) if enforce_cross_layer else list(existing_bboxes or [])
+            # Bboxes da passare: existing globali + bbox dei layer gia' piazzati
+            sub_existing = list(cross_layer_bboxes)
             layer_placed = place_objects(
                 bg, catalog_analyses, catalog_entries,
                 count=lcount, difficulty=difficulty,
@@ -1511,21 +2158,30 @@ def place_objects(
                 ref_diag=ref_diag,
                 allowed_layers=[lid],
                 edge_margin_px=edge_margin_px,
+                forbidden_mask=forbidden_mask,
             )
             all_placed.extend(layer_placed)
-            # Accumula bbox di questo layer (per il sub-pass successivo se enforce)
-            if enforce_cross_layer:
-                for p in layer_placed:
-                    if p.detection_type == "circle":
-                        r = p.radius * p.scale
-                        cross_layer_bboxes.append((p.x - r, p.y - r, p.x + r, p.y + r))
-                    else:
-                        w = p.width * p.scale
-                        h = p.height * p.scale
-                        cross_layer_bboxes.append((p.x, p.y, p.x + w, p.y + h))
-        # Swap optimization globale (cross-layer) per migliorare match catalog↔posizione
+            # Accumula bbox di questo layer per i sub-pass successivi
+            # (ristrette ad alta densita': vedi _shrunk)
+            for p in layer_placed:
+                if p.detection_type == "circle":
+                    r = p.radius * p.scale
+                    cross_layer_bboxes.append(_shrunk((p.x - r, p.y - r,
+                                                       p.x + r, p.y + r)))
+                else:
+                    w = p.width * p.scale
+                    h = p.height * p.scale
+                    cross_layer_bboxes.append(_shrunk((p.x, p.y,
+                                                       p.x + w, p.y + h)))
+        # Swap optimization globale (cross-layer) per migliorare match catalog↔posizione.
+        # Gate-aware: uno swap non deve spostare un oggetto su una cella vetata per lui.
         if len(all_placed) >= 2:
-            all_placed = _swap_optimize(all_placed, bg, catalog_analyses, weights, max_iters=2)
+            for cid_swap in {p.catalog_id for p in all_placed}:
+                if cid_swap in catalog_analyses:
+                    _color_gate_for(cid_swap)
+            all_placed = _swap_optimize(all_placed, bg, catalog_analyses, weights, max_iters=2,
+                                        color_gates=color_gate_cache,
+                                        forbidden_mask=forbidden_mask)
         log.info(f"[SCATTER] TOTALE multi-layer: {len(all_placed)}/{count}")
         return all_placed
 
@@ -1569,20 +2225,20 @@ def place_objects(
         max_total_attempts = max(2500, count * 60)
     elif count <= 100:
         anti_cluster_strength = 0.35
-        overlap_margin_factor = 0.40
+        overlap_margin_factor = 0.32   # v3.1: era 0.40, troppa compenetrazione
         gauss_sigma_scale = 0.50
         semantic_relax = 0.5
         max_total_attempts = max(8000, count * 100)
     elif count <= 200:
         anti_cluster_strength = 0.20
-        overlap_margin_factor = 0.50
+        overlap_margin_factor = 0.38   # v3.1: era 0.50
         gauss_sigma_scale = 0.40
         semantic_relax = 0.25
         max_total_attempts = max(15000, count * 120)
     else:
         # Densita' estrema (>200): semantic e CLIP quasi spenti, riempi ovunque
         anti_cluster_strength = 0.10
-        overlap_margin_factor = 0.60
+        overlap_margin_factor = 0.42   # v3.1: era 0.60 (pile di oggetti)
         gauss_sigma_scale = 0.30
         semantic_relax = 0.10
         max_total_attempts = min(50000, count * 150)
@@ -1597,11 +2253,76 @@ def place_objects(
     log.info(f"[SCATTER] density mode: count={count}, strength={anti_cluster_strength}, "
              f"overlap={overlap_margin_factor:.0%}, sigma={gauss_sigma_scale}, "
              f"sem_relax={semantic_relax}, max_attempts={max_total_attempts}")
+    # Cache della parte object-invariant della score matrix, per catalog_id.
+    # Entro un singolo place_objects i weights sono costanti: la base di un dato id
+    # non cambia tra i tentativi, quindi la calcoliamo una volta sola invece di
+    # ricostruirla a ogni tentativo (fino a max_total_attempts). E' il maggior
+    # risparmio del piazzamento perche' la base contiene i termini costosi
+    # (color similarity, profile, clip, shape-match).
+    base_score_cache: dict[str, np.ndarray] = {}
+    # Colori dominanti RGB per la verifica Delta-E post-tint (per cid).
+    dominant_rgb_cache: dict[str, list[tuple[int, int, int]]] = {}
     total_attempts = 0
-    reject_reasons = {"score_neg": 0, "overlap": 0, "too_big": 0}
+    reject_reasons = {"score_neg": 0, "overlap": 0, "too_big": 0,
+                      "color_deltaE": 0, "vis_band": 0}
+
+    # HARD MASK occupancy: soglia sotto la quale una cella e' considerata gia'
+    # presa. Dipende solo da count: loop-invariante (v3.1: spostata fuori dal
+    # loop, serve anche alla scelta dell'oggetto per zona).
+    if count <= 20:
+        occ_threshold = 0.7
+    elif count <= 50:
+        occ_threshold = 0.45
+    elif count <= 100:
+        occ_threshold = 0.30   # v3.1: era 0.25
+    elif count <= 200:
+        occ_threshold = 0.20   # v3.1: era 0.12 (celle gia' prese rieleggibili)
+    else:
+        occ_threshold = 0.12   # v3.1: era 0.05
+
+    def _base_for(cid_: str) -> np.ndarray:
+        b = base_score_cache.get(cid_)
+        if b is None:
+            b = _build_base_score_matrix(bg, catalog_analyses[cid_], weights)
+            base_score_cache[cid_] = b
+        return b
+
     while len(placed) < count and total_attempts < max_total_attempts:
         total_attempts += 1
-        cid = random.choice(pool_ids)
+
+        # ── ZONA corrente PRIMA della scelta oggetto (v3.1) ───────────────
+        zone_idx = zone_order[len(placed) % len(zone_order)]
+        zx, zy = zone_idx % ZONE_COLS, zone_idx // ZONE_COLS
+        z_x0 = int(zx * bg.cell_w / ZONE_COLS)
+        z_x1 = int((zx + 1) * bg.cell_w / ZONE_COLS)
+        z_y0 = int(zy * bg.cell_h / ZONE_ROWS)
+        z_y1 = int((zy + 1) * bg.cell_h / ZONE_ROWS)
+        z_sl = (slice(z_y0, z_y1), slice(z_x0, z_x1))
+
+        # ── SCELTA OGGETTO PER ZONA (v3.1): K candidati, vince chi matcha ──
+        # meglio la macro-zona corrente (base score cacheata + gate + celle
+        # libere). Prima l'oggetto era pescato a caso e POI si cercava una
+        # cella per lui: colore/forma/dimensione non guidavano la SCELTA.
+        cand_ids = [random.choice(pool_ids)
+                    for _ in range(OBJ_CANDIDATES_PER_ATTEMPT)]
+        cid = cand_ids[0]
+        uniq = list(dict.fromkeys(cand_ids))
+        if len(uniq) > 1:
+            free_z = occupied[z_sl] >= occ_threshold
+            if forbidden_mask is not None:
+                free_z = free_z & ~forbidden_mask[z_sl]
+            best_val = -1e18
+            for c in uniq:
+                m = free_z
+                g = _color_gate_for(c)
+                if g is not None:
+                    m = m & ~g[z_sl]
+                if not m.any():
+                    continue
+                val = float(_base_for(c)[z_sl][m].max())
+                if val > best_val:
+                    best_val = val
+                    cid = c
         obj_an = catalog_analyses[cid]
         entry = catalog_entries[cid]
 
@@ -1641,33 +2362,19 @@ def place_objects(
         eff_radius = ref_radius * scale
 
         # ── SCORE MATRIX + zona stratificata ──────────────────────────────
-        score = _build_score_matrix(bg, obj_an, weights, occupied)
+        # Base object-invariant da cache (calcolata una volta per id), poi i
+        # termini per-tentativo (occupied/jitter/veto) aggiunti dal wrapper.
+        base_score = _base_for(cid)
+        score = _build_score_matrix(bg, obj_an, weights, occupied, base=base_score,
+                                    forbidden_mask=forbidden_mask,
+                                    color_gate=_color_gate_for(cid))
 
-        # HARD MASK: escludi celle gia' "occupate" (occ < soglia) dalla scelta.
-        # Soglia varia con density: piu' permissiva per density alta.
-        # In modalita' bassa densita' (count<=20), soglia 0.7 (oggetti BEN distanziati).
-        # In modalita' estrema (count>200), soglia 0.05 (quasi nessuna esclusione).
-        if count <= 20:
-            occ_threshold = 0.7
-        elif count <= 50:
-            occ_threshold = 0.45
-        elif count <= 100:
-            occ_threshold = 0.25
-        elif count <= 200:
-            occ_threshold = 0.12
-        else:
-            occ_threshold = 0.05
-        # Applica mask: celle troppo occupate diventano "score = -inf"
-        score = np.where(occupied < occ_threshold, -1e9, score)
+        # Applica mask occupancy: celle troppo occupate = "score -inf"
+        # (occ_threshold calcolata pre-loop, v3.1)
+        score = np.where(occupied < occ_threshold, SCORE_VETO, score)
 
-        # Boost per la zona stratificata corrente
-        zone_idx = zone_order[len(placed) % len(zone_order)]
-        zx, zy = zone_idx % ZONE_COLS, zone_idx // ZONE_COLS
+        # Boost per la zona stratificata corrente (bound gia' calcolati sopra)
         zone_score = np.zeros_like(score)
-        z_x0 = int(zx * bg.cell_w / ZONE_COLS)
-        z_x1 = int((zx + 1) * bg.cell_w / ZONE_COLS)
-        z_y0 = int(zy * bg.cell_h / ZONE_ROWS)
-        z_y1 = int((zy + 1) * bg.cell_h / ZONE_ROWS)
         zone_score[z_y0:z_y1, z_x0:z_x1] = 0.5
         score = score + zone_score
 
@@ -1688,10 +2395,10 @@ def place_objects(
         # Margine in celle = ceil(eff_size/2 / cell_px) + safety
         margin_cells = int(math.ceil((eff_size / 2 + edge_margin_px) / cell_px))
         if margin_cells > 0:
-            score[:margin_cells, :] = -1e9
-            score[-margin_cells:, :] = -1e9
-            score[:, :margin_cells] = -1e9
-            score[:, -margin_cells:] = -1e9
+            score[:margin_cells, :] = SCORE_VETO
+            score[-margin_cells:, :] = SCORE_VETO
+            score[:, :margin_cells] = SCORE_VETO
+            score[:, -margin_cells:] = SCORE_VETO
 
         # Top-K adaptive in base a size_class E al numero piazzati.
         # Mano a mano che la mappa si satura (placed alto), allargo K per accettare
@@ -1708,7 +2415,7 @@ def place_objects(
             k_top_base = int(k_top_base * (1 + progress))
 
         flat = score.flatten()
-        if flat.max() < -1e8:
+        if flat.max() < SCORE_VETO_THRESHOLD:
             reject_reasons["score_neg"] += 1
             continue
         k_top = min(k_top_base, len(flat))
@@ -1744,6 +2451,18 @@ def place_objects(
         # Refresh cy,cx for downstream usage (orientation, semantic, etc)
         cy = int(min(bg.cell_h - 1, max(0, center_y / cell_px)))
         cx = int(min(bg.cell_w - 1, max(0, center_x / cell_px)))
+
+        # ── SCALA PER PROFONDITA' (v3, tier>=1): lontano = piu' piccolo ────
+        # depth_grid e' NEARNESS 0..1 (1 = vicino alla camera). Applicata PRIMA
+        # del region-fit cosi' il prior fisico (clamp per size_class) include
+        # gia' la prospettiva. Deterministica (no RNG).
+        if bg.depth_grid is not None:
+            nearness = float(bg.depth_grid[cy, cx])
+            scale *= DEPTH_SCALE_MIN + (DEPTH_SCALE_MAX - DEPTH_SCALE_MIN) * nearness
+            eff_w = ref_w * scale
+            eff_h = ref_h * scale
+            eff_size = max(eff_w, eff_h)
+            eff_radius = ref_radius * scale
 
         # ── REGION-FIT: dimensiona/orienta l'oggetto sulla porzione di sfondo ─
         # (Fase 1: scala dalla regione cromatica omogenea sotto la cella;
@@ -1950,56 +2669,77 @@ def place_objects(
         if "vetro" in tags or "cristallo" in tags or "bottiglia" in tags:
             alpha = random.randint(180, 215)
 
-        # Tint di CAMOUFLAGE: avvicina il colore dell'oggetto a quello REALE
-        # dello sfondo coperto dal footprint (non la media della cella), cosi'
-        # l'oggetto si fonde. Mix limitato per non snaturarlo, opacita' invariata.
-        # Disabilitato per line_art: lo stile e' B/N, l'hue del BG e' rumore.
+        # Tint di CAMOUFLAGE (v3, Lab): avvicina il colore dell'oggetto a quello
+        # REALE dello sfondo coperto dal footprint. Mix per DIFFICOLTA' (hard
+        # fonde di piu'), clamp su L e guard sulle zone grigie dentro
+        # _lab_harmonize_tint. Applicato ANCHE agli oggetti translucidi (vetro/
+        # cristallo): si mimetizzano meglio adottando il colore del fondo.
+        # Disabilitato per line_art: lo stile e' B/N, il colore del BG e' rumore.
         color_filter = (255, 255, 255)
-        if style != "line_art" and (obj_an.palette_ext or obj_an.palette) and alpha == 255:
-            loc = _sample_footprint_hsv(bg, x_min, y_min, x_max, y_max)
-            if loc is not None:
-                bg_h, bg_s, bg_v = loc
-                # Riferimento = colore DOMINANTE dell'oggetto: palette_ext[0] e' il
-                # cluster col peso (frequenza) maggiore; fallback alla palette
-                # (ora ordinata per dominanza), non a un cluster arbitrario.
-                if obj_an.palette_ext:
-                    _dom = obj_an.palette_ext[0]
-                    obj_h, obj_s, obj_v = _dom["h"], _dom["s"], _dom["v"]
+        if style != "line_art":
+            tint = _lab_harmonize_tint(bg, x_min, y_min, x_max, y_max, difficulty)
+            if tint is not None:
+                color_filter = tint
+            elif obj_an.palette_ext or obj_an.palette:
+                # Fallback HSV storico (lab_full/cv2 assenti): mix dal delta hue.
+                loc = _sample_footprint_hsv(bg, x_min, y_min, x_max, y_max)
+                if loc is not None:
+                    bg_h, bg_s, bg_v = loc
+                    if obj_an.palette_ext:
+                        _dom = obj_an.palette_ext[0]
+                        obj_h, obj_s, obj_v = _dom["h"], _dom["s"], _dom["v"]
+                    else:
+                        obj_h, obj_s, obj_v = obj_an.palette[0]
+                    delta = _hue_distance(obj_h, bg_h)  # 0..0.5
+                    mix = min(0.35, 0.12 + delta * 0.9)
+                    # Su zone quasi grigie l'hue e' rumore: no colore falso.
+                    tint_s = bg_s if bg_s > 0.12 else min(obj_s * 0.4, bg_s)
+                    color_filter = _hsv_to_tint_rgb(bg_h, min(1.0, tint_s),
+                                                    max(0.30, bg_v), mix=mix)
+
+        # ── VERIFICA FOOTPRINT in Lab (Delta-E 76) POST-TINT (v3.2) ────────
+        # La cella 48px e' una media: puo' dire "marrone" su un patch a
+        # scacchi. Qui controlliamo i PIXEL REALI sotto il footprint contro il
+        # colore EFFETTIVO dell'oggetto (dominanti moltiplicati per il
+        # color_filter, come li rendera' l'engine): e' il look finale che deve
+        # fondersi, non la palette grezza. Cap rilassato con attempts_frac.
+        # Skip per line_art. RNG del tentativo gia' consumato: il reject non
+        # altera la sequenza del seed.
+        if style != "line_art":
+            dom_rgb = dominant_rgb_cache.get(cid)
+            if dom_rgb is None:
+                dom_rgb = _obj_dominant_rgb(obj_an)
+                dominant_rgb_cache[cid] = dom_rgb
+            if dom_rgb:
+                if tuple(color_filter) != (255, 255, 255):
+                    cf_r, cf_g, cf_b = color_filter
+                    tinted = [(r * cf_r // 255, g * cf_g // 255, b * cf_b // 255)
+                              for (r, g, b) in dom_rgb]
                 else:
-                    obj_h, obj_s, obj_v = obj_an.palette[0]
-                delta = _hue_distance(obj_h, bg_h)  # 0..0.5
-                # Correzione piu' forte quando l'oggetto e' lontano dal colore
-                # locale (va fuso di piu'), ma con tetto a 0.35: oltre, l'oggetto
-                # perderebbe identita'/leggibilita'.
-                mix = min(0.35, 0.12 + delta * 0.9)
-                # Su zone quasi grigie l'hue e' rumore: non iniettare colore falso.
-                tint_s = bg_s if bg_s > 0.12 else min(obj_s * 0.4, bg_s)
-                color_filter = _hsv_to_tint_rgb(bg_h, min(1.0, tint_s),
-                                                max(0.30, bg_v), mix=mix)
+                    tinted = dom_rgb
+                obj_labs = _rgb_list_to_lab(tinted)
+                de = _footprint_delta_e(bg, obj_labs, x_min, y_min, x_max, y_max)
+                if de is not None:
+                    attempts_frac = total_attempts / max(1, max_total_attempts)
+                    de_cap = (DELTAE_MAX.get(difficulty, DELTAE_MAX["medium"])
+                              * (1.0 + DELTAE_RELAX_GAIN * attempts_frac))
+                    if de > de_cap:
+                        reject_reasons["color_deltaE"] += 1
+                        continue
 
         # Layer: round-robin dei layer ammessi (l'utente puo' escludere alcuni)
         layer = layer_rot[len(placed) % len(layer_rot)]
 
-        # Visibility score (qualita' del nascondiglio).
-        # Per line_art il color similarity vale 0 (B/N): il peso si sposta su edge.
-        if style == "line_art":
-            vs = (
-                0.45 * float(bg.edge_density[cy, cx])
-                + 0.30 * float(1.0 - bg.saliency[cy, cx])
-                + 0.10 * float(anchor_below[cy, cx])
-            )
-        else:
-            vs = (
-                0.30 * float(bg.edge_density[cy, cx])
-                + 0.30 * float(1.0 - bg.saliency[cy, cx])
-                + 0.15 * _color_similarity(obj_an.palette, float(bg.hue[cy, cx]),
-                                            float(bg.sat[cy, cx]), float(bg.val[cy, cx]))
-                + 0.10 * float(anchor_below[cy, cx])
-            )
-        if bg.horizontal_score is not None:
-            vs += 0.15 * float(bg.horizontal_score[cy, cx])
-        else:
-            vs += 0.15 * 0.5  # neutro
+        # Visibility score (qualita' del nascondiglio) + ENFORCEMENT banda (v3).
+        vs = _visibility_score(bg, obj_an, cy, cx, float(anchor_below[cy, cx]), style)
+        # Banda [min, max] per difficolta': il max e' il floor di risolvibilita'
+        # (nessun oggetto introvabile), il min scarta i piazzamenti banali.
+        # Allargata linearmente con attempts_frac per garantire il completamento.
+        band_lo, band_hi = VISIBILITY_BAND.get(difficulty, VISIBILITY_BAND["medium"])
+        band_relax = VIS_BAND_RELAX_GAIN * (total_attempts / max(1, max_total_attempts))
+        if not (band_lo - band_relax <= vs <= band_hi + band_relax):
+            reject_reasons["vis_band"] += 1
+            continue
 
         placed.append(PlacedObject(
             catalog_id=cid,
@@ -2049,21 +2789,49 @@ def place_objects(
     # Hill-climbing: scambia catalog_id tra posizioni se aumenta lo score.
     # Solo se siamo NEL pass single-layer (lo swap globale lo fa il caller multi-layer).
     if len(placed) >= 2 and len(allowed_layers) == 1:
-        placed = _swap_optimize(placed, bg, catalog_analyses, weights, max_iters=2)
+        placed = _swap_optimize(placed, bg, catalog_analyses, weights, max_iters=2,
+                                color_gates=color_gate_cache,
+                                forbidden_mask=forbidden_mask)
     return placed
 
 
 def _swap_optimize(placed: list[PlacedObject], bg: BGAnalysis,
                    catalog_analyses: dict, weights: dict,
-                   max_iters: int = 2) -> list[PlacedObject]:
+                   max_iters: int = 2,
+                   color_gates: Optional[dict[str, Optional[np.ndarray]]] = None,
+                   forbidden_mask: Optional[np.ndarray] = None) -> list[PlacedObject]:
     """Hill-climbing: scambia oggetti tra posizioni per massimizzare visibility totale.
 
     Greedy: per ogni coppia (i, j), valuta lo score se gli oggetti i e j si
     scambiassero di posizione (x, y, rotation, scale, layer restano alla posizione).
     Se lo swap aumenta la somma dei visibility score, tienilo.
+
+    color_gates/forbidden_mask (v3, default None = comportamento storico): uno
+    swap e' ammesso solo se la cella di destinazione NON e' vetata per l'oggetto
+    entrante (gate colore per-catalog_id) ne' vietata in assoluto (volti/manuale).
     """
+    def _swap_dest_allowed(cid_key: str, cy_: int, cx_: int) -> bool:
+        if forbidden_mask is not None and bool(forbidden_mask[cy_, cx_]):
+            return False
+        if color_gates:
+            g = color_gates.get(cid_key)
+            if g is not None and bool(g[cy_, cx_]):
+                return False
+        return True
+
+    # Memoizzazione: lo score di (catalog_id, cella) e' una funzione PURA del BG e
+    # della palette dell'oggetto, quindi NON cambia durante gli swap (gli oggetti
+    # cambiano cella ma lo score di "catalogo X alla cella (cy,cx)" e' invariante).
+    # Nel doppio loop le stesse coppie (oggetto, cella) vengono valutate molte volte
+    # (es. _score_at(an_i, cyi, cxi) per ogni j): memoizzare elimina le ricomputazioni
+    # ridondanti di _color_similarity restituendo float identici -> swap identici.
+    _score_cache: dict[tuple, float] = {}
+
     def _score_at(obj_an, cy, cx):
-        # Replica veloce della parte fondamentale del visibility score
+        key = (obj_an.catalog_id, cy, cx)
+        cached = _score_cache.get(key)
+        if cached is not None:
+            return cached
         s = 0.30 * float(bg.edge_density[cy, cx])
         s += 0.30 * float(1.0 - bg.saliency[cy, cx])
         s += 0.15 * _color_similarity(obj_an.palette,
@@ -2074,6 +2842,7 @@ def _swap_optimize(placed: list[PlacedObject], bg: BGAnalysis,
             s += 0.15 * float(bg.horizontal_score[cy, cx])
         if bg.semantic_score is not None:
             s += 0.10 * max(0.0, float(bg.semantic_score[cy, cx]))
+        _score_cache[key] = s
         return s
 
     improved_total = 0
@@ -2091,6 +2860,10 @@ def _swap_optimize(placed: list[PlacedObject], bg: BGAnalysis,
                 an_i = catalog_analyses.get(obj_i.catalog_id)
                 an_j = catalog_analyses.get(obj_j.catalog_id)
                 if an_i is None or an_j is None:
+                    continue
+                # Gate-aware: destinazioni vetate per l'oggetto entrante = no swap.
+                if not (_swap_dest_allowed(obj_j.catalog_id, cyi, cxi)
+                        and _swap_dest_allowed(obj_i.catalog_id, cyj, cxj)):
                     continue
                 # Score corrente
                 cur = _score_at(an_i, cyi, cxi) + _score_at(an_j, cyj, cxj)

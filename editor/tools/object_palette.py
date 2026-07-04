@@ -215,11 +215,19 @@ def ensure_palette_columns(base_path: Path):
 
 
 def save_palette(base_path: Path, catalog_id: str, style: str,
-                  clusters: list[ColorCluster]):
-    """Persiste palette estesa per un oggetto. UPSERT semplice."""
-    p = base_path / OBJ_PROFILES_DB
-    p.parent.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(str(p))
+                  clusters: list[ColorCluster],
+                  con: Optional["sqlite3.Connection"] = None):
+    """Persiste palette estesa per un oggetto. UPSERT semplice.
+
+    Se `con` e' fornita (uso batch), la riusa senza aprirla/chiuderla, evitando
+    una connessione SQLite per ogni oggetto; altrimenti apre e chiude la propria.
+    In entrambi i casi committa, quindi il risultato su disco e' identico.
+    """
+    own = con is None
+    if own:
+        p = base_path / OBJ_PROFILES_DB
+        p.parent.mkdir(parents=True, exist_ok=True)
+        con = sqlite3.connect(str(p))
     try:
         from editor.tools.object_profiles import _ensure_schema
         _ensure_schema(con)
@@ -246,7 +254,8 @@ def save_palette(base_path: Path, catalog_id: str, style: str,
             """, (catalog_id, style, payload, PALETTE_VERSION))
         con.commit()
     finally:
-        con.close()
+        if own:
+            con.close()
 
 
 def get_palettes_for_style(style: str, base_path: Path) -> dict[str, list[dict]]:
@@ -289,47 +298,48 @@ def build_palettes_for_catalog(catalog: list[dict], style: str, base_path: Path,
     """Pre-compute palette estesa per oggetti dello stile."""
     ensure_palette_columns(base_path)
     p = base_path / OBJ_PROFILES_DB
+    # Una sola connessione per l'intero batch (riusata da save_palette), invece di
+    # aprirne/chiuderne una per ogni oggetto.
     con = sqlite3.connect(str(p))
-    cur = con.cursor()
+    try:
+        cur = con.cursor()
+        style_pool = [c for c in catalog if c.get("style", "real") == style]
+        if not style_pool:
+            return 0
 
-    style_pool = [c for c in catalog if c.get("style", "real") == style]
-    if not style_pool:
+        existing = set()
+        if not overwrite:
+            for row in cur.execute(
+                "SELECT catalog_id FROM object_profile WHERE palette_version = ?",
+                (PALETTE_VERSION,)
+            ):
+                existing.add(row[0])
+        to_process = [c for c in style_pool if c["id"] not in existing]
+        log.info(f"[PALETTE] {len(to_process)}/{len(style_pool)} da processare per '{style}'")
+
+        t0 = time.time()
+        n_done = 0
+        for i, entry in enumerate(to_process):
+            cid = entry["id"]
+            icon_rel = entry.get("icon", "")
+            candidates = [
+                base_path / "engine" / "assets" / icon_rel,
+                base_path / icon_rel,
+            ]
+            icon_path = next((cp for cp in candidates if cp.exists()), None)
+            if not icon_path:
+                continue
+            clusters = compute_palette_extended(icon_path)
+            if not clusters:
+                continue
+            save_palette(base_path, cid, style, clusters, con=con)
+            n_done += 1
+            if progress_cb and (i + 1) % 50 == 0:
+                try: progress_cb(i + 1, len(to_process))
+                except Exception: pass
+
+        dt = time.time() - t0
+        log.info(f"[PALETTE] build done '{style}': {n_done} processed in {dt:.1f}s")
+        return n_done
+    finally:
         con.close()
-        return 0
-
-    existing = set()
-    if not overwrite:
-        for row in cur.execute(
-            "SELECT catalog_id FROM object_profile WHERE palette_version = ?",
-            (PALETTE_VERSION,)
-        ):
-            existing.add(row[0])
-    to_process = [c for c in style_pool if c["id"] not in existing]
-    log.info(f"[PALETTE] {len(to_process)}/{len(style_pool)} da processare per '{style}'")
-
-    con.close()
-
-    t0 = time.time()
-    n_done = 0
-    for i, entry in enumerate(to_process):
-        cid = entry["id"]
-        icon_rel = entry.get("icon", "")
-        candidates = [
-            base_path / "engine" / "assets" / icon_rel,
-            base_path / icon_rel,
-        ]
-        icon_path = next((p for p in candidates if p.exists()), None)
-        if not icon_path:
-            continue
-        clusters = compute_palette_extended(icon_path)
-        if not clusters:
-            continue
-        save_palette(base_path, cid, style, clusters)
-        n_done += 1
-        if progress_cb and (i + 1) % 50 == 0:
-            try: progress_cb(i + 1, len(to_process))
-            except Exception: pass
-
-    dt = time.time() - t0
-    log.info(f"[PALETTE] build done '{style}': {n_done} processed in {dt:.1f}s")
-    return n_done

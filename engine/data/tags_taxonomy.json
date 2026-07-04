@@ -1472,6 +1472,14 @@
     "volo": {
       "it": "Volo",
       "cat": "Generale"
+    },
+    "cartoon": {
+      "it": "Cartoon",
+      "cat": "Generale"
+    },
+    "vari": {
+      "it": "Vari",
+      "cat": "Generale"
     }
   }
 }
