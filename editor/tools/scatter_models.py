@@ -84,6 +84,17 @@ MODEL_CLIP_TEXT = {
     "size_mb_approx": 127,
     "display_name": "CLIP ViT-B/32 Text (FP16, Xenova export)",
 }
+# YuNet face detector per le zone vietate dello scatter (~0.3MB). Non e' un
+# modello onnxruntime: lo consuma cv2.FaceDetectorYN. Il file vive nel repo
+# opencv_zoo (GitHub LFS -> media.githubusercontent.com serve i byte reali).
+# Override URL via env SCATTER_YUNET_URL.
+MODEL_YUNET_FACE = {
+    "filename": "face_detection_yunet_2023mar.onnx",
+    "url": ("https://media.githubusercontent.com/media/opencv/opencv_zoo/"
+            "main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx"),
+    "size_mb_approx": 1,
+    "display_name": "YuNet Face Detector",
+}
 
 # Soglie quick-benchmark per declassare (ms). Se inference > soglia, retrocedi al tier sotto.
 # NB: tier2 (Metric3D 616px + normals) e' piu' pesante di tier1 (Depth Anything 518px),
@@ -434,13 +445,27 @@ class Metric3DLarge(ScatterModelBase):
 # TIER ULTRA: SegFormer (semantic seg) + CLIP visual (similarity)
 # ─────────────────────────────────────────────────────────────────────────────
 
-# ADE20K classes (150). Source: nvidia/segformer config.
+# ADE20K classes (150), indici 0-based dell'id2label del checkpoint
+# optimum/segformer-b0-finetuned-ade-512-512 (fonte di verita': config HF).
 # Solo subset chiave per scoring; il resto e' "neutro".
-ADE20K_FLOOR_LIKE  = {3, 6, 11, 13, 28, 53}    # floor, road, sidewalk, earth, rug, stairs-equivalent
-ADE20K_TABLE_LIKE  = {15, 23, 25, 33, 64}      # table, sofa, shelf, desk, coffee_table
-ADE20K_WALL_LIKE   = {0, 1, 8, 9}              # wall, building, window, door
-ADE20K_SKY_LIKE    = {2, 4, 16, 21, 26, 60, 109, 113}  # sky, tree, mountain, water, sea, lake, fountain, wave
-ADE20K_PROHIBITED  = ADE20K_SKY_LIKE | ADE20K_WALL_LIKE  # zone dove NON mettere oggetti
+# Documentazione degli id usati nei set (v3, dopo audit #42):
+ADE20K_ID2LABEL_SUBSET = {
+    0: "wall", 1: "building", 2: "sky", 3: "floor", 4: "tree",
+    6: "road", 8: "windowpane", 11: "sidewalk", 12: "person", 13: "earth",
+    14: "door", 15: "table", 16: "mountain", 21: "water", 23: "sofa",
+    24: "shelf", 26: "sea", 28: "rug", 33: "desk", 53: "stairs",
+    60: "river", 64: "coffee table", 109: "swimming pool", 113: "waterfall",
+}
+ADE20K_FLOOR_LIKE  = {3, 6, 11, 13, 28, 53}    # floor, road, sidewalk, earth, rug, stairs
+# v3 fix audit #42: 25 era "house" (non un piano d'appoggio) -> 24 "shelf",
+# coerente con l'intento originale del commento.
+ADE20K_TABLE_LIKE  = {15, 23, 24, 33, 64}      # table, sofa, shelf, desk, coffee_table
+# v3 fix audit #42: 9 era "grass" (zona di nascondiglio legittima!) -> 14 "door".
+ADE20K_WALL_LIKE   = {0, 1, 8, 14}             # wall, building, windowpane, door
+ADE20K_SKY_LIKE    = {2, 4, 16, 21, 26, 60, 109, 113}  # sky, tree, mountain, water, sea, river, pool, waterfall
+# v3: le persone sono zone SEMPRE vietate (oggetti su volti/corpi = pessimo HOG).
+ADE20K_PERSON_LIKE = {12}                      # person
+ADE20K_PROHIBITED  = ADE20K_SKY_LIKE | ADE20K_WALL_LIKE | ADE20K_PERSON_LIKE
 ADE20K_PREFERRED   = ADE20K_FLOOR_LIKE | ADE20K_TABLE_LIKE
 
 
@@ -713,6 +738,10 @@ def clip_text_path(base_path: Path) -> Path:
     return models_dir(base_path) / MODEL_CLIP_TEXT["filename"]
 
 
+def yunet_path(base_path: Path) -> Path:
+    return models_dir(base_path) / MODEL_YUNET_FACE["filename"]
+
+
 def is_model_available(tier: int, base_path: Path) -> bool:
     if tier == 0:
         return True
@@ -739,6 +768,7 @@ def get_status_summary(base_path: Path) -> dict:
         "tier3_model_present": is_model_available(3, base_path),
         "segformer_present":   segformer_path(base_path).exists(),
         "clip_present":        clip_path(base_path).exists(),
+        "face_model_present":  yunet_path(base_path).exists(),
     }
 
 

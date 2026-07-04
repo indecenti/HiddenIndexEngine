@@ -51,7 +51,10 @@ import numpy as np
 log = logging.getLogger(__name__)
 
 DB_REL_PATH = "engine/data/bg_cache.db"
-SCHEMA_VER = "v2"
+# v3: edge_density/saliency con normalizzazione assoluta/p95 (semantica cambiata:
+# le entry v2 vanno ricalcolate, non riusate) + colonne face_mask e depth_grid.
+# v3.1: face_mask include l'estensione corpo sotto i volti (geometria cambiata).
+SCHEMA_VER = "v3.1"
 
 try:
     import cv2
@@ -402,7 +405,32 @@ def _ensure_schema(con: sqlite3.Connection):
             cur.execute("ALTER TABLE bg_analysis ADD COLUMN contours_json TEXT")
         except Exception:
             pass
+    if "face_mask" not in cols:
+        try:
+            cur.execute("ALTER TABLE bg_analysis ADD COLUMN face_mask BLOB")
+        except Exception:
+            pass
+    if "depth_grid" not in cols:
+        try:
+            cur.execute("ALTER TABLE bg_analysis ADD COLUMN depth_grid BLOB")
+        except Exception:
+            pass
     con.commit()
+
+
+def _purge_old_schema(con: sqlite3.Connection) -> None:
+    """Elimina le entry con schema_ver diversa dall'attuale.
+
+    Le vecchie righe non verrebbero mai piu' lette (la PK include schema_ver) e
+    terrebbero solo gonfio il DB: al primo accesso post-bump vengono purgate.
+    """
+    try:
+        cur = con.execute("DELETE FROM bg_analysis WHERE schema_ver != ?", (SCHEMA_VER,))
+        if cur.rowcount > 0:
+            log.info(f"[BG_CACHE] purge {cur.rowcount} entry con schema vecchio")
+        con.commit()
+    except Exception as e:
+        log.debug(f"[BG_CACHE] purge schema vecchio fallito: {e}")
 
 
 def _connect(base_path: Path) -> sqlite3.Connection:
@@ -412,6 +440,7 @@ def _connect(base_path: Path) -> sqlite3.Connection:
     con.execute("PRAGMA journal_mode = WAL")
     con.execute("PRAGMA synchronous = NORMAL")
     _ensure_schema(con)
+    _purge_old_schema(con)
     return con
 
 
@@ -422,7 +451,9 @@ def save(bg, model_tier: int, base_path: Path,
          anchor_points: Optional[list] = None,
          zone_palettes: Optional[dict] = None,
          structural_orient: Optional[np.ndarray] = None,
-         contours: Optional[list] = None) -> str:
+         contours: Optional[list] = None,
+         face_mask: Optional[np.ndarray] = None,
+         depth_grid: Optional[np.ndarray] = None) -> str:
     """Salva BGAnalysis nel DB. Restituisce bg_sha256."""
     # bg e' una BGAnalysis instance (importata da scatter_engine, evito circular import)
     con = _connect(base_path)
@@ -437,8 +468,9 @@ def save(bg, model_tier: int, base_path: Path,
                 semantic, semantic_score, clip_grid,
                 hideability_map, texture_entropy, local_complexity,
                 anchor_points_json, zone_palettes_json,
-                structural_orient, contours_json
-            ) VALUES (?,?,?,?,?,?, ?,?, ?,?,?,?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?, ?, ?)
+                structural_orient, contours_json,
+                face_mask, depth_grid
+            ) VALUES (?,?,?,?,?,?, ?,?, ?,?,?,?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?, ?, ?, ?,?)
         """, (
             sha, bg.bg_w, bg.bg_h, bg.cell_px, bg.cell_w, bg.cell_h,
             model_tier, SCHEMA_VER,
@@ -455,6 +487,7 @@ def save(bg, model_tier: int, base_path: Path,
             json.dumps(zone_palettes or {}),
             _np_to_blob(structural_orient),
             json.dumps(contours or []),
+            _np_to_blob(face_mask), _np_to_blob(depth_grid),
         ))
         con.commit()
         log.info(f"[BG_CACHE] saved sha={sha[:12]}... tier={model_tier}")
@@ -469,12 +502,21 @@ def load(bg_sha256: str, model_tier: int, base_path: Path) -> Optional[dict]:
     if not p.exists(): return None
     con = sqlite3.connect(str(p))
     try:
-        # Verifica colonne disponibili (contours_json puo' essere assente in DB vecchi)
+        # Verifica colonne disponibili (le colonne aggiunte via ALTER possono
+        # essere assenti in DB vecchi)
         cur = con.cursor()
         cur.execute("PRAGMA table_info(bg_analysis)")
         cols = {r[1] for r in cur.fetchall()}
         has_contours = "contours_json" in cols
-        sel_contours = ", contours_json" if has_contours else ""
+        has_face = "face_mask" in cols
+        has_depth = "depth_grid" in cols
+        sel_extra = ""
+        if has_contours:
+            sel_extra += ", contours_json"
+        if has_face:
+            sel_extra += ", face_mask"
+        if has_depth:
+            sel_extra += ", depth_grid"
         row = con.execute(f"""
             SELECT bg_w, bg_h, cell_px, cell_w, cell_h,
                    edge_density, saliency, hue, sat, val, grad_orient,
@@ -482,17 +524,26 @@ def load(bg_sha256: str, model_tier: int, base_path: Path) -> Optional[dict]:
                    semantic, semantic_score, clip_grid,
                    hideability_map, texture_entropy, local_complexity,
                    anchor_points_json, zone_palettes_json,
-                   structural_orient{sel_contours}
+                   structural_orient{sel_extra}
             FROM bg_analysis WHERE bg_sha256=? AND model_tier=? AND schema_ver=?
         """, (bg_sha256, model_tier, SCHEMA_VER)).fetchone()
         if not row:
             return None
+        # Le colonne extra seguono structural_orient (indice 22) nell'ordine
+        # in cui sono state accodate a sel_extra.
+        idx = 23
         contours = []
-        if has_contours and row[23]:
-            try:
-                contours = json.loads(row[23])
-            except Exception:
-                contours = []
+        if has_contours:
+            if row[idx]:
+                try:
+                    contours = json.loads(row[idx])
+                except Exception:
+                    contours = []
+            idx += 1
+        face_mask = _blob_to_np(row[idx]) if has_face else None
+        if has_face:
+            idx += 1
+        depth_grid = _blob_to_np(row[idx]) if has_depth else None
         return {
             "bg_w": row[0], "bg_h": row[1], "cell_px": row[2],
             "cell_w": row[3], "cell_h": row[4],
@@ -513,6 +564,8 @@ def load(bg_sha256: str, model_tier: int, base_path: Path) -> Optional[dict]:
             "zone_palettes": json.loads(row[21] or "{}"),
             "structural_orient": _blob_to_np(row[22]),
             "contours": contours,
+            "face_mask": face_mask,
+            "depth_grid": depth_grid,
         }
     finally:
         con.close()

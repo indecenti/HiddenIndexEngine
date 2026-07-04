@@ -126,9 +126,14 @@ class InputHandlersMixin:
             return
         if getattr(self, "_scatter_modal_open", False):
             if ev.key == pygame.K_ESCAPE:
-                # _scatter_close pulisce anche i ghost pendenti: chiudere mutando
-                # solo il flag lasciava i ghost renderizzati senza modo di applicarli.
-                self._scatter_close()
+                # In brush mode ESC esce SOLO dal brush (torna al modal);
+                # altrimenti chiude il modal. _scatter_close pulisce anche i
+                # ghost pendenti: chiudere mutando solo il flag lasciava i
+                # ghost renderizzati senza modo di applicarli.
+                if getattr(self, "_scatter_brush_active", False):
+                    self._scatter_brush_exit()
+                else:
+                    self._scatter_close()
             return
         if getattr(self, "_confirm_leave_modal", False):
             if ev.key == pygame.K_ESCAPE:
@@ -652,7 +657,14 @@ class InputHandlersMixin:
 
         if getattr(self, "_music_modal", False):
             self._music_modal_mmove(mx, my_raw, w, h); return
-        
+
+        # Brush zone vietate dello scatter: drag-paint col tasto sinistro.
+        # Return solo mentre si dipinge: pan (tasto centrale/destro) resta attivo.
+        if getattr(self, "_scatter_brush_active", False):
+            if pygame.mouse.get_pressed(num_buttons=3)[0]:
+                self._scatter_brush_motion(mx, my_raw)
+                return
+
         # --- LOGICA RESIZE INTERATTIVO ---
         from editor.constants import PANEL_MIN_W, PANEL_MAX_W
         # Auto-heal: se il tasto sinistro non è più premuto (mouseup perso fuori
