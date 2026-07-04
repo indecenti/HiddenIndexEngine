@@ -156,6 +156,22 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_xmas_tree_mini",
+      "label_key": "obj_ca_xmas_tree_mini",
+      "icon": "objects_cartoon/ca_xmas_tree_mini.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 70,
+      "default_hint_delay": 20,
+      "tags": [
+        "natale",
+        "inverno",
+        "decorazione",
+        "natura"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "la_ancora",
       "label_key": "obj_la_ancora",
       "icon": "objects_lineart/la_ancora.png",
