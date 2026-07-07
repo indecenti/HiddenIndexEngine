@@ -30,7 +30,6 @@ Requisiti host (Windows):
 """
 
 import subprocess
-import threading
 import time
 import re
 import hashlib
@@ -38,6 +37,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from engine.utils import get_base_path, get_logger
+from editor.build_common import run_subprocess_with_timeout, RC_TIMEOUT
 from editor.build_system import _analyze_game_usage, next_build_version
 from editor.core.io import _load_json
 
@@ -64,7 +64,15 @@ WSL_JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64"
 # Timeout build (prima volta può richiedere ~50 min; build incrementali ~5 min)
 BUILDOZER_FIRST_BUILD_TIMEOUT = 4200   # 70 minuti
 BUILDOZER_INCREMENTAL_TIMEOUT = 1200   # 20 minuti (alzato per sicurezza su shared platform)
-SUBPROCESS_CHECK_INTERVAL = 2
+
+# Secondi senza output di buildozer prima di dichiarare lo stallo.
+BUILDOZER_STALL_TIMEOUT = 300  # 5 minuti
+
+# Progresso di partenza della fase buildozer sulla barra complessiva.
+_BUILDOZER_INITIAL_PROGRESS = 18
+
+# Le build sono molto verbose: logga a debug una linea ogni N.
+_BUILDOZER_LOG_EVERY_LINES = 50
 
 # Cache globali condivise per accelerare le build
 WSL_GRADLE_HOME = "/root/.gradle_cache"
@@ -842,109 +850,31 @@ def _run_buildozer_with_timeout(
     progress_callback: Optional[Callable[[float, str], None]] = None,
 ) -> tuple[int, list[str]]:
     """
-    Esegue `wsl ... bash -c "<cmd>"` con timeout e parsing stage per progress.
+    Esegue `wsl ... bash -lc "<cmd>"` tramite il runner condiviso
+    (editor/build_common.py): streaming output, avanzamento su marker di
+    stage (_BUILDOZER_STAGES), heartbeat, rilevamento stallo (nessun output
+    per BUILDOZER_STALL_TIMEOUT) e timeout globale.
+
+    Returns:
+        (return_code, output_lines) — RC_TIMEOUT (124) su stallo/timeout.
     """
-    output_lines: list[str] = []
     wsl_cmd = ["wsl", "-d", WSL_DISTRO, "-u", "root", "-e", "bash", "-lc", cmd]
-
-    proc: Optional[subprocess.Popen] = None
-    exception_occurred: Optional[BaseException] = None
-    last_line_time = time.time()
-    current_progress = 18
-
-    def run_process() -> None:
-        nonlocal proc, exception_occurred, last_line_time, current_progress
-        try:
-            proc = subprocess.Popen(
-                wsl_cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                bufsize=1,
-            )
-            logger.debug(f"[Buildozer PID] {proc.pid}")
-
-            for line in proc.stdout:
-                line = line.rstrip()
-                last_line_time = time.time()
-                if not line:
-                    continue
-                output_lines.append(line)
-                if len(output_lines) % 50 == 0:
-                    logger.debug(f"[Buildozer #{len(output_lines)}] {line[:120]}")
-
-                # Avanza progress su marker noti
-                for marker, pct, label in _BUILDOZER_STAGES:
-                    if marker in line and pct > current_progress:
-                        current_progress = pct
-                        if progress_callback:
-                            progress_callback(current_progress, label)
-                        logger.info(f"[Progress] {current_progress}% — {label}")
-                        break
-
-            try:
-                proc.wait(timeout=30)
-            except subprocess.TimeoutExpired:
-                proc.kill()
-                proc.wait()
-        except Exception as e:
-            exception_occurred = e
-            if proc:
-                try:
-                    proc.kill()
-                except Exception:
-                    pass
-
-    t = threading.Thread(target=run_process, daemon=False)
-    t.start()
-
-    start = time.time()
-    last_heartbeat = start
-    while t.is_alive() and (time.time() - start) < timeout:
-        idle = time.time() - last_line_time
-        if idle > 300:  # 5 minuti senza output = blocco
-            logger.error(f"✗ Blocco rilevato: nessun output buildozer da {idle:.0f}s")
-            if proc:
-                try:
-                    proc.kill()
-                except Exception:
-                    pass
-            t.join(timeout=2)
-            return 124, output_lines
-
-        if (time.time() - last_heartbeat) > 30:
-            elapsed = time.time() - start
-            if progress_callback:
-                progress_callback(
-                    current_progress,
-                    f"In corso ({elapsed/60:.1f} min, {len(output_lines)} linee)…",
-                )
-            logger.info(
-                f"[Heartbeat] buildozer ({elapsed/60:.1f} min, {len(output_lines)} linee)"
-            )
-            last_heartbeat = time.time()
-
-        time.sleep(SUBPROCESS_CHECK_INTERVAL)
-
-    if t.is_alive():
-        logger.error(f"✗ TIMEOUT buildozer dopo {timeout}s")
-        if proc:
-            try:
-                proc.kill()
-            except Exception:
-                pass
-        t.join(timeout=5)
-        return 124, output_lines
-
-    if exception_occurred:
-        logger.error(f"✗ Eccezione buildozer: {exception_occurred}")
-        return 1, output_lines
-
-    rc = proc.returncode if proc else 1
-    logger.info(f"[Buildozer] terminato, rc={rc}, {len(output_lines)} linee")
-    return rc, output_lines
+    return run_subprocess_with_timeout(
+        wsl_cmd,
+        timeout=timeout,
+        stall_timeout=BUILDOZER_STALL_TIMEOUT,
+        log_tag="Buildozer",
+        encoding="utf-8",
+        errors="replace",
+        stages=_BUILDOZER_STAGES,
+        initial_progress=_BUILDOZER_INITIAL_PROGRESS,
+        heartbeat_label_fn=lambda elapsed, n_lines: (
+            f"In corso ({elapsed/60:.1f} min, {n_lines} linee)…"
+        ),
+        progress_callback=progress_callback,
+        log_every_n_lines=_BUILDOZER_LOG_EVERY_LINES,
+        log=logger,
+    )
 
 
 def _get_p4a_apk_command(
@@ -1179,7 +1109,7 @@ def build_game_apk(
         if rc == 0:
             # Salva l'hash della build riuscita per il prossimo giro
             _wsl_run(f"echo '{current_hash}' > '{wsl_workspace}/.hie_build_hash'", timeout=5)
-        elif rc == 124:
+        elif rc == RC_TIMEOUT:
             tail = "\n".join(lines[-20:])
             raise RuntimeError(f"TIMEOUT build dopo {timeout}s.\nUltime righe:\n{tail}")
         else:

@@ -191,11 +191,17 @@ def build_cli_args(entry_point: Path | str,
                    icon: Path | str | None = None,
                    extra_hidden: Iterable[str] = (),
                    extra_excludes: Iterable[str] = (),
-                   limit_minigames: Iterable[str] | None = None) -> list[str]:
+                   limit_minigames: Iterable[str] | None = None,
+                   distpath: Path | str | None = None,
+                   workpath: Path | str | None = None,
+                   specpath: Path | str | None = None) -> list[str]:
     """
     Costruisce la lista di argomenti CLI di PyInstaller.
 
     Riproducibile: stessi input → stessi argomenti, sempre.
+
+    distpath/workpath/specpath: directory di output/lavoro/spec opzionali
+    (usate dal build per-gioco, che lavora in una cartella temporanea).
     """
     args: list[str] = [
         "pyinstaller",
@@ -204,6 +210,12 @@ def build_cli_args(entry_point: Path | str,
         "--clean",
         f"--name={name}",
     ]
+    if distpath is not None:
+        args.append(f"--distpath={distpath}")
+    if workpath is not None:
+        args.append(f"--workpath={workpath}")
+    if specpath is not None:
+        args.append(f"--specpath={specpath}")
     if onedir:
         args.append("-D")
     else:

@@ -14,7 +14,6 @@ import json
 import shutil
 import tempfile
 import subprocess
-import threading
 import time
 from pathlib import Path
 from typing import Callable, Optional
@@ -22,12 +21,31 @@ from zipfile import ZipFile
 
 from engine.utils import get_base_path, get_logger
 from editor.core.io import _load_json, _save_json
+from editor.build_common import run_subprocess_with_timeout, RC_TIMEOUT
+from editor.pyinstaller_common import build_cli_args
 
 logger = get_logger("build_system")
 
 # Timeout globali (in secondi)
 PYINSTALLER_TIMEOUT = 600  # 10 minuti max per PyInstaller
-SUBPROCESS_CHECK_INTERVAL = 2  # Check ogni 2 secondi se il processo è vivo
+
+# Secondi senza output di PyInstaller prima di dichiarare lo stallo.
+PYINSTALLER_STALL_TIMEOUT = 120
+
+# Progressi della fase PyInstaller sulla barra complessiva del build.
+_PYINSTALLER_INITIAL_PROGRESS = 70
+_PYINSTALLER_HEARTBEAT_PROGRESS = 75
+
+# Marker di stage PyInstaller -> percentuale (match case-insensitive).
+# label=None: l'etichetta mostrata e' la linea corrente prefissata.
+_PYINSTALLER_STAGES: list[tuple[str, int, Optional[str]]] = [
+    ("Analysis", 72, None),
+    ("Building", 75, None),
+    ("Checking", 78, None),
+    ("Linking", 80, None),
+    ("Building EXE", 82, None),
+    ("Appending", 83, None),
+]
 
 
 def _analyze_game_usage(game_path: Path) -> dict:
@@ -207,152 +225,28 @@ def _run_pyinstaller_with_timeout(
     progress_callback: Optional[Callable[[float, str], None]] = None
 ) -> tuple[int, list[str]]:
     """
-    Esegue PyInstaller con timeout e monitoraggio.
-
-    Monitora PyInstaller per stage e killa il processo se rimane bloccato.
+    Esegue PyInstaller tramite il runner condiviso (editor/build_common.py):
+    streaming output, avanzamento su marker di stage, heartbeat, rilevamento
+    stallo (nessun output per PYINSTALLER_STALL_TIMEOUT) e timeout globale.
 
     Returns:
-        (return_code, output_lines)
+        (return_code, output_lines) — RC_TIMEOUT (124) su stallo/timeout.
     """
-    pyinstaller_output = []
-    proc = None  # Riferimento al processo per killarlo se necessario
-    exception_occurred = None
-    last_line_time = time.time()
-    last_line_count = 0
-
-    def run_process():
-        """Esegue il processo in un thread separato."""
-        nonlocal proc, exception_occurred, last_line_time, last_line_count
-
-        try:
-            proc = subprocess.Popen(
-                pyinstaller_args,
-                cwd=cwd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-            )
-
-            logger.debug(f"[PyInstaller PID] {proc.pid}")
-
-            # Leggi output riga per riga (non bloccante)
-            pyinstaller_steps = [
-                ("Analysis", 72),
-                ("Building", 75),
-                ("Checking", 78),
-                ("Linking", 80),
-                ("Building EXE", 82),
-                ("Appending", 83),
-            ]
-            current_progress = 70
-            line_count = 0
-
-            for line in proc.stdout:
-                line = line.rstrip()
-                line_count += 1
-                last_line_count = line_count
-                last_line_time = time.time()
-
-                if not line:
-                    continue
-
-                pyinstaller_output.append(line)
-                logger.debug(f"[PyInstaller #{line_count}] {line[:100]}")
-
-                # Avanza il progresso basato su keywords
-                for keyword, pct in pyinstaller_steps:
-                    if keyword.lower() in line.lower() and pct > current_progress:
-                        current_progress = pct
-                        if progress_callback:
-                            progress_callback(current_progress, f"PyInstaller: {line[:60]}")
-                        logger.info(f"[Progress] {current_progress}% - {keyword}")
-                        break
-
-            # Attendi che il processo termini (con timeout interno)
-            try:
-                proc.wait(timeout=30)  # 30 secondi per terminare gracefully
-            except subprocess.TimeoutExpired:
-                logger.warning(f"[PyInstaller] Processo non termina, killing...")
-                proc.kill()
-                proc.wait()
-
-            return proc.returncode
-
-        except Exception as e:
-            exception_occurred = e
-            if proc:
-                try:
-                    proc.kill()
-                except Exception:
-                    pass
-            return 1
-
-    # Lancia il processo in un thread
-    proc_thread = threading.Thread(target=run_process, daemon=False)
-    proc_thread.start()
-
-    # Attendi con timeout e monitoraggio attivo
-    start_time = time.time()
-    last_update = start_time
-    stuck_warning_time = None
-
-    while proc_thread.is_alive() and (time.time() - start_time) < timeout:
-        elapsed = time.time() - start_time
-
-        # Rilevamento di blocco: nessun output per troppo tempo
-        time_since_last_line = time.time() - last_line_time
-        if time_since_last_line > 120:  # 2 minuti senza output = bloccato
-            logger.error(
-                f"✗ BLOCCO RILEVATO: PyInstaller non emette output da {time_since_last_line:.0f}s "
-                f"(ultima linea #{last_line_count})"
-            )
-            if proc:
-                try:
-                    logger.warning(f"[Kill] Killing PyInstaller process {proc.pid}")
-                    proc.kill()
-                    proc.wait(timeout=5)
-                except Exception as e:
-                    logger.error(f"Errore killing processo: {e}")
-            proc_thread.join(timeout=2)
-            return 124, pyinstaller_output
-
-        # Log di heartbeat ogni 30 secondi
-        if (time.time() - last_update) > 30:
-            logger.info(f"[Heartbeat] PyInstaller in corso ({elapsed:.0f}s, {len(pyinstaller_output)} linee, ultima linea: {time_since_last_line:.0f}s fa)")
-            if progress_callback:
-                progress_callback(75, f"PyInstaller in corso ({elapsed:.0f}s)...")
-            last_update = time.time()
-
-        time.sleep(SUBPROCESS_CHECK_INTERVAL)
-
-    # Thread terminato
-    if not proc_thread.is_alive():
-        if exception_occurred:
-            logger.error(f"✗ Eccezione in PyInstaller: {exception_occurred}")
-            return 1, pyinstaller_output
-        logger.info(f"[PyInstaller completato] {len(pyinstaller_output)} linee di output")
-        return 0, pyinstaller_output
-
-    # Timeout scaduto
-    if proc_thread.is_alive():
-        logger.error(f"✗ TIMEOUT PyInstaller dopo {timeout}s!")
-        if progress_callback:
-            progress_callback(100, f"✗ TIMEOUT PyInstaller dopo {timeout}s!")
-
-        # Forza kill del processo
-        if proc:
-            try:
-                logger.warning(f"[Timeout Kill] Killing PyInstaller process {proc.pid}")
-                proc.kill()
-                proc.wait(timeout=5)
-            except Exception as e:
-                logger.error(f"Errore killing processo on timeout: {e}")
-
-        proc_thread.join(timeout=5)
-        return 124, pyinstaller_output
-
-    return 0, pyinstaller_output
+    return run_subprocess_with_timeout(
+        pyinstaller_args,
+        cwd=cwd,
+        timeout=timeout,
+        stall_timeout=PYINSTALLER_STALL_TIMEOUT,
+        log_tag="PyInstaller",
+        stages=_PYINSTALLER_STAGES,
+        stage_match_lower=True,
+        stage_line_label_prefix="PyInstaller: ",
+        initial_progress=_PYINSTALLER_INITIAL_PROGRESS,
+        heartbeat_progress=_PYINSTALLER_HEARTBEAT_PROGRESS,
+        heartbeat_label_fn=lambda elapsed, n_lines: f"PyInstaller in corso ({elapsed:.0f}s)...",
+        progress_callback=progress_callback,
+        log=logger,
+    )
 
 
 def build_game(
@@ -492,76 +386,38 @@ def build_game(
         # ── STEP 8: PyInstaller ──────────────────────────────────────────────
         log_step("Verifica PyInstaller disponibile...", 68)
 
-        # Verifica PyInstaller
-        try:
-            pyinstaller_cmd = _verify_pyinstaller_available()
-        except RuntimeError as e:
-            raise RuntimeError(str(e))
+        # Verifica PyInstaller (solleva RuntimeError se assente)
+        _verify_pyinstaller_available()
 
         log_step("Avvio PyInstaller (timeout: 10 minuti)...", 70)
 
         dist_dir = temp_dir / "dist"
         dist_dir.mkdir(exist_ok=True)
 
-        # Argomenti PyInstaller
-        # ⚠️  CRUCIALE: niente --collect-all né -p temp_dir!
-        #     Quelli fanno includere l'intera env Python (torch 3.6GB, cv2, scipy…)
-        # PyInstaller di default analizza gli import e raccoglie solo ciò che serve.
-
-        pyinstaller_args = [
-            pyinstaller_cmd,
-            str(temp_dir / "main.py"),
-            "-D",           # directory mode: più veloce, niente blocco "checking PYZ"
-            "-w",           # no console window
-            "--clean",      # no cache residua
-            f"--distpath={dist_dir}",
-            f"--workpath={temp_dir / 'build'}",
-            f"--specpath={temp_dir}",
-            f"--name={game_id}",
-            "-y",           # no confirm prompt
-            "--collect-all=jsonschema",
-            "--collect-all=jsonschema_specifications",
-            "--collect-all=rpds",
-
-            # ── Esclude SOLO librerie ML/data science non usate dal gioco ─────
-            # cv2, numpy, scipy, pygame, jsonschema → USATI, non escludere!
-            "--exclude-module=torch",
-            "--exclude-module=torchvision",
-            "--exclude-module=torchaudio",
-            "--exclude-module=onnxruntime",
-            "--exclude-module=sklearn",
-            "--exclude-module=matplotlib",
-            "--exclude-module=pandas",
-            "--exclude-module=pyarrow",
-            "--exclude-module=transformers",
-            "--exclude-module=tokenizers",
-            "--exclude-module=llvmlite",
-            "--exclude-module=numba",
-            "--exclude-module=lxml",
-            "--exclude-module=IPython",
-            "--exclude-module=notebook",
-            "--exclude-module=jupyter",
-        ]
-
-        # Hidden imports obbligatori (import dinamici invisibili all'analisi statica):
-        # cv2 (background MP4), numpy, scipy.ndimage (warp prospettico). Stessa fonte
-        # unica usata dalla build dell'editor, cosi' i giochi spediti li risolvono sempre.
-        from editor.pyinstaller_common import BASE_HIDDEN_IMPORTS
-        for h in BASE_HIDDEN_IMPORTS:
-            pyinstaller_args.append(f"--hidden-import={h}")
-
-        # Inserisce i minigiochi come hidden imports (import dinamici)
-        for mg_id in used_minigames:
-            pyinstaller_args.append(f"--hidden-import=engine.minigames.{mg_id}.{mg_id}_game")
-            logger.debug(f"[PyInstaller] Aggiunto hidden-import: {mg_id}")
-
-        log_step("Modalità PyInstaller: directory (-D), ML libs escluse", 70)
-
-        # Aggiunge icona se presente nel gioco
+        # Argomenti PyInstaller dalla fonte unica condivisa (pyinstaller_common:
+        # collect-all, hidden imports base, exclude ML/data science, discovery
+        # dei minigiochi limitata a quelli usati dal gioco).
+        # NOTA: niente --collect-all generici ne' -p temp_dir! Quelli fanno
+        # includere l'intera env Python (torch 3.6GB, cv2, scipy...):
+        # PyInstaller analizza gli import e raccoglie solo cio' che serve.
         icon_path = games_src / "icon.ico"
         if icon_path.exists():
-            pyinstaller_args.append(f"--icon={icon_path}")
             log_step(f"Icona trovata: {icon_path}", 69)
+
+        pyinstaller_args = build_cli_args(
+            temp_dir / "main.py",
+            name=game_id,
+            project_root=base_path,
+            onedir=True,       # directory mode: più veloce, niente blocco "checking PYZ"
+            windowed=True,     # no console window
+            icon=icon_path if icon_path.exists() else None,
+            limit_minigames=used_minigames,
+            distpath=dist_dir,
+            workpath=temp_dir / "build",
+            specpath=temp_dir,
+        )
+
+        log_step("Modalità PyInstaller: directory (-D), ML libs escluse", 70)
 
         logger.info(f"[PyInstaller Command] {' '.join(pyinstaller_args[:5])} ... (timeout={PYINSTALLER_TIMEOUT}s)")
         logger.debug(f"[PyInstaller Full Args] {pyinstaller_args}")
@@ -576,7 +432,7 @@ def build_game(
                 progress_callback=progress_callback,
             )
 
-            if returncode == 124:
+            if returncode == RC_TIMEOUT:
                 raise RuntimeError(
                     f"TIMEOUT: PyInstaller non ha terminato entro {PYINSTALLER_TIMEOUT} secondi.\n"
                     f"Possibili cause:\n"
