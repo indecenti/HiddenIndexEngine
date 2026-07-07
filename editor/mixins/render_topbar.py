@@ -194,12 +194,20 @@ class RenderTopbarMixin:
                 save_r = pygame.Rect(btn_r.right + 10, btn_y, save_w, btn_h)
                 hov_save = _in_rect((mx2, my2), save_r)
                 if hov_save: self.active_tooltip = UI_TIPS.get("btn_save")
-                
+
                 # Colore dinamico: OK_C se modificato, BTN se salvato
                 scol = OK_C if self.scene_dirty else BTN
-                _button(self.screen, save_r, self._TR("tb_save"), hov_save, 
+                _button(self.screen, save_r, self._TR("tb_save"), hov_save,
                         active=self.scene_dirty, icon="save", custom_bg=scol)
-                msg_x = save_r.right + 25
+
+                # Pulsante PLAYTEST (avvia la scena corrente in un processo separato)
+                play_w = 120
+                play_r = pygame.Rect(save_r.right + 10, btn_y, play_w, btn_h)
+                hov_play = _in_rect((mx2, my2), play_r)
+                if hov_play: self.active_tooltip = UI_TIPS.get("btn_play_scene")
+                _button(self.screen, play_r, self._TR("tb_play_scene"), hov_play,
+                        icon="play")
+                msg_x = play_r.right + 25
 
         # Messaggio status (Chirurgicamente spostato a destra)
         # Centratura verticale nella barra

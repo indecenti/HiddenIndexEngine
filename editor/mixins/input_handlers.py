@@ -518,6 +518,9 @@ class InputHandlersMixin:
             save_btn_r = (170, h - STATUS_H, 120, STATUS_H)
             if btn == 1 and _in_rect((mx, my_raw), save_btn_r):
                 self._with_loading(self._save); return
+            play_btn_r = (300, h - STATUS_H, 120, STATUS_H)
+            if btn == 1 and _in_rect((mx, my_raw), play_btn_r):
+                self._playtest_scene(); return
 
         # 2. CONTEXT MENU & MODALS (Massima priorità al centro/area di lavoro)
         if btn == 1:

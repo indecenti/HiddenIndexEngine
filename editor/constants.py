@@ -145,6 +145,7 @@ UI_TIPS = {
     
     # Status Bar
     "btn_save": "Salva Scena (Ctrl+S): Scrive le modifiche nel file scene.json del livello.",
+    "btn_play_scene": "Playtest: prova subito questa scena in gioco (salva prima le modifiche).",
     "btn_back": "Torna al Selettore: Esci dall'editor e torna alla schermata di selezione gioco/livello.",
     
     # Tabs

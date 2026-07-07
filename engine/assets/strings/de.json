@@ -2596,6 +2596,7 @@
   "tb_overlay_btn": "O Overlay",
   "tb_rect_btn": "2 Rechteck",
   "tb_save": "SPEICHERN",
+  "tb_play_scene": "TESTEN",
   "tb_scene": "Szene:",
   "tb_select_btn": "S Auswählen",
   "tb_shortcuts": "Ctrl+S=Speichern Ctrl+Z/Y=Undo/Redo Pfeile/WASD=Scroll R=Drehen H/V=Flip Space+drag=Pan",

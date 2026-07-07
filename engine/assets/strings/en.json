@@ -2643,6 +2643,7 @@
   "tb_overlay_btn": "O Overlay",
   "tb_rect_btn": "2 Rectangle",
   "tb_save": "SAVE",
+  "tb_play_scene": "PLAY",
   "tb_scene": "Scene:",
   "tb_select_btn": "S Select",
   "tb_shortcuts": "Ctrl+S=Save Ctrl+Z/Y=Undo/Redo Arrows/WASD=Scroll R=Rotate H/V=Flip Space+drag=Pan",

@@ -2596,6 +2596,7 @@
   "tb_overlay_btn": "O Superposition",
   "tb_rect_btn": "2 Rectangle",
   "tb_save": "SAUVEGARDER",
+  "tb_play_scene": "TESTER",
   "tb_scene": "Sce'ne :",
   "tb_select_btn": "S Se'lection",
   "tb_shortcuts": "Ctrl+S=Sauver Ctrl+Z/Y=Annuler/Re'tablir Fle'ches/WASD=Scroll R=Rotation H/V=Flip Espace+drag=Pan",

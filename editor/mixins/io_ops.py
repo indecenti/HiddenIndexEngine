@@ -9,6 +9,8 @@ import os
 import json
 import logging
 import copy
+import subprocess
+import sys
 import time
 import shutil
 from pathlib import Path
@@ -348,6 +350,34 @@ class IoOpsMixin:
     # ─────────────────────────────────────────────────────────────────────────
     # SAVE / AUTOSAVE
     # ─────────────────────────────────────────────────────────────────────────
+
+    def _playtest_scene(self):
+        """Avvia il playtest della scena corrente in un processo separato.
+
+        Salva prima le modifiche pendenti cosi' il playtest riflette lo stato
+        dell'editor. Usa main.py --scene (save effimero: non sporca i salvataggi).
+        """
+        if not (getattr(self, "scene_path", None) and getattr(self, "game_path", None)):
+            self._status("Nessuna scena aperta", WARN_C, 2)
+            return
+        if self.scene_dirty:
+            self._save()
+        level_id = self.scene_path.parent.name
+        scene_id = self.scene_path.name
+        scene_arg = f"{level_id}/{scene_id}"
+        try:
+            if getattr(sys, "frozen", False):
+                cmd = [sys.executable, "--play-game", self.game_path.name,
+                       "--scene", scene_arg]
+            else:
+                cmd = [sys.executable, "main.py", "--game", self.game_path.name,
+                       "--scene", scene_arg, "--lang", self.current_lang]
+            subprocess.Popen(cmd, cwd=str(self.base_path))
+            self._status(f"Playtest: {scene_arg}", OK_C, 3)
+            logging.info("Playtest avviato: %s", scene_arg)
+        except Exception as e:
+            logging.exception(f"Errore avvio playtest: {e}")
+            self._status(f"Errore playtest: {e}", ERR_C, 4)
 
     def _save(self):
         if not self.scene_path:
