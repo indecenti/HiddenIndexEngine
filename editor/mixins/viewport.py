@@ -114,6 +114,33 @@ class ViewportMixin:
         cx, cy = cr.centerx, cr.centery
         self._zoom_toward(cx, cy, factor)
 
+    def _zoom_to_selection(self):
+        """Inquadra la selezione corrente nel canvas (tasto Z)."""
+        from editor.ui.draw import _clamp
+        from editor.constants import ZOOM_MIN, ZOOM_MAX, ZOOM_SEL_MARGIN
+        objs = (self.scene_data or {}).get("objects", [])
+        idxs = list(getattr(self, "selected_indices", []))
+        if self.selected_idx is not None and self.selected_idx not in idxs:
+            idxs.append(self.selected_idx)
+        idxs = [i for i in idxs if 0 <= i < len(objs)]
+        if not idxs:
+            return
+        boxes = [self._get_obj_bbox(objs[i]) for i in idxs]
+        x_min = min(b[0] for b in boxes)
+        y_min = min(b[1] for b in boxes)
+        x_max = max(b[2] for b in boxes)
+        y_max = max(b[3] for b in boxes)
+        bw = max(1.0, x_max - x_min)
+        bh = max(1.0, y_max - y_min)
+        cr = self._canvas_rect()
+        if cr.width <= 0 or cr.height <= 0:
+            return
+        self.zoom = _clamp(min(cr.width / bw, cr.height / bh) * ZOOM_SEL_MARGIN,
+                           ZOOM_MIN, ZOOM_MAX)
+        self.origin_x = cr.left + (cr.width - bw * self.zoom) / 2 - x_min * self.zoom
+        self.origin_y = cr.top + (cr.height - bh * self.zoom) / 2 - y_min * self.zoom
+        self._mark_dirty()
+
     def _zoom_toward(self, sx, sy, factor):
         from editor.ui.draw import _clamp
         old = self.zoom

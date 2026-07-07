@@ -28,6 +28,20 @@ AUTOSAVE_SECS  = 60
 UNDO_MAX       = 50
 HANDLE_R       = 4
 
+# ─────────────────────────────────────────────────────────────────────────────
+# GRIGLIA / SNAP / NUDGE
+# ─────────────────────────────────────────────────────────────────────────────
+
+GRID_SIZES         = (8, 16, 32, 64, 128)   # dimensioni cicliche (Shift+G)
+DEFAULT_GRID_SIZE  = 32
+ZOOM_MIN           = 0.04
+ZOOM_MAX           = 10.0
+ZOOM_SEL_MARGIN    = 0.8   # margine attorno alla selezione in zoom-to-selection
+NUDGE_STEP         = 1     # spostamento frecce in px scena
+NUDGE_STEP_FAST    = 10    # spostamento frecce con Shift
+NUDGE_UNDO_GAP_S   = 1.0   # pause > soglia = nuovo snapshot undo (coalescing)
+OBJ_SNAP_PX        = 8     # soglia snap a oggetti in pixel schermo
+
 SND_CLICK      = "engine/assets/sounds/click_Low.wav"
 CACHE_OBJ_MAX  = 400
 CACHE_FILTER_MAX = 100
@@ -126,7 +140,7 @@ UI_TIPS = {
     "mode_effect_place": "Strumento Effetti (3): Posiziona effetti visivi come bagliori o fumetti (Bubble Tips).",
     "mode_scatter": "Strumento Cluster (4): Piazza un gruppo di oggetti casuali. Usa Shift+Click per densità massima.",
     "toggle_overlay": "Mostra/Nascondi Overlay (O): Visualizza le aree di hit colorate sopra il background.",
-    "toggle_grid": "Griglia (G): Attiva la griglia e lo snap per un posizionamento preciso.",
+    "toggle_grid": "Griglia (G): Attiva la griglia e lo snap. Shift+G cambia dimensione, Ctrl+G snap a oggetti.",
     "toggle_icons": "Icone (I): Mostra o nasconde le icone PNG degli oggetti nel canvas.",
     
     # Status Bar

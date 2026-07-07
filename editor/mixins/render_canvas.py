@@ -93,6 +93,9 @@ class RenderCanvasMixin:
         if self._sel_box_active:
             self._r_selection_box()
 
+        if self._drag_active and getattr(self, "_snap_guides", None):
+            self._r_snap_guides(cr)
+
         self.screen.set_clip(None)
         _rect(self.screen, BORDER, cr, 1)
         self._r_drag_tooltip()  # coordinate live durante drag/resize
@@ -701,6 +704,18 @@ class RenderCanvasMixin:
         
         s = _txt(f"r:{fx_cat.get('default_radius', 55)}  Click={self._TR('fx_hint_click')}", "sm", FX_C)
         self.screen.blit(s, (mx + r + 6, my_raw - 8))
+
+    def _r_snap_guides(self, cr):
+        """Linee guida dello snap a oggetti durante il drag (verticali/orizzontali)."""
+        for axis, coord in self._snap_guides:
+            if axis == "v":
+                sx, _ = self._r2s(coord, 0)
+                if cr.left <= sx <= cr.right:
+                    pygame.draw.line(self.screen, SEL_C, (sx, cr.top), (sx, cr.bottom))
+            else:
+                _, sy = self._r2s(0, coord)
+                if cr.top <= sy <= cr.bottom:
+                    pygame.draw.line(self.screen, SEL_C, (cr.left, sy), (cr.right, sy))
 
     def _r_drag_tooltip(self):
         """Mostra coordinate X,Y vicino al cursore."""

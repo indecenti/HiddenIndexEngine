@@ -38,7 +38,7 @@ from editor.constants import (
     MIN_EDITOR_WIDTH, MIN_EDITOR_HEIGHT, WIN_W, WIN_H,
     TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_LAYERS, TAB_PROPS,
     MODE_SELECT, MODE_CIRCLE, MODE_RECT, MODE_EFFECT_PLACE,
-    DEFAULT_LAYERS,
+    DEFAULT_LAYERS, DEFAULT_GRID_SIZE,
     BG, TXT_DIM, TXT_HI, ACCENT,
     AUTOSAVE_SECS, SND_CLICK,
 )
@@ -258,11 +258,17 @@ class LevelEditor(
         self._resizing_r        = False
 
         # ── View toggles ─────────────────────────────────────────────────────
+        _view_settings = self._load_editor_settings()
         self.show_overlay = False
         self.show_grid    = False
-        self.grid_size    = 32
+        self.grid_size    = int(_view_settings.get("grid_size", DEFAULT_GRID_SIZE))
         self.grid_snap    = True
+        self.obj_snap     = bool(_view_settings.get("obj_snap", True))
         self.show_icons   = True
+        # Guide di snap a oggetti attive durante il drag: lista di ("v"|"h", coord scena)
+        self._snap_guides: list = []
+        # Timestamp ultimo nudge da tastiera (coalescing undo)
+        self._last_nudge_ts = 0.0
 
         # ── Tool mode ────────────────────────────────────────────────────────
         self.mode = MODE_SELECT

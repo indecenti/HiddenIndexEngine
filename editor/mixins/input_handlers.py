@@ -7,6 +7,7 @@ InputHandlersMixin — gestione eventi pygame: keyboard, mouse (down/up/move/whe
 
 import copy
 import math
+import time
 import pygame
 import logging
 
@@ -18,6 +19,7 @@ from editor.constants import (
     STATE_GAME_SELECT, STATE_MAIN,
     TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_LAYERS, TAB_PROPS,
     ACCENT, OK_C, ERR_C, WARN_C, TXT, TXT_DIM, FX_C, ALWAYS_C,
+    GRID_SIZES, NUDGE_STEP, NUDGE_STEP_FAST, NUDGE_UNDO_GAP_S, OBJ_SNAP_PX,
 )
 from editor.core.io import _discover_games, _default_effect
 from editor.ui.draw import _in_rect, _clamp
@@ -177,6 +179,14 @@ class InputHandlersMixin:
             if ev.key == pygame.K_3: self._set_layer("objects_high"); return
             if ev.key == pygame.K_4: self._set_layer("overlay");      return
 
+            # G = snap a oggetti on/off (persistito)
+            if ev.key == pygame.K_g:
+                self.obj_snap = not getattr(self, "obj_snap", True)
+                self._save_editor_setting("obj_snap", self.obj_snap)
+                self._status(
+                    f"Snap a oggetti: {'ON' if self.obj_snap else 'OFF'}", ACCENT, 2)
+                return
+
         # ── 3. MODALITÀ EDITING TESTO (Search bars, Numeric props) ────────────────
         # Se siamo in queste modalità e NON è premuto Ctrl, catturiamo l'input.
         if self._editing_prop:
@@ -259,7 +269,18 @@ class InputHandlersMixin:
             if ev.key == pygame.K_SLASH:   self._focus_catalog_search();                  return
             if ev.key == pygame.K_o:  self.show_overlay = not self.show_overlay; return
             if ev.key == pygame.K_g:
-                self.show_grid = not self.show_grid
+                if mods & pygame.KMOD_SHIFT:
+                    # Shift+G: cicla la dimensione della griglia (persistita)
+                    try:
+                        gi = GRID_SIZES.index(self.grid_size)
+                    except ValueError:
+                        gi = -1
+                    self.grid_size = GRID_SIZES[(gi + 1) % len(GRID_SIZES)]
+                    self._save_editor_setting("grid_size", self.grid_size)
+                    self.show_grid = True
+                    self._status(f"Griglia: {self.grid_size}px", ACCENT, 2)
+                else:
+                    self.show_grid = not self.show_grid
                 self._mark_dirty()
                 return
             if ev.key == pygame.K_i:
@@ -267,6 +288,7 @@ class InputHandlersMixin:
                 self._mark_dirty()
                 return
             if ev.key == pygame.K_f:  self._fit_canvas();                         return
+            if ev.key == pygame.K_z:  self._zoom_to_selection();                  return
             if ev.key == pygame.K_l:
                 self.r_tab = TAB_LAYERS if self.r_tab != TAB_LAYERS else TAB_PROPS
                 return
@@ -274,10 +296,15 @@ class InputHandlersMixin:
                 self._zoom_by(1.2);  return
             if ev.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
                 self._zoom_by(1/1.2); return
-            if ev.key == pygame.K_LEFT:  self._pan_by( self._pan_speed, 0); return
-            if ev.key == pygame.K_RIGHT: self._pan_by(-self._pan_speed, 0); return
-            if ev.key == pygame.K_UP:    self._pan_by( 0,  self._pan_speed); return
-            if ev.key == pygame.K_DOWN:  self._pan_by( 0, -self._pan_speed); return
+            if ev.key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN):
+                # Frecce: nudge della selezione (Shift = passo grande);
+                # senza selezione mantengono il pan del canvas.
+                ndx = int(ev.key == pygame.K_RIGHT) - int(ev.key == pygame.K_LEFT)
+                ndy = int(ev.key == pygame.K_DOWN) - int(ev.key == pygame.K_UP)
+                step = NUDGE_STEP_FAST if (mods & pygame.KMOD_SHIFT) else NUDGE_STEP
+                if not self._nudge_sel(ndx * step, ndy * step):
+                    self._pan_by(-ndx * self._pan_speed, -ndy * self._pan_speed)
+                return
             if ev.key == pygame.K_a:     self._pan_by( self._pan_speed, 0); return
             if ev.key == pygame.K_d:     self._pan_by(-self._pan_speed, 0); return
             if ev.key == pygame.K_w:     self._pan_by( 0,  self._pan_speed); return
@@ -930,6 +957,7 @@ class InputHandlersMixin:
         self._handle_snap = None
         self._dragging_effect_idx = None
         self._sel_box_active = False
+        self._snap_guides  = []
         self._panning      = True
         self._pan_start_mx = mx
         self._pan_start_my = my
@@ -1014,7 +1042,8 @@ class InputHandlersMixin:
         if self._drag_active:
             self._drag_active = False
             self._dragging_effect_idx = None
-            self._mark_dirty() 
+            self._snap_guides = []
+            self._mark_dirty()
             return
         if self._handle_id:
             self._handle_id   = None
@@ -1113,14 +1142,90 @@ class InputHandlersMixin:
     # DRAG / HANDLE
     # ─────────────────────────────────────────────────────────────────────────
 
+    def _nudge_sel(self, dx: int, dy: int) -> bool:
+        """Sposta la selezione di (dx, dy) px scena. Ritorna False se non c'e'
+        selezione. Snapshot undo coalescente: pressioni ravvicinate = un solo undo."""
+        objs = (self.scene_data or {}).get("objects", [])
+        idxs = [i for i in self.selected_indices if 0 <= i < len(objs)]
+        if (self.selected_idx is not None and self.selected_idx not in idxs
+                and 0 <= self.selected_idx < len(objs)):
+            idxs.append(self.selected_idx)
+        if not idxs:
+            return False
+        now = time.time()
+        if now - getattr(self, "_last_nudge_ts", 0.0) > NUDGE_UNDO_GAP_S:
+            self._push_undo()
+        self._last_nudge_ts = now
+        for i in idxs:
+            obj = objs[i]
+            obj["x"] = round(obj.get("x", 0) + dx)
+            obj["y"] = round(obj.get("y", 0) + dy)
+        self.scene_dirty = True
+        self._mark_dirty()
+        return True
+
+    def _obj_snap_offset(self, dx: float, dy: float) -> tuple:
+        """Correzione di snap del drag verso bordi/centri degli altri oggetti.
+
+        Usa l'oggetto guida (selected_idx se nel gruppo, altrimenti il primo)
+        alla posizione proposta e cerca il bordo/centro piu' vicino tra gli
+        oggetti visibili fuori dal gruppo. Ritorna (snap_dx | None, snap_dy | None)
+        e aggiorna self._snap_guides per il rendering delle guide.
+        """
+        self._snap_guides = []
+        if not getattr(self, "obj_snap", True):
+            return None, None
+        objs = (self.scene_data or {}).get("objects", [])
+        group = self._drag_group_starts
+        if not group:
+            return None, None
+        lead = self.selected_idx if self.selected_idx in group else next(iter(group))
+        if not (0 <= lead < len(objs)):
+            return None, None
+        base_x, base_y = group[lead]
+        tmp = dict(objs[lead])
+        tmp["x"] = base_x + dx
+        tmp["y"] = base_y + dy
+        lx_min, ly_min, lx_max, ly_max = self._get_obj_bbox(tmp)
+        lead_xs = (lx_min, (lx_min + lx_max) / 2, lx_max)
+        lead_ys = (ly_min, (ly_min + ly_max) / 2, ly_max)
+        thr = OBJ_SNAP_PX / max(self.zoom, 1e-6)
+        best_dx = best_dy = None
+        best_ax = best_ay = thr
+        guide_v = guide_h = None
+        for j, other in enumerate(objs):
+            if j in group:
+                continue
+            if not self.layer_vis.get(other.get("layer", "objects_mid"), True):
+                continue
+            bx_min, by_min, bx_max, by_max = self._get_obj_bbox(other)
+            for tx in (bx_min, (bx_min + bx_max) / 2, bx_max):
+                for lx in lead_xs:
+                    d = tx - lx
+                    if abs(d) < best_ax:
+                        best_ax, best_dx, guide_v = abs(d), d, tx
+            for ty in (by_min, (by_min + by_max) / 2, by_max):
+                for ly in lead_ys:
+                    d = ty - ly
+                    if abs(d) < best_ay:
+                        best_ay, best_dy, guide_h = abs(d), d, ty
+        if best_dx is not None:
+            self._snap_guides.append(("v", guide_v))
+        if best_dy is not None:
+            self._snap_guides.append(("h", guide_h))
+        return best_dx, best_dy
+
     def _do_drag(self, mx, my):
         dx  = (mx - self._drag_start_mx) / self.zoom
         dy  = (my - self._drag_start_my) / self.zoom
-        
+
+        # Lo snap a oggetti, se aggancia, prevale sullo snap a griglia
+        snap_dx, snap_dy = self._obj_snap_offset(dx, dy)
         for idx, (base_x, base_y) in self._drag_group_starts.items():
             obj = self.scene_data["objects"][idx]
-            obj["x"] = self._snap(base_x + dx)
-            obj["y"] = self._snap(base_y + dy)
+            nx, ny = base_x + dx, base_y + dy
+            obj["x"] = round(nx + snap_dx) if snap_dx is not None else self._snap(nx)
+            obj["y"] = round(ny + snap_dy) if snap_dy is not None else self._snap(ny)
         self.scene_dirty = True
 
     def _do_handle(self, mx, my):
