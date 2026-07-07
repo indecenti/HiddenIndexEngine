@@ -11,7 +11,7 @@ from editor.constants import (
     MODE_SELECT, MODE_CIRCLE, MODE_RECT, MODE_EFFECT_PLACE, MODE_SCATTER,
     ACCENT, BORDER, CANVAS, GRID_C, SEL_C, FX_C, ERR_C,
     TXT, TXT_DIM, TXT_HI, OK_C, WARN_C, ALWAYS_C, BTN_AC, BTN_HO, STATUS, PANEL,
-    HANDLE_R, REF_W, REF_H,
+    HANDLE_R, REF_W, REF_H, TOP_BAR_H,
     CACHE_OBJ_MAX, CACHE_FILTER_MAX,
     layer_color,
 )
@@ -118,7 +118,93 @@ class RenderCanvasMixin:
                 by    = cr.top + rel_y * (cr.height - bar_h)
                 _rect(self.screen, (*ACCENT, 100), (cr.right - 6, int(by), 4, bar_h), radius=2)
 
-        self._r_toolbar(cr)
+        if not self._preview_mode:
+            self._r_toolbar(cr)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # ANTEPRIMA COME-IN-GIOCO
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def _preview_toggle(self):
+        """Attiva/disattiva l'anteprima come-in-gioco (F5).
+
+        Nasconde pannelli/overlay/griglia/selezione, fa il fit del background
+        e blocca l'editing; lo stato della vista viene ripristinato all'uscita.
+        """
+        if not self._preview_mode:
+            if not self.scene_data or not self.bg_surf:
+                self._status("Apri una scena con background per l'anteprima", WARN_C, 2)
+                return
+            self._preview_saved = {
+                "zoom": self.zoom,
+                "origin": (self.origin_x, self.origin_y),
+                "panels": self.panels_visible,
+                "overlay": self.show_overlay,
+                "grid": self.show_grid,
+                "sel": (self.selected_idx, list(self.selected_indices)),
+                "fx": getattr(self, "sel_effect_idx", None),
+            }
+            self.selected_idx = None
+            self.selected_indices = []
+            self.sel_effect_idx = None
+            self._ctx_menu = None
+            self.show_overlay = False
+            self.show_grid = False
+            self.panels_visible = False
+            self._update_layout()
+            self._preview_mode = True
+            self._fit_canvas()
+            self._status("Anteprima come in gioco - F5 o Esc per uscire", ACCENT, 3)
+        else:
+            saved = self._preview_saved or {}
+            self.panels_visible = saved.get("panels", True)
+            self._update_layout()
+            self.zoom = saved.get("zoom", self.zoom)
+            self.origin_x, self.origin_y = saved.get(
+                "origin", (self.origin_x, self.origin_y))
+            self.show_overlay = saved.get("overlay", False)
+            self.show_grid = saved.get("grid", False)
+            self.selected_idx, self.selected_indices = saved.get("sel", (None, []))
+            self.sel_effect_idx = saved.get("fx")
+            self._preview_mode = False
+            self._preview_saved = {}
+            self._mark_dirty()
+
+    def _r_preview_hud(self, w: int):
+        """HUD simulato: barra scura con le icone degli oggetti goal + etichetta."""
+        hud_h = 56
+        icon_sz = 40
+        gap = 8
+        bar = pygame.Rect(0, TOP_BAR_H, w, hud_h)
+        hud_surf = pygame.Surface((bar.w, bar.h), pygame.SRCALPHA)
+        hud_surf.fill((12, 12, 18, 215))
+        self.screen.blit(hud_surf, bar.topleft)
+        pygame.draw.line(self.screen, BORDER, (0, bar.bottom), (w, bar.bottom))
+
+        # Oggetti goal (semantica engine: is_goal default True)
+        objs = (self.scene_data or {}).get("objects", [])
+        goals = [o for o in objs if o.get("is_goal", True)]
+        max_icons = max(1, (w - 320) // (icon_sz + gap))
+        x = 12
+        y = bar.y + (hud_h - icon_sz) // 2
+        for obj in goals[:max_icons]:
+            cat_e = next(
+                (c for c in self.catalog if c["id"] == obj.get("catalog_id")), None)
+            if cat_e and self.game_path:
+                ic = self._load_img(self.game_path / cat_e.get("icon", ""),
+                                    (icon_sz, icon_sz))
+                if ic:
+                    self.screen.blit(ic, (x, y))
+            _rect(self.screen, BORDER, (x, y, icon_sz, icon_sz), 1, radius=4)
+            x += icon_sz + gap
+        if len(goals) > max_icons:
+            _draw_text(self.screen, f"+{len(goals) - max_icons}", "sm", TXT_DIM,
+                       x + 4, bar.y + hud_h // 2 - 8)
+
+        label = f"ANTEPRIMA  |  {len(goals)} obiettivi  |  F5 esce"
+        tw, th = _text_wh(label, "sm")
+        _draw_text(self.screen, label, "sm", TXT_HI, w - tw - 16,
+                   bar.y + (hud_h - th) // 2)
 
     # ─────────────────────────────────────────────────────────────────────────
     # GRID

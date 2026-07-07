@@ -309,6 +309,10 @@ class LevelEditor(
         self.undo_stack: list = []
         self.redo_stack: list = []
 
+        # ── Anteprima come-in-gioco ──────────────────────────────────────────
+        self._preview_mode = False
+        self._preview_saved: dict = {}
+
         # ── Stack modale unificato ───────────────────────────────────────────
         # Oggetti con handle_event(editor, ev) -> bool e render(editor).
         # Il top dello stack cattura tutto l'input utente (vedi _handle_events).
@@ -691,6 +695,10 @@ class LevelEditor(
         if self.panels_visible:
             self._r_left(h)
             self._r_right(w, h)
+
+        # 3. HUD simulato dell'anteprima come-in-gioco
+        if self._preview_mode:
+            self._r_preview_hud(w)
 
     def _r_loading_overlay(self, w: int, h: int):
         """Disegna un overlay premium per il caricamento."""

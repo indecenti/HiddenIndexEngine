@@ -238,7 +238,15 @@ class InputHandlersMixin:
         if self.state == STATE_GAME_SELECT:
             self._gs_key(ev); return
 
+        # Anteprima come-in-gioco: F5/Esc escono, il resto e' bloccato
+        if getattr(self, "_preview_mode", False):
+            if ev.key in (pygame.K_F5, pygame.K_ESCAPE):
+                self._preview_toggle()
+            return
+
         if not ctrl:
+            if ev.key == pygame.K_F5:
+                self._preview_toggle(); return
             if ev.key == pygame.K_HOME:
                 def go_home():
                     self.state = STATE_GAME_SELECT
@@ -685,6 +693,9 @@ class InputHandlersMixin:
         if btn in (2, 3):
             self._panning = False
             if btn == 3 and not self._pan_moved:
+                # In anteprima niente context menu
+                if getattr(self, "_preview_mode", False):
+                    return
                 # Controlla se siamo sui pannelli
                 if self.panels_visible:
                     if mx < self.panel_l_w:
@@ -999,6 +1010,9 @@ class InputHandlersMixin:
     # ─────────────────────────────────────────────────────────────────────────
 
     def _canvas_ldown(self, mx, my_raw):
+        # In anteprima il canvas non e' editabile
+        if getattr(self, "_preview_mode", False):
+            return
         # Reset stati pendenti del panel destro (es: conferma svuota scena)
         if getattr(self, "_confirm_clear", False):
             self._confirm_clear = False
