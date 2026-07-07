@@ -2350,14 +2350,12 @@ if __name__ == "__main__":
                 if ev.key == pygame.K_a:
                     self._gs_edit_all_selected = True
                 elif ev.key == pygame.K_c:
-                    import tkinter as tk
-                    r = tk.Tk(); r.withdraw()
-                    r.clipboard_clear(); r.clipboard_append(buf); r.destroy()
+                    from editor.ui.widgets import clipboard_set
+                    clipboard_set(buf)
                 elif ev.key == pygame.K_v:
-                    import tkinter as tk
-                    try:
-                        r = tk.Tk(); r.withdraw()
-                        pasted = r.clipboard_get(); r.destroy()
+                    from editor.ui.widgets import clipboard_get
+                    pasted = clipboard_get()
+                    if pasted:
                         if self._gs_edit_all_selected:
                             buf = pasted; cur = len(buf)
                             self._gs_edit_all_selected = False
@@ -2366,7 +2364,6 @@ if __name__ == "__main__":
                             cur += len(pasted)
                         self._gs_edit_lang_bufs[af] = buf
                         self._gs_edit_cursors[af] = cur
-                    except Exception: pass
             elif ev.key == pygame.K_BACKSPACE:
                 if self._gs_edit_all_selected:
                     buf = ""; cur = 0; self._gs_edit_all_selected = False
@@ -2436,22 +2433,17 @@ if __name__ == "__main__":
                 if ev.key == pygame.K_a:
                     all_sel = True
                 elif ev.key == pygame.K_c:
-                    try:
-                        import tkinter as tk
-                        r = tk.Tk(); r.withdraw()
-                        r.clipboard_clear(); r.clipboard_append(buf); r.destroy()
-                    except Exception: pass
+                    from editor.ui.widgets import clipboard_set
+                    clipboard_set(buf)
                 elif ev.key == pygame.K_v:
-                    try:
-                        import tkinter as tk
-                        r = tk.Tk(); r.withdraw()
-                        pasted = r.clipboard_get(); r.destroy()
+                    from editor.ui.widgets import clipboard_get
+                    pasted = clipboard_get()
+                    if pasted:
                         if all_sel:
                             buf = pasted; cur = len(buf); all_sel = False
                         else:
                             buf = buf[:cur] + pasted + buf[cur:]
                             cur += len(pasted)
-                    except Exception: pass
             elif ev.key == pygame.K_BACKSPACE:
                 if all_sel:
                     buf = ""; cur = 0; all_sel = False

@@ -195,20 +195,12 @@ class BackgroundModalMixin:
         self._bg_suggestions = []
 
     def _set_clipboard(self, text):
-        try:
-            import tkinter as tk
-            r = tk.Tk(); r.withdraw()
-            r.clipboard_clear(); r.clipboard_append(text)
-            r.update(); r.destroy()
-        except Exception: pass
+        from editor.ui.widgets import clipboard_set
+        clipboard_set(text)
 
     def _get_clipboard(self):
-        try:
-            import tkinter as tk
-            r = tk.Tk(); r.withdraw()
-            res = r.clipboard_get()
-            r.destroy(); return res
-        except Exception: return ""
+        from editor.ui.widgets import clipboard_get
+        return clipboard_get()
 
     def _bg_modal_click(self, mx, my, w, h):
         if not self._bg_modal: return

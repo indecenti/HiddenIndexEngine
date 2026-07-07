@@ -599,13 +599,9 @@ class MusicModalMixin:
         _draw_text(self.screen, self._TR("modal_drag_drop"), "sm", (80, 90, 120), dx+dw-290, dy+dh-35)
 
     def _set_clipboard(self, text):
-        try:
-            import tkinter as tk
-            r = tk.Tk(); r.withdraw(); r.clipboard_clear(); r.clipboard_append(text); r.update(); r.destroy()
-        except Exception: pass
+        from editor.ui.widgets import clipboard_set
+        clipboard_set(text)
 
     def _get_clipboard(self):
-        try:
-            import tkinter as tk
-            r = tk.Tk(); r.withdraw(); res = r.clipboard_get(); r.destroy(); return res
-        except Exception: return ""
+        from editor.ui.widgets import clipboard_get
+        return clipboard_get()
