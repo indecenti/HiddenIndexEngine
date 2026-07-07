@@ -15,6 +15,11 @@ import pygame
 _FONTS: dict = {}
 _ICON_CACHE: dict = {}
 
+# Scala UI corrente (impostata da _init_fonts, letta per icone e metriche)
+_UI_SCALE: float = 1.0
+_FONT_BASE_SIZES: dict = {"xs": 11, "sm": 13, "md": 16, "lg": 20, "xl": 30, "mono": 13}
+ICON_SIZE_BASE = 18
+
 def _get_icon(icon_id):
     """Carica e mette in cache le icone PNG premium."""
     if icon_id in _ICON_CACHE:
@@ -70,7 +75,10 @@ def _get_icon(icon_id):
     return None
 
 
-def _init_fonts():
+def _init_fonts(scale: float = 1.0):
+    """Inizializza (o re-inizializza) i font della UI alla scala richiesta."""
+    global _UI_SCALE
+    _UI_SCALE = max(0.5, min(2.0, float(scale)))
     candidates_ui   = ["Segoe UI", "Arial", "DejaVu Sans", None]
     candidates_mono = ["Consolas", "Courier New", "Courier", None]
 
@@ -82,12 +90,17 @@ def _init_fonts():
                 continue
         return pygame.font.Font(None, size)
 
-    _FONTS["xs"]   = best_font(candidates_ui,   11)
-    _FONTS["sm"]   = best_font(candidates_ui,   13)
-    _FONTS["md"]   = best_font(candidates_ui,   16)
-    _FONTS["lg"]   = best_font(candidates_ui,   20)
-    _FONTS["xl"]   = best_font(candidates_ui,   30)
-    _FONTS["mono"] = best_font(candidates_mono, 13)
+    for key, base_size in _FONT_BASE_SIZES.items():
+        cands = candidates_mono if key == "mono" else candidates_ui
+        _FONTS[key] = best_font(cands, int(round(base_size * _UI_SCALE)))
+
+
+def _ui_scale() -> float:
+    return _UI_SCALE
+
+
+def _icon_size() -> int:
+    return int(round(ICON_SIZE_BASE * _UI_SCALE))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -245,7 +258,7 @@ def _button(surf, r, label, hovered=False, active=False, danger=False, font="sm"
     _rect(surf, BORDER, r, 1, radius=5)
     
     if icon:
-        icon_sz = 18
+        icon_sz = _icon_size()
         tw, th = _text_wh(label, font)
         spacing = 8
         total_w = icon_sz + spacing + tw
@@ -373,7 +386,7 @@ def _input_box(surf, r, text, focused=False, hint="", icon=None, font="md", all_
     # 4. Icona opzionale
     text_x = r[0] + 10
     if icon:
-        icon_sz = 18
+        icon_sz = _icon_size()
         iy = r[1] + (r[3] - icon_sz) // 2
         _draw_shape_icon(surf, (r[0] + 8, iy, icon_sz, icon_sz), icon, TXT_DIM)
         text_x += 28

@@ -20,6 +20,7 @@ from editor.constants import (
     TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_LAYERS, TAB_PROPS,
     ACCENT, OK_C, ERR_C, WARN_C, TXT, TXT_DIM, FX_C, ALWAYS_C,
     GRID_SIZES, NUDGE_STEP, NUDGE_STEP_FAST, NUDGE_UNDO_GAP_S, OBJ_SNAP_PX,
+    UI_SCALE_STEP,
 )
 from editor.core.io import _discover_games, _default_effect
 from editor.ui.draw import _in_rect, _clamp
@@ -178,6 +179,12 @@ class InputHandlersMixin:
             if ev.key == pygame.K_2: self._set_layer("objects_mid");  return
             if ev.key == pygame.K_3: self._set_layer("objects_high"); return
             if ev.key == pygame.K_4: self._set_layer("overlay");      return
+
+            # Ctrl+Piu'/Meno = scala UI (font e icone della chrome editor)
+            if ev.key in (pygame.K_PLUS, pygame.K_EQUALS, pygame.K_KP_PLUS):
+                self._set_ui_scale(UI_SCALE_STEP); return
+            if ev.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
+                self._set_ui_scale(-UI_SCALE_STEP); return
 
             # G = snap a oggetti on/off (persistito)
             if ev.key == pygame.K_g:

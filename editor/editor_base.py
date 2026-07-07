@@ -25,11 +25,34 @@ Uso:
 """
 
 import argparse
+import logging
+import sys
 import time
 from pathlib import Path
 from typing import Optional
 
 import pygame
+
+# SetProcessDpiAwareness: 2 = per-monitor DPI aware (Windows 8.1+)
+_DPI_PER_MONITOR_AWARE = 2
+
+
+def _enable_dpi_awareness() -> None:
+    """Dichiara il processo DPI-aware su Windows.
+
+    Senza questa chiamata, con scaling display >100% l'OS stira la bitmap
+    della finestra e il testo risulta sfocato.
+    """
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(_DPI_PER_MONITOR_AWARE)
+        except Exception:
+            ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        logging.getLogger(__name__).debug("DPI awareness non impostata", exc_info=True)
 
 # ── Costanti e UI primitives ─────────────────────────────────────────────────
 from editor.constants import (
@@ -39,6 +62,7 @@ from editor.constants import (
     TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_LAYERS, TAB_PROPS,
     MODE_SELECT, MODE_CIRCLE, MODE_RECT, MODE_EFFECT_PLACE,
     DEFAULT_LAYERS, DEFAULT_GRID_SIZE,
+    UI_SCALE_DEFAULT, UI_SCALE_MIN, UI_SCALE_MAX, UI_SCALE_STEP,
     BG, TXT_DIM, TXT_HI, ACCENT,
     AUTOSAVE_SECS, SND_CLICK,
 )
@@ -105,7 +129,10 @@ class LevelEditor(
 
     def __init__(self, base_path: Path, initial_game: str = None):
         self.base_path = base_path
+        # Impostazioni persistite, lette una volta sola all'avvio
+        self._boot_settings = self._load_editor_settings()
 
+        _enable_dpi_awareness()
         pygame.init()
         pygame.key.set_repeat(300, 50)
         pygame.display.set_caption(f"HiddenEngine Level Editor  [{VERSION}]")
@@ -125,7 +152,8 @@ class LevelEditor(
             pass
         self.screen_size = self.screen.get_size()
         self.clock = pygame.time.Clock()
-        _init_fonts()
+        ui_scale = float(self._boot_settings.get("ui_scale", UI_SCALE_DEFAULT))
+        _init_fonts(max(UI_SCALE_MIN, min(UI_SCALE_MAX, ui_scale)))
 
         # ── Audio ────────────────────────────────────────────────────────────
         try:
@@ -258,7 +286,7 @@ class LevelEditor(
         self._resizing_r        = False
 
         # ── View toggles ─────────────────────────────────────────────────────
-        _view_settings = self._load_editor_settings()
+        _view_settings = self._boot_settings
         self.show_overlay = False
         self.show_grid    = False
         self.grid_size    = int(_view_settings.get("grid_size", DEFAULT_GRID_SIZE))
@@ -373,6 +401,16 @@ class LevelEditor(
     def _mark_dirty(self):
         """Invalida la cache del canvas per forzare un ridisegno completo."""
         self._canvas_cache_dirty = True
+
+    def _set_ui_scale(self, delta: float):
+        """Cambia la scala dei font/icone della UI (Ctrl+Piu'/Meno) e la persiste."""
+        from editor.ui.draw import _ui_scale
+        new_scale = round(
+            max(UI_SCALE_MIN, min(UI_SCALE_MAX, _ui_scale() + delta)), 2)
+        _init_fonts(new_scale)
+        self._save_editor_setting("ui_scale", new_scale)
+        self._mark_dirty()
+        self._status(f"Scala UI: {int(new_scale * 100)}%", ACCENT, 2)
 
     def _get_asset_ratio(self, cat_id: str) -> float:
         """Restituisce l'aspect ratio (w/h) di un asset, usando la cache di sessione."""

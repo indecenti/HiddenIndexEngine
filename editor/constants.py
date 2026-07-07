@@ -37,6 +37,15 @@ DEFAULT_GRID_SIZE  = 32
 ZOOM_MIN           = 0.04
 ZOOM_MAX           = 10.0
 ZOOM_SEL_MARGIN    = 0.8   # margine attorno alla selezione in zoom-to-selection
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SCALA UI (font e icone della chrome editor)
+# ─────────────────────────────────────────────────────────────────────────────
+
+UI_SCALE_DEFAULT   = 1.0
+UI_SCALE_MIN       = 0.75
+UI_SCALE_MAX       = 1.5
+UI_SCALE_STEP      = 0.1   # incremento con Ctrl+Piu'/Meno
 NUDGE_STEP         = 1     # spostamento frecce in px scena
 NUDGE_STEP_FAST    = 10    # spostamento frecce con Shift
 NUDGE_UNDO_GAP_S   = 1.0   # pause > soglia = nuovo snapshot undo (coalescing)
