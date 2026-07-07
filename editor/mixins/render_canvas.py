@@ -15,7 +15,9 @@ from editor.constants import (
     CACHE_OBJ_MAX, CACHE_FILTER_MAX,
     layer_color,
 )
-from editor.ui.draw import _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _draw_shape_icon
+from editor.ui.draw import (
+    _txt, _draw_text, _draw_text_wrapped, _rect, _button, _in_rect, _text_wh, _draw_shape_icon
+)
 from engine.utils import warp_surface, apply_grayscale
 from engine.effect_renderer import (
     draw_smoke_effect, draw_flies_effect, draw_glint_effect, 
@@ -908,8 +910,9 @@ class RenderCanvasMixin:
         _draw_text(self.screen, self._TR("modal_leave_title"), "lg", TXT_HI, bx + 30, by + 25)
         pygame.draw.line(self.screen, BORDER, (bx + 20, by + 65), (bx + bw - 20, by + 65), 1)
         
-        # Messaggio (con wrapping)
-        _draw_text(self.screen, self._TR("modal_leave_msg"), "sm", TXT, bx + 30, by + 85, bw - 60)
+        # Messaggio con word-wrap (max 3 righe, poi ellissi)
+        _draw_text_wrapped(self.screen, self._TR("modal_leave_msg"), "sm", TXT,
+                           bx + 30, by + 85, bw - 60, max_lines=3)
         
         # Bottoni
         mx, my = pygame.mouse.get_pos()

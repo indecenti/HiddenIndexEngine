@@ -114,6 +114,55 @@ def _text_wh(text: str, font_key: str) -> tuple:
     return _FONTS.get(font_key, _FONTS["md"]).size(str(text))
 
 
+def _wrap_lines(text: str, font_key: str, max_w: int) -> list:
+    """Spezza il testo in righe che stanno in max_w pixel (a parole; spezza
+    le parole singole troppo lunghe carattere per carattere)."""
+    font = _FONTS.get(font_key, _FONTS["md"])
+    lines: list = []
+    for raw_line in str(text).split("\n"):
+        words = raw_line.split(" ")
+        current = ""
+        for word in words:
+            candidate = word if not current else current + " " + word
+            if font.size(candidate)[0] <= max_w:
+                current = candidate
+                continue
+            if current:
+                lines.append(current)
+                current = ""
+            # Parola singola piu' larga di max_w: spezzala a caratteri
+            while font.size(word)[0] > max_w and len(word) > 1:
+                cut = len(word)
+                while cut > 1 and font.size(word[:cut])[0] > max_w:
+                    cut -= 1
+                lines.append(word[:cut])
+                word = word[cut:]
+            current = word
+        lines.append(current)
+    return lines
+
+
+def _draw_text_wrapped(surf, text, font_key, color, x, y, max_w, line_gap=2,
+                       max_lines=None) -> int:
+    """Disegna testo con word-wrap dentro max_w. Ritorna l'altezza totale usata.
+    Se max_lines e' impostato, l'ultima riga visibile viene troncata con ellissi."""
+    font = _FONTS.get(font_key, _FONTS["md"])
+    lines = _wrap_lines(text, font_key, max_w)
+    if max_lines is not None and len(lines) > max_lines:
+        lines = lines[:max_lines]
+        last = lines[-1]
+        while last and font.size(last + "...")[0] > max_w:
+            last = last[:-1]
+        lines[-1] = last + "..."
+    line_h = font.get_linesize()
+    cur_y = y
+    for line in lines:
+        if line:
+            surf.blit(font.render(line, True, color), (x, cur_y))
+        cur_y += line_h + line_gap
+    return cur_y - y
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # PRIMITIVE UI
 # ─────────────────────────────────────────────────────────────────────────────

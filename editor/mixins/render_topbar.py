@@ -11,7 +11,12 @@ from editor.constants import (
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC, STATUS,
     TXT, TXT_DIM, TXT_HI, OK_C, PANEL, BG
 )
-from editor.ui.draw import _txt, _draw_text, _rect, _button, _in_rect
+from editor.ui.draw import _txt, _draw_text, _rect, _button, _in_rect, _text_wh
+
+# Geometria menu principale: le hitbox seguono la larghezza del testo localizzato
+MENU_START_X = 10
+MENU_PAD_X = 16
+TITLE_GAP = 20
 
 
 class RenderTopbarMixin:
@@ -33,20 +38,23 @@ class RenderTopbarMixin:
         menu_edit = self.lang_manager.get("menu_edit", "Modifica")
         menu_lang = self.lang_manager.get("menu_language", "Lingua")
 
-        # Inizializza bounds se vuoti (usando i nomi inglesi come ID interni costanti)
-        if not self._menu_bounds:
-            self._menu_bounds = {
-                "File": pygame.Rect(10, 0, 60, TOP_BAR_H),
-                "Edit": pygame.Rect(70, 0, 90, TOP_BAR_H),
-                "Lang": pygame.Rect(160, 0, 80, TOP_BAR_H),
-            }
-
-        # Rendering voci principali
+        # Etichette visualizzate (gli ID interni restano costanti in inglese)
         menu_display_names = {
             "File": menu_file,
             "Edit": menu_edit,
             "Lang": menu_lang
         }
+
+        # Hitbox ricalcolate ogni frame sulla larghezza del testo renderizzato:
+        # le etichette sono localizzate e la lingua puo' cambiare a runtime.
+        menu_x = MENU_START_X
+        bounds: dict = {}
+        for internal_id, display_name in menu_display_names.items():
+            tw, _ = _text_wh(display_name, "sm")
+            bw = tw + MENU_PAD_X * 2
+            bounds[internal_id] = pygame.Rect(menu_x, 0, bw, TOP_BAR_H)
+            menu_x += bw
+        self._menu_bounds = bounds
 
         for internal_id, rect in self._menu_bounds.items():
             is_active = (self._active_menu == internal_id)
@@ -65,8 +73,8 @@ class RenderTopbarMixin:
         if self._active_menu:
             self._r_dropdown(self._active_menu)
 
-        # Titolo (spostato a destra per non coprire i menu)
-        title_x = 260
+        # Titolo (a destra dell'ultimo menu, qualunque sia la larghezza localizzata)
+        title_x = menu_x + TITLE_GAP
         title_str = "HIDDEN ENGINE"
         if self.game_path:
             title_str += f"  |  {self.game_path.name.upper()}"
