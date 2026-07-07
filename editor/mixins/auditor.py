@@ -5,6 +5,14 @@ AuditorMixin — Project Auditor: scansiona un gioco selezionato alla ricerca
 di referenze rotte (PNG mancanti, background assenti, musica orfana) e propone
 riparazioni non distruttive con conferma esplicita dell'utente.
 
+Check di scena aggiuntivi (non distruttivi, nessun repair automatico):
+- catalog_id inesistenti nel catalogo unito (ERR) e duplicati in scena (WARN);
+- bounding box oggetti fuori dai bounds del background (ERR/WARN);
+- scena senza oggetti goal, quindi non risolvibile (ERR);
+- minigame_trigger verso minigiochi senza manifest (ERR);
+- completezza traduzioni per le lingue del gioco (WARN);
+- coerenza game_config['levels'] / level_config vs cartelle su disco (ERR/WARN).
+
 NON modifica dati senza click esplicito sui pulsanti di riparazione.
 NON disegna mai fuori dai bounds del suo modale.
 """
@@ -51,6 +59,21 @@ _SEV_COLORS = {
     _SEV_OK:   OK_C,
 }
 
+# ─── Costanti check di scena (allineate a engine/scene_loader) ────────────────
+_OOB_PARTIAL_FRAC: float = 0.30          # frazione area fuori background per WARN
+_DEFAULT_RADIUS: float = 30.0            # default engine per detection circle
+_I18N_SAMPLE_MAX: int = 5                # max chiavi mancanti mostrate nel dettaglio
+_VIDEO_EXTS: tuple[str, ...] = (".mp4", ".mov", ".mkv")
+
+
+def _as_bool(v: object) -> bool:
+    """Replica _to_bool di engine/scene_loader (bool, stringhe 'true'/'1'/'yes')."""
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, str):
+        return v.lower() in ("true", "1", "yes")
+    return bool(v)
+
 
 class AuditorMixin:
     """
@@ -77,6 +100,11 @@ class AuditorMixin:
         self._auditor_scroll: int = 0
         self._auditor_running: bool = False
         self._auditor_hitboxes: dict = {}
+        # Cache di scansione (ripopolate a ogni audit da _auditor_scan)
+        self._auditor_cat_index: dict[str, dict] = {}
+        self._auditor_cat_ids: set[str] = set()
+        self._auditor_bg_cache: dict[str, tuple[int, int] | None] = {}
+        self._auditor_strings_cache: dict[str, dict] = {}
 
     # ─────────────────────────────────────────────────────────────────────────
     # APERTURA
@@ -129,6 +157,16 @@ class AuditorMixin:
         except Exception as e:
             logger.error(f"[AUDITOR] Catalogo di {self._auditor_game_id} non caricato: {e}")
             self._auditor_catalog = getattr(self, "catalog", [])
+
+        # Indice id -> entry del catalogo unito + cache per i check di scena.
+        self._auditor_cat_index = {
+            str(o.get("id")): o
+            for o in self._auditor_catalog
+            if isinstance(o, dict) and o.get("id")
+        }
+        self._auditor_cat_ids = set(self._auditor_cat_index)
+        self._auditor_bg_cache = {}
+        self._auditor_strings_cache = {}
 
         if not game_path.exists():
             issues.append(self._issue(
@@ -277,6 +315,8 @@ class AuditorMixin:
                 ))
 
     def _scan_levels(self, game_path: Path, issues: list) -> None:
+        self._scan_levels_config(game_path, issues)
+
         levels_dir = game_path / "levels"
         if not levels_dir.exists():
             return
@@ -310,13 +350,14 @@ class AuditorMixin:
             ))
             return
 
+        scene_label = f"{scn_dir.parent.name}/{scn_dir.name}"
+        game_path = scn_dir.parent.parent.parent  # games/<g>/
+
         # Background scena
         bg = sd.get("background", "")
         if bg:
             bg_full = scn_dir / bg
             if not bg_full.exists():
-                scene_label = f"{scn_dir.parent.name}/{scn_dir.name}"
-
                 def _fix_bg_scene(sj=scn_json, s=sd, b=bg) -> None:
                     s["background"] = ""
                     _safe_save_json(sj, s)
@@ -329,23 +370,348 @@ class AuditorMixin:
                     repair_fn=_fix_bg_scene,
                 ))
 
+        objects = sd.get("objects", [])
+        if not isinstance(objects, list):
+            objects = []
+        objects = [o for o in objects if isinstance(o, dict)]
+
         # Oggetti scena — controlla icon/image vs catalogo locale+engine
-        for obj in sd.get("objects", []):
+        for obj in objects:
             cat_id = obj.get("catalog_id", "?")
             # Recupera il path immagine dal catalogo in memoria se disponibile
             img_rel = self._auditor_resolve_img(cat_id)
             if img_rel is None:
                 continue  # Non sappiamo il path, skip silenzioso
 
-            img_local = scn_dir.parent.parent.parent / img_rel  # games/<g>/
+            img_local = game_path / img_rel
             img_engine = self.base_path / "engine" / "assets" / img_rel
 
             if not img_local.exists() and not img_engine.exists():
-                scene_label = f"{scn_dir.parent.name}/{scn_dir.name}"
                 issues.append(self._issue(
                     _SEV_WARN,
                     f"Asset scena PNG mancante: {cat_id}",
                     f"Scena: {scene_label}  |  {img_rel}",
+                ))
+
+        # Check aggiuntivi (tutti non distruttivi, nessun repair automatico)
+        self._scan_scene_catalog_ids(scene_label, objects, issues)
+        self._scan_scene_bounds(scn_dir, scene_label, sd, objects, issues)
+        self._scan_scene_goals(scene_label, sd, objects, issues)
+        self._scan_scene_minigames(scene_label, objects, issues)
+        self._scan_scene_i18n(game_path, scene_label, objects, issues)
+
+    # ── Check aggiuntivi di scena ─────────────────────────────────────────────
+
+    def _scan_scene_catalog_ids(
+        self, scene_label: str, objects: list, issues: list
+    ) -> None:
+        """catalog_id inesistenti nel catalogo unito (ERR) e duplicati (WARN)."""
+        cat_ids = self._auditor_cat_ids
+        if cat_ids:
+            # Con catalogo vuoto (caricamento fallito) il check salterebbe tutto:
+            # meglio nessun rilievo che un falso ERR per ogni oggetto.
+            missing: dict[str, list[int]] = {}
+            for i, obj in enumerate(objects):
+                cid = str(obj.get("catalog_id", ""))
+                if cid and cid not in cat_ids:
+                    missing.setdefault(cid, []).append(i)
+            for cid, idxs in missing.items():
+                idx_txt = ", ".join(f"#{n}" for n in idxs)
+                issues.append(self._issue(
+                    _SEV_ERR,
+                    f"catalog_id inesistente: {cid}",
+                    f"Scena: {scene_label}  |  oggetti {idx_txt}  |  "
+                    "assente dal catalogo unito (l'engine lo scarta)",
+                ))
+
+        counts: dict[str, int] = {}
+        for obj in objects:
+            cid = str(obj.get("catalog_id", ""))
+            if cid:
+                counts[cid] = counts.get(cid, 0) + 1
+        for cid, n in counts.items():
+            if n > 1:
+                issues.append(self._issue(
+                    _SEV_WARN,
+                    f"catalog_id duplicato nella scena: {cid}",
+                    f"Scena: {scene_label}  |  {n} occorrenze "
+                    "(legittimo in alcuni casi, ma da verificare)",
+                ))
+
+    def _scan_scene_bounds(
+        self, scn_dir: Path, scene_label: str, sd: dict, objects: list, issues: list
+    ) -> None:
+        """
+        Bounding box oggetti vs dimensioni background.
+        ERR se completamente fuori, WARN se fuori oltre _OOB_PARTIAL_FRAC dell'area.
+        """
+        size = self._scene_bg_size(scn_dir, sd.get("background", ""))
+        if size is None:
+            return
+        bg_w, bg_h = size
+        for i, obj in enumerate(objects):
+            box = self._object_bbox(obj)
+            if box is None:
+                continue
+            left, top, w, h = box
+            area = w * h
+            if area <= 0:
+                continue
+            ix = min(left + w, float(bg_w)) - max(left, 0.0)
+            iy = min(top + h, float(bg_h)) - max(top, 0.0)
+            inter = max(0.0, ix) * max(0.0, iy)
+            cid = obj.get("catalog_id", "?")
+            if inter <= 0:
+                issues.append(self._issue(
+                    _SEV_ERR,
+                    f"Oggetto completamente fuori dal background: {cid}",
+                    f"Scena: {scene_label}  |  oggetto #{i}  |  bbox "
+                    f"({left:.0f},{top:.0f} {w:.0f}x{h:.0f}) vs {bg_w}x{bg_h}",
+                ))
+            elif (area - inter) / area > _OOB_PARTIAL_FRAC:
+                pct = int(round((area - inter) / area * 100))
+                issues.append(self._issue(
+                    _SEV_WARN,
+                    f"Oggetto parzialmente fuori dal background: {cid}",
+                    f"Scena: {scene_label}  |  oggetto #{i}  |  {pct}% dell'area "
+                    f"fuori dai bounds {bg_w}x{bg_h}",
+                ))
+
+    @staticmethod
+    def _object_bbox(obj: dict) -> tuple[float, float, float, float] | None:
+        """
+        Bounding box (left, top, w, h) in spazio pixel nativo del background.
+        Convenzione ancore: rect (x,y)=top-left; circle/mask (x,y)=centro con
+        dimensione width|radius*2 (come engine/scene_loader).
+        """
+        try:
+            x = float(obj.get("x", 0))
+            y = float(obj.get("y", 0))
+            width = float(obj.get("width", 0) or 0)
+            height = float(obj.get("height", 0) or 0)
+            radius = float(obj.get("radius", _DEFAULT_RADIUS) or _DEFAULT_RADIUS)
+        except (TypeError, ValueError):
+            return None
+        dt = str(obj.get("detection_type", ""))
+        if dt == "rect":
+            if width <= 0 or height <= 0:
+                return None  # dimensioni assenti: bbox non calcolabile
+            return (x, y, width, height)
+        w = width if width > 0 else radius * 2.0
+        h = height if height > 0 else radius * 2.0
+        return (x - w / 2.0, y - h / 2.0, w, h)
+
+    def _scene_bg_size(self, scn_dir: Path, bg_name: str) -> tuple[int, int] | None:
+        """Dimensioni del background con cache per path. None se non determinabili."""
+        if not bg_name or bg_name.lower().endswith(_VIDEO_EXTS):
+            return None
+        bg_path = scn_dir / bg_name
+        key = str(bg_path)
+        cache = self._auditor_bg_cache
+        if key in cache:
+            return cache[key]
+        size: tuple[int, int] | None = None
+        if bg_path.exists():
+            try:
+                size = pygame.image.load(str(bg_path)).get_size()
+            except Exception as e:
+                logger.warning(
+                    f"[AUDITOR] Dimensioni background non lette ({bg_path.name}): {e}"
+                )
+        cache[key] = size
+        return size
+
+    def _scan_scene_goals(
+        self, scene_label: str, sd: dict, objects: list, issues: list
+    ) -> None:
+        """Scena senza oggetti goal: il giocatore non puo' completarla (ERR)."""
+        if _as_bool(sd.get("auto_random_finds", False)) and objects:
+            return  # i goal vengono assegnati a runtime dallo shuffle dell'engine
+        goals = sum(1 for o in objects if _as_bool(o.get("is_goal", True)))
+        if goals == 0:
+            detail = (
+                "Nessun oggetto nella scena" if not objects
+                else f"{len(objects)} oggetti, nessuno con is_goal attivo"
+            )
+            issues.append(self._issue(
+                _SEV_ERR,
+                f"Scena non risolvibile (nessun goal): {scene_label}",
+                f"{detail}  |  la scena non puo' essere completata",
+            ))
+
+    def _scan_scene_minigames(
+        self, scene_label: str, objects: list, issues: list
+    ) -> None:
+        """minigame_trigger verso minigiochi senza manifest.json in engine (ERR)."""
+        seen: set[str] = set()
+        for i, obj in enumerate(objects):
+            trig = obj.get("minigame_trigger")
+            if not isinstance(trig, dict):
+                continue
+            mid = str(trig.get("minigame_id", "")).strip()
+            if not mid or mid in seen:
+                continue
+            seen.add(mid)
+            manifest = self.base_path / "engine" / "minigames" / mid / "manifest.json"
+            if not manifest.exists():
+                issues.append(self._issue(
+                    _SEV_ERR,
+                    f"Minigioco inesistente: {mid}",
+                    f"Scena: {scene_label}  |  oggetto #{i}  |  manca {manifest}",
+                ))
+
+    def _scan_scene_i18n(
+        self, game_path: Path, scene_label: str, objects: list, issues: list
+    ) -> None:
+        """
+        Completezza traduzioni: per ogni lingua in games/<id>/strings/ verifica
+        che la chiave label di ogni oggetto (label_key da catalogo, fallback
+        'obj_<catalog_id>') esista non vuota nelle stringhe del gioco o, in
+        fallback come da LanguageManager, in engine/assets/strings/ (WARN).
+        """
+        strings_dir = game_path / "strings"
+        if not strings_dir.exists():
+            return
+        langs = sorted(p.stem for p in strings_dir.glob("*.json"))
+        if not langs:
+            return
+
+        # Chiavi label richieste dagli oggetti della scena. I catalog_id
+        # inesistenti sono esclusi: gia' segnalati come ERR dal check dedicato.
+        keys: set[str] = set()
+        for obj in objects:
+            cid = str(obj.get("catalog_id", ""))
+            if not cid or (self._auditor_cat_ids and cid not in self._auditor_cat_ids):
+                continue
+            entry = self._auditor_cat_index.get(cid, {})
+            keys.add(entry.get("label_key") or f"obj_{cid}")
+        if not keys:
+            return
+
+        engine_strings_dir = self.base_path / "engine" / "assets" / "strings"
+        for lang in langs:
+            game_str = self._auditor_strings(strings_dir / f"{lang}.json")
+            engine_str = self._auditor_strings(engine_strings_dir / f"{lang}.json")
+            missing = sorted(
+                k for k in keys
+                if not str(game_str.get(k, "") or "").strip()
+                and not str(engine_str.get(k, "") or "").strip()
+            )
+            if missing:
+                sample = ", ".join(missing[:_I18N_SAMPLE_MAX])
+                extra = "" if len(missing) <= _I18N_SAMPLE_MAX else ", ..."
+                issues.append(self._issue(
+                    _SEV_WARN,
+                    f"Traduzioni mancanti [{lang}]: {len(missing)} chiavi",
+                    f"Scena: {scene_label}  |  {sample}{extra}",
+                ))
+
+    def _auditor_strings(self, path: Path) -> dict:
+        """Carica un file stringhe JSON con cache per audit ({} se assente/corrotto)."""
+        key = str(path)
+        cache = self._auditor_strings_cache
+        if key in cache:
+            return cache[key]
+        data: dict = {}
+        if path.exists():
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    loaded = json.load(f)
+                if isinstance(loaded, dict):
+                    data = loaded
+            except Exception as e:
+                logger.warning(f"[AUDITOR] Stringhe non lette ({path.name}): {e}")
+        cache[key] = data
+        return data
+
+    # ── Coerenza levels config ────────────────────────────────────────────────
+
+    def _scan_levels_config(self, game_path: Path, issues: list) -> None:
+        """
+        Coerenza tra game_config.json['levels'], i level_config.json e le
+        cartelle su disco: voci config senza cartella (ERR), livelli/scene
+        presenti su disco ma non registrati (WARN, orfani).
+        """
+        levels_dir = game_path / "levels"
+        disk_levels: set[str] = set()
+        if levels_dir.exists():
+            disk_levels = {d.name for d in levels_dir.iterdir() if d.is_dir()}
+
+        cfg_levels: list[str] = []
+        cfg_p = game_path / "game_config.json"
+        if cfg_p.exists():
+            try:
+                with open(cfg_p, "r", encoding="utf-8") as f:
+                    raw = json.load(f).get("levels", [])
+                if isinstance(raw, list):
+                    cfg_levels = [str(x) for x in raw]
+            except Exception:
+                return  # parsing gia' segnalato da _scan_game_config
+
+        # Voci di game_config['levels'] senza cartella su disco -> ERR
+        for lvl_id in cfg_levels:
+            if lvl_id not in disk_levels:
+                issues.append(self._issue(
+                    _SEV_ERR,
+                    f"Livello in config senza cartella: {lvl_id}",
+                    f"game_config.json['levels'] referenzia '{lvl_id}' "
+                    f"ma manca {levels_dir / lvl_id}",
+                ))
+
+        # Livelli su disco assenti dal config -> WARN (l'engine li accoda comunque)
+        for lvl_id in sorted(disk_levels - set(cfg_levels)):
+            issues.append(self._issue(
+                _SEV_WARN,
+                f"Livello orfano (non in game_config): {lvl_id}",
+                "Cartella presente su disco ma assente da "
+                "game_config.json['levels']: ordine non garantito",
+            ))
+
+        # Coerenza scene per livello: level_config.json vs cartelle scena
+        for lvl_id in sorted(disk_levels):
+            lvl_dir = levels_dir / lvl_id
+            lc_p = lvl_dir / "level_config.json"
+            disk_scenes = {
+                d.name for d in lvl_dir.iterdir()
+                if d.is_dir() and (d / "scene.json").exists()
+            }
+            if not lc_p.exists():
+                if lvl_id in cfg_levels:
+                    issues.append(self._issue(
+                        _SEV_ERR,
+                        f"level_config.json mancante: {lvl_id}",
+                        "Senza level_config.json il livello non e' "
+                        "avviabile dall'engine",
+                    ))
+                continue
+            try:
+                with open(lc_p, "r", encoding="utf-8") as f:
+                    lc = json.load(f)
+            except Exception as e:
+                issues.append(self._issue(
+                    _SEV_ERR,
+                    f"level_config.json corrotto: {lvl_id}",
+                    str(e),
+                ))
+                continue
+            cfg_scenes = [
+                str(s.get("id", "")) for s in lc.get("scenes", [])
+                if isinstance(s, dict) and s.get("id")
+            ]
+            for scn_id in cfg_scenes:
+                if scn_id not in disk_scenes:
+                    issues.append(self._issue(
+                        _SEV_ERR,
+                        f"Scena in config senza cartella: {lvl_id}/{scn_id}",
+                        f"level_config.json referenzia '{scn_id}' ma manca "
+                        f"{lvl_dir / scn_id} (o il suo scene.json)",
+                    ))
+            for scn_id in sorted(disk_scenes - set(cfg_scenes)):
+                issues.append(self._issue(
+                    _SEV_WARN,
+                    f"Scena orfana (non in level_config): {lvl_id}/{scn_id}",
+                    "Cartella con scene.json presente su disco ma non "
+                    "referenziata da level_config.json: non verra' mai giocata",
                 ))
 
     def _auditor_resolve_img(self, cat_id: str) -> str | None:
