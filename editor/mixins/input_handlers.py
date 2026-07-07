@@ -903,7 +903,8 @@ class InputHandlersMixin:
                 if obj.get("detection_type") == "circle" and (mods & pygame.KMOD_ALT):
                     delta = 5 if (mods & pygame.KMOD_SHIFT) else 1
                     delta *= (1 if ev.y > 0 else -1)
-                    self._push_undo()
+                    # Coalescing: la raffica di wheel produce un solo snapshot
+                    self._push_undo("Modifica raggio", coalesce_key="radius_wheel")
                     obj["radius"] = max(5, obj.get("radius", 30) + delta)
                     return
 

@@ -49,6 +49,7 @@ UI_SCALE_STEP      = 0.1   # incremento con Ctrl+Piu'/Meno
 NUDGE_STEP         = 1     # spostamento frecce in px scena
 NUDGE_STEP_FAST    = 10    # spostamento frecce con Shift
 NUDGE_UNDO_GAP_S   = 1.0   # pause > soglia = nuovo snapshot undo (coalescing)
+UNDO_COALESCE_GAP_S = 1.0  # finestra coalescing snapshot con stessa coalesce_key
 OBJ_SNAP_PX        = 8     # soglia snap a oggetti in pixel schermo
 
 SND_CLICK      = "engine/assets/sounds/click_Low.wav"
