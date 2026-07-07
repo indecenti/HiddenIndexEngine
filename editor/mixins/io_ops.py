@@ -11,9 +11,12 @@ import logging
 import copy
 import subprocess
 import sys
+import threading
 import time
 import shutil
+from collections import deque
 from pathlib import Path
+from typing import Any, Callable, Optional
 
 import pygame
 
@@ -27,6 +30,23 @@ from editor.core.io import (
 )
 
 
+class _AsyncInputShield:
+    """Modale "scudo" per lo stack unificato durante _with_loading_async.
+
+    Assorbe TUTTO l'input utente mentre l'operazione in background e' in corso,
+    impedendo interazioni su uno stato parzialmente caricato (il main loop
+    resta attivo, a differenza di _with_loading). Non disegna nulla: il
+    feedback visivo e' l'overlay di caricamento (_r_loading_overlay), che il
+    render principale disegna sopra lo stack modale quando _loading=True.
+    """
+
+    def handle_event(self, editor, ev) -> bool:
+        return True  # app-modal: consuma tutto l'input utente
+
+    def render(self, editor) -> None:
+        return None
+
+
 class IoOpsMixin:
     """Load/save dati editor, image cache, status bar."""
 
@@ -38,6 +58,98 @@ class IoOpsMixin:
         self.status_msg   = msg
         self.status_col   = color or TXT_DIM
         self.status_until = time.time() + duration if duration else 0
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # OPERAZIONI ASYNC (overlay _loading, main loop reattivo)
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def _with_loading_async(self, fn: Callable[[], Any],
+                            done_cb: Optional[Callable[[Any], None]] = None) -> None:
+        """Esegue fn in un thread daemon mantenendo il main loop reattivo.
+
+        A differenza di _with_loading (bloccante), la finestra continua a
+        pompare eventi e a renderizzare: l'overlay _loading resta visibile e
+        un micro-modale scudo (_AsyncInputShield) nello stack unificato
+        assorbe l'input utente finche' l'operazione non e' conclusa.
+
+        Al termine done_cb(risultato) viene invocata NEL MAIN THREAD; se fn ha
+        sollevato un'eccezione, done_cb riceve l'ECCEZIONE come argomento
+        (il chiamante la distingue con isinstance(res, Exception)).
+
+        Punto di aggancio per-frame: editor_base._render() chiama
+        _r_loading_overlay ad ogni frame quando _loading=True. Non potendo
+        modificare editor_base.py, qui il metodo viene shadowato con un
+        attributo D'ISTANZA che disegna l'overlay originale di classe e poi
+        drena la coda dei risultati (_async_drain). Lo shadow viene rimosso
+        a operazione conclusa, ripristinando il comportamento standard.
+
+        NOTA: fn gira fuori dal main thread e NON deve toccare la coda eventi
+        pygame (niente pygame.event.*); caricare/convertire Surface e' ok.
+        """
+        if not callable(fn):
+            return
+        thread = getattr(self, "_async_thread", None)
+        if thread is not None and thread.is_alive():
+            self._status("Operazione in corso, attendere...", WARN_C, 2)
+            return
+
+        # Coda risultati worker -> main thread (deque.append e' thread-safe)
+        self._async_results: deque = deque()
+
+        def _worker() -> None:
+            try:
+                outcome: Any = fn()
+            except BaseException as exc:  # il worker DEVE sempre depositare
+                logging.exception("[ASYNC] Errore nell'operazione in background")
+                outcome = exc
+            self._async_results.append((done_cb, outcome))
+
+        self._async_shield = _AsyncInputShield()
+        self._modal_push(self._async_shield)
+
+        # Shadow d'istanza: overlay originale di classe + drain per-frame.
+        cls_overlay = type(self)._r_loading_overlay
+
+        def _overlay_and_drain(w: int, h: int) -> None:
+            cls_overlay(self, w, h)
+            self._async_drain()
+
+        self._r_loading_overlay = _overlay_and_drain
+        self._loading = True
+        self._async_thread = threading.Thread(
+            target=_worker, daemon=True, name="editor-async-op")
+        self._async_thread.start()
+
+    def _async_drain(self) -> None:
+        """Drena il risultato dell'operazione async nel main thread.
+
+        Chiamato una volta a frame dallo shadow di _r_loading_overlay finche'
+        l'operazione e' in corso. Quando il worker deposita il risultato:
+        ripristina overlay/hook/scudo PRIMA di chiamare done_cb, cosi' la
+        callback puo' a sua volta avviare un nuovo _with_loading_async o un
+        _with_loading sincrono senza interferenze.
+        """
+        queue = getattr(self, "_async_results", None)
+        if not queue:
+            return
+        done_cb, outcome = queue.popleft()
+
+        self._loading = False
+        self.__dict__.pop("_r_loading_overlay", None)  # rimuove lo shadow
+        self._async_thread = None
+        shield = getattr(self, "_async_shield", None)
+        if shield is not None:
+            self._modal_pop(shield)
+            self._async_shield = None
+
+        if done_cb is not None:
+            try:
+                done_cb(outcome)
+            except Exception:
+                logging.exception("[ASYNC] Errore nella done_cb")
+                self._status("Errore al termine dell'operazione", ERR_C, 4)
+        elif isinstance(outcome, BaseException):
+            self._status(f"Errore: {outcome}", ERR_C, 5)
 
     # ─────────────────────────────────────────────────────────────────────────
     # ASSET MANAGEMENT

@@ -5,18 +5,21 @@ GameSelectMixin — schermata di selezione gioco/livello/scena:
                   logica, eventi, rendering dashboard.
 """
 
+import os
 import sys
 import time
 import json
 import subprocess
 import logging
+import threading
 import pygame
 import re
+from collections import deque
 from pathlib import Path
 
 from editor.constants import (
     TOP_BAR_H, STATE_MAIN,
-    ACCENT, BORDER, BTN, BTN_HO, BTN_AC,
+    ACCENT, BORDER, BTN, BTN_HO, BTN_AC, PANEL,
     TXT, TXT_DIM, TXT_HI, OK_C, WARN_C, ERR_C,
     VERSION,
 )
@@ -27,6 +30,7 @@ from editor.build_system import next_build_version
 from editor.ui.draw import (
     _txt, _draw_text, _text_wh, _rect, _button, _in_rect, _draw_shape_icon, _scrollbar, _input_box
 )
+from editor.ui.widgets import Button, WidgetGroup
 from engine.utils import get_base_path, get_logger
 
 logger = get_logger("game_select")
@@ -250,7 +254,11 @@ class GameSelectMixin:
             self._status(f"Errore: {str(e)}", ERR_C, 4)
 
     def _gs_export_html(self, idx: int):
-        """Esporta il gioco selezionato come sito statico HTML/JS tramite web_exporter."""
+        """Esporta il gioco selezionato come sito statico HTML/JS tramite web_exporter.
+
+        L'export gira in un thread daemon; il progresso e' mostrato da un
+        modale NON bloccante (_WebExportProgressModal) nello stack unificato.
+        """
         if idx is None or idx >= len(self.gs_games):
             self._status("Errore: gioco non valido", ERR_C, 2)
             return
@@ -263,26 +271,7 @@ class GameSelectMixin:
 
         output_dir = self.base_path / "build_web" / game_id
         self._status(f"Esportazione HTML: {game_id}...", WARN_C, 2)
-
-        def _do_export():
-            try:
-                from editor.web_exporter import export_web_game
-                result = export_web_game(game_id, output_dir, self.base_path)
-                if result.get("success"):
-                    lvls = result.get("levels", 0)
-                    scenes = result.get("scenes", 0)
-                    self._status(
-                        f"HTML esportato: {game_id} "
-                        f"({lvls} livelli, {scenes} scene) → build_web/{game_id}",
-                        OK_C, 5
-                    )
-                else:
-                    self._status(f"Esportazione HTML fallita: {game_id}", ERR_C, 4)
-            except Exception as e:
-                logger.exception(f"Errore esportazione HTML: {e}")
-                self._status(f"Errore HTML: {str(e)[:60]}", ERR_C, 4)
-
-        self._with_loading(_do_export)
+        self._modal_push(_WebExportProgressModal(self, game_id, output_dir))
 
     def _gs_run_game(self, idx: int):
         """Avvia il gioco in modalità standalone."""
@@ -345,22 +334,30 @@ class GameSelectMixin:
     def _gs_open(self):
         if self.gs_sel_game is None:
             self._status("Seleziona prima un gioco", WARN_C, 3); return
-            
-        def _perform_open():
-            # Operazioni di caricamento lente (I/O, surface conversion)
-            gname = self.gs_games[self.gs_sel_game]
-            self._load_game(gname)
-            
-            # Tra caricamento gioco e scena lo stato cambia in STATE_MAIN
-            # Eseguiamo un pump per mantenere la finestra reattiva
-            pygame.event.pump()
-            
-            if self.gs_sel_scene is not None:
-                self._load_scene(self.gs_cur_scenes[self.gs_sel_scene])
-            elif self.gs_cur_scenes:
-                self._load_scene(self.gs_cur_scenes[0])
 
-        self._with_loading(_perform_open)
+        # Cattura la selezione ADESSO: il worker non deve rileggere lo stato
+        # della dashboard (che nel frattempo potrebbe cambiare).
+        gname = self.gs_games[self.gs_sel_game]
+        scenes = list(self.gs_cur_scenes)
+        sel_scene = self.gs_sel_scene
+
+        def _perform_open():
+            # Operazioni di caricamento lente (I/O, surface conversion).
+            # Gira in un thread daemon (_with_loading_async): il main loop
+            # continua a pompare eventi/renderizzare, quindi qui NIENTE
+            # pygame.event.* (coda eventi = solo main thread).
+            self._load_game(gname)
+            if sel_scene is not None:
+                self._load_scene(scenes[sel_scene])
+            elif scenes:
+                self._load_scene(scenes[0])
+
+        def _done(result):
+            # Nel main thread: fn ha gia' impostato lo stato; qui solo errori.
+            if isinstance(result, BaseException):
+                self._status(f"Errore apertura: {result}", ERR_C, 5)
+
+        self._with_loading_async(_perform_open, _done)
 
     # ─────────────────────────────────────────────────────────────────────────
     # CREAZIONE
@@ -3631,3 +3628,215 @@ if __name__ == "__main__":
                 opt_a = pygame.Rect(c1_x, _SEC2_Y + 22 + 68, 260, 34)
                 _button(self.screen, opt_d, "💻 DESKTOP", _in_rect((mx2, my2), opt_d), active=(_cur_cat == "desktop"))
                 _button(self.screen, opt_a, "📱 ANDROID", _in_rect((mx2, my2), opt_a), active=(_cur_cat == "android"))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MODALE PROGRESSO EXPORT HTML (stack modale unificato)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Geometria del modale di progresso export
+_WX_W, _WX_H = 560, 390
+_WX_PAD = 20
+_WX_BAR_H = 18
+_WX_LOG_LINES = 8          # ultimi N messaggi mostrati
+_WX_LOG_LINE_H = 18
+_WX_BTN_W, _WX_BTN_H = 130, 30
+_WX_BTN_GAP = 10
+_WX_OVERLAY_ALPHA = 150
+_WX_STEP_MAX_CHARS = 78    # troncamento testo step corrente
+_WX_LOG_MAX_CHARS = 92     # troncamento righe di log
+_WX_ERR_MAX_CHARS = 70     # troncamento messaggio d'errore nell'esito
+
+
+class _WebExportProgressModal:
+    """Modale di progresso NON bloccante per l'export HTML.
+
+    Protocollo dello stack modale unificato: handle_event(editor, ev) -> bool
+    e render(editor). L'export gira in un thread daemon che NON tocca pygame:
+    comunica con il main thread solo tramite campi di tipo semplice e una
+    deque (append thread-safe) letti dal render ad ogni frame.
+
+    Annulla: imposta un flag; la progress_cb (eseguita nel thread di export)
+    lo vede alla tappa successiva e solleva ExportCancelled, che il worker
+    cattura per una interruzione pulita. A export finito il modale mostra
+    l'esito con i bottoni Chiudi e Apri cartella.
+    """
+
+    def __init__(self, editor, game_id: str, output_dir: Path) -> None:
+        self._editor = editor
+        self.game_id = game_id
+        self.output_dir = Path(output_dir)
+
+        # Stato condiviso con il thread di export (scritture atomiche sotto GIL)
+        self._log: deque = deque(maxlen=_WX_LOG_LINES)
+        self._step: str = "Avvio export..."
+        self._frac: float = 0.0
+        self._done: bool = False
+        self._result: "dict | None" = None
+        self._error: "str | None" = None
+        self._cancel_requested: bool = False
+        self._cancelled: bool = False
+
+        self.btn_cancel = Button((0, 0, _WX_BTN_W, _WX_BTN_H), "Annulla",
+                                 self._request_cancel, danger=True)
+        self.btn_open = Button((0, 0, _WX_BTN_W, _WX_BTN_H), "Apri cartella",
+                               self._open_folder)
+        self.btn_close = Button((0, 0, _WX_BTN_W, _WX_BTN_H), "Chiudi",
+                                lambda: self._close(editor))
+        self.group = WidgetGroup([self.btn_cancel, self.btn_open, self.btn_close])
+
+        self._thread = threading.Thread(
+            target=self._worker, daemon=True, name=f"web-export-{game_id}")
+        self._thread.start()
+
+    # ── Thread di export (NIENTE pygame qui dentro) ──────────────────────────
+
+    def _worker(self) -> None:
+        from editor.web_exporter import export_web_game, ExportCancelled
+        try:
+            self._result = export_web_game(
+                self.game_id, self.output_dir, self._editor.base_path,
+                progress_cb=self._on_progress)
+        except ExportCancelled:
+            self._cancelled = True
+            logger.info(f"Export HTML annullato dall'utente: {self.game_id}")
+        except Exception as e:
+            logger.exception(f"Errore esportazione HTML: {e}")
+            self._error = str(e)
+        finally:
+            self._done = True
+
+    def _on_progress(self, msg: str, frac: float) -> None:
+        """progress_cb per export_web_game: eseguita nel thread di export."""
+        from editor.web_exporter import ExportCancelled
+        if self._cancel_requested:
+            raise ExportCancelled(f"Export di '{self.game_id}' annullato")
+        self._step = msg
+        # Clamp + monotonia: la barra non torna mai indietro
+        self._frac = max(self._frac, min(1.0, max(0.0, frac)))
+        self._log.append(msg)
+
+    # ── Azioni bottoni (main thread) ─────────────────────────────────────────
+
+    def _request_cancel(self) -> None:
+        if not self._done and not self._cancel_requested:
+            self._cancel_requested = True
+            self._step = "Annullamento in corso..."
+
+    def _open_folder(self) -> None:
+        try:
+            os.startfile(str(self.output_dir))
+        except OSError as e:
+            logger.error(f"Apertura cartella export fallita: {e}")
+            self._editor._status(f"Impossibile aprire la cartella: {e}", ERR_C, 4)
+
+    def _close(self, editor) -> None:
+        editor._modal_pop(self)
+        if self._result and self._result.get("success"):
+            lvls = self._result.get("levels", 0)
+            scenes = self._result.get("scenes", 0)
+            editor._status(
+                f"HTML esportato: {self.game_id} "
+                f"({lvls} livelli, {scenes} scene) → build_web/{self.game_id}",
+                OK_C, 5)
+        elif self._cancelled:
+            editor._status(f"Export HTML annullato: {self.game_id}", WARN_C, 3)
+        else:
+            editor._status(f"Esportazione HTML fallita: {self.game_id}", ERR_C, 4)
+
+    # ── Layout / eventi / render (main thread) ───────────────────────────────
+
+    def _layout(self, w_win: int, h_win: int) -> pygame.Rect:
+        panel = pygame.Rect((w_win - _WX_W) // 2, (h_win - _WX_H) // 2,
+                            _WX_W, _WX_H)
+        by = panel.bottom - _WX_PAD - _WX_BTN_H
+        bx_right = panel.right - _WX_PAD - _WX_BTN_W
+        self.btn_cancel.rect.update(bx_right, by, _WX_BTN_W, _WX_BTN_H)
+        self.btn_close.rect.update(bx_right, by, _WX_BTN_W, _WX_BTN_H)
+        self.btn_open.rect.update(bx_right - _WX_BTN_W - _WX_BTN_GAP, by,
+                                  _WX_BTN_W, _WX_BTN_H)
+        running = not self._done
+        self.btn_cancel.visible = running
+        self.btn_cancel.enabled = running and not self._cancel_requested
+        self.btn_close.visible = self._done
+        self.btn_open.visible = self._done and self.output_dir.exists()
+        return panel
+
+    def handle_event(self, editor, ev) -> bool:
+        self._layout(*editor.screen.get_size())
+        if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+            if self._done:
+                self._close(editor)
+            else:
+                self._request_cancel()
+            return True
+        self.group.handle_event(ev)
+        return True  # app-modal: consuma comunque l'input utente
+
+    def render(self, editor) -> None:
+        screen = editor.screen
+        w_win, h_win = screen.get_size()
+        panel = self._layout(w_win, h_win)
+
+        overlay = pygame.Surface((w_win, h_win), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, _WX_OVERLAY_ALPHA))
+        screen.blit(overlay, (0, 0))
+        _rect(screen, PANEL, panel, radius=8)
+        _rect(screen, BORDER, panel, 1, radius=8)
+
+        _draw_text(screen, f"Export HTML — {self.game_id}", "md", TXT_HI,
+                   panel.x + _WX_PAD, panel.y + _WX_PAD)
+
+        # Step corrente + percentuale (snapshot dei campi scritti dal thread)
+        step = self._step
+        frac = self._frac
+        step_y = panel.y + 56
+        _draw_text(screen, step[:_WX_STEP_MAX_CHARS], "sm", TXT,
+                   panel.x + _WX_PAD, step_y)
+        pct = f"{int(frac * 100)}%"
+        pct_w, _ = _text_wh(pct, "sm")
+        _draw_text(screen, pct, "sm", TXT_DIM,
+                   panel.right - _WX_PAD - pct_w, step_y)
+
+        # Barra di progresso determinata
+        bar = pygame.Rect(panel.x + _WX_PAD, step_y + 26,
+                          _WX_W - _WX_PAD * 2, _WX_BAR_H)
+        _rect(screen, (30, 32, 42), bar, radius=6)
+        if self._error:
+            bar_color = ERR_C
+        elif self._cancelled:
+            bar_color = WARN_C
+        elif self._done:
+            bar_color = OK_C
+        else:
+            bar_color = ACCENT
+        fill_w = int(round(bar.w * frac))
+        if fill_w > 0:
+            _rect(screen, bar_color, (bar.x, bar.y, fill_w, bar.h), radius=6)
+        _rect(screen, BORDER, bar, 1, radius=6)
+
+        # Ultimi messaggi (list() su deque: copia atomica sotto GIL)
+        log_y = bar.bottom + 14
+        _draw_text(screen, "LOG", "xs", TXT_DIM, panel.x + _WX_PAD, log_y)
+        y = log_y + _WX_LOG_LINE_H
+        for msg in list(self._log):
+            _draw_text(screen, msg[:_WX_LOG_MAX_CHARS], "xs", TXT_DIM,
+                       panel.x + _WX_PAD, y)
+            y += _WX_LOG_LINE_H
+
+        # Esito finale
+        if self._done:
+            if self._result and self._result.get("success"):
+                esito = (f"Completato: {self._result.get('levels', 0)} livelli, "
+                         f"{self._result.get('scenes', 0)} scene, "
+                         f"{self._result.get('objects', 0)} oggetti")
+                col = OK_C
+            elif self._cancelled:
+                esito, col = "Annullato dall'utente", WARN_C
+            else:
+                esito = f"Errore: {(self._error or '?')[:_WX_ERR_MAX_CHARS]}"
+                col = ERR_C
+            _draw_text(screen, esito, "sm", col, panel.x + _WX_PAD,
+                       panel.bottom - _WX_PAD - _WX_BTN_H - 28)
+
+        self.group.draw(screen)

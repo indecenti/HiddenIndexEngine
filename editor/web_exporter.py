@@ -24,9 +24,40 @@ import argparse
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable
 
 # Versione del runtime web (incrementare a modifiche significative di runtime.js).
 RUNTIME_VERSION = "1.0.0"
+
+
+class ExportCancelled(Exception):
+    """Export interrotto su richiesta dell'utente.
+
+    Viene sollevata dalla progress_cb fornita dal chiamante (es. il modale di
+    progresso dell'editor quando l'utente preme Annulla): export_web_game la
+    lascia propagare senza mascherarla, cosi' il chiamante distingue
+    l'annullamento volontario da un errore reale.
+    """
+
+
+# Frazioni di avanzamento (0..1) riportate a progress_cb alle tappe principali
+# dell'export. La copia delle scene (background, WebP, thumbnail, icone) e' la
+# parte piu' lunga: occupa l'intervallo [_PROG_SCENES_START, _PROG_SCENES_END].
+_PROG_START = 0.02
+_PROG_SCENES_START = 0.05
+_PROG_SCENES_END = 0.55
+_PROG_AUDIO = 0.60
+_PROG_MENU_MEDIA = 0.66
+_PROG_STRINGS = 0.70
+_PROG_MINIGAMES = 0.74
+_PROG_MANIFEST = 0.84
+_PROG_RUNTIME = 0.88
+_PROG_META = 0.96
+_PROG_DONE = 1.0
+# export_web_versioned: l'export vero occupa [0, _PROG_VERSIONED_SCALE], il
+# resto e' per landing/builds.json/catalogo.
+_PROG_VERSIONED_SCALE = 0.96
+_PROG_VERSIONED_POST = 0.98
 
 from PIL import Image
 
@@ -634,7 +665,20 @@ def _collect_strings(base: Path, game_id: str) -> tuple[dict, list[str]]:
 
 
 def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
-                    version: str | None = None) -> dict:
+                    version: str | None = None,
+                    progress_cb: Callable[[str, float], None] | None = None) -> dict:
+    """Esporta il gioco come sito statico.
+
+    progress_cb(messaggio_step, frazione 0..1), se fornita, viene chiamata alle
+    tappe principali (scene/asset, audio, minigiochi, manifest, runtime, ...).
+    Puo' sollevare ExportCancelled per interrompere l'export (l'eccezione
+    propaga al chiamante). Con progress_cb=None il comportamento e' identico
+    a prima.
+    """
+    def _progress(msg: str, frac: float) -> None:
+        if progress_cb is not None:
+            progress_cb(msg, frac)
+
     base = base or Path(__file__).resolve().parents[1]
     game_path = base / "games" / game_id
     if not game_path.exists():
@@ -643,6 +687,7 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
     game_config = _load_json(game_path / "game_config.json")
     version = version or game_config.get("version", "1.0")
     catalog = load_catalog(game_id)
+    _progress("Preparazione cartella di output", _PROG_START)
 
     output_dir = Path(output_dir)
     # Pulisce i contenuti senza rimuovere la cartella radice (potrebbe essere
@@ -709,6 +754,9 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
     levels_dir = game_path / "levels"
     level_dirs = sorted(p for p in levels_dir.iterdir() if p.is_dir()) if levels_dir.exists() else []
 
+    # Pre-pass: risolve le scene di ogni livello PRIMA del loop pesante, cosi'
+    # il totale scene e' noto e la progress bar per-scena e' determinata.
+    level_plans: list[tuple[Path, dict, list]] = []
     for level_dir in level_dirs:
         lvl_cfg_path = level_dir / "level_config.json"
         lvl_cfg = _load_json(lvl_cfg_path) if lvl_cfg_path.exists() else {"id": level_dir.name}
@@ -720,10 +768,22 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
         if not scene_entries:
             scene_entries = [{"id": p.name} for p in sorted(level_dir.iterdir())
                              if p.is_dir() and (p / "scene.json").exists()]
+        level_plans.append((level_dir, lvl_cfg, scene_entries))
 
+    total_scene_entries = sum(len(entries) for _, _, entries in level_plans) or 1
+    scenes_started = 0
+    _progress("Copia scene, background e icone", _PROG_SCENES_START)
+
+    for level_dir, lvl_cfg, scene_entries in level_plans:
         scenes_out = []
         for sc_entry in scene_entries:
             sid = sc_entry["id"]
+            scenes_started += 1
+            _progress(
+                f"Scena {level_dir.name}/{sid} ({scenes_started}/{total_scene_entries})",
+                _PROG_SCENES_START + (_PROG_SCENES_END - _PROG_SCENES_START)
+                * (scenes_started / total_scene_entries),
+            )
             scene_dir = level_dir / sid
             scene_json = scene_dir / "scene.json"
             if not scene_json.exists():
@@ -882,12 +942,14 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
         })
 
     # ── Audio: SFX globali + musica scene/menu (MP3 compresso) ──────────────
+    _progress("Esportazione audio (SFX e musiche)", _PROG_AUDIO)
     menu_cfg = game_config.get("menu", {})
     menu_music_list = menu_cfg.get("music", []) if isinstance(menu_cfg, dict) else []
     menu_music_ref = menu_music_list[0] if menu_music_list else None
     audio = _export_audio(base, game_id, output_dir, scene_music_refs, menu_music_ref)
 
     # Video di sfondo del menu (game_config menu.background, se .mp4/.webm/...)
+    _progress("Media del menu (video e poster)", _PROG_MENU_MEDIA)
     menu_video = None
     menu_bg = menu_cfg.get("background", "") if isinstance(menu_cfg, dict) else ""
     if menu_bg and _is_video(menu_bg):
@@ -917,11 +979,14 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
             track = sc.pop("music_track", None)
             sc["music"] = audio["music"].get(track) if track else None
 
+    _progress("Raccolta stringhe e lingue", _PROG_STRINGS)
     strings, languages = _collect_strings(base, game_id)
 
     # Minigiochi: copia asset + stringhe namespaced per-minigioco
+    _progress("Esportazione minigiochi", _PROG_MINIGAMES)
     minigames, mg_strings = _export_minigames(base, output_dir, triggered_minigames, languages)
 
+    _progress("Scrittura manifest", _PROG_MANIFEST)
     manifest = {
         "game_id": game_id,
         "title_key": game_config.get("title_key", game_id),
@@ -973,6 +1038,7 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
     og_web = (menu_poster or first_thumb or favicon_web or "")
 
     # index.html generato (meta completi) + style.css/runtime.js statici
+    _progress("Bundle runtime e pagine web", _PROG_RUNTIME)
     (output_dir / "index.html").write_text(
         _render_index_html(default_lang, title, desc, theme_color, favicon_web, og_web),
         encoding="utf-8")
@@ -999,6 +1065,7 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
     (output_dir / "avvia_server.bat").write_text(bat, encoding="utf-8")
 
     # Metadati di build (versionamento)
+    _progress("Metadati di build", _PROG_META)
     n_scenes_v = sum(len(l["scenes"]) for l in levels_out)
     version_info = {
         "game_id": game_id,
@@ -1022,6 +1089,7 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
           f"{len(copied_icons)} icone, {len(languages)} lingue")
     print(f"     Dimensione totale: {total_bytes/1024/1024:.1f} MB")
 
+    _progress("Export completato", _PROG_DONE)
     return {
         "success": True,
         "output_dir": str(output_dir),
@@ -1055,8 +1123,13 @@ def _next_web_version(game_id: str, root: Path, base: Path) -> str:
             return cand
 
 
-def export_web_versioned(game_id: str, base: Path | None = None, version: str | None = None) -> dict:
-    """Build versionato: build_web/<game>/v<X.Y>/ + index.html redirect a 'latest' + builds.json."""
+def export_web_versioned(game_id: str, base: Path | None = None, version: str | None = None,
+                         progress_cb: Callable[[str, float], None] | None = None) -> dict:
+    """Build versionato: build_web/<game>/v<X.Y>/ + index.html redirect a 'latest' + builds.json.
+
+    progress_cb viene propagata a export_web_game riscalata su
+    [0, _PROG_VERSIONED_SCALE]; il tratto finale copre landing e catalogo.
+    """
     base = base or Path(__file__).resolve().parents[1]
     root = base / "build_web" / game_id
     root.mkdir(parents=True, exist_ok=True)
@@ -1072,7 +1145,15 @@ def export_web_versioned(game_id: str, base: Path | None = None, version: str | 
 
     version = version or _next_web_version(game_id, root, base)
     out = root / f"v{version}"
-    result = export_web_game(game_id, out, base, version=version)
+
+    scaled_cb: Callable[[str, float], None] | None = None
+    if progress_cb is not None:
+        def scaled_cb(msg: str, frac: float) -> None:
+            progress_cb(msg, frac * _PROG_VERSIONED_SCALE)
+
+    result = export_web_game(game_id, out, base, version=version, progress_cb=scaled_cb)
+    if progress_cb is not None:
+        progress_cb("Landing, storico versioni e catalogo", _PROG_VERSIONED_POST)
     meta = result.get("meta", {})
     vdir = f"v{version}/"
     fav_root = (vdir + meta["favicon"]) if meta.get("favicon") else ""
@@ -1120,6 +1201,8 @@ def export_web_versioned(game_id: str, base: Path | None = None, version: str | 
     _update_catalog_index(root.parent, game_id, game_meta)
 
     print(f"     Versione: v{version}  (latest -> build_web/{game_id}/index.html)")
+    if progress_cb is not None:
+        progress_cb("Export completato", _PROG_DONE)
     result["version"] = version
     result["root"] = str(root)
     return result
