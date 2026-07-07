@@ -4,6 +4,9 @@ editor/mixins/newobj_modal.py
 NewObjModalMixin — dialogo creazione nuovo oggetto catalogo + musica: logica + rendering.
 """
 
+import logging
+import threading
+
 import pygame
 from pathlib import Path
 
@@ -14,9 +17,22 @@ from editor.constants import (
 from editor.core.io import (
     _load_json, _save_json, _load_catalog, _file_dialog,
 )
+from editor.mixins.batch_import import (
+    draw_checkbox, process_image, rembg_available,
+)
 from editor.ui.draw import (
     _txt, _draw_text, _rect, _button, _in_rect,
 )
+
+# Geometria dialogo: altezza estesa per la riga delle opzioni di elaborazione
+_DLG_W, _DLG_H = 500, 410
+# Offset verticali delle righe aggiunte (condivisi tra hit-test e rendering)
+_Y_PROC = 326   # checkbox "Rimuovi sfondo (AI)" / "Auto-ritaglio"
+_Y_BTNS = 364   # riga bottoni conferma/annulla
+_CB_H = 24      # altezza hitbox checkbox
+# Chiavi impostazioni persistite (.editor_settings.json)
+_SETTING_REMOVE_BG = "newobj_remove_bg"
+_SETTING_AUTOTRIM = "newobj_autotrim"
 
 
 class NewObjModalMixin:
@@ -27,15 +43,31 @@ class NewObjModalMixin:
     # ─────────────────────────────────────────────────────────────────────────
 
     def _newobj_open(self):
+        settings = self._load_editor_settings()
         self._newobj = {
             "id": "", "icon_path": "", "detection": "circle",
             "radius": 30, "width": 60, "height": 60, "hint": 30,
+            # Preferenze di elaborazione icona, persistite tra sessioni
+            "remove_bg": bool(settings.get(_SETTING_REMOVE_BG, False)),
+            "autotrim":  bool(settings.get(_SETTING_AUTOTRIM, False)),
         }
         self._newobj_field = "id"
         self._newobj_buf   = ""
+        # Elaborazione (rembg/trim) in thread: stato busy + handoff risultato
+        self._newobj_busy = False
+        self._newobj_proc_result = None  # (token, bytes RGBA, (w, h)) dal worker
+        self._newobj_proc_error  = None  # (token, messaggio) dal worker
+        self._newobj_proc_token  = getattr(self, "_newobj_proc_token", 0) + 1
+        self._newobj_pending     = None  # (dest, icon_rel) in attesa del worker
         self._newobj_modal = True
 
     def _newobj_key(self, ev):
+        if getattr(self, "_newobj_busy", False):
+            # Durante l'elaborazione solo ESC: annulla (scarta il risultato) e chiude
+            if ev.key == pygame.K_ESCAPE:
+                self._newobj_cancel_processing()
+                self._newobj_modal = False
+            return
         field = self._newobj_field
         if ev.key == pygame.K_ESCAPE:
             self._newobj_modal = False; return
@@ -68,10 +100,22 @@ class NewObjModalMixin:
         self._newobj_buf = ""
 
     def _newobj_click(self, mx, my_raw, w, h):
-        dw, dh = 500, 400
+        dw, dh = _DLG_W, _DLG_H
         dx, dy = (w-dw)//2, (h-dh)//2
 
-        if _in_rect((mx, my_raw), (dx+dw-36, dy+8, 26, 22)):
+        half     = (dw-20)//2-5
+        y_btns   = dy + _Y_BTNS
+        close_r  = (dx+dw-36, dy+8, 26, 22)
+        cancel_r = (dx+10+half+10, y_btns, half, 34)
+
+        if getattr(self, "_newobj_busy", False):
+            # Durante l'elaborazione: solo X/Annulla (scartano il risultato)
+            if _in_rect((mx, my_raw), close_r) or _in_rect((mx, my_raw), cancel_r):
+                self._newobj_cancel_processing()
+                self._newobj_modal = False
+            return
+
+        if _in_rect((mx, my_raw), close_r):
             self._newobj_modal = False; return
 
         y_id     = dy + 54
@@ -81,7 +125,7 @@ class NewObjModalMixin:
         y_width  = dy + 218
         y_height = dy + 254
         y_hint   = dy + 290
-        y_btns   = dy + 334
+        y_proc   = dy + _Y_PROC
 
         if _in_rect((mx, my_raw), (dx+160, y_id, dw-172, 26)):
             self._newobj_commit_field()
@@ -111,34 +155,56 @@ class NewObjModalMixin:
                 self._newobj_buf   = str(self._newobj.get(fname, ""))
                 return
 
-        half = (dw-20)//2-5
+        # Toggle elaborazione icona (persistiti in .editor_settings.json)
+        cb_w = (dw - 30) // 2
+        if _in_rect((mx, my_raw), (dx+10, y_proc, cb_w, _CB_H)):
+            self._newobj["remove_bg"] = not self._newobj.get("remove_bg", False)
+            self._save_editor_setting(_SETTING_REMOVE_BG, self._newobj["remove_bg"])
+            return
+        if _in_rect((mx, my_raw), (dx+20+cb_w, y_proc, cb_w, _CB_H)):
+            self._newobj["autotrim"] = not self._newobj.get("autotrim", False)
+            self._save_editor_setting(_SETTING_AUTOTRIM, self._newobj["autotrim"])
+            return
+
         if _in_rect((mx, my_raw), (dx+10, y_btns, half, 34)):
             self._newobj_commit_field()
             self._confirm_newobj(); return
-        if _in_rect((mx, my_raw), (dx+10+half+10, y_btns, half, 34)):
+        if _in_rect((mx, my_raw), cancel_r):
             self._newobj_modal = False; return
 
     def _confirm_newobj(self):
         import shutil
         obj = self._newobj
         oid = obj["id"].strip()
+        if getattr(self, "_newobj_busy", False):
+            return
         if not oid:
             self._status("Inserisci un ID oggetto", WARN_C, 3); return
         if any(c["id"] == oid for c in self.catalog):
             self._status(f"ID '{oid}' già presente nel catalogo", ERR_C, 3); return
 
-        icon_rel = ""
         src = Path(obj["icon_path"]) if obj["icon_path"] else None
-        if src and src.exists():
-            dest_name = f"{oid}_icon{src.suffix}"
-            dest = self.game_path / "objects" / dest_name
-            (self.game_path / "objects").mkdir(exist_ok=True)
-            shutil.copy2(str(src), str(dest))
-            icon_rel = f"objects/{dest_name}"
-        else:
+        if not (src and src.exists()):
             self._status("Seleziona un'icona PNG", WARN_C, 3); return
 
-        det   = obj["detection"]
+        (self.game_path / "objects").mkdir(exist_ok=True)
+        if obj.get("remove_bg") or obj.get("autotrim"):
+            # Icona rielaborata in thread: salvata sempre come PNG (alpha)
+            dest_name = f"{oid}_icon.png"
+            self._newobj_start_processing(
+                src, self.game_path / "objects" / dest_name,
+                f"objects/{dest_name}")
+            return
+
+        dest_name = f"{oid}_icon{src.suffix}"
+        shutil.copy2(str(src), str(self.game_path / "objects" / dest_name))
+        self._newobj_register(f"objects/{dest_name}")
+
+    def _newobj_register(self, icon_rel: str):
+        """Registra l'entry nel catalogo locale, ricarica e chiude il modale."""
+        obj = self._newobj
+        oid = obj["id"].strip()
+        det = obj["detection"]
         entry = {
             "id": oid, "label_key": f"obj_{oid}", "icon": icon_rel,
             "default_detection": det, "default_hint_delay": obj["hint"], "tags": [],
@@ -161,6 +227,75 @@ class NewObjModalMixin:
                 self._lang_data.setdefault(lang, {}).setdefault(f"obj_{oid}", "")
 
     # ─────────────────────────────────────────────────────────────────────────
+    # ELABORAZIONE ICONA (rembg / auto-ritaglio in thread)
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def _newobj_start_processing(self, src: Path, dest: Path, icon_rel: str):
+        """
+        Avvia rimozione sfondo AI e/o auto-ritaglio in un thread separato
+        (pattern img_editor: il worker tocca solo dati locali, il risultato
+        e' applicato nel loop principale da _newobj_poll).
+        """
+        obj = self._newobj
+        if obj.get("remove_bg") and not rembg_available():
+            self._status("rembg non installato: disattiva 'Rimuovi sfondo (AI)'",
+                         WARN_C, 4)
+            return
+        token = self._newobj_proc_token
+        self._newobj_busy = True
+        self._newobj_pending = (dest, icon_rel)
+        self._newobj_proc_result = None
+        self._newobj_proc_error = None
+        self._status("Elaborazione icona in corso...", ACCENT, 2)
+        remove_bg = bool(obj.get("remove_bg"))
+        autotrim = bool(obj.get("autotrim"))
+
+        def worker() -> None:
+            try:
+                surf = process_image(src, remove_bg, autotrim)
+                raw = pygame.image.tobytes(surf, "RGBA")
+                self._newobj_proc_result = (token, raw, surf.get_size())
+            except Exception as exc:
+                logging.error(f"[NEWOBJ] Elaborazione icona fallita: {exc}")
+                self._newobj_proc_error = (token, str(exc))
+
+        threading.Thread(target=worker, daemon=True, name="newobj_process").start()
+
+    def _newobj_cancel_processing(self):
+        """Invalida l'elaborazione in corso: il risultato del worker e' scartato."""
+        self._newobj_proc_token += 1
+        self._newobj_busy = False
+        self._newobj_pending = None
+
+    def _newobj_poll(self):
+        """
+        Applica nel loop principale (render) il risultato del worker.
+        I risultati con token diverso appartengono a sessioni chiuse: scartati.
+        """
+        err = getattr(self, "_newobj_proc_error", None)
+        if err is not None:
+            self._newobj_proc_error = None
+            if err[0] == self._newobj_proc_token:
+                self._newobj_busy = False
+                self._newobj_pending = None
+                self._status(f"Errore elaborazione: {err[1]}", ERR_C, 4)
+            return
+        res = getattr(self, "_newobj_proc_result", None)
+        if res is None:
+            return
+        self._newobj_proc_result = None
+        token, raw, size = res
+        if token != self._newobj_proc_token or not self._newobj_pending:
+            return  # Elaborazione annullata o di una sessione precedente
+        self._newobj_busy = False
+        dest, icon_rel = self._newobj_pending
+        self._newobj_pending = None
+        surf = pygame.image.frombytes(raw, size, "RGBA")
+        dest.parent.mkdir(exist_ok=True)
+        pygame.image.save(surf, str(dest))
+        self._newobj_register(icon_rel)
+
+    # ─────────────────────────────────────────────────────────────────────────
     # MUSICA
     # ─────────────────────────────────────────────────────────────────────────
 
@@ -175,12 +310,18 @@ class NewObjModalMixin:
     # ─────────────────────────────────────────────────────────────────────────
 
     def _r_newobj_modal(self, w, h):
+        # Applica l'eventuale risultato del worker di elaborazione (main loop)
+        self._newobj_poll()
+        if not self._newobj_modal:
+            return  # il poll puo' aver registrato l'oggetto e chiuso il modale
+
         dim = pygame.Surface((w, h), pygame.SRCALPHA)
         dim.fill((0, 0, 0, 160))
         self.screen.blit(dim, (0, 0))
 
-        dw, dh = 500, 400
+        dw, dh = _DLG_W, _DLG_H
         dx, dy = (w-dw)//2, (h-dh)//2
+        busy = getattr(self, "_newobj_busy", False)
 
         box = pygame.Rect(dx, dy, dw, dh)
         _rect(self.screen, (42, 42, 52), box, radius=8)
@@ -188,6 +329,9 @@ class NewObjModalMixin:
 
         title = _txt("+ Nuovo Oggetto Catalogo", "lg", TXT_HI)
         self.screen.blit(title, (dx + 12, dy + 10))
+        if busy:
+            s = _txt("Elaborazione in corso...", "sm", ACCENT)
+            self.screen.blit(s, (dx + dw - s.get_width() - 44, dy + 14))
 
         mx2, my2 = pygame.mouse.get_pos()
         xr = pygame.Rect(dx + dw - 36, dy + 8, 26, 22)
@@ -235,13 +379,25 @@ class NewObjModalMixin:
         self._r_newobj_field(dx, y, dw, "Hint delay (s):", "hint",
                              str(self._newobj["hint"]));                         y += 36
 
+        # Opzioni di elaborazione icona (persistite tra sessioni)
+        cb_w = (dw - 30) // 2
+        draw_checkbox(self.screen, pygame.Rect(dx + 10, y, cb_w, _CB_H),
+                      "Rimuovi sfondo (AI)", self._newobj.get("remove_bg", False),
+                      enabled=not busy)
+        draw_checkbox(self.screen, pygame.Rect(dx + 20 + cb_w, y, cb_w, _CB_H),
+                      "Auto-ritaglio", self._newobj.get("autotrim", False),
+                      enabled=not busy)
+        y += 30
+
         pygame.draw.line(self.screen, BORDER, (dx, y), (dx + dw, y))
         y += 8
         half   = (dw - 20) // 2 - 5
         add_r  = pygame.Rect(dx + 10,             y, half, 34)
         ann_r  = pygame.Rect(dx + 10 + half + 10, y, half, 34)
-        can_add = bool(self._newobj["id"].strip() and self._newobj["icon_path"])
-        _button(self.screen, add_r, "+ Aggiungi al catalogo",
+        can_add = bool(self._newobj["id"].strip() and self._newobj["icon_path"]
+                       and not busy)
+        add_label = "Elaborazione..." if busy else "+ Aggiungi al catalogo"
+        _button(self.screen, add_r, add_label,
                 _in_rect((mx2, my2), add_r), active=can_add)
         _button(self.screen, ann_r, "Annulla",
                 _in_rect((mx2, my2), ann_r), danger=True)

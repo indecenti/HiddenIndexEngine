@@ -95,6 +95,7 @@ from editor.mixins.auditor    import AuditorMixin
 from editor.mixins.scatter_modal import ScatterModalMixin
 from editor.mixins.scene_stats import SceneStatsMixin
 from editor.mixins.presets import PresetsMixin
+from editor.mixins.batch_import import BatchImportMixin
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -124,6 +125,7 @@ class LevelEditor(
     ScatterModalMixin,
     SceneStatsMixin,
     PresetsMixin,
+    BatchImportMixin,
 ):
     """
     Editor di livelli HiddenEngine.

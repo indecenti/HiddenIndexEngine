@@ -2439,6 +2439,10 @@ class InputHandlersMixin:
         elif cmd == "file_scene_stats":
             self._stats_open()
 
+        # IMPORT BATCH OGGETTI
+        elif cmd == "file_batch_import":
+            self._batch_import_open()
+
         # AUDITOR
         elif cmd == "file_auditor":
             game_id = ""

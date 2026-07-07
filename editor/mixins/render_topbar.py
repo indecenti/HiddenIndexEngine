@@ -98,6 +98,7 @@ class RenderTopbarMixin:
                 None,
                 (l.get("menu_auditor", "Auditor Progetto..."), "file_auditor"),
                 (l.get("menu_scene_stats", "Statistiche Scena..."), "file_scene_stats"),
+                (l.get("menu_batch_import", "Import Batch Oggetti..."), "file_batch_import"),
                 None,
                 (l.get("menu_exit_to_gs", "Torna al Selettore"), "file_exit_to_gs"),
                 (l.get("menu_quit", "Esci"), "file_quit"),
