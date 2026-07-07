@@ -388,7 +388,9 @@ class TestEdgesCritical:
     """Test boundary conditions and edge cases."""
 
     def test_zero_radius_circle(self):
-        """Circle with radius 0 is a point."""
+        """Circle con raggio 0: il detector clampa i semiassi degeneri a 1px
+        (click_detector rx/ry <= 0 -> 1.0, identico al runtime web core.js),
+        quindi il punto resta cliccabile entro 1px dal centro."""
         detector = ClickDetector(ScalingManager())
         obj = SceneObject(
             instance_id="point",
@@ -402,9 +404,11 @@ class TestEdgesCritical:
         )
         obj.is_goal = True
 
-        # Only hits at exact center
         assert detector._hit_circle(obj, 640.0, 360.0) is True
-        assert detector._hit_circle(obj, 640.1, 360.0) is False
+        # Entro il clamp di 1px: colpito
+        assert detector._hit_circle(obj, 640.1, 360.0) is True
+        # Oltre il clamp: mancato
+        assert detector._hit_circle(obj, 641.5, 360.0) is False
 
     def test_tiny_rect(self):
         """Rect with minimal dimensions."""
