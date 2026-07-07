@@ -3,7 +3,8 @@ editor/mixins/img_editor.py
 
 ImgEditorMixin — Editor di immagini professionale per gli oggetti del catalogo.
 Include: gomma, ripristina, magic wand, chroma destroyer, zoom/pan,
-trim evoluto, ritaglio manuale con maniglie e undo/redo.
+trim evoluto, ritaglio manuale con maniglie, undo/redo, rimozione sfondo AI
+(rembg), ridimensionamento numerico, filtri colore e contorno silhouette.
 """
 
 import pygame
@@ -12,13 +13,19 @@ import math
 import copy
 import json
 import hashlib
+import threading
 from pathlib import Path
 from editor.constants import (
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC, PANEL,
     TXT, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C,
 )
-from editor.ui.draw import _txt, _draw_text, _rect, _button, _in_rect, _slider
-from editor.mixins.img_editor_logic import evolved_trim, brush_power_map, restore_stamp
+from editor.ui.draw import (
+    _txt, _draw_text, _rect, _button, _in_rect, _slider, _input_box, _text_wh,
+)
+from editor.mixins.img_editor_logic import (
+    evolved_trim, brush_power_map, restore_stamp,
+    apply_color_adjust_surface, outline_ring, aspect_resize_dims,
+)
 
 # Costanti Studio Asset
 UNDO_STACK_CAP = 20              # Profondita' massima di undo e redo
@@ -29,6 +36,17 @@ CROP_HANDLE_HIT = 22             # Lato dell'area cliccabile delle maniglie
 CROP_MIN_KEEP = 1                # Pixel minimi che il ritaglio deve lasciare
 CROP_OVERLAY_ALPHA = 150         # Opacita' dell'overlay sulle zone escluse
 CROP_HANDLE_FILL = (25, 25, 30)  # Riempimento maniglie (sfondo modal)
+SIDEBAR_W = 480                  # Larghezza sidebar strumenti (3 colonne)
+COL3_X_OFF = 320                 # Offset X della colonna 3 dentro la sidebar
+FILTER_MIN = -100                # Estremo inferiore slider filtri colore
+FILTER_MAX = 100                 # Estremo superiore slider filtri colore
+OUTLINE_MIN_PX = 1               # Spessore minimo del contorno
+OUTLINE_MAX_PX = 8               # Spessore massimo del contorno
+OUTLINE_DEFAULT_PX = 2           # Spessore contorno di default
+OUTLINE_COLORS = {"white": (255, 255, 255), "black": (0, 0, 0)}
+RESIZE_FIELD_MAX_CHARS = 4       # Cifre massime nei campi W/H
+BUSY_OVERLAY_ALPHA = 130         # Opacita' overlay canvas durante l'AI
+BUSY_DOT_MS = 350                # Periodo animazione puntini "Elaborazione"
 
 
 class ImgEditorMixin:
@@ -63,7 +81,22 @@ class ImgEditorMixin:
         self._img_editor_save_confirm = False
         self._img_editor_copy_confirm = False
         self._img_editor_exit_confirm = False
-        self._img_editor_bg_mode = "check" 
+        self._img_editor_bg_mode = "check"
+        # Rimozione sfondo AI (rembg) in thread separato
+        self._img_editor_busy = False
+        self._img_editor_ai_result = None   # (token, bytes RGBA, (w, h)) dal worker
+        self._img_editor_ai_error = None    # (token, messaggio) dal worker
+        self._img_editor_ai_token = 0       # Scarta risultati di sessioni precedenti
+        # Ridimensionamento numerico (campi W/H con aspect ratio bloccato)
+        self._img_editor_resize_edit = False
+        self._img_editor_resize_w = ""
+        self._img_editor_resize_h = ""
+        self._img_editor_resize_focus = "w"
+        # Filtri colore in anteprima live (b/c/s in -100..+100)
+        self._img_editor_filters = {"b": 0, "c": 0, "s": 0}
+        # Contorno silhouette
+        self._img_editor_outline_px = OUTLINE_DEFAULT_PX
+        self._img_editor_outline_color = "white"
         self._img_editor_icons = {}
         self._img_editor_load_assets()
 
@@ -157,8 +190,15 @@ class ImgEditorMixin:
             self._img_editor_save_confirm = False
             self._img_editor_copy_confirm = False
             self._img_editor_exit_confirm = False
+            # Reset stato AI / resize / filtri della sessione precedente
+            self._img_editor_busy = False
+            self._img_editor_ai_result = None
+            self._img_editor_ai_error = None
+            self._img_editor_ai_token += 1
+            self._img_editor_resize_edit = False
+            self._img_editor_filters = {"b": 0, "c": 0, "s": 0}
             # Forza Auto-Fit al primo frame
-            self._img_editor_zoom = 0.0 
+            self._img_editor_zoom = 0.0
             self._img_editor_pan = [0, 0]
             self._status(f"Editor Immagine: {cat_id}", ACCENT, 2)
         except Exception as e:
@@ -314,6 +354,15 @@ class ImgEditorMixin:
         if not self._img_editor_active: return
         
         if ev.type == pygame.KEYDOWN:
+            # Editing campi W/H: la tastiera e' catturata dal mini-prompt
+            if self._img_editor_resize_edit:
+                self._img_editor_resize_keydown(ev)
+                return
+            # Elaborazione AI in corso: accettiamo solo l'uscita dal modale
+            if self._img_editor_busy:
+                if ev.key == pygame.K_ESCAPE:
+                    self._img_editor_active = False
+                return
             mods = pygame.key.get_mods()
             if ev.key == pygame.K_ESCAPE:
                 # In modalita' ritaglio, Esc annulla il ritaglio senza chiudere
@@ -385,8 +434,8 @@ class ImgEditorMixin:
 
     def _img_editor_get_img_layout(self, ew, eh, ex, ey):
         iw, ih = self._img_editor_view_surf.get_size()
-        # Responsive: Sidebar compatta (320), resto alla tela
-        sb_w = 320
+        # Responsive: sidebar a 3 colonne, resto alla tela
+        sb_w = SIDEBAR_W
         work_w = ew - sb_w - 60
         work_h = eh - 150
         
@@ -417,7 +466,7 @@ class ImgEditorMixin:
         ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
 
         reset_confirm = True
-        sb_w = 320
+        sb_w = SIDEBAR_W
         sb_x = ex + ew - sb_w - 15
         # ALLINEATO al render: col1_x = sb_x + 10, col2_x = sb_x + 165
         col1_x = sb_x + 10
@@ -438,6 +487,26 @@ class ImgEditorMixin:
             modes = ["check", "black", "white"]
             self._img_editor_bg_mode = modes[(modes.index(self._img_editor_bg_mode) + 1) % 3]
             return
+
+        # Elaborazione AI in corso: input bloccato, e' consentita solo l'uscita
+        # (il risultato del thread verra' scartato tramite il token di sessione)
+        if self._img_editor_busy:
+            if _in_rect((mx, my), fb_rects[2]):
+                if self._img_editor_dirty and not self._img_editor_exit_confirm:
+                    self._img_editor_exit_confirm = True
+                else:
+                    self._img_editor_active = False
+            return
+
+        # Editing W/H attivo: un click fuori dai campi/bottone chiude il prompt
+        # e viene consumato (evita pennellate accidentali sul canvas)
+        if self._img_editor_resize_edit:
+            r3 = self._img_editor_col3_rects(ex, ey, sb_x)
+            on_prompt = (_in_rect((mx, my), r3["dim_w"]) or _in_rect((mx, my), r3["dim_h"])
+                         or _in_rect((mx, my), r3["dim_btn"]))
+            if not on_prompt:
+                self._img_editor_resize_edit = False
+                return
 
         # Determina se il click cade su un elemento UI (sidebar / header / footer)
         is_ui = (mx > sb_x) or (my < ey + 60) or (my >= fy - 5)
@@ -559,6 +628,38 @@ class ImgEditorMixin:
         if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 38)):
             if self._img_editor_crop_mode: self._img_editor_apply_crop()
             return
+
+        # ---------- COLONNA 3: AI / DIMENSIONE / FILTRI / CONTORNO ----------
+        # Geometria condivisa con il render tramite _img_editor_col3_rects
+        r3 = self._img_editor_col3_rects(ex, ey, sb_x)
+        if _in_rect((mx, my), r3["ai"]):
+            self._img_editor_start_remove_bg(); return
+        if self._img_editor_resize_edit:
+            if _in_rect((mx, my), r3["dim_w"]):
+                self._img_editor_resize_focus = "w"; return
+            if _in_rect((mx, my), r3["dim_h"]):
+                self._img_editor_resize_focus = "h"; return
+        if _in_rect((mx, my), r3["dim_btn"]):
+            if self._img_editor_resize_edit: self._img_editor_resize_apply()
+            else: self._img_editor_resize_begin()
+            return
+        for f_key in ("sl_filt_b", "sl_filt_c", "sl_filt_s"):
+            if _in_rect((mx, my), r3[f_key]):
+                self._img_editor_dragging = f_key
+                self._img_editor_filter_from_mouse(f_key, mx, r3[f_key])
+                return
+        if _in_rect((mx, my), r3["filt_apply"]):
+            self._img_editor_apply_filters(); return
+        if _in_rect((mx, my), r3["sl_outline"]):
+            self._img_editor_dragging = "sl_outline"
+            self._img_editor_outline_from_mouse(mx, r3["sl_outline"])
+            return
+        if _in_rect((mx, my), r3["out_white"]):
+            self._img_editor_outline_color = "white"; return
+        if _in_rect((mx, my), r3["out_black"]):
+            self._img_editor_outline_color = "black"; return
+        if _in_rect((mx, my), r3["out_apply"]):
+            self._img_editor_apply_outline(); return
 
         if reset_confirm:
             self._img_editor_save_confirm = False
@@ -761,9 +862,208 @@ class ImgEditorMixin:
             self._img_editor_dirty = True; self._status("Bordi Ammorbiditi", OK_C, 2)
         except Exception: self._status("Smooth non disponibile", WARN_C, 2)
 
+    def _img_editor_col3_rects(self, ex: int, ey: int, sb_x: int) -> dict[str, pygame.Rect]:
+        """
+        Geometria della colonna 3 della sidebar (AI, dimensione, filtri,
+        contorno). Sorgente unica condivisa da click, drag e render: ogni
+        controllo nuovo va aggiunto SOLO qui.
+        """
+        col3_x = sb_x + COL3_X_OFF
+        sl_w = 145
+        bw2 = (sl_w // 2) - 3
+        return {
+            # SFONDO AI
+            "ai": pygame.Rect(col3_x, ey + 85, sl_w, 40),
+            # DIMENSIONE: campi W/H (solo in edit) + bottone
+            "dim_w": pygame.Rect(col3_x, ey + 160, bw2, 32),
+            "dim_h": pygame.Rect(col3_x + bw2 + 6, ey + 160, bw2, 32),
+            "dim_btn": pygame.Rect(col3_x, ey + 200, sl_w, 36),
+            # FILTRI: 3 slider + applica
+            "sl_filt_b": pygame.Rect(col3_x, ey + 292, sl_w, 18),
+            "sl_filt_c": pygame.Rect(col3_x, ey + 334, sl_w, 18),
+            "sl_filt_s": pygame.Rect(col3_x, ey + 376, sl_w, 18),
+            "filt_apply": pygame.Rect(col3_x, ey + 404, sl_w, 34),
+            # CONTORNO: spessore + colore + applica
+            "sl_outline": pygame.Rect(col3_x, ey + 486, sl_w, 18),
+            "out_white": pygame.Rect(col3_x, ey + 514, bw2, 30),
+            "out_black": pygame.Rect(col3_x + bw2 + 6, ey + 514, bw2, 30),
+            "out_apply": pygame.Rect(col3_x, ey + 550, sl_w, 34),
+        }
+
+    def _img_editor_start_remove_bg(self) -> None:
+        """
+        Avvia la rimozione sfondo AI (rembg, policy di progetto: vedi
+        docs/assets/IMAGE_PROCESSING_GUIDELINES.md) in un thread separato.
+        Il primo uso puo' scaricare i pesi U2-Net: il modale mostra lo stato
+        di busy e il risultato viene applicato nel loop principale.
+        """
+        if self._img_editor_busy:
+            return
+        try:
+            import rembg  # Lazy: dipendenza opzionale, non nei requirements
+        except ImportError:
+            self._status("rembg non installato", WARN_C, 3)
+            return
+        try:
+            from PIL import Image  # Lazy: arriva con rembg ma verifichiamo
+        except ImportError:
+            self._status("Pillow non installato", WARN_C, 3)
+            return
+
+        raw = pygame.image.tobytes(self._img_editor_view_surf, "RGBA")
+        size = self._img_editor_view_surf.get_size()
+        token = self._img_editor_ai_token
+        self._img_editor_busy = True
+        self._img_editor_ai_result = None
+        self._img_editor_ai_error = None
+        self._status("Rimozione sfondo AI in corso...", ACCENT, 2)
+
+        def worker() -> None:
+            # Nel worker si toccano solo bytes: niente Surface fuori dal main loop
+            try:
+                pil_img = Image.frombytes("RGBA", size, raw)
+                out = rembg.remove(pil_img).convert("RGBA")
+                self._img_editor_ai_result = (token, out.tobytes(), out.size)
+            except Exception as exc:
+                logging.error(f"[IMG_EDITOR] rembg fallito: {exc}")
+                self._img_editor_ai_error = (token, str(exc))
+
+        threading.Thread(target=worker, daemon=True, name="img_editor_rembg").start()
+
+    def _img_editor_poll_ai(self) -> None:
+        """
+        Applica nel loop principale (render) il risultato del thread rembg.
+        I risultati con token diverso appartengono a sessioni chiuse: scartati.
+        """
+        err = self._img_editor_ai_error
+        if err is not None:
+            self._img_editor_ai_error = None
+            if err[0] == self._img_editor_ai_token:
+                self._img_editor_busy = False
+                self._status(f"Errore rembg: {err[1]}", ERR_C, 4)
+            return
+        res = self._img_editor_ai_result
+        if res is None:
+            return
+        self._img_editor_ai_result = None
+        token, raw, size = res
+        if token != self._img_editor_ai_token:
+            return  # Risultato di una sessione precedente
+        self._img_editor_busy = False
+        new_surf = pygame.image.frombuffer(raw, size, "RGBA").convert_alpha()
+        self._img_editor_push_undo()
+        self._img_editor_view_surf = new_surf
+        self._img_editor_dirty = True
+        self._status("Sfondo rimosso (AI)", OK_C, 2)
+
+    def _img_editor_resize_begin(self) -> None:
+        """Apre il mini-prompt inline W/H precompilato con le dimensioni attuali."""
+        w, h = self._img_editor_view_surf.get_size()
+        self._img_editor_resize_edit = True
+        self._img_editor_resize_w = str(w)
+        self._img_editor_resize_h = str(h)
+        self._img_editor_resize_focus = "w"
+
+    def _img_editor_resize_sync(self, edited: str) -> None:
+        """Ricalcola il campo complementare mantenendo l'aspect ratio."""
+        w, h = self._img_editor_view_surf.get_size()
+        src = self._img_editor_resize_w if edited == "w" else self._img_editor_resize_h
+        if not src.isdigit():
+            return
+        if edited == "w":
+            _, new_h = aspect_resize_dims(w, h, target_w=int(src))
+            self._img_editor_resize_h = str(new_h)
+        else:
+            new_w, _ = aspect_resize_dims(w, h, target_h=int(src))
+            self._img_editor_resize_w = str(new_w)
+
+    def _img_editor_resize_keydown(self, ev: pygame.event.Event) -> None:
+        """Editing da tastiera dei campi W/H: cifre, Backspace, Tab, Invio, Esc."""
+        focus = self._img_editor_resize_focus
+        attr = "_img_editor_resize_w" if focus == "w" else "_img_editor_resize_h"
+        cur = getattr(self, attr)
+        if ev.key == pygame.K_ESCAPE:
+            self._img_editor_resize_edit = False
+        elif ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            self._img_editor_resize_apply()
+        elif ev.key == pygame.K_TAB:
+            self._img_editor_resize_focus = "h" if focus == "w" else "w"
+        elif ev.key == pygame.K_BACKSPACE:
+            setattr(self, attr, cur[:-1])
+            self._img_editor_resize_sync(focus)
+        elif ev.unicode.isdigit() and len(cur) < RESIZE_FIELD_MAX_CHARS:
+            setattr(self, attr, cur + ev.unicode)
+            self._img_editor_resize_sync(focus)
+
+    def _img_editor_resize_apply(self) -> None:
+        """Applica il ridimensionamento numerico mantenendo l'aspect ratio."""
+        w, h = self._img_editor_view_surf.get_size()
+        if self._img_editor_resize_w.isdigit():
+            new_w, new_h = aspect_resize_dims(w, h, target_w=int(self._img_editor_resize_w))
+        elif self._img_editor_resize_h.isdigit():
+            new_w, new_h = aspect_resize_dims(w, h, target_h=int(self._img_editor_resize_h))
+        else:
+            self._status("Dimensione non valida", WARN_C, 2)
+            return
+        self._img_editor_resize_edit = False
+        if (new_w, new_h) == (w, h):
+            return
+        self._img_editor_push_undo()
+        self._img_editor_view_surf = pygame.transform.smoothscale(
+            self._img_editor_view_surf, (new_w, new_h))
+        # Il crop pendente non e' piu' riferibile ai nuovi pixel
+        self._img_editor_crop = {"l": 0, "r": 0, "t": 0, "b": 0}
+        self._img_editor_dirty = True
+        self._img_editor_sync_orig_surf()
+        self._status(f"Ridimensionato: {new_w}x{new_h}", OK_C, 2)
+
+    def _img_editor_filter_from_mouse(self, key: str, mx: int, sl_rect: pygame.Rect) -> None:
+        """Aggiorna il filtro colore associato allo slider (key = sl_filt_b/c/s)."""
+        ratio = max(0.0, min(1.0, (mx - sl_rect.x) / sl_rect.w))
+        val = int(round(FILTER_MIN + ratio * (FILTER_MAX - FILTER_MIN)))
+        self._img_editor_filters[key.rsplit("_", 1)[1]] = val
+
+    def _img_editor_outline_from_mouse(self, mx: int, sl_rect: pygame.Rect) -> None:
+        """Aggiorna lo spessore del contorno dallo slider dedicato."""
+        ratio = max(0.0, min(1.0, (mx - sl_rect.x) / sl_rect.w))
+        self._img_editor_outline_px = int(
+            round(OUTLINE_MIN_PX + ratio * (OUTLINE_MAX_PX - OUTLINE_MIN_PX)))
+
+    def _img_editor_apply_filters(self) -> None:
+        """Rende permanenti i filtri colore in anteprima e azzera gli slider."""
+        filt = self._img_editor_filters
+        if not (filt["b"] or filt["c"] or filt["s"]):
+            self._status("Filtri a zero: nulla da applicare", WARN_C, 2)
+            return
+        self._img_editor_push_undo()
+        apply_color_adjust_surface(
+            self._img_editor_view_surf, filt["b"], filt["c"], filt["s"])
+        self._img_editor_filters = {"b": 0, "c": 0, "s": 0}
+        self._img_editor_dirty = True
+        self._status("Filtri applicati", OK_C, 2)
+
+    def _img_editor_apply_outline(self) -> None:
+        """Aggiunge un contorno uniforme attorno alla silhouette alpha."""
+        surf = self._img_editor_view_surf
+        alpha = pygame.surfarray.array_alpha(surf)
+        ring = outline_ring(alpha, self._img_editor_outline_px)
+        if not ring.any():
+            self._status("Nessuna silhouette da contornare", WARN_C, 2)
+            return
+        self._img_editor_push_undo()
+        color = OUTLINE_COLORS[self._img_editor_outline_color]
+        rgb = pygame.surfarray.pixels3d(surf)
+        rgb[ring] = color
+        del rgb
+        alpha_px = pygame.surfarray.pixels_alpha(surf)
+        alpha_px[ring] = 255
+        del alpha_px
+        self._img_editor_dirty = True
+        self._status(f"Contorno {self._img_editor_outline_px}px applicato", OK_C, 2)
+
     def _img_editor_drag(self, mx, my):
         ex, ey, ew, eh = self._img_editor_get_modal_rect()
-        sb_w = 320
+        sb_w = SIDEBAR_W
         sb_x = ex + ew - sb_w - 15
         col1_x = sb_x + 10  # ALLINEATO al render
         sl_w = 145
@@ -786,9 +1086,13 @@ class ImgEditorMixin:
             self._img_editor_wand_feather = int(max(0, min(1, (mx - col1_x) / sl_w)) * 32)
         elif self._img_editor_dragging == "sl_chroma":
             self._img_editor_chroma_intensity = 0.5 + max(0, min(1, (mx - col1_x) / sl_w)) * 3.5
-
-
-
+        elif self._img_editor_dragging in ("sl_filt_b", "sl_filt_c", "sl_filt_s"):
+            r3 = self._img_editor_col3_rects(ex, ey, sb_x)
+            self._img_editor_filter_from_mouse(
+                self._img_editor_dragging, mx, r3[self._img_editor_dragging])
+        elif self._img_editor_dragging == "sl_outline":
+            r3 = self._img_editor_col3_rects(ex, ey, sb_x)
+            self._img_editor_outline_from_mouse(mx, r3["sl_outline"])
 
     def _img_editor_erase(self, mx: int, my: int, ix: int, iy: int, scale: float) -> None:
         """Pennello morbido interpolato: gomma (cancella alpha) o Ripristina."""
@@ -888,6 +1192,8 @@ class ImgEditorMixin:
 
     def _r_img_editor_modal(self, w, h):
         if not self._img_editor_active: return
+        # Applica eventuale risultato del thread rembg nel loop principale
+        self._img_editor_poll_ai()
         dim = pygame.Surface((w, h), pygame.SRCALPHA); dim.fill((0, 0, 0, 215)); self.screen.blit(dim, (0, 0))
         
         # Responsive Modal Size (Liquida & Studio-Grade)
@@ -924,8 +1230,19 @@ class ImgEditorMixin:
         bg_r = pygame.Rect(ex + ew - 110, ey + 25, 80, 32)
         _button(self.screen, bg_r, f" {self._img_editor_bg_mode.upper()}", _in_rect((mx, my), bg_r))
 
-        if scale >= 1.0: scaled_img = pygame.transform.scale(self._img_editor_view_surf, (sw, sh))
-        else: scaled_img = pygame.transform.smoothscale(self._img_editor_view_surf, (sw, sh))
+        # Anteprima live dei filtri colore: applicata sul lato piu' economico
+        # (nativo o scalato), senza mai toccare la superficie di lavoro.
+        filt = self._img_editor_filters
+        filt_on = bool(filt["b"] or filt["c"] or filt["s"])
+        src_surf = self._img_editor_view_surf
+        nat_w, nat_h = src_surf.get_size()
+        if filt_on and nat_w * nat_h <= sw * sh:
+            src_surf = src_surf.copy()
+            apply_color_adjust_surface(src_surf, filt["b"], filt["c"], filt["s"])
+        if scale >= 1.0: scaled_img = pygame.transform.scale(src_surf, (sw, sh))
+        else: scaled_img = pygame.transform.smoothscale(src_surf, (sw, sh))
+        if filt_on and nat_w * nat_h > sw * sh:
+            apply_color_adjust_surface(scaled_img, filt["b"], filt["c"], filt["s"])
         self.screen.blit(scaled_img, (ix, iy))
         
         # Overlay Hitbox (per precisione chirurgica)
@@ -945,6 +1262,21 @@ class ImgEditorMixin:
         if self._img_editor_crop_mode:
             self._r_img_editor_crop_overlay(ix, iy, sw, sh, scale)
 
+        # Indicatore di busy AI: overlay sul canvas (clippato all'area di lavoro)
+        if self._img_editor_busy:
+            work_r = pygame.Rect(ex + 25, ey + 70, ew - SIDEBAR_W - 60, eh - 150)
+            clip_r = pygame.Rect(ix, iy, sw, sh).clip(work_r)
+            if clip_r.w > 0 and clip_r.h > 0:
+                busy_ov = pygame.Surface(clip_r.size, pygame.SRCALPHA)
+                busy_ov.fill((0, 0, 0, BUSY_OVERLAY_ALPHA))
+                self.screen.blit(busy_ov, clip_r.topleft)
+                dots = "." * (1 + (pygame.time.get_ticks() // BUSY_DOT_MS) % 3)
+                b_msg = "Elaborazione" + dots
+                b_w, b_h = _text_wh(b_msg, "lg")
+                _draw_text(self.screen, b_msg, "lg", TXT_HI,
+                           clip_r.x + (clip_r.w - b_w) // 2,
+                           clip_r.y + (clip_r.h - b_h) // 2)
+
         # HUD Technical Data — collocato nell'header per non sovrapporsi MAI al footer.
         if _in_rect((mx, my), (ix, iy, sw, sh)):
             rx = int((mx - ix) / scale); ry = int((my - iy) / scale)
@@ -955,8 +1287,8 @@ class ImgEditorMixin:
                 # ancorato a destra della title bar, a sinistra del toggle BG
                 _draw_text(self.screen, hud_txt, "sm", TXT_DIM, ex + 320, ey + 32)
 
-        # SIDEBAR (Compatta)
-        sb_w = 320
+        # SIDEBAR (3 colonne)
+        sb_w = SIDEBAR_W
         sb_x = ex + ew - sb_w - 15
         col1_x, col2_x = sb_x + 10, sb_x + 165
         
@@ -1044,6 +1376,56 @@ class ImgEditorMixin:
         can_apply = self._img_editor_crop_mode and any(self._img_editor_crop.values())
         _button(self.screen, r_ca, "APPLICA", _in_rect((mx, my), r_ca) and can_apply)
 
+        # Colonna 3 (AI / Dimensione / Filtri / Contorno)
+        # Geometria condivisa con il click tramite _img_editor_col3_rects
+        r3 = self._img_editor_col3_rects(ex, ey, sb_x)
+        col3_x = r3["ai"].x
+        busy = self._img_editor_busy
+
+        _draw_text(self.screen, "SFONDO AI", "sm", TXT_DIM, col3_x, ey + 60)
+        ai_label = "ELABORAZIONE..." if busy else "RIMUOVI SFONDO"
+        _button(self.screen, r3["ai"], ai_label,
+                _in_rect((mx, my), r3["ai"]) and not busy, active=busy)
+
+        _draw_text(self.screen, "DIMENSIONE", "sm", TXT_DIM, col3_x, r3["dim_w"].y - 25)
+        if self._img_editor_resize_edit:
+            _input_box(self.screen, r3["dim_w"], self._img_editor_resize_w,
+                       focused=(self._img_editor_resize_focus == "w"), hint="W", font="sm")
+            _input_box(self.screen, r3["dim_h"], self._img_editor_resize_h,
+                       focused=(self._img_editor_resize_focus == "h"), hint="H", font="sm")
+            _button(self.screen, r3["dim_btn"], "APPLICA", _in_rect((mx, my), r3["dim_btn"]))
+        else:
+            vw, vh = self._img_editor_view_surf.get_size()
+            _draw_text(self.screen, f"{vw} x {vh} px", "sm", TXT_HI,
+                       col3_x, r3["dim_w"].y + 8)
+            _button(self.screen, r3["dim_btn"], "RIDIMENSIONA",
+                    _in_rect((mx, my), r3["dim_btn"]))
+
+        _draw_text(self.screen, "FILTRI", "sm", TXT_DIM, col3_x, r3["sl_filt_b"].y - 42)
+        f_range = FILTER_MAX - FILTER_MIN
+        filt3 = self._img_editor_filters
+        for f_name, f_key in (("LUMINOSITÀ", "b"), ("CONTRASTO", "c"), ("SATURAZIONE", "s")):
+            f_rect = r3["sl_filt_" + f_key]
+            _draw_text(self.screen, f"{f_name}: {filt3[f_key]:+d}", "xs", TXT_DIM,
+                       col3_x, f_rect.y - 16)
+            _slider(self.screen, f_rect, (filt3[f_key] - FILTER_MIN) / f_range, 0, 1)
+        filt3_on = bool(filt3["b"] or filt3["c"] or filt3["s"])
+        _button(self.screen, r3["filt_apply"], "APPLICA FILTRI",
+                _in_rect((mx, my), r3["filt_apply"]), active=filt3_on)
+
+        _draw_text(self.screen, "CONTORNO", "sm", TXT_DIM, col3_x, r3["sl_outline"].y - 42)
+        _draw_text(self.screen, f"SPESSORE: {self._img_editor_outline_px}px", "xs", TXT_DIM,
+                   col3_x, r3["sl_outline"].y - 16)
+        o_range = OUTLINE_MAX_PX - OUTLINE_MIN_PX
+        _slider(self.screen, r3["sl_outline"],
+                (self._img_editor_outline_px - OUTLINE_MIN_PX) / o_range, 0, 1)
+        _button(self.screen, r3["out_white"], "BIANCO", _in_rect((mx, my), r3["out_white"]),
+                active=(self._img_editor_outline_color == "white"))
+        _button(self.screen, r3["out_black"], "NERO", _in_rect((mx, my), r3["out_black"]),
+                active=(self._img_editor_outline_color == "black"))
+        _button(self.screen, r3["out_apply"], "APPLICA CONTORNO",
+                _in_rect((mx, my), r3["out_apply"]))
+
         # Footer (Compattato e Corretto)
         fy = ey + eh - 65; bw, bh = 150, 42
         total_footer_w = bw * 3 + 40
@@ -1064,9 +1446,9 @@ class ImgEditorMixin:
         _button(self.screen, fb_rects[2], el, h2, danger=True, active=self._img_editor_exit_confirm)
         self._r_blit_icon("exit", pygame.Rect(fb_rects[2].x+12, fb_rects[2].y, 25, 42), active=h2)
 
-        # Cursore Strumento (Workspace Wide, non in modalita' ritaglio)
+        # Cursore Strumento (Workspace Wide, non in ritaglio ne' durante l'AI)
         is_in_work = mx < sb_x and my < fy - 10 and my > ey + 60
-        if is_in_work and not self._img_editor_crop_mode:
+        if is_in_work and not self._img_editor_crop_mode and not self._img_editor_busy:
             r_vis = self._img_editor_eraser_r * scale
             if self._img_editor_shape == "round": pygame.draw.circle(self.screen, TXT_HI, (mx, my), int(round(r_vis)), 1)
             else: rv = int(round(r_vis)); pygame.draw.rect(self.screen, TXT_HI, (mx-rv, my-rv, rv*2, rv*2), 1)

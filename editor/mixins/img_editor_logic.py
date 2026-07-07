@@ -10,6 +10,165 @@ import pygame
 import logging
 from scipy import ndimage
 
+# Filtri colore: parametri utente in -100..+100 (0 = nessun effetto)
+FILTER_VAL_MIN = -100
+FILTER_VAL_MAX = 100
+BRIGHTNESS_UNIT = 2.55           # Mappa -100..+100 su -255..+255
+CONTRAST_UNIT = 2.55             # Mappa -100..+100 su -255..+255
+CONTRAST_PIVOT = 128.0           # Punto fisso della curva di contrasto
+CONTRAST_MAGIC = 259.0           # Costante della formula classica a 8 bit
+LUMA_WEIGHTS = (0.299, 0.587, 0.114)  # Pesi ITU-R BT.601 per la luminanza
+
+# Contorno: soglia alpha oltre cui un pixel appartiene alla silhouette
+OUTLINE_ALPHA_THRESHOLD = 10
+
+# Ridimensionamento numerico: limiti hard su entrambi i lati
+RESIZE_MIN_PX = 8
+RESIZE_MAX_PX = 4096
+
+
+def apply_color_adjust(
+    rgb: np.ndarray, brightness: float, contrast: float, saturation: float
+) -> np.ndarray:
+    """
+    Regola luminosita', contrasto e saturazione di un array RGB.
+
+    Il canale alpha non viene passato e quindi non viene mai toccato.
+    Ordine di applicazione: luminosita' -> contrasto -> saturazione.
+
+    Args:
+        rgb: Array shape (..., 3), qualsiasi dtype numerico (tipicamente uint8).
+        brightness: -100..+100; +100 porta tutto a bianco, -100 a nero.
+        contrast: -100..+100; -100 appiattisce tutto sul grigio 128.
+        saturation: -100..+100; -100 desatura completamente (scala di grigi).
+
+    Returns:
+        Nuovo array uint8 della stessa shape, clampato a 0..255.
+    """
+    arr = rgb.astype(np.float32)
+    if brightness:
+        arr += float(brightness) * BRIGHTNESS_UNIT
+    if contrast:
+        c = float(contrast) * CONTRAST_UNIT
+        factor = (CONTRAST_MAGIC * (c + 255.0)) / (255.0 * (CONTRAST_MAGIC - c))
+        arr = (arr - CONTRAST_PIVOT) * factor + CONTRAST_PIVOT
+    if saturation:
+        sat_factor = 1.0 + float(saturation) / 100.0
+        luma = (arr[..., 0] * LUMA_WEIGHTS[0]
+                + arr[..., 1] * LUMA_WEIGHTS[1]
+                + arr[..., 2] * LUMA_WEIGHTS[2])[..., np.newaxis]
+        arr = luma + (arr - luma) * sat_factor
+    return np.clip(arr, 0.0, 255.0).astype(np.uint8)
+
+
+def apply_color_adjust_surface(
+    surf: pygame.Surface, brightness: float, contrast: float, saturation: float
+) -> None:
+    """
+    Applica apply_color_adjust ai soli canali RGB della superficie, in-place.
+    Il canale alpha resta intatto per costruzione.
+    """
+    rgb = pygame.surfarray.pixels3d(surf)
+    rgb[:] = apply_color_adjust(rgb, brightness, contrast, saturation)
+    del rgb  # Sblocca la superficie
+
+
+def _dilate_once(mask: np.ndarray) -> np.ndarray:
+    """Una passata di dilatazione 8-connessa senza wrap-around (fallback numpy)."""
+    out = mask.copy()
+    out[1:, :] |= mask[:-1, :]
+    out[:-1, :] |= mask[1:, :]
+    out[:, 1:] |= mask[:, :-1]
+    out[:, :-1] |= mask[:, 1:]
+    out[1:, 1:] |= mask[:-1, :-1]
+    out[1:, :-1] |= mask[:-1, 1:]
+    out[:-1, 1:] |= mask[1:, :-1]
+    out[:-1, :-1] |= mask[1:, 1:]
+    return out
+
+
+def dilate_mask(mask: np.ndarray, thickness: int, use_scipy: bool = True) -> np.ndarray:
+    """
+    Dilata una maschera booleana di thickness pixel (kernel 3x3 pieno).
+
+    Usa scipy.ndimage.binary_dilation se disponibile; altrimenti fallback
+    numpy con shift nelle 8 direzioni ripetuto thickness volte (equivalente).
+
+    Args:
+        mask: Maschera booleana 2D.
+        thickness: Numero di iterazioni di dilatazione (>= 1 per avere effetto).
+        use_scipy: Se False forza il fallback numpy (utile nei test).
+    """
+    base = mask.astype(bool)
+    if thickness <= 0:
+        return base.copy()
+    if use_scipy:
+        try:
+            from scipy.ndimage import binary_dilation
+            kernel = np.ones((3, 3), dtype=bool)
+            return binary_dilation(base, structure=kernel, iterations=int(thickness))
+        except ImportError:
+            logging.info("[IMG_LOGIC] scipy non disponibile: fallback numpy per dilatazione")
+    out = base.copy()
+    for _ in range(int(thickness)):
+        out = _dilate_once(out)
+    return out
+
+
+def outline_ring(
+    alpha: np.ndarray,
+    thickness: int,
+    alpha_threshold: int = OUTLINE_ALPHA_THRESHOLD,
+    use_scipy: bool = True,
+) -> np.ndarray:
+    """
+    Maschera booleana dell'anello di contorno attorno alla silhouette alpha:
+    dilatazione di thickness px meno la silhouette originale. Per costruzione
+    non include mai pixel interni alla silhouette.
+
+    Args:
+        alpha: Canale alpha 2D (uint8 o numerico).
+        thickness: Spessore dell'anello in pixel.
+        alpha_threshold: Alpha oltre cui il pixel appartiene alla silhouette.
+        use_scipy: Se False forza il fallback numpy della dilatazione.
+    """
+    solid = alpha > alpha_threshold
+    if not solid.any():
+        return np.zeros_like(solid)
+    return dilate_mask(solid, thickness, use_scipy=use_scipy) & ~solid
+
+
+def aspect_resize_dims(
+    cur_w: int,
+    cur_h: int,
+    target_w: int | None = None,
+    target_h: int | None = None,
+) -> tuple[int, int]:
+    """
+    Dimensioni finali per un resize che mantiene l'aspect ratio.
+
+    Esattamente uno tra target_w e target_h deve essere valorizzato; l'altro
+    lato viene derivato dal rapporto corrente. Entrambi i lati risultanti sono
+    clampati a RESIZE_MIN_PX..RESIZE_MAX_PX (il clamp puo' alterare il
+    rapporto nei casi estremi: i limiti hard hanno precedenza).
+
+    Returns:
+        Tupla (nuova_larghezza, nuova_altezza) in pixel.
+    """
+    if (target_w is None) == (target_h is None):
+        raise ValueError("Specificare esattamente uno tra target_w e target_h")
+    if cur_w <= 0 or cur_h <= 0:
+        raise ValueError("Dimensioni correnti non valide")
+    if target_w is not None:
+        new_w = max(RESIZE_MIN_PX, min(RESIZE_MAX_PX, int(target_w)))
+        new_h = int(round(new_w * cur_h / cur_w))
+    else:
+        new_h = max(RESIZE_MIN_PX, min(RESIZE_MAX_PX, int(target_h)))
+        new_w = int(round(new_h * cur_w / cur_h))
+    new_w = max(RESIZE_MIN_PX, min(RESIZE_MAX_PX, new_w))
+    new_h = max(RESIZE_MIN_PX, min(RESIZE_MAX_PX, new_h))
+    return new_w, new_h
+
 
 def brush_power_map(shape: str, radius: int, hardness: float) -> np.ndarray:
     """
