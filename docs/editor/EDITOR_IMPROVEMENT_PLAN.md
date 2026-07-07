@@ -3,6 +3,11 @@
 Data analisi: 2026-07-07. Basato su esplorazione completa di `editor/` (~24k righe),
 `docs/editor/EDITOR_AUDIT_REPORT.md` e `docs/ROADMAP.md`.
 
+> STATO 2026-07-07: PIANO COMPLETATO. Tutte le fasi implementate e verificate
+> (suite 117 pass / 0 fail; avvio editor validato). Uniche eccezioni deliberate:
+> save esplicito rimasto sincrono (harvesting con event.pump interni), voci
+> "fuori scope" invariate. Vedi `docs/ROADMAP.md` sezione Editor per il riepilogo.
+
 ## Stato dell'arte (sintesi)
 
 ### Punti di forza

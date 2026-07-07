@@ -19,10 +19,21 @@ Legenda: [x] completo · [~] in corso/parziale · [ ] da fare.
 ## Editor
 
 - [x] Audit P1-P4 (273 rilievi): critici, alti, bug medi, codice morto. Vedi `docs/editor/EDITOR_AUDIT_REPORT.md`.
-- [ ] Grandi refactor di ridondanza (rimandati per rischio, non bug):
-  - unificare la pipeline di build desktop e Android.
-  - `AssetCatalog` condiviso per background / musica / video.
-  - editing testo centralizzato tra i modali.
+- [x] Piano di miglioramento (5 fasi, `docs/editor/EDITOR_IMPROVEMENT_PLAN.md`) COMPLETATO:
+  - Fondamenta UI: widget layer (`ui/widgets.py`), stack modale unificato,
+    editing testo centralizzato, DPI awareness + scala UI, hitbox menubar dinamiche.
+  - UX canvas: nudge frecce, zoom-to-selection, griglia configurabile, snap a
+    oggetti con guide, undo con etichette/coalescing/selezione preservata.
+  - Studio asset (PNG): crop con maniglie, redo, pennello restore, rimozione
+    sfondo AI (rembg), resize, filtri colore, contorno; import con processing e
+    import batch con registrazione catalogo + i18n.
+  - Level design: playtest scena (`main.py --scene`, bottone in status bar),
+    statistiche scena con stima difficolta' (scoring scatter_engine), anteprima
+    come-in-gioco (F5), preset gruppi oggetti, auditor esteso (6 nuovi check).
+  - Dashboard: duplica scena/livello, sposta scena tra livelli, riordino giochi.
+  - Refactor: pipeline build EXE/APK unificata (`build_common.py`),
+    `AssetCatalog` condiviso bg/musica/video, export web con progress+cancel,
+    open scena asincrono, clipboard unico.
 
 ## Sistema menu (skin)
 
