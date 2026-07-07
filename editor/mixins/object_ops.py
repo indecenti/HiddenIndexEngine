@@ -912,6 +912,8 @@ class ObjectOpsMixin:
             ("sep",      "---"),
             ("modify_tags", "Modifica Tag..."),
         ]
+        if n_sel > 1:
+            items.append(("preset_save", f"Salva Gruppo ({n_sel})..."))
         return items
 
     def _get_item_h(self, cid: str) -> int:
@@ -1095,6 +1097,9 @@ class ObjectOpsMixin:
                 elif cid == "l_low":  self._set_layer("objects_low"); return False
                 elif cid == "modify_tags":
                     self._tag_modal_open(obj["catalog_id"])
+                    return False
+                elif cid == "preset_save":
+                    self._preset_open_save()
                     return False
                 elif cid == "delete": self._delete_sel(); return False
                 elif cid == "fx_dupe":

@@ -137,6 +137,9 @@ class InputHandlersMixin:
             if ev.key == pygame.K_ESCAPE:
                 self._minigame_modal = False
             return
+        if getattr(self, "_stats_modal", False):
+            self._stats_modal_key(ev)
+            return
         if getattr(self, "_scatter_modal_open", False):
             if ev.key == pygame.K_ESCAPE:
                 # In brush mode ESC esce SOLO dal brush (torna al modal);
@@ -577,6 +580,8 @@ class InputHandlersMixin:
                 self._vid_modal_click(mx, my_raw, w, h); return
             if self._minigame_modal:
                 self._minigame_click(mx, my_raw); return
+            if getattr(self, "_stats_modal", False):
+                self._stats_modal_click(mx, my_raw, w, h); return
             if getattr(self, "_icon_modal", False):
                 if self._icon_click(mx, my_raw, w, h): return
             if self._img_editor_active:
@@ -894,6 +899,10 @@ class InputHandlersMixin:
 
         if getattr(self, "_minigame_modal", False):
             self._minigame_wheel(ev.y)
+            return
+
+        if getattr(self, "_stats_modal", False):
+            self._stats_modal_wheel(ev)
             return
 
         if getattr(self, "_scatter_modal_open", False):
@@ -2393,6 +2402,8 @@ class InputHandlersMixin:
         elif cmd == "edit_copy": self._copy_sel()
         elif cmd == "edit_paste": self._paste_sel()
         elif cmd == "edit_lang_modal": self._lang_open()
+        elif cmd == "edit_preset_save": self._preset_open_save()
+        elif cmd == "edit_preset_insert": self._preset_open_insert()
         
         # LANG SWITCH
         elif cmd.startswith("lang_switch_"):
@@ -2410,6 +2421,10 @@ class InputHandlersMixin:
                 
             self._status(f"Lingua impostata: {new_lang.upper()}", OK_C, 2)
         
+        # STATISTICHE SCENA
+        elif cmd == "file_scene_stats":
+            self._stats_open()
+
         # AUDITOR
         elif cmd == "file_auditor":
             game_id = ""

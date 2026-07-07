@@ -93,6 +93,8 @@ from editor.mixins.tag_modal import TagModalMixin
 from editor.mixins.icon_modal import IconModalMixin
 from editor.mixins.auditor    import AuditorMixin
 from editor.mixins.scatter_modal import ScatterModalMixin
+from editor.mixins.scene_stats import SceneStatsMixin
+from editor.mixins.presets import PresetsMixin
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -120,6 +122,8 @@ class LevelEditor(
     IconModalMixin,
     AuditorMixin,
     ScatterModalMixin,
+    SceneStatsMixin,
+    PresetsMixin,
 ):
     """
     Editor di livelli HiddenEngine.
@@ -654,6 +658,9 @@ class LevelEditor(
         # Scatter modal
         if getattr(self, "_scatter_modal_open", False):
             self._r_scatter_modal(w, h)
+        # Statistiche scena
+        if getattr(self, "_stats_modal", False):
+            self._r_stats_modal(w, h)
         # Conferma uscita/salvataggio: sempre sopra TUTTE le altre modali
         if self._confirm_leave_modal:
             self._r_confirm_leave_modal(w, h)

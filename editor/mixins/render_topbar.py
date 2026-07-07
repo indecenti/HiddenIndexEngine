@@ -97,6 +97,7 @@ class RenderTopbarMixin:
                 (l.get("menu_save_as", "Salva con nome..."), "file_save_as"),
                 None,
                 (l.get("menu_auditor", "Auditor Progetto..."), "file_auditor"),
+                (l.get("menu_scene_stats", "Statistiche Scena..."), "file_scene_stats"),
                 None,
                 (l.get("menu_exit_to_gs", "Torna al Selettore"), "file_exit_to_gs"),
                 (l.get("menu_quit", "Esci"), "file_quit"),
@@ -109,6 +110,9 @@ class RenderTopbarMixin:
                 (l.get("menu_cut", "Taglia") + " (Ctrl+X)", "edit_cut"),
                 (l.get("menu_copy", "Copia") + " (Ctrl+C)", "edit_copy"),
                 (l.get("menu_paste", "Incolla") + " (Ctrl+V)", "edit_paste"),
+                None,
+                (l.get("menu_preset_save", "Salva Gruppo..."), "edit_preset_save"),
+                (l.get("menu_preset_insert", "Inserisci Gruppo..."), "edit_preset_insert"),
                 None,
                 (l.get("menu_lang_modal", "Editor Traduzioni..."), "edit_lang_modal"),
             ]
