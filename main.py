@@ -7,9 +7,16 @@ Legge la configurazione, gli argomenti da riga di comando e avvia il core del gi
 
 import sys
 import os
+import json
+import logging
 import traceback
 import argparse
 import configparser
+
+# Exit code dedicato per argomento --scene malformato o scena/livello inesistente:
+# permette all'editor (che lancia il playtest come subprocess) di distinguere
+# "scena non valida" (2) da un errore fatale generico del motore (1).
+EXIT_CODE_BAD_SCENE = 2
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -68,8 +75,59 @@ if _is_android():
     sys.excepthook = _android_crash_handler
 
 
-from engine.utils import setup_logging, get_base_path, get_user_config_path, get_logger
+from engine.utils import (
+    setup_logging, get_base_path, get_user_config_path, get_logger, get_resource_path,
+)
 from engine.core import EngineCore
+
+
+def _resolve_playtest_scene(game_id: str, scene_arg: str, logger: logging.Logger) -> str:
+    """Valida l'argomento --scene ("<livello>/<scena>") per il gioco indicato.
+
+    Controlli: formato, esistenza del livello (level_config.json), registrazione
+    della scena nel level_config, esistenza dello scene.json su disco.
+    In caso di problema logga l'errore ed esce con EXIT_CODE_BAD_SCENE.
+    Ritorna l'argomento normalizzato "livello/scena" (separatore '/').
+    """
+    normalized = scene_arg.replace("\\", "/").strip("/")
+    parts = normalized.split("/")
+    if len(parts) != 2 or not parts[0] or not parts[1]:
+        logger.error(
+            f"--scene deve avere il formato '<livello>/<scena>' (es. livello1/Albergo_Lobby), "
+            f"ricevuto: '{scene_arg}'"
+        )
+        sys.exit(EXIT_CODE_BAD_SCENE)
+    level_id, scene_id = parts
+
+    level_cfg_path = get_resource_path("games", game_id, "levels", level_id, "level_config.json")
+    if not level_cfg_path.exists():
+        logger.error(
+            f"Livello '{level_id}' inesistente per il gioco '{game_id}' "
+            f"(manca {level_cfg_path})."
+        )
+        sys.exit(EXIT_CODE_BAD_SCENE)
+
+    try:
+        with open(level_cfg_path, "r", encoding="utf-8") as f:
+            scene_ids = [s.get("id") for s in json.load(f).get("scenes", [])]
+    except Exception as e:
+        logger.error(f"level_config.json illeggibile per '{level_id}': {e}")
+        sys.exit(EXIT_CODE_BAD_SCENE)
+
+    if scene_id not in scene_ids:
+        logger.error(
+            f"Scena '{scene_id}' non registrata nel livello '{level_id}'. "
+            f"Scene disponibili: {scene_ids}"
+        )
+        sys.exit(EXIT_CODE_BAD_SCENE)
+
+    scene_json_path = get_resource_path("games", game_id, "levels", level_id, scene_id, "scene.json")
+    if not scene_json_path.exists():
+        logger.error(f"scene.json mancante per '{level_id}/{scene_id}' ({scene_json_path}).")
+        sys.exit(EXIT_CODE_BAD_SCENE)
+
+    return f"{level_id}/{scene_id}"
+
 
 def main() -> None:
     """Entry point principale."""
@@ -83,6 +141,11 @@ def main() -> None:
     parser.add_argument("--fullscreen", action="store_true", help="Avvia in fullscreen")
     parser.add_argument("--minigame", type=str, help="Avvia un minigioco specifico subito")
     parser.add_argument("--lang", type=str, help="Forza la lingua (it, en, es, fr, de)")
+    parser.add_argument(
+        "--scene", type=str,
+        help="Playtest: avvia direttamente una scena '<livello>/<scena>' saltando il menu "
+             "(sessione effimera, nessuna scrittura sui salvataggi). Da usare con --game."
+    )
     args = parser.parse_args()
     
     # Lettura config.ini: prima i DEFAULT bundlati (get_base_path, read-only su
@@ -117,7 +180,18 @@ def main() -> None:
     if not game_id:
         logger.error("Nessun gioco specificato (né in CLI né in config.ini).")
         sys.exit(1)
-        
+
+    # Playtest diretto di una scena (--scene): validazione PRIMA di creare
+    # l'engine, così una scena inesistente non apre nemmeno la finestra e il
+    # processo esce con un codice dedicato (usato dall'editor).
+    if args.scene:
+        if args.minigame:
+            logger.error("--scene e --minigame sono mutuamente esclusivi.")
+            sys.exit(EXIT_CODE_BAD_SCENE)
+        args.scene = _resolve_playtest_scene(game_id, args.scene, logger)
+        logger.info(f"Playtest scena richiesto: {game_id} -> {args.scene}")
+
+
     # Avvio vero e proprio
     try:
         engine = EngineCore(game_id=game_id, config=config, cli_args=args)

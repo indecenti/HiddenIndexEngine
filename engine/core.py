@@ -49,6 +49,24 @@ class EngineState:
     PAUSE = "PAUSE"
     MINIGAME = "MINIGAME"
 
+
+class _EphemeralSaveManager(SaveManager):
+    """SaveManager effimero per la modalità playtest (--scene).
+
+    Legge l'eventuale salvataggio esistente ma NON scrive mai su disco:
+    tutte le mutazioni (score, unlock, checkpoint) restano in memoria e
+    muoiono con il processo. Così una sessione di prova lanciata dall'editor
+    non sporca i progressi reali del giocatore. Vive qui in core.py per non
+    toccare engine/save_manager.py (logica replicata dal runtime web)."""
+
+    def save(self) -> None:
+        # No-op deliberato: nessuna persistenza in modalità playtest.
+        self.logger.debug("Playtest: scrittura salvataggio ignorata (modalità effimera).")
+
+    def _quarantine_corrupt_save(self) -> None:
+        # No-op: in playtest non tocchiamo nemmeno i file corrotti su disco.
+        pass
+
 class EngineCore:
     """
     Gestisce il setup del contesto, lo step delta-time, e
@@ -179,7 +197,15 @@ class EngineCore:
         # Safe area (solo Android): cutout + padding minimo.
         self._reconfigure_safe_area()
 
-        self.save_manager = SaveManager(self.game_id)
+        # Modalità playtest (--scene "<livello>/<scena>"): avvio diretto di una
+        # scena senza menu, con salvataggi in sola lettura (store effimero).
+        self._playtest_scene: str | None = getattr(cli_args, "scene", None)
+        self._playtest_mode: bool = bool(self._playtest_scene)
+
+        if self._playtest_mode:
+            self.save_manager = _EphemeralSaveManager(self.game_id)
+        else:
+            self.save_manager = SaveManager(self.game_id)
         # Preferenza vibrazione dallo store persistente (scrivibile su Android).
         self.vibration_enabled = bool(self.save_manager.get_progress("vibration_enabled", True))
         haptics.set_enabled(self.vibration_enabled)
@@ -378,6 +404,23 @@ class EngineCore:
                 self.state = EngineState.BOOT
                 # Se fallisce, usciamo per tornare all'editor
                 self.running = False
+        elif self._playtest_mode:
+            # MODALITÀ PLAYTEST: bypass completo di splash/menu, la scena parte
+            # subito in gameplay. main.py ha già validato livello e scena.
+            level_id, _, scene_id = self._playtest_scene.replace("\\", "/").partition("/")
+            self.logger.info(
+                f"MODALITÀ PLAYTEST: avvio diretto scena '{level_id}/{scene_id}' "
+                f"(salvataggi disabilitati)"
+            )
+            self._start_level(level_id, scene_id)
+            if self.state != EngineState.SCENE:
+                # _start_level ha fallito (scena corrotta/asset mancanti): in
+                # playtest niente fallback al menu, propaga come errore fatale
+                # così main.py esce con codice != 0.
+                raise RuntimeError(
+                    f"Playtest: impossibile avviare la scena '{self._playtest_scene}' "
+                    f"(vedi errori precedenti nel log)."
+                )
         else:
             # Test pipeline di transizione: Fade da SplashScreen (BOOT) a Menu
             self.transition_manager.start_transition(
@@ -560,6 +603,11 @@ class EngineCore:
         tasto/gesto Indietro di Android (K_AC_BACK). Comportamento da vera app:
         nei sotto-menu torna al menu precedente, in gioco apre la pausa, nel
         menu principale esce."""
+        if self._playtest_mode:
+            # Playtest: ESC/Indietro chiude subito la sessione di prova.
+            self.logger.info("Playtest: uscita richiesta (ESC/Indietro).")
+            self.running = False
+            return
         if self.state == EngineState.MENU:
             ms = getattr(self.menu_system, "state", "main")
             if ms == "scenes":
@@ -1405,6 +1453,12 @@ class EngineCore:
 
     def _switch_to_menu(self) -> None:
         """Sincronizza core e menu_system verso lo stato principale."""
+        if self._playtest_mode:
+            # Playtest: nessun ritorno al menu, qualunque percorso vi arrivi
+            # (fine livello, quit dalla pausa, errore) termina la sessione.
+            self.logger.info("Playtest: sessione terminata, uscita senza menu.")
+            self.running = False
+            return
         # Reset checkpoint quando torni al menu principale
         self.save_manager.set_progress("current_level", None)
         self.save_manager.set_progress("current_scene_index", 0)
@@ -1461,6 +1515,12 @@ class EngineCore:
             self.results_screen.show(score=0, stars=0, time_elapsed=0.0)
         
     def _advance_scene(self) -> None:
+        if self._playtest_mode:
+            # Playtest: la scena di prova è conclusa (schermata risultati
+            # confermata), niente scena successiva: chiudi il processo.
+            self.logger.info("Playtest: scena conclusa, chiusura della sessione.")
+            self.running = False
+            return
         self.scaling_manager.invalidate_cache()
         try:
             next_scene = self.level_manager.advance_to_next_scene()
