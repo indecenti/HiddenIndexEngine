@@ -305,6 +305,11 @@ class LevelEditor(
         self.undo_stack: list = []
         self.redo_stack: list = []
 
+        # ── Stack modale unificato ───────────────────────────────────────────
+        # Oggetti con handle_event(editor, ev) -> bool e render(editor).
+        # Il top dello stack cattura tutto l'input utente (vedi _handle_events).
+        self.modal_stack: list = []
+
         # ── Status bar ───────────────────────────────────────────────────────
         self.status_msg   = "Seleziona un gioco per iniziare"
         self.status_col   = TXT_DIM
@@ -401,6 +406,18 @@ class LevelEditor(
     def _mark_dirty(self):
         """Invalida la cache del canvas per forzare un ridisegno completo."""
         self._canvas_cache_dirty = True
+
+    def _modal_push(self, modal) -> None:
+        """Apre un modale nello stack unificato (il top cattura l'input)."""
+        self.modal_stack.append(modal)
+
+    def _modal_pop(self, modal=None) -> None:
+        """Chiude il modale indicato (o il top dello stack)."""
+        if modal is None:
+            if self.modal_stack:
+                self.modal_stack.pop()
+        elif modal in self.modal_stack:
+            self.modal_stack.remove(modal)
 
     def _set_ui_scale(self, delta: float):
         """Cambia la scala dei font/icone della UI (Ctrl+Piu'/Meno) e la persiste."""
@@ -640,6 +657,10 @@ class LevelEditor(
         # Conferma uscita/salvataggio: sempre sopra TUTTE le altre modali
         if self._confirm_leave_modal:
             self._r_confirm_leave_modal(w, h)
+
+        # Stack modale unificato (nuovi modali non-flag): sopra i modali legacy
+        for modal in self.modal_stack:
+            modal.render(self)
 
         # Status Bar (Globale, disegnata sopra tutto)
         self._r_status(w, h)

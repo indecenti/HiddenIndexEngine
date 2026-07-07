@@ -34,10 +34,20 @@ class InputHandlersMixin:
     # ─────────────────────────────────────────────────────────────────────────
 
     def _handle_events(self):
+        # Eventi di input utente catturati dal top dello stack modale unificato
+        _MODAL_INPUT_EVENTS = (
+            pygame.KEYDOWN, pygame.KEYUP, pygame.TEXTINPUT,
+            pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP,
+            pygame.MOUSEMOTION, pygame.MOUSEWHEEL,
+        )
         for ev in pygame.event.get():
             # QUIT ha priorità assoluta — non può essere bloccato da nessun modale
             if ev.type == pygame.QUIT:
                 self._request_nav("file_quit")
+                continue
+            # Stack modale unificato: il top e' app-modal e consuma l'input utente
+            if self.modal_stack and ev.type in _MODAL_INPUT_EVENTS:
+                self.modal_stack[-1].handle_event(self, ev)
                 continue
             if self._img_editor_active:
                 self._img_editor_handle_event(ev); continue

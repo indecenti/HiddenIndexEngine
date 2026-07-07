@@ -1228,19 +1228,24 @@ class ObjectOpsMixin:
             objs_sel = [self.scene_data["objects"][i] for i in idxs if i < len(self.scene_data["objects"])]
         
         if not objs_sel: return
-        
+
         try:
-            from editor.ui.color_picker import ask_color
+            from editor.ui.color_picker import ColorPickerModal
             bg_surf = getattr(self, "bg_surf", None)
             init_c = objs_sel[0].get("color_filter", (255, 255, 255))
-            color = ask_color(self.screen, bg_surf, init_c, title="Colore Filtro Selezione")
-            if color:
+
+            def _apply(color):
+                if not color:
+                    return
                 self._push_undo("Filtro colore")
                 c_list = [int(x) for x in color]
                 for o in objs_sel:
                     o["color_filter"] = c_list
                 self.scene_dirty = True
                 self._mark_dirty()
+
+            self._modal_push(ColorPickerModal(
+                bg_surf, init_c, title="Colore Filtro Selezione", on_done=_apply))
         except Exception: logging.error("Color picker fallito (selezione)")
 
     def _get_objs_selection(self) -> list:
@@ -1396,12 +1401,20 @@ class ObjectOpsMixin:
         if idx is None or idx >= len(self.scene_data.get("effects", [])): return
         fx = self.scene_data["effects"][idx]
         try:
-            from editor.ui.color_picker import ask_color
+            from editor.ui.color_picker import ColorPickerModal
             bg_surf = getattr(self, "bg_surf", None)
             init_c = fx.get(key, (255, 215, 60))
-            color = ask_color(self.screen, bg_surf, init_c, title=title)
-            if color:
-                self._push_undo(); fx[key] = [int(x) for x in color]; self.scene_dirty = True; self._mark_dirty()
+
+            def _apply(color):
+                if not color:
+                    return
+                self._push_undo("Colore effetto")
+                fx[key] = [int(x) for x in color]
+                self.scene_dirty = True
+                self._mark_dirty()
+
+            self._modal_push(ColorPickerModal(bg_surf, init_c, title=title,
+                                              on_done=_apply))
         except Exception: logging.error("Color picker fallito (effetto)")
 
     def _delete_effect_sel(self):

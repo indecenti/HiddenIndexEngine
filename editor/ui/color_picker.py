@@ -1,52 +1,73 @@
-import pygame
+"""
+editor/ui/color_picker.py
+
+Color picker HSV con palette estratta dal background.
+
+ColorPickerModal e' un modale NON bloccante per lo stack modale unificato
+dell'editor (editor.modal_stack): render/handle_event per frame, callback
+on_done(color | None) alla chiusura. Sostituisce il vecchio ask_color con
+event-loop bloccante separato.
+"""
+
 import math
+from typing import Callable, Optional
 
-from editor.constants import (
-    PANEL, BORDER, ACCENT, TXT_HI, TXT_DIM, BTN, BTN_AC, BG, OK_C
-)
-from editor.ui.draw import _txt, _rect, _button, _in_rect, _text_wh
+import pygame
 
-def extract_palette(surf: pygame.Surface, n=10) -> list:
+from editor.constants import PANEL, BORDER, TXT_HI, TXT_DIM
+from editor.ui.draw import _txt, _rect, _button, _in_rect
+
+# Geometria del modale
+PICKER_W, PICKER_H = 480, 520
+PAD = 20
+HUE_BAR_H = 20
+SV_H = 256
+SWATCH = 30
+SWATCH_GAP = 4
+BTN_W, BTN_H = 100, 30
+PALETTE_N = 10
+PALETTE_MIN_DIST = 30
+OVERLAY_ALPHA = 150
+
+
+def extract_palette(surf: pygame.Surface, n: int = PALETTE_N) -> list:
     if not surf:
         return []
     small = pygame.transform.scale(surf, (50, 50))
-    counts = {}
+    counts: dict = {}
     for x in range(50):
         for y in range(50):
             r, g, b, _ = small.get_at((x, y))
-            r_q, g_q, b_q = r // 16 * 16, g // 16 * 16, b // 16 * 16
-            color = (r_q, g_q, b_q)
+            color = (r // 16 * 16, g // 16 * 16, b // 16 * 16)
             counts[color] = counts.get(color, 0) + 1
-    
-    # Rimuoviamo il nero/grigio scuro ed estremo bianco se dominano troppo,
-    # per avere colori più "utili", ma non è strettamente necessario.
+
     sorted_colors = sorted(counts.items(), key=lambda idx: idx[1], reverse=True)
-    res = []
-    
+    res: list = []
+
     # Prendi i primi N colori distanti almeno un po'
-    for color, count in sorted_colors:
+    for color, _count in sorted_colors:
         if len(res) >= n:
             break
-        # Verifica distanza minima dai precedenti per varietà
         too_close = False
         for rgb in res:
-            dist = math.hypot(color[0]-rgb[0], math.hypot(color[1]-rgb[1], color[2]-rgb[2]))
-            if dist < 30:
+            dist = math.hypot(color[0] - rgb[0],
+                              math.hypot(color[1] - rgb[1], color[2] - rgb[2]))
+            if dist < PALETTE_MIN_DIST:
                 too_close = True
                 break
         if not too_close:
             res.append(color)
-            
-    # Se non ce ne sono abbastanza, riempi con quelli che abbiamo ignorato
+
     if len(res) < n:
-        for color, count in sorted_colors:
+        for color, _count in sorted_colors:
             if color not in res:
                 res.append(color)
             if len(res) >= n:
                 break
     return res
 
-def build_sv_surface(hue, w, h):
+
+def build_sv_surface(hue: float, w: int, h: int) -> pygame.Surface:
     surf = pygame.Surface((w, h))
     for x in range(w):
         for y in range(h):
@@ -57,7 +78,8 @@ def build_sv_surface(hue, w, h):
             surf.set_at((x, y), c)
     return surf
 
-def build_hue_surface(w, h):
+
+def build_hue_surface(w: int, h: int) -> pygame.Surface:
     surf = pygame.Surface((w, h))
     for x in range(w):
         hue = (x / w) * 360
@@ -66,168 +88,178 @@ def build_hue_surface(w, h):
         pygame.draw.line(surf, c, (x, 0), (x, h))
     return surf
 
-def ask_color(screen: pygame.Surface, bg_surf: pygame.Surface = None, 
-              initial_color=(255, 255, 255), title="Seleziona Colore") -> tuple:
-    """
-    Mostra un modal per la selezione del colore. Ritorna il colore RGB scelto o None.
-    Blocca l'esecuzione tramite un mini-loop di eventi.
-    """
-    w_win, h_win = screen.get_size()
-    w, h = 480, 520
-    x, y = (w_win - w) // 2, (h_win - h) // 2
 
-    # UI elements
-    hue_bar_rect = pygame.Rect(x + 20, y + 60, w - 40, 20)
-    sv_rect = pygame.Rect(x + 20, y + 90, w - 40, 256)
-    
-    current_hue = 0.0
-    current_s = 0.0
-    current_v = 100.0
-    
-    # Try reversing initial color to HSV
-    c = pygame.Color(*initial_color)
-    current_hue, current_s, current_v, _ = c.hsva
-    
-    hue_surf = build_hue_surface(hue_bar_rect.width, hue_bar_rect.height)
-    sv_surf = build_sv_surface(current_hue, sv_rect.width, sv_rect.height)
-    last_hue_drawn = current_hue
-    
-    # Palette estratta
-    palette = extract_palette(bg_surf, 10)
-    
-    running = True
-    result = None
-    clock = pygame.time.Clock()
+class ColorPickerModal:
+    """Selettore colore HSV non bloccante per lo stack modale dell'editor."""
 
-    dragging_hue = False
-    dragging_sv = False
+    def __init__(self, bg_surf: Optional[pygame.Surface],
+                 initial_color=(255, 255, 255),
+                 title: str = "Seleziona Colore",
+                 on_done: Optional[Callable[[Optional[tuple]], None]] = None) -> None:
+        self.title = title
+        self.on_done = on_done
+        c = pygame.Color(*initial_color)
+        self.hue, self.sat, self.val, _ = c.hsva
+        self.palette = extract_palette(bg_surf, PALETTE_N)
+        self.dragging_hue = False
+        self.dragging_sv = False
+        self._hue_surf: Optional[pygame.Surface] = None
+        self._sv_surf: Optional[pygame.Surface] = None
+        self._sv_hue_drawn: Optional[float] = None
+        # Rects calcolati dal layout corrente (finestra ridimensionabile)
+        self._rects: dict = {}
 
-    # Snapshot dello schermo allo stato attuale per evitare sovrapposizioni o alpha stacking
-    bg_snapshot = screen.copy()
-    bg_dark = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
-    bg_dark.fill((0, 0, 0, 150))
-    bg_snapshot.blit(bg_dark, (0, 0))
+    # ── Layout ───────────────────────────────────────────────────────────────
 
-    while running:
-        clock.tick(60)
+    def _layout(self, w_win: int, h_win: int) -> dict:
+        x = (w_win - PICKER_W) // 2
+        y = (h_win - PICKER_H) // 2
+        inner_w = PICKER_W - PAD * 2
+        rects = {
+            "panel": pygame.Rect(x, y, PICKER_W, PICKER_H),
+            "hue": pygame.Rect(x + PAD, y + 60, inner_w, HUE_BAR_H),
+            "sv": pygame.Rect(x + PAD, y + 90, inner_w, SV_H),
+            "palette_origin": (x + PAD, y + 370),
+            "ok": pygame.Rect(x + PICKER_W - PAD * 2 - BTN_W * 2 - 10,
+                              y + PICKER_H - 50, BTN_W, BTN_H),
+            "cancel": pygame.Rect(x + PICKER_W - PAD - BTN_W,
+                                  y + PICKER_H - 50, BTN_W, BTN_H),
+            "current": pygame.Rect(x + PAD, y + PICKER_H - 50, 40, BTN_H),
+        }
+        self._rects = rects
+        return rects
+
+    def _current_color(self) -> tuple:
+        c = pygame.Color(0)
+        c.hsva = (self.hue, self.sat, max(0, min(100, self.val)), 100)
+        return (c.r, c.g, c.b)
+
+    def _close(self, editor, result: Optional[tuple]) -> None:
+        editor._modal_pop(self)
+        if self.on_done:
+            self.on_done(result)
+
+    # ── Input ────────────────────────────────────────────────────────────────
+
+    def handle_event(self, editor, ev) -> bool:
+        w_win, h_win = editor.screen.get_size()
+        r = self._layout(w_win, h_win)
+
+        if ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_ESCAPE:
+                self._close(editor, None)
+            elif ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                self._close(editor, self._current_color())
+            return True
+
+        if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+            pos = ev.pos
+            if _in_rect(pos, r["hue"]):
+                self.dragging_hue = True
+                self._apply_hue(pos[0], r)
+            elif _in_rect(pos, r["sv"]):
+                self.dragging_sv = True
+                self._apply_sv(pos, r)
+            elif _in_rect(pos, r["ok"]):
+                self._close(editor, self._current_color())
+            elif _in_rect(pos, r["cancel"]):
+                self._close(editor, None)
+            else:
+                ox, oy = r["palette_origin"]
+                for pcol in self.palette:
+                    swatch = pygame.Rect(ox, oy, SWATCH, SWATCH)
+                    if _in_rect(pos, swatch):
+                        pc = pygame.Color(*pcol)
+                        self.hue, self.sat, self.val, _ = pc.hsva
+                        break
+                    ox += SWATCH + SWATCH_GAP
+            return True
+
+        if ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
+            self.dragging_hue = False
+            self.dragging_sv = False
+            return True
+
+        if ev.type == pygame.MOUSEMOTION:
+            if self.dragging_hue:
+                self._apply_hue(ev.pos[0], r)
+            elif self.dragging_sv:
+                self._apply_sv(ev.pos, r)
+            return True
+
+        return True  # app-modal: consuma comunque l'input utente
+
+    def _apply_hue(self, mx: int, r: dict) -> None:
+        rel_x = max(0.0, min(1.0, (mx - r["hue"].x) / r["hue"].width))
+        self.hue = rel_x * 360
+        if self.hue >= 360:
+            self.hue = 0
+
+    def _apply_sv(self, pos, r: dict) -> None:
+        rel_x = max(0.0, min(1.0, (pos[0] - r["sv"].x) / r["sv"].width))
+        rel_y = max(0.0, min(1.0, (pos[1] - r["sv"].y) / r["sv"].height))
+        self.sat = rel_x * 100
+        self.val = 100 - (rel_y * 100)
+
+    # ── Render ───────────────────────────────────────────────────────────────
+
+    def render(self, editor) -> None:
+        screen = editor.screen
+        w_win, h_win = screen.get_size()
+        r = self._layout(w_win, h_win)
         mx, my = pygame.mouse.get_pos()
-        
-        for ev in pygame.event.get():
-            if ev.type == pygame.QUIT:
-                # Ri-posta l'evento: questo loop bloccante consuma tutta la coda,
-                # quindi senza re-post l'intento di chiusura andrebbe perso e l'app
-                # non si chiuderebbe. Il main loop dell'editor lo gestira'.
-                pygame.event.post(pygame.event.Event(pygame.QUIT))
-                running = False
-            elif ev.type == pygame.MOUSEBUTTONDOWN:
-                if ev.button == 1:
-                    if _in_rect((mx, my), hue_bar_rect):
-                        dragging_hue = True
-                    elif _in_rect((mx, my), sv_rect):
-                        dragging_sv = True
-                    else:
-                        # Controllo click palette
-                        ox = x + 20
-                        oy = y + 370
-                        for pcol in palette:
-                            r = pygame.Rect(ox, oy, 30, 30)
-                            if _in_rect((mx, my), r):
-                                pc = pygame.Color(*pcol)
-                                current_hue, current_s, current_v, _ = pc.hsva
-                            ox += 34
-                            
-                        # Bottoni conferme
-                        btn_w = 100
-                        ok_r = pygame.Rect(x + w - 40 - btn_w * 2 - 10, y + h - 50, btn_w, 30)
-                        can_r = pygame.Rect(x + w - 20 - btn_w, y + h - 50, btn_w, 30)
-                        
-                        if _in_rect((mx, my), ok_r):
-                            sc = pygame.Color(0)
-                            sc.hsva = (current_hue, current_s, current_v, 100)
-                            result = (sc.r, sc.g, sc.b)
-                            running = False
-                        elif _in_rect((mx, my), can_r):
-                            running = False
-                            
-            elif ev.type == pygame.MOUSEBUTTONUP:
-                if ev.button == 1:
-                    dragging_hue = False
-                    dragging_sv = False
-            elif ev.type == pygame.KEYDOWN:
-                if ev.key == pygame.K_ESCAPE:
-                    running = False
-                elif ev.key == pygame.K_RETURN:
-                    sc = pygame.Color(0)
-                    sc.hsva = (current_hue, current_s, current_v, 100)
-                    result = (sc.r, sc.g, sc.b)
-                    running = False
 
-        if dragging_hue:
-            rel_x = max(0, min(1.0, (mx - hue_bar_rect.x) / hue_bar_rect.width))
-            current_hue = rel_x * 360
-            if current_hue >= 360:
-                current_hue = 0
-        
-        if dragging_sv:
-            rel_x = max(0, min(1.0, (mx - sv_rect.x) / sv_rect.width))
-            rel_y = max(0, min(1.0, (my - sv_rect.y) / sv_rect.height))
-            current_s = rel_x * 100
-            current_v = 100 - (rel_y * 100)
+        # Overlay scuro sull'editor (ridisegnato sotto ogni frame)
+        overlay = pygame.Surface((w_win, h_win), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, OVERLAY_ALPHA))
+        screen.blit(overlay, (0, 0))
 
-        if str(current_hue) != str(last_hue_drawn):
-            sv_surf = build_sv_surface(current_hue, sv_rect.width, sv_rect.height)
-            last_hue_drawn = current_hue
+        panel = r["panel"]
+        _rect(screen, PANEL, panel, radius=8)
+        _rect(screen, BORDER, panel, 1, radius=8)
 
-        cur_color = pygame.Color(0)
-        cur_color.hsva = (current_hue, current_s, max(0, min(100, current_v)), 100)
+        header = _txt(self.title, "md", TXT_HI)
+        screen.blit(header, (panel.x + PAD, panel.y + PAD))
 
-        screen.blit(bg_snapshot, (0, 0))
-        
-        # Modal Background
-        modal_r = pygame.Rect(x, y, w, h)
-        _rect(screen, PANEL, modal_r, radius=8)
-        _rect(screen, BORDER, modal_r, 1, radius=8)
-        
-        header = _txt(title, "md", TXT_HI)
-        screen.blit(header, (x + 20, y + 20))
-        
-        screen.blit(hue_surf, hue_bar_rect)
-        pygame.draw.rect(screen, BORDER, hue_bar_rect, 1)
-        hx = hue_bar_rect.x + int((current_hue / 360) * hue_bar_rect.width)
-        pygame.draw.line(screen, (255, 255, 255), (hx, hue_bar_rect.y - 2), (hx, hue_bar_rect.bottom + 2), 2)
-        pygame.draw.line(screen, (0, 0, 0), (hx, hue_bar_rect.y - 2), (hx, hue_bar_rect.bottom + 2), 1)
-        
-        screen.blit(sv_surf, sv_rect)
-        pygame.draw.rect(screen, BORDER, sv_rect, 1)
-        sx = sv_rect.x + int((current_s / 100) * sv_rect.width)
-        sy = sv_rect.y + int(((100 - current_v) / 100) * sv_rect.height)
+        # Barre (cache: hue statica, sv rigenerata al cambio di hue)
+        if (self._hue_surf is None
+                or self._hue_surf.get_size() != r["hue"].size):
+            self._hue_surf = build_hue_surface(r["hue"].width, r["hue"].height)
+        if (self._sv_surf is None or self._sv_hue_drawn != self.hue
+                or self._sv_surf.get_size() != r["sv"].size):
+            self._sv_surf = build_sv_surface(self.hue, r["sv"].width, r["sv"].height)
+            self._sv_hue_drawn = self.hue
+
+        screen.blit(self._hue_surf, r["hue"])
+        pygame.draw.rect(screen, BORDER, r["hue"], 1)
+        hx = r["hue"].x + int((self.hue / 360) * r["hue"].width)
+        pygame.draw.line(screen, (255, 255, 255),
+                         (hx, r["hue"].y - 2), (hx, r["hue"].bottom + 2), 2)
+        pygame.draw.line(screen, (0, 0, 0),
+                         (hx, r["hue"].y - 2), (hx, r["hue"].bottom + 2), 1)
+
+        screen.blit(self._sv_surf, r["sv"])
+        pygame.draw.rect(screen, BORDER, r["sv"], 1)
+        sx = r["sv"].x + int((self.sat / 100) * r["sv"].width)
+        sy = r["sv"].y + int(((100 - self.val) / 100) * r["sv"].height)
         pygame.draw.circle(screen, (255, 255, 255), (sx, sy), 5, 1)
         pygame.draw.circle(screen, (0, 0, 0), (sx, sy), 6, 1)
-        
+
         lbl_pal = _txt("Estratti dal Background:", "sm", TXT_DIM)
-        screen.blit(lbl_pal, (x + 20, y + 350))
-        
-        ox = x + 20
-        oy = y + 370
-        for pcol in palette:
-            pr = pygame.Rect(ox, oy, 30, 30)
+        screen.blit(lbl_pal, (panel.x + PAD, panel.y + 350))
+
+        ox, oy = r["palette_origin"]
+        for pcol in self.palette:
+            pr = pygame.Rect(ox, oy, SWATCH, SWATCH)
             _rect(screen, pcol, pr)
             _rect(screen, BORDER, pr, 1)
-            ox += 34
-            
-        cur_r = pygame.Rect(x + 20, y + h - 50, 40, 30)
-        _rect(screen, (cur_color.r, cur_color.g, cur_color.b), cur_r)
-        _rect(screen, BORDER, cur_r, 1)
-        
-        val_txt = _txt(f"RGB: {cur_color.r}, {cur_color.g}, {cur_color.b}", "sm", TXT_HI)
-        screen.blit(val_txt, (x + 70, y + h - 45))
-        
-        btn_w = 100
-        ok_r = pygame.Rect(x + w - 40 - btn_w * 2 - 10, y + h - 50, btn_w, 30)
-        can_r = pygame.Rect(x + w - 20 - btn_w, y + h - 50, btn_w, 30)
-        _button(screen, ok_r, "Applica", _in_rect((mx, my), ok_r), active=True)
-        _button(screen, can_r, "Annulla", _in_rect((mx, my), can_r))
-        
-        pygame.display.flip()
+            ox += SWATCH + SWATCH_GAP
 
-    return result
+        cur = self._current_color()
+        _rect(screen, cur, r["current"])
+        _rect(screen, BORDER, r["current"], 1)
+        val_txt = _txt(f"RGB: {cur[0]}, {cur[1]}, {cur[2]}", "sm", TXT_HI)
+        screen.blit(val_txt, (panel.x + 70, panel.y + PICKER_H - 45))
+
+        _button(screen, r["ok"], "Applica", _in_rect((mx, my), r["ok"]), active=True)
+        _button(screen, r["cancel"], "Annulla", _in_rect((mx, my), r["cancel"]))
