@@ -9,17 +9,23 @@ Supporto avanzato per editing testo (cursore, scorciatoie, key repeat).
 import logging
 import pygame
 import shutil
-import threading
-import json
 from collections import OrderedDict
 from pathlib import Path
 from editor.constants import (
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC,
     TXT, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C,
 )
+from editor.core.asset_catalog import AssetCatalog
 from editor.ui.draw import (
     _draw_text, _rect, _button, _in_rect, _scrollbar, _draw_shape_icon, _clamp, _text_wh
 )
+
+# Estensioni gestite dal modale background (immagini + video full-screen)
+BG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".bmp", ".mp4")
+# Nome del catalogo tag persistente nella cartella backgrounds
+BG_CATALOG_FILENAME = "backgrounds_catalog.json"
+# Dimensione delle miniature nella griglia
+BG_THUMB_SIZE = (250, 140)
 
 class BackgroundModalMixin:
     """Modale premium avanzata per la gestione dei background con UX testo migliorata."""
@@ -40,67 +46,37 @@ class BackgroundModalMixin:
         self._bg_overlay_surf = getattr(self, "_bg_overlay_surf", None)
         
         # Miniature e Ricerca
-        self._bg_thumbnails = getattr(self, "_bg_thumbnails", {})
-        self._bg_thumb_lock = getattr(self, "_bg_thumb_lock", threading.Lock())
         self._bg_search = ""
         self._bg_last_query = None
         self._bg_search_active = False
         self._bg_delete_pending = None
-        
+
         # Stati Editing e suggerimenti
-        self._bg_editing_name = None 
+        self._bg_editing_name = None
         self._bg_name_buffer = ""
-        self._bg_editing_tags = None 
+        self._bg_editing_tags = None
         self._bg_tags_buffer = ""
         self._bg_cursor = 0
-        self._bg_all_library_tags = []
         self._bg_suggestions = []
-        
-        # Stato thread
-        self._bg_loading_thumbs = getattr(self, "_bg_loading_thumbs", False)
-        
-        # Abilita ripetizione tasti
 
-        
         self._bg_dir = self.base_path / "engine" / "assets" / "backgrounds"
-        self._bg_load_catalog()
-        self._bg_refresh_library_tags()
-        
-        if self._bg_dir.exists():
-            self._bg_all_files = sorted([f.name for f in self._bg_dir.glob("*") 
-                                       if f.suffix.lower() in [".jpg", ".jpeg", ".png", ".bmp", ".mp4"] 
-                                       and f.name != "backgrounds_catalog.json"])
-            self._bg_files = list(self._bg_all_files)
-            if not self._bg_loading_thumbs:
-                threading.Thread(target=self._bg_load_thumbnails_task, daemon=True).start()
-        else:
-            logging.error(f"Cartella background non trovata: {self._bg_dir}")
+        # Strato dati condiviso: scansione, tag, rename, delete, import, miniature.
+        # L'istanza persiste tra le aperture (miniature in RAM riutilizzate).
+        if getattr(self, "_bg_cat", None) is None:
+            self._bg_cat = AssetCatalog(self._bg_dir, BG_EXTENSIONS,
+                                        BG_CATALOG_FILENAME, thumb_size=BG_THUMB_SIZE)
+        self._bg_cat.load()
+        self._bg_all_files = self._bg_cat.refresh()
+        self._bg_files = list(self._bg_all_files)
+        self._bg_start_thumbnails()
 
-    def _bg_load_catalog(self):
-        cat_path = self._bg_dir / "backgrounds_catalog.json"
-        if cat_path.exists():
-            try:
-                with open(cat_path, "r", encoding="utf-8") as f:
-                    self._bg_catalog = json.load(f)
-            except Exception: self._bg_catalog = {}
-        else: self._bg_catalog = {}
-
-    def _bg_save_catalog(self):
-        cat_path = self._bg_dir / "backgrounds_catalog.json"
-        try:
-            self._bg_dir.mkdir(parents=True, exist_ok=True)
-            with open(cat_path, "w", encoding="utf-8") as f:
-                json.dump(self._bg_catalog, f, indent=2)
-            self._bg_refresh_library_tags()
-        except Exception as e:
-            logging.error(f"Errore salvataggio catalogo BG: {e}")
-
-    def _bg_refresh_library_tags(self):
-        """Raccoglie tutti i tag unici esistenti per i suggerimenti."""
-        tags = set()
-        for data in self._bg_catalog.values():
-            tags.update(data.get("tags", []))
-        self._bg_all_library_tags = sorted(list(tags))
+    def _bg_start_thumbnails(self):
+        """Avvia il caricamento asincrono delle miniature (cache disco .thumbs)."""
+        self._bg_cat.start_thumbnail_thread(
+            should_continue=lambda: getattr(self, "_bg_modal", False),
+            # Invalida la cache di rendering per mostrare la nuova immagine
+            on_thumbnail=lambda _name: self._bg_row_cache.clear(),
+        )
 
     def _bg_modal_close(self):
         self._bg_modal = False
@@ -108,67 +84,18 @@ class BackgroundModalMixin:
         self._bg_editing_name = None
         self._bg_editing_tags = None
 
-
-    def _bg_load_thumbnails_task(self):
-        """Carica le miniature con Disk Caching (PNG) per massima compatibilità."""
-        self._bg_loading_thumbs = True
-        cache_dir = self._bg_dir / ".thumbs"
-        try:
-            cache_dir.mkdir(parents=True, exist_ok=True)
-            for name in self._bg_all_files:
-                if not self._bg_modal: break
-                if name in self._bg_thumbnails: continue
-                if name.lower().endswith((".mp4", ".mov", ".mkv")): continue
-                
-                try:
-                    # Usiamo .png esplicito per la cache per evitare errori di formato
-                    thumb_path = cache_dir / f"{name}.png"
-                    thumb = None
-                    
-                    if thumb_path.exists():
-                        try:
-                            # Caricamento da cache disco
-                            thumb = pygame.image.load(str(thumb_path)).convert_alpha()
-                        except Exception:
-                            # Se la cache è corrotta, la eliminiamo per rigenerarla
-                            thumb_path.unlink(missing_ok=True)
-                    
-                    if not thumb:
-                        # Generazione o rigenerazione dall'originale
-                        path = self._bg_dir / name
-                        raw = pygame.image.load(str(path))
-                        tw, th = 250, 140
-                        thumb = pygame.transform.smoothscale(raw, (tw, th))
-                        # Salvataggio con estensione standard
-                        pygame.image.save(thumb, str(thumb_path))
-                    
-                    if thumb:
-                        with self._bg_thumb_lock:
-                            self._bg_thumbnails[name] = thumb
-                        # Invalida cache rendering per mostrare la nuova immagine
-                        if hasattr(self, "_bg_row_cache"): self._bg_row_cache.clear()
-                except Exception as e:
-                    logging.debug(f"Errore caricamento miniatura {name}: {e}")
-        finally:
-            self._bg_loading_thumbs = False
-
-    def _bg_update_filter(self):
+    def _bg_update_filter(self, force=False):
+        # force=True: la lista file e' cambiata (rename/delete/import) e va
+        # ricalcolata anche a query invariata (il vecchio early-return lasciava
+        # la griglia stale dopo queste operazioni).
         query = self._bg_search.lower().strip()
-        if query == getattr(self, "_bg_last_query", None): return 
+        query_changed = query != getattr(self, "_bg_last_query", None)
+        if not force and not query_changed: return
         self._bg_last_query = query
-        
-        if not query:
-            self._bg_files = list(self._bg_all_files)
-        else:
-            self._bg_files = []
-            for f in self._bg_all_files:
-                tags = self._bg_catalog.get(f, {}).get("tags", [])
-                tags_str = " ".join([self.tag_manager.get_label(t) for t in tags]).lower()
-                if query in f.lower() or query in tags_str:
-                    self._bg_files.append(f)
-        
-        self._bg_scroll = self._bg_scroll_target = 0
-        self._bg_row_cache.clear() # Invalida solo al cambio query
+        self._bg_files = self._bg_cat.search(query, tag_label_fn=self.tag_manager.get_label)
+        if query_changed:
+            self._bg_scroll = self._bg_scroll_target = 0
+        self._bg_row_cache.clear() # Invalida solo al cambio query o lista
 
     def _bg_modal_key(self, ev):
         if not self._bg_modal: return
@@ -207,18 +134,14 @@ class BackgroundModalMixin:
         # ── EDITING STANDARD ──
         if ev.key == pygame.K_RETURN:
             if active_field == "name": self._bg_confirm_rename()
-            elif active_field == "tags": 
+            elif active_field == "tags":
                 if self._bg_tags_buffer:
                     new_tag = self.tag_manager.ensure_tag(self._bg_tags_buffer)
                     if new_tag:
-                        if self._bg_editing_tags not in self._bg_catalog: self._bg_catalog[self._bg_editing_tags] = {}
-                        tags = set(self._bg_catalog[self._bg_editing_tags].get("tags", []))
-                        tags.add(new_tag)
-                        self._bg_catalog[self._bg_editing_tags]["tags"] = sorted(list(tags))
+                        self._bg_cat.add_tag(self._bg_editing_tags, new_tag)
                         self._bg_tags_buffer = ""
                         self._bg_cursor = 0
                         self._bg_update_suggestions()
-                        self._bg_save_catalog()
                 else:
                     self._bg_confirm_tags()
             elif active_field == "search": self._bg_search_active = False
@@ -266,14 +189,10 @@ class BackgroundModalMixin:
 
     def _bg_apply_suggestion(self, tag):
         if not self._bg_editing_tags: return
-        if self._bg_editing_tags not in self._bg_catalog: self._bg_catalog[self._bg_editing_tags] = {}
-        tags = set(self._bg_catalog[self._bg_editing_tags].get("tags", []))
-        tags.add(tag)
-        self._bg_catalog[self._bg_editing_tags]["tags"] = sorted(list(tags))
+        self._bg_cat.add_tag(self._bg_editing_tags, tag)
         self._bg_tags_buffer = ""
         self._bg_cursor = 0
         self._bg_suggestions = []
-        self._bg_save_catalog()
 
     def _set_clipboard(self, text):
         try:
@@ -371,17 +290,9 @@ class BackgroundModalMixin:
     def _bg_confirm_rename(self):
         if not self._bg_editing_name: return
         old_name, buf = self._bg_editing_name, self._bg_name_buffer.strip()
-        new_name = buf + Path(old_name).suffix
-        if new_name != old_name and buf:
-            try:
-                (self._bg_dir/old_name).rename(self._bg_dir/new_name)
-                if old_name in self._bg_catalog: self._bg_catalog[new_name] = self._bg_catalog.pop(old_name)
-                self._bg_save_catalog()
-                idx = self._bg_all_files.index(old_name); self._bg_all_files[idx] = new_name
-                with self._bg_thumb_lock:
-                    if old_name in self._bg_thumbnails: self._bg_thumbnails[new_name] = self._bg_thumbnails.pop(old_name)
-                self._bg_update_filter()
-            except Exception: pass
+        # Rename validata (file + catalogo + miniature) delegata al catalogo
+        if self._bg_cat.rename(old_name, buf):
+            self._bg_update_filter(force=True)
         self._bg_editing_name = None
 
     def _bg_confirm_tags(self):
@@ -424,34 +335,18 @@ class BackgroundModalMixin:
     def _bg_delete_file(self, name):
         # Soft-delete: sposta nel cestino .editor_trash/ invece di unlink diretto.
         # Recuperabile per 7 giorni e tracciato in .editor_audit.log.
-        try:
-            from engine.utils import safe_delete
-            p = self._bg_dir / name
-            if p.exists() and safe_delete(p, reason="user_delete_background"):
-                if name in self._bg_all_files: self._bg_all_files.remove(name)
-                with self._bg_thumb_lock:
-                    if name in self._bg_thumbnails: del self._bg_thumbnails[name]
-                if name in self._bg_catalog: del self._bg_catalog[name]
-                self._bg_save_catalog(); self._bg_update_filter()
-        except Exception as e:
-            logging.warning(f"[BG] Delete fallita per '{name}': {e}")
+        if not self._bg_cat.delete(name, reason="user_delete_background"):
+            logging.warning(f"[BG] Delete fallita per '{name}'")
+        self._bg_update_filter(force=True)
         self._bg_delete_pending = None
 
     def _bg_handle_drop(self, path_str: str):
         if not self._bg_modal: return
-        src = Path(path_str)
-        if not src.exists() or src.suffix.lower() not in [".jpg", ".jpeg", ".png", ".bmp", ".mp4"]: return
-        t_name, c = src.name, 1
-        while (self._bg_dir / t_name).exists(): t_name = f"{src.stem}_{c}{src.suffix}"; c += 1
-        try:
-            self._bg_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(str(src), str(self._bg_dir / t_name))
-            if t_name not in self._bg_all_files:
-                self._bg_all_files.append(t_name); self._bg_all_files.sort(); self._bg_update_filter()
-            if t_name.lower().endswith((".jpg", ".jpeg", ".png", ".bmp")):
-                threading.Thread(target=self._bg_load_thumbnails_task, daemon=True).start()
-            self._status(self._TR("modal_status_loaded").format(t_name), OK_C, 3)
-        except Exception: pass
+        t_name = self._bg_cat.import_file(Path(path_str))
+        if not t_name: return
+        self._bg_update_filter(force=True)
+        self._bg_start_thumbnails()
+        self._status(self._TR("modal_status_loaded").format(t_name), OK_C, 3)
 
     def _bg_modal_wheel(self, dy):
         if not self._bg_modal: return
@@ -547,7 +442,7 @@ class BackgroundModalMixin:
                     # Thumbnail
                     thumb_r = pygame.Rect(15, 12, 250, 140)
                     _rect(cell_surf, (12, 14, 20), thumb_r, radius=10)
-                    with self._bg_thumb_lock: thumb_surf = self._bg_thumbnails.get(name)
+                    thumb_surf = self._bg_cat.get_thumbnail(name)
                     if thumb_surf: cell_surf.blit(thumb_surf, thumb_r.topleft)
                     else: _draw_shape_icon(cell_surf, thumb_r.inflate(-180, -80), "camera", (60, 65, 85))
 
@@ -562,7 +457,7 @@ class BackgroundModalMixin:
                     if not is_ed_n:
                         _draw_text(cell_surf, name, "sm", TXT_HI, 15, 208, item_w - 30)
                     
-                    tags = self._bg_catalog.get(name, {}).get("tags", [])
+                    tags = self._bg_cat.get_tags(name)
                     if not is_ed_t:
                         if tags:
                             t_str = ", ".join(tags)
@@ -588,7 +483,7 @@ class BackgroundModalMixin:
                     self._last_tags_x, self._last_tags_y = ix + 10, iy + 245
                     
                     # 2. Chip dei tag esistenti (rimovibili)
-                    tags = self._bg_catalog.get(name, {}).get("tags", [])
+                    tags = self._bg_cat.get_tags(name)
                     for i, t_id in enumerate(tags):
                         # Disegniamo i chip in riga sopra l'input se c'è spazio, o gestiamo una riga extra
                         # Per ora, mostriamoli semplicemente come chip cliccabili per rimuoverli

@@ -9,16 +9,21 @@ import logging
 import pygame
 import shutil
 import threading
-import json
 from collections import OrderedDict
 from pathlib import Path
 from editor.constants import (
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC,
     TXT, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C,
 )
+from editor.core.asset_catalog import AssetCatalog
 from editor.ui.draw import (
     _draw_text, _rect, _button, _in_rect, _scrollbar, _draw_shape_icon, _clamp, _text_wh
 )
+
+# Estensioni gestite dal modale musica
+MUSIC_EXTENSIONS = (".mp3",)
+# Nome del catalogo tag/durate persistente nella cartella music
+MUSIC_CATALOG_FILENAME = "music_catalog.json"
 
 class MusicModalMixin:
     """Modale avanzata per la gestione della musica con UX testo migliorata."""
@@ -59,56 +64,30 @@ class MusicModalMixin:
         self._music_search = ""
         self._music_search_active = False
         self._music_suggestions = []
-        self._music_all_library_tags = []
-        
 
-        
         self._music_dir = self.base_path / "engine" / "assets" / "music"
-        self._music_load_catalog()
-        self._music_refresh_library_tags()
-        
+        # Strato dati condiviso: scansione, tag, durate, rename, delete, import.
+        if getattr(self, "_music_cat", None) is None:
+            self._music_cat = AssetCatalog(self._music_dir, MUSIC_EXTENSIONS,
+                                           MUSIC_CATALOG_FILENAME)
+        self._music_cat.load()
+
         if self._music_dir.exists():
-            self._music_all_files = sorted([f.name for f in self._music_dir.glob("*.mp3") if f.name != "music_catalog.json"])
+            self._music_all_files = self._music_cat.refresh()
             self._music_files = list(self._music_all_files)
-            self._music_pre_cache_data() 
-            
+            self._music_pre_cache_data()
+
             # Caricamento durate in background con protezione thread singolo
             if not self._music_loading_durations:
                 # Sincronizza durate già presenti nel catalogo
-                for name, data in self._music_catalog.items():
-                    if "duration" in data and name not in self._music_durations:
-                        self._music_durations[name] = data["duration"]
-                
+                for name in self._music_all_files:
+                    dur = self._music_cat.get_entry_value(name, "duration")
+                    if dur is not None and name not in self._music_durations:
+                        self._music_durations[name] = dur
+
                 threading.Thread(target=self._music_load_durations_task, daemon=True).start()
-        
+
         pygame.mixer.music.stop()
-
-    def _music_load_catalog(self):
-        cat_path = self._music_dir / "music_catalog.json"
-        if cat_path.exists():
-            try:
-                with open(cat_path, "r", encoding="utf-8") as f:
-                    self._music_catalog = json.load(f)
-            except Exception: self._music_catalog = {}
-        else: self._music_catalog = {}
-
-    def _music_save_catalog(self):
-        cat_path = self._music_dir / "music_catalog.json"
-        try:
-            self._music_dir.mkdir(parents=True, exist_ok=True)
-            from engine.utils import safe_write_json
-            if safe_write_json(cat_path, self._music_catalog, indent=2):
-                self._music_refresh_library_tags()
-            else:
-                logging.warning(f"[MUSIC] Salvataggio catalogo musica fallito: {cat_path}")
-        except Exception as e:
-            logging.warning(f"[MUSIC] Salvataggio catalogo musica fallito: {e}")
-
-    def _music_refresh_library_tags(self):
-        tags = set()
-        for data in self._music_catalog.values():
-            tags.update(data.get("tags", []))
-        self._music_all_library_tags = sorted(list(tags))
 
     def _music_modal_close(self):
         self._music_modal = False
@@ -136,26 +115,16 @@ class MusicModalMixin:
                         dur = s.get_length()
                         self._music_durations[name] = dur
                         # Aggiorna catalogo per persistenza
-                        if name not in self._music_catalog: self._music_catalog[name] = {}
-                        self._music_catalog[name]["duration"] = dur
+                        self._music_cat.set_entry_value(name, "duration", dur)
                         needs_save = True
                         del s # Forza rilascio memoria
                     except Exception: self._music_durations[name] = 0.0
-            if needs_save: self._music_save_catalog()
+            if needs_save: self._music_cat.save()
         finally:
             self._music_loading_durations = False
 
     def _music_update_filter(self):
-        query = self._music_search.lower().strip()
-        if not query:
-            self._music_files = list(self._music_all_files)
-        else:
-            self._music_files = []
-            for f in self._music_all_files:
-                tags = self._music_catalog.get(f, {}).get("tags", [])
-                tags_str = " ".join(tags).lower()
-                if query in f.lower() or query in tags_str:
-                    self._music_files.append(f)
+        self._music_files = self._music_cat.search(self._music_search)
         self._music_scroll = self._music_scroll_target = 0
         self._music_row_cache.clear()
 
@@ -236,7 +205,7 @@ class MusicModalMixin:
         parts = [p.strip().lower() for p in self._music_tags_buffer.split(",")]
         curr = parts[-1] if parts else ""
         if not curr: self._music_suggestions = []; return
-        self._music_suggestions = [t for t in self._music_all_library_tags if t.startswith(curr) and t not in parts][:5]
+        self._music_suggestions = self._music_cat.suggest_tags(curr, exclude=parts)
 
     def _music_apply_suggestion(self, tag):
         parts = [p.strip() for p in self._music_tags_buffer.split(",")]
@@ -257,7 +226,7 @@ class MusicModalMixin:
         
         self._music_display_tags = {}
         for name in self._music_all_files:
-            tags = self._music_catalog.get(name, {}).get("tags", [])
+            tags = self._music_cat.get_tags(name)
             t_str = ", ".join(tags) if tags else self._TR("modal_no_tags")
             if len(t_str) > 60: t_str = t_str[:57] + "..."
             self._music_display_tags[name] = t_str
@@ -331,7 +300,7 @@ class MusicModalMixin:
                 if _in_rect((mx, my), (list_x + 75, ry + 45, 500, 40)):
                     self._music_confirm_rename(); self._music_confirm_tags()
                     self._music_editing_tags = name
-                    tags = self._music_catalog.get(name, {}).get("tags", [])
+                    tags = self._music_cat.get_tags(name)
                     self._music_tags_buffer = ", ".join(tags) + (", " if tags else "")
                     self._music_cursor = len(self._music_tags_buffer); return
                 
@@ -346,24 +315,23 @@ class MusicModalMixin:
     def _music_confirm_rename(self):
         if not self._music_editing_name: return
         old_name, buf = self._music_editing_name, self._music_name_buffer.strip()
-        new_name = buf + Path(old_name).suffix
-        if new_name != old_name and buf:
-            try:
-                (self._music_dir/old_name).rename(self._music_dir/new_name)
-                if old_name in self._music_catalog: self._music_catalog[new_name] = self._music_catalog.pop(old_name)
-                self._music_save_catalog()
-                idx = self._music_all_files.index(old_name); self._music_all_files[idx] = new_name
-                self._music_update_filter()
-            except Exception: pass
+        # Rename validata (file + catalogo) delegata al catalogo condiviso
+        new_name = self._music_cat.rename(old_name, buf)
+        if new_name:
+            if old_name in self._music_durations:
+                self._music_durations[new_name] = self._music_durations.pop(old_name)
+            self._music_pre_cache_data()
+            self._music_update_filter()
         self._music_editing_name = None
 
     def _music_confirm_tags(self):
         if not self._music_editing_tags: return
         name = self._music_editing_tags
-        tags = sorted(list(set([t.strip().lower() for t in self._music_tags_buffer.split(",") if t.strip()])))
-        if name not in self._music_catalog: self._music_catalog[name] = {}
-        self._music_catalog[name]["tags"] = tags
-        self._music_save_catalog(); self._music_update_filter()
+        tags = [t.strip().lower() for t in self._music_tags_buffer.split(",") if t.strip()]
+        self._music_cat.set_tags(name, tags)
+        # Rigenera le stringhe pre-calcolate (i tag mostrati in riga)
+        self._music_pre_cache_data()
+        self._music_update_filter()
         self._music_editing_tags = None; self._music_suggestions = []
 
     def _music_preview(self, name):
@@ -417,35 +385,28 @@ class MusicModalMixin:
         if self._music_playing == name:
             pygame.mixer.music.stop()
             self._music_playing = None
-        p = self._music_dir / name
-        try:
-            from engine.utils import safe_delete
-            if p.exists() and safe_delete(p, reason="user_delete_music"):
-                if name in self._music_all_files: self._music_all_files.remove(name)
-                if name in self._music_catalog: del self._music_catalog[name]
-                self._music_save_catalog(); self._music_update_filter()
-        except Exception as e:
-            logging.warning(f"[MUSIC] Delete fallita per '{name}': {e}")
+        if not self._music_cat.delete(name, reason="user_delete_music"):
+            logging.warning(f"[MUSIC] Delete fallita per '{name}'")
+        self._music_durations.pop(name, None)
+        self._music_update_filter()
         self._music_delete_pending = None
 
     def _music_handle_drop(self, path_str: str):
         if not self._music_modal: return
-        src = Path(path_str)
-        if src.suffix.lower() != ".mp3": return
-        t_name, c = src.name, 1
-        while (self._music_dir / t_name).exists(): t_name = f"{src.stem}_{c}{src.suffix}"; c += 1
+        t_name = self._music_cat.import_file(Path(path_str))
+        if not t_name: return
+        self._music_update_filter()
         try:
-            shutil.copy2(str(src), str(self._music_dir / t_name))
-            if t_name not in self._music_all_files:
-                self._music_all_files.append(t_name); self._music_all_files.sort(); self._music_update_filter()
-            s = pygame.mixer.Sound(str(self._music_dir/t_name)); self._music_durations[t_name] = s.get_length()
-            # Rigenera i nomi/tag visualizzati, altrimenti la nuova traccia mostra valori grezzi.
-            self._music_pre_cache_data()
+            s = pygame.mixer.Sound(str(self._music_dir / t_name))
+            self._music_durations[t_name] = s.get_length()
+        except Exception:
+            self._music_durations[t_name] = 0.0
+        # Rigenera i nomi/tag visualizzati, altrimenti la nuova traccia mostra valori grezzi.
+        self._music_pre_cache_data()
 
-            # Scorrimento automatico a fine lista
-            v_rows = (800 - 160) // 125
-            self._music_scroll = max(0, len(self._music_files) - v_rows)
-        except Exception: pass
+        # Scorrimento automatico a fine lista
+        v_rows = (800 - 160) // 125
+        self._music_scroll = max(0, len(self._music_files) - v_rows)
 
     def _music_modal_mup(self):
         """Fine trascinamento o seek."""

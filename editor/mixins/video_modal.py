@@ -8,9 +8,6 @@ Basato sulla struttura di BackgroundModalMixin ma filtrato solo per video.
 
 import logging
 import pygame
-import shutil
-import threading
-import json
 import cv2
 import numpy as np
 from pathlib import Path
@@ -18,9 +15,19 @@ from editor.constants import (
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC,
     TXT, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C,
 )
+from editor.core.asset_catalog import AssetCatalog
 from editor.ui.draw import (
     _draw_text, _rect, _button, _in_rect, _scrollbar, _draw_shape_icon, _clamp, _text_wh
 )
+
+# Estensioni gestite dal modale video
+VIDEO_EXTENSIONS = (".mp4", ".mov", ".mkv")
+# File distinto da quello degli sfondi: condividere backgrounds_catalog.json
+# (stessa cartella, schemi tag incompatibili) faceva sovrascrivere a vicenda
+# i due modali. I video usano il proprio catalogo.
+VIDEO_CATALOG_FILENAME = "videos_catalog.json"
+# Dimensione delle miniature nella lista
+VIDEO_THUMB_SIZE = (200, 112)
 
 class VideoModalMixin:
     """Modale premium avanzata per la gestione dei video per il background dei giochi."""
@@ -29,132 +36,81 @@ class VideoModalMixin:
         self._vid_modal = True
         self._vid_modal_context = context
         self._vid_dir = self.base_path / "engine" / "assets" / "backgrounds"
-        
+
         # Inizializzazione stati
-        self._vid_all_files = []
-        self._vid_files = []
         self._vid_scroll = 0
         self._vid_search = ""
         self._vid_search_active = False
         self._vid_show_favorites = False
         self._vid_delete_pending = None
-        self._vid_editing_name = None 
+        self._vid_editing_name = None
         self._vid_name_buffer = ""
-        self._vid_editing_tags = None 
+        self._vid_editing_tags = None
         self._vid_tags_buffer = ""
         self._vid_cursor = 0
-        
-        # Miniature e Player
-        self._vid_thumbnails = {}
-        self._vid_thumb_lock = threading.Lock()
+
+        # Player
         self._vid_playing = None
         self._vid_preview_cap = None
         self._vid_preview_surf = None
-        
-        # Cataloghi e Tag
-        self._vid_load_catalog()
-        self._vid_refresh_library_tags()
         self._vid_suggestions = []
-        
-        # Carica video fisici e applica filtro iniziale
-        self._vid_update_filter()
-        
-        # Abilita ripetizione tasti
 
+        # Strato dati condiviso: scansione ricorsiva (sottocartelle es. video/),
+        # tag, rename, delete, import, miniature con cache disco .thumbs.
+        # L'istanza persiste tra le aperture (miniature in RAM riutilizzate).
+        if getattr(self, "_vid_cat", None) is None:
+            self._vid_cat = AssetCatalog(self._vid_dir, VIDEO_EXTENSIONS,
+                                         VIDEO_CATALOG_FILENAME, recursive=True,
+                                         thumb_size=VIDEO_THUMB_SIZE)
+        self._vid_cat.load()
+        self._vid_all_files = self._vid_cat.refresh()
+        self._vid_files = list(self._vid_all_files)
 
-        # Autoplay se richiesto (alla fine per evitare conflitti d'ordine)
+        # Autoplay se richiesto
         if autoplay_path:
             p = Path(autoplay_path)
             if p.exists():
                 self._vid_playing = p.name
                 self._vid_start_preview(p.name)
-        
-        if self._vid_dir.exists():
-            # Supporto ricorsivo per sottocartelle (es. video/)
-            all_vids = []
-            for f in self._vid_dir.rglob("*"):
-                if f.is_file() and f.suffix.lower() in [".mp4", ".mov", ".mkv"]:
-                    # Memorizza path relativo normalizzato
-                    rel = f.relative_to(self._vid_dir)
-                    all_vids.append(str(rel).replace("\\", "/"))
-            
-            self._vid_all_files = sorted(all_vids)
-            self._vid_files = list(self._vid_all_files)
-            
-            # Caricamento miniature in thread
-            threading.Thread(target=self._vid_load_thumbnails_task, daemon=True).start()
-        else:
-            logging.error(f"Cartella background non trovata: {self._vid_dir}")
 
-    def _vid_load_catalog(self):
-        cat_path = self._vid_dir / "videos_catalog.json"
-        if cat_path.exists():
-            try:
-                with open(cat_path, "r", encoding="utf-8") as f:
-                    self._vid_catalog = json.load(f)
-            except Exception: self._vid_catalog = {}
-        else: self._vid_catalog = {}
+        # Caricamento miniature in thread (sidecar jpg/png o frame OpenCV)
+        self._vid_cat.start_thumbnail_thread(
+            generator=self._vid_thumb_generator,
+            # Modale chiuso: non continuare a decodificare i video (CPU/IO leak)
+            should_continue=lambda: getattr(self, "_vid_modal", False),
+        )
 
-    def _vid_load_thumbnails_task(self):
-        """Cerca e carica miniature correlate ai video (es. video.jpg per video.mp4)."""
-        for name in self._vid_all_files:
-            if not getattr(self, "_vid_modal", False):
-                break  # modale chiuso: non continuare a decodificare i video (CPU/IO leak)
-            if name in self._vid_thumbnails: continue
-            # Prova varianti: nome intero + .jpg, o stem + .jpg
-            p = Path(name)
-            candidates = [
-                self._vid_dir / f"{name}.jpg",
-                self._vid_dir / f"{name}.png",
-                self._vid_dir / f"{p.stem}.jpg",
-                self._vid_dir / f"{p.stem}.png"
-            ]
-            found = False
-            for c in candidates:
-                if c.exists():
-                    try:
-                        raw = pygame.image.load(str(c))
-                        thumb = pygame.transform.smoothscale(raw, (200, 112))
-                        with self._vid_thumb_lock:
-                            self._vid_thumbnails[name] = thumb
-                        found = True
-                        break
-                    except Exception: pass
-            
-            # Fallback: Estrazione frame con OpenCV
-            if not found:
+    def _vid_thumb_generator(self, name):
+        """Miniatura per un video: sidecar jpg/png se presente, altrimenti primo frame."""
+        # Prova varianti: nome intero + .jpg, o stem + .jpg
+        p = Path(name)
+        candidates = [
+            self._vid_dir / f"{name}.jpg",
+            self._vid_dir / f"{name}.png",
+            self._vid_dir / f"{p.stem}.jpg",
+            self._vid_dir / f"{p.stem}.png"
+        ]
+        for c in candidates:
+            if c.exists():
                 try:
-                    v_path = self._vid_dir / name
-                    cap = cv2.VideoCapture(str(v_path))
-                    ret, frame = cap.read()
-                    if ret:
-                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                        frame = np.transpose(frame, (1, 0, 2))
-                        surf = pygame.surfarray.make_surface(frame)
-                        thumb = pygame.transform.smoothscale(surf, (200, 112))
-                        with self._vid_thumb_lock:
-                            self._vid_thumbnails[name] = thumb
-                    cap.release()
+                    raw = pygame.image.load(str(c))
+                    return pygame.transform.smoothscale(raw, VIDEO_THUMB_SIZE)
                 except Exception: pass
 
-    def _vid_save_catalog(self):
-        # File distinto da quello degli sfondi: condividere backgrounds_catalog.json
-        # (stessa cartella, schemi tag incompatibili) faceva sovrascrivere a vicenda
-        # i due modali. I video usano il proprio catalogo.
-        cat_path = self._vid_dir / "videos_catalog.json"
+        # Fallback: Estrazione frame con OpenCV
         try:
-            self._vid_dir.mkdir(parents=True, exist_ok=True)
-            with open(cat_path, "w", encoding="utf-8") as f:
-                json.dump(self._vid_catalog, f, indent=2)
-            self._vid_refresh_library_tags()
-        except Exception as e:
-            logging.error(f"Errore salvataggio catalogo Video: {e}")
-
-    def _vid_refresh_library_tags(self):
-        tags = set()
-        for data in self._vid_catalog.values():
-            tags.update(data.get("tags", []))
-        self._vid_all_library_tags = sorted(list(tags))
+            cap = cv2.VideoCapture(str(self._vid_dir / name))
+            try:
+                ret, frame = cap.read()
+            finally:
+                cap.release()
+            if ret:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                frame = np.transpose(frame, (1, 0, 2))
+                surf = pygame.surfarray.make_surface(frame)
+                return pygame.transform.smoothscale(surf, VIDEO_THUMB_SIZE)
+        except Exception: pass
+        return None
 
     def _vid_modal_close(self):
         self._vid_modal = False
@@ -166,16 +122,7 @@ class VideoModalMixin:
 
 
     def _vid_update_filter(self):
-        query = self._vid_search.lower().strip()
-        if not query:
-            self._vid_files = list(self._vid_all_files)
-        else:
-            self._vid_files = []
-            for f in self._vid_all_files:
-                tags = self._vid_catalog.get(f, {}).get("tags", [])
-                tags_str = " ".join(tags).lower()
-                if query in f.lower() or query in tags_str:
-                    self._vid_files.append(f)
+        self._vid_files = self._vid_cat.search(self._vid_search)
         self._vid_scroll = 0
 
     def _vid_modal_key(self, ev):
@@ -258,7 +205,7 @@ class VideoModalMixin:
         parts = [p.strip().lower() for p in self._vid_tags_buffer.split(",")]
         curr = parts[-1] if parts else ""
         if not curr: self._vid_suggestions = []; return
-        self._vid_suggestions = [t for t in self._vid_all_library_tags if t.startswith(curr) and t not in parts][:5]
+        self._vid_suggestions = self._vid_cat.suggest_tags(curr, exclude=parts)
 
     def _vid_apply_suggestion(self, tag):
         parts = [p.strip() for p in self._vid_tags_buffer.split(",")]
@@ -326,7 +273,7 @@ class VideoModalMixin:
                 if _in_rect((mx, my), (list_x + 240, ry + 60, 500, 60)):
                     self._vid_confirm_rename(); self._vid_confirm_tags()
                     self._vid_editing_tags = name
-                    tags = self._vid_catalog.get(name, {}).get("tags", [])
+                    tags = self._vid_cat.get_tags(name)
                     self._vid_tags_buffer = ", ".join(tags) + (", " if tags else "")
                     self._vid_cursor = len(self._vid_tags_buffer)
                     return
@@ -375,24 +322,17 @@ class VideoModalMixin:
     def _vid_confirm_rename(self):
         if not self._vid_editing_name: return
         old_name, buf = self._vid_editing_name, self._vid_name_buffer.strip()
-        new_name = buf + Path(old_name).suffix
-        if new_name != old_name and buf:
-            try:
-                (self._vid_dir/old_name).rename(self._vid_dir/new_name)
-                if old_name in self._vid_catalog: self._vid_catalog[new_name] = self._vid_catalog.pop(old_name)
-                self._vid_save_catalog()
-                idx = self._vid_all_files.index(old_name); self._vid_all_files[idx] = new_name
-                self._vid_update_filter()
-            except Exception: pass
+        # Rename validata (file + catalogo + miniature, sottocartella preservata)
+        if self._vid_cat.rename(old_name, buf):
+            self._vid_update_filter()
         self._vid_editing_name = None
 
     def _vid_confirm_tags(self):
         if not self._vid_editing_tags: return
         name = self._vid_editing_tags
-        tags = sorted(list(set([t.strip().lower() for t in self._vid_tags_buffer.split(",") if t.strip()])))
-        if name not in self._vid_catalog: self._vid_catalog[name] = {}
-        self._vid_catalog[name]["tags"] = tags
-        self._vid_save_catalog(); self._vid_update_filter()
+        tags = [t.strip().lower() for t in self._vid_tags_buffer.split(",") if t.strip()]
+        self._vid_cat.set_tags(name, tags)
+        self._vid_update_filter()
         self._vid_editing_tags = None; self._vid_suggestions = []
 
     def _vid_select(self, name):
@@ -412,35 +352,24 @@ class VideoModalMixin:
         self._vid_modal_close()
 
     def _vid_delete_file(self, name):
-        try:
-            p = self._vid_dir / name
-            if p.exists():
-                # Soft-delete nel cestino .editor_trash (recuperabile 7gg), come musica/sfondi.
-                from engine.utils import safe_delete
-                if safe_delete(p, reason="user_delete_video"):
-                    if name in self._vid_all_files: self._vid_all_files.remove(name)
-                    if name in self._vid_catalog: del self._vid_catalog[name]
-                    self._vid_save_catalog(); self._vid_update_filter()
-        except Exception as e:
-            logging.warning(f"[VIDEO] Delete fallita per '{name}': {e}")
+        # Soft-delete nel cestino .editor_trash (recuperabile 7gg), come musica/sfondi.
+        if not self._vid_cat.delete(name, reason="user_delete_video"):
+            logging.warning(f"[VIDEO] Delete fallita per '{name}'")
+        self._vid_update_filter()
         self._vid_delete_pending = None
 
     def _vid_handle_drop(self, path_str: str):
         if not getattr(self, "_vid_modal", False): return
-        src = Path(path_str)
-        if not src.exists() or src.suffix.lower() not in [".mp4", ".mov", ".mkv"]: return
-        t_name, c = src.name, 1
-        while (self._vid_dir / t_name).exists(): t_name = f"{src.stem}_{c}{src.suffix}"; c += 1
-        try:
-            self._vid_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(str(src), str(self._vid_dir / t_name))
-            if t_name not in self._vid_all_files:
-                self._vid_all_files.append(t_name); self._vid_all_files.sort(); self._vid_update_filter()
-            
-            v_rows = (800 - 190) // 140
-            self._vid_scroll = max(0, len(self._vid_files) - v_rows)
-            self._status(self._TR("modal_status_loaded").format(t_name), OK_C, 3)
-        except Exception: pass
+        t_name = self._vid_cat.import_file(Path(path_str))
+        if not t_name: return
+        self._vid_update_filter()
+        self._vid_cat.start_thumbnail_thread(
+            generator=self._vid_thumb_generator,
+            should_continue=lambda: getattr(self, "_vid_modal", False),
+        )
+        v_rows = (800 - 190) // 140
+        self._vid_scroll = max(0, len(self._vid_files) - v_rows)
+        self._status(self._TR("modal_status_loaded").format(t_name), OK_C, 3)
 
     def _vid_modal_wheel(self, dy):
         if not getattr(self, "_vid_modal", False): return
@@ -501,12 +430,12 @@ class VideoModalMixin:
                     scaled = pygame.transform.smoothscale(self._vid_preview_surf, (200, 112))
                     self.screen.blit(scaled, thumb_r.topleft)
             else:
-                with self._vid_thumb_lock:
-                    if name in self._vid_thumbnails:
-                        self.screen.blit(self._vid_thumbnails[name], thumb_r.topleft)
-                    else:
-                        _rect(self.screen, (25, 27, 45), thumb_r, radius=8)
-                        _draw_text(self.screen, self._TR("modal_no_preview"), "sm", (60, 65, 90), thumb_r.centerx - 45, thumb_r.centery - 10)
+                thumb = self._vid_cat.get_thumbnail(name)
+                if thumb is not None:
+                    self.screen.blit(thumb, thumb_r.topleft)
+                else:
+                    _rect(self.screen, (25, 27, 45), thumb_r, radius=8)
+                    _draw_text(self.screen, self._TR("modal_no_preview"), "sm", (60, 65, 90), thumb_r.centerx - 45, thumb_r.centery - 10)
 
             # PROGRESS BAR (Sotto il video, se in play)
             if is_playing:
@@ -538,7 +467,7 @@ class VideoModalMixin:
                 _draw_text(self.screen, name, "md", TXT_HI, text_x, ry+20, 400)
                 _draw_shape_icon(self.screen, (text_x+_text_wh(name, "md")[0]+12, ry+20, 24, 24), "edit", (100, 100, 255))
 
-            tags = self._vid_catalog.get(name, {}).get("tags", [])
+            tags = self._vid_cat.get_tags(name)
             tag_y = ry + 62
             if self._vid_editing_tags == name:
                 self._last_vtags_x, self._last_vtags_y = text_x, tag_y
