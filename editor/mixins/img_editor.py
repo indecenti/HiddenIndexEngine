@@ -2,7 +2,8 @@
 editor/mixins/img_editor.py
 
 ImgEditorMixin — Editor di immagini professionale per gli oggetti del catalogo.
-Include: gomma, magic wand, chroma destroyer, zoom/pan e trim evoluto.
+Include: gomma, ripristina, magic wand, chroma destroyer, zoom/pan,
+trim evoluto, ritaglio manuale con maniglie e undo/redo.
 """
 
 import pygame
@@ -17,7 +18,17 @@ from editor.constants import (
     TXT, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C,
 )
 from editor.ui.draw import _txt, _draw_text, _rect, _button, _in_rect, _slider
-from editor.mixins.img_editor_logic import evolved_trim
+from editor.mixins.img_editor_logic import evolved_trim, brush_power_map, restore_stamp
+
+# Costanti Studio Asset
+UNDO_STACK_CAP = 20              # Profondita' massima di undo e redo
+TOOL_BTN_SIZE = 48               # Lato dei bottoni strumento (3 per riga)
+TOOL_BTN_STEP = 53               # Passo orizzontale tra i bottoni strumento
+CROP_HANDLE_SIZE = 12            # Lato visivo delle maniglie di ritaglio
+CROP_HANDLE_HIT = 22             # Lato dell'area cliccabile delle maniglie
+CROP_MIN_KEEP = 1                # Pixel minimi che il ritaglio deve lasciare
+CROP_OVERLAY_ALPHA = 150         # Opacita' dell'overlay sulle zone escluse
+CROP_HANDLE_FILL = (25, 25, 30)  # Riempimento maniglie (sfondo modal)
 
 
 class ImgEditorMixin:
@@ -31,21 +42,25 @@ class ImgEditorMixin:
         self._img_editor_pan = [0, 0]
         self._img_editor_surf = None
         self._img_editor_view_surf = None # Superficie di lavoro
+        self._img_editor_orig_surf = None # Copia originale per lo strumento Ripristina
         self._img_editor_last_m = None    # Per interpolazione gomma
         self._img_editor_eraser_r = 4
         self._img_editor_eraser_hardness = 1.0
         self._img_editor_eraser_opacity = 1.0
         self._img_editor_wand_tol = 32
         self._img_editor_wand_feather = 4
-        self._img_editor_wand_global = False
         self._img_editor_chroma_intensity = 1.0
-        self._img_editor_tool = "eraser"  # "eraser", "soft", "wand"
+        self._img_editor_tool = "eraser"  # "eraser", "restore", "wand"
         self._img_editor_shape = "round"  # "round", "square"
         self._img_editor_crop = {"l": 0, "r": 0, "t": 0, "b": 0}
-        self._img_editor_dragging = None # "eraser" | "crop_l" | "crop_r" ...
+        self._img_editor_crop_mode = False  # Toggle strumento Ritaglia
+        self._img_editor_dragging = None # "eraser" | "pan" | "crop_l/r/t/b" | "sl_*"
         self._img_editor_dirty = False
         self._img_editor_undo_stack = []
-        self._img_editor_save_confirm = False 
+        self._img_editor_redo_stack = []
+        self._img_editor_brush_cache = {}
+        self._img_editor_restore_cache = {}
+        self._img_editor_save_confirm = False
         self._img_editor_copy_confirm = False
         self._img_editor_exit_confirm = False
         self._img_editor_bg_mode = "check" 
@@ -129,12 +144,16 @@ class ImgEditorMixin:
             orig = pygame.image.load(str(self._img_editor_path)).convert_alpha()
             self._img_editor_surf = orig
             self._img_editor_view_surf = orig.copy()
+            # Copia dell'originale: sorgente pixel per lo strumento Ripristina
+            self._img_editor_orig_surf = orig.copy()
             self._img_editor_id = cat_id
             self._img_editor_active = True
             self._img_editor_asset_shape = cat_item.get("shape", "rect")
             self._img_editor_crop = {"l": 0, "r": 0, "t": 0, "b": 0}
+            self._img_editor_crop_mode = False
             self._img_editor_dirty = False
             self._img_editor_undo_stack = []
+            self._img_editor_redo_stack = []
             self._img_editor_save_confirm = False
             self._img_editor_copy_confirm = False
             self._img_editor_exit_confirm = False
@@ -145,21 +164,24 @@ class ImgEditorMixin:
         except Exception as e:
             self._status(f"Errore caricamento: {e}", ERR_C, 3)
 
+    def _img_editor_compose_final_surf(self) -> pygame.Surface:
+        """Superficie finale con il crop corrente applicato (save, copia, applica)."""
+        w, h = self._img_editor_view_surf.get_size()
+        cl, cr = self._img_editor_crop["l"], self._img_editor_crop["r"]
+        ct, cb = self._img_editor_crop["t"], self._img_editor_crop["b"]
+        new_w = max(1, w - cl - cr)
+        new_h = max(1, h - ct - cb)
+        final_surf = pygame.Surface((new_w, new_h), pygame.SRCALPHA)
+        final_surf.blit(self._img_editor_view_surf, (0, 0), (cl, ct, new_w, new_h))
+        return final_surf
+
     def _img_editor_save(self):
         if not self._img_editor_active or not self._img_editor_path: return
-        
+
         try:
             # Applica il crop finale
-            w, h = self._img_editor_view_surf.get_size()
-            cl, cr = self._img_editor_crop["l"], self._img_editor_crop["r"]
-            ct, cb = self._img_editor_crop["t"], self._img_editor_crop["b"]
-            
-            new_w = max(1, w - cl - cr)
-            new_h = max(1, h - ct - cb)
-            
-            final_surf = pygame.Surface((new_w, new_h), pygame.SRCALPHA)
-            final_surf.blit(self._img_editor_view_surf, (0, 0), (cl, ct, new_w, new_h))
-            
+            final_surf = self._img_editor_compose_final_surf()
+
             target_name = self._img_editor_path.name
             
             # 0. Aggiorna metadati nel catalogo in memoria
@@ -251,13 +273,8 @@ class ImgEditorMixin:
                 counter += 1; new_id = f"{base_name}_v{counter}"
             
             # Prepara Superficie Finale
-            w, h = self._img_editor_view_surf.get_size()
-            cl, cr = self._img_editor_crop["l"], self._img_editor_crop["r"]
-            ct, cb = self._img_editor_crop["t"], self._img_editor_crop["b"]
-            new_w, new_h = max(1, w - cl - cr), max(1, h - ct - cb)
-            final_surf = pygame.Surface((new_w, new_h), pygame.SRCALPHA)
-            final_surf.blit(self._img_editor_view_surf, (0, 0), (cl, ct, new_w, new_h))
-            
+            final_surf = self._img_editor_compose_final_surf()
+
             orig_rel_path = orig_item.get("image") or orig_item.get("icon")
             p = Path(orig_rel_path)
             clean_stem = re.sub(r"_v\d+$", "", p.stem)
@@ -297,10 +314,17 @@ class ImgEditorMixin:
         if not self._img_editor_active: return
         
         if ev.type == pygame.KEYDOWN:
-            if ev.key == pygame.K_ESCAPE: self._img_editor_active = False
-            elif ev.key == pygame.K_s and (pygame.key.get_mods() & pygame.KMOD_CTRL): self._img_editor_save()
-            elif ev.key == pygame.K_z and (pygame.key.get_mods() & pygame.KMOD_CTRL): self._img_editor_undo()
-            elif ev.key == pygame.K_r and (pygame.key.get_mods() & pygame.KMOD_CTRL):
+            mods = pygame.key.get_mods()
+            if ev.key == pygame.K_ESCAPE:
+                # In modalita' ritaglio, Esc annulla il ritaglio senza chiudere
+                if self._img_editor_crop_mode: self._img_editor_cancel_crop()
+                else: self._img_editor_active = False
+            elif ev.key == pygame.K_s and (mods & pygame.KMOD_CTRL): self._img_editor_save()
+            elif ev.key == pygame.K_z and (mods & pygame.KMOD_CTRL):
+                if mods & pygame.KMOD_SHIFT: self._img_editor_redo()
+                else: self._img_editor_undo()
+            elif ev.key == pygame.K_y and (mods & pygame.KMOD_CTRL): self._img_editor_redo()
+            elif ev.key == pygame.K_r and (mods & pygame.KMOD_CTRL):
                 self._img_editor_zoom = 1.0; self._img_editor_pan = [0, 0]
         
         elif ev.type == pygame.MOUSEWHEEL:
@@ -419,6 +443,12 @@ class ImgEditorMixin:
         is_ui = (mx > sb_x) or (my < ey + 60) or (my >= fy - 5)
 
         if not is_ui:
+            if self._img_editor_crop_mode:
+                # In modalita' ritaglio il canvas serve solo alle maniglie
+                handle = self._img_editor_crop_handle_at(mx, my, ix, iy, scale)
+                if handle is not None:
+                    self._img_editor_dragging = "crop_" + handle
+                return
             if self._img_editor_tool == "wand":
                 self._img_editor_apply_wand(mx, my, ix, iy, scale)
             else:
@@ -450,8 +480,9 @@ class ImgEditorMixin:
 
         # ---------- COLONNA 1: PENNELLI ----------
         sy = ey + 85
-        for i, tid in enumerate(["eraser", "wand"]):
-            if _in_rect((mx, my), (col1_x + i * 60, sy, 52, 52)):
+        for i, tid in enumerate(["eraser", "restore", "wand"]):
+            tool_r = (col1_x + i * TOOL_BTN_STEP, sy, TOOL_BTN_SIZE, TOOL_BTN_SIZE)
+            if _in_rect((mx, my), tool_r):
                 self._img_editor_tool = tid; return
         for i, sid in enumerate(["round", "square"]):
             if _in_rect((mx, my), (col1_x + i * 60, sy + 65, 52, 52)):
@@ -459,7 +490,7 @@ class ImgEditorMixin:
 
         # Sliders (ALLINEATO al render: sy_sl = ey + 255, offset +70 e +140)
         sy_sl = ey + 255
-        if self._img_editor_tool == "eraser":
+        if self._img_editor_tool in ("eraser", "restore"):
             if _in_rect((mx, my), (col1_x, sy_sl, sl_w, 20)):
                 self._img_editor_dragging = "sl_radius"
                 self._img_editor_eraser_r = int(1 + max(0, min(1, (mx - col1_x) / sl_w)) * 63); return
@@ -519,6 +550,16 @@ class ImgEditorMixin:
         if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 38)):
             self._img_editor_asset_shape = "circle"; return
 
+        sy2 += 75  # RITAGLIO MANUALE
+        if _in_rect((mx, my), (col2_x, sy2, bw2, 38)):
+            # Toggle: ri-click sul bottone annulla il ritaglio in corso
+            if self._img_editor_crop_mode: self._img_editor_cancel_crop()
+            else: self._img_editor_crop_mode = True
+            return
+        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 38)):
+            if self._img_editor_crop_mode: self._img_editor_apply_crop()
+            return
+
         if reset_confirm:
             self._img_editor_save_confirm = False
             self._img_editor_copy_confirm = False
@@ -532,6 +573,7 @@ class ImgEditorMixin:
             self._img_editor_view_surf = evolved_trim(self._img_editor_view_surf, noise_threshold=2)
             self._img_editor_crop = {"l": 0, "r": 0, "t": 0, "b": 0}
             self._img_editor_dirty = True
+            self._img_editor_sync_orig_surf()
             final_w, final_h = self._img_editor_view_surf.get_size()
             self._status(f"Trim: {final_w}x{final_h}", OK_C, 2)
         except Exception as e:
@@ -586,27 +628,22 @@ class ImgEditorMixin:
         self._img_editor_push_undo()
         tol, feather = self._img_editor_wand_tol, self._img_editor_wand_feather
         to_process = []
-        if self._img_editor_wand_global:
-            for y in range(h):
-                for x in range(w):
-                    nc = surf.get_at((x, y))
-                    diff = max(abs(nc[0]-target_color[0]), abs(nc[1]-target_color[1]), abs(nc[2]-target_color[2]))
-                    if diff <= tol + feather: to_process.append((x, y, diff))
-        else:
-            from collections import deque
-            queue = deque([(rx, ry)]); visited = [False] * (w * h); visited[ry * w + rx] = True
-            while queue:
-                cx, cy = queue.popleft(); nc = surf.get_at((cx, cy))
-                diff = max(abs(nc[0]-target_color[0]), abs(nc[1]-target_color[1]), abs(nc[2]-target_color[2]))
-                to_process.append((cx, cy, diff))
-                for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]:
-                    nx, ny = cx + dx, cy + dy
-                    if 0 <= nx < w and 0 <= ny < h:
-                        v_idx = ny * w + nx
-                        if not visited[v_idx]:
-                            nc_n = surf.get_at((nx, ny))
-                            diff_n = max(abs(nc_n[0]-target_color[0]), abs(nc_n[1]-target_color[1]), abs(nc_n[2]-target_color[2]))
-                            if diff_n <= tol + feather: visited[v_idx] = True; queue.append((nx, ny))
+        from collections import deque
+        queue = deque([(rx, ry)]); visited = [False] * (w * h); visited[ry * w + rx] = True
+        while queue:
+            cx, cy = queue.popleft(); nc = surf.get_at((cx, cy))
+            diff = max(abs(nc[0]-target_color[0]), abs(nc[1]-target_color[1]),
+                       abs(nc[2]-target_color[2]))
+            to_process.append((cx, cy, diff))
+            for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]:
+                nx, ny = cx + dx, cy + dy
+                if 0 <= nx < w and 0 <= ny < h:
+                    v_idx = ny * w + nx
+                    if not visited[v_idx]:
+                        nc_n = surf.get_at((nx, ny))
+                        diff_n = max(abs(nc_n[0]-target_color[0]), abs(nc_n[1]-target_color[1]),
+                                     abs(nc_n[2]-target_color[2]))
+                        if diff_n <= tol + feather: visited[v_idx] = True; queue.append((nx, ny))
 
         for px, py, d in to_process:
             if d <= tol: surf.set_at((px, py), (0,0,0,0))
@@ -620,11 +657,99 @@ class ImgEditorMixin:
         self._img_editor_push_undo()
         self._img_editor_view_surf = pygame.transform.rotate(self._img_editor_view_surf, angle)
         self._img_editor_crop = {"l": 0, "r": 0, "t": 0, "b": 0}; self._img_editor_dirty = True
+        self._img_editor_sync_orig_surf()
 
     def _img_editor_apply_flip(self, flip_h, flip_v):
         self._img_editor_push_undo()
         self._img_editor_view_surf = pygame.transform.flip(self._img_editor_view_surf, flip_h, flip_v)
+        # Il ritaglio pendente segue il contenuto specchiato
+        crop = self._img_editor_crop
+        if flip_h: crop["l"], crop["r"] = crop["r"], crop["l"]
+        if flip_v: crop["t"], crop["b"] = crop["b"], crop["t"]
         self._img_editor_dirty = True
+        self._img_editor_sync_orig_surf()
+
+    def _img_editor_sync_orig_surf(self) -> None:
+        """
+        Riallinea l'originale del Ripristina alla superficie corrente.
+        Va chiamata dopo ogni operazione geometrica (rotate/flip/trim/crop):
+        l'originale pre-operazione non sarebbe piu' allineato ai pixel.
+        """
+        self._img_editor_orig_surf = self._img_editor_view_surf.copy()
+
+    def _img_editor_crop_handle_centers(
+        self, ix: int, iy: int, scale: float
+    ) -> dict[str, tuple[float, float]]:
+        """Centri (in coordinate schermo) delle 4 maniglie di ritaglio."""
+        iw, ih = self._img_editor_view_surf.get_size()
+        crop = self._img_editor_crop
+        x0 = ix + crop["l"] * scale
+        x1 = ix + (iw - crop["r"]) * scale
+        y0 = iy + crop["t"] * scale
+        y1 = iy + (ih - crop["b"]) * scale
+        cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+        return {"l": (x0, cy), "r": (x1, cy), "t": (cx, y0), "b": (cx, y1)}
+
+    def _img_editor_crop_handle_at(
+        self, mx: int, my: int, ix: int, iy: int, scale: float
+    ) -> str | None:
+        """
+        Lato ("l"/"r"/"t"/"b") della maniglia sotto il mouse, se presente.
+        Se piu' maniglie si sovrappongono (immagine piccola/zoom basso)
+        vince quella con il centro piu' vicino al mouse.
+        """
+        half = CROP_HANDLE_HIT / 2.0
+        best_side, best_d2 = None, None
+        for side, (hx, hy) in self._img_editor_crop_handle_centers(ix, iy, scale).items():
+            if abs(mx - hx) <= half and abs(my - hy) <= half:
+                d2 = (mx - hx) ** 2 + (my - hy) ** 2
+                if best_d2 is None or d2 < best_d2:
+                    best_side, best_d2 = side, d2
+        return best_side
+
+    def _img_editor_crop_drag(self, mx: int, my: int, ix: int, iy: int, scale: float) -> None:
+        """Aggiorna il crop trascinando una maniglia (schermo -> spazio immagine)."""
+        iw, ih = self._img_editor_view_surf.get_size()
+        crop = self._img_editor_crop
+        px = (mx - ix) / scale
+        py = (my - iy) / scale
+        side = self._img_editor_dragging.rsplit("_", 1)[1]
+        if side == "l":
+            crop["l"] = max(0, min(int(round(px)), iw - crop["r"] - CROP_MIN_KEEP))
+        elif side == "r":
+            crop["r"] = max(0, min(int(round(iw - px)), iw - crop["l"] - CROP_MIN_KEEP))
+        elif side == "t":
+            crop["t"] = max(0, min(int(round(py)), ih - crop["b"] - CROP_MIN_KEEP))
+        elif side == "b":
+            crop["b"] = max(0, min(int(round(ih - py)), ih - crop["t"] - CROP_MIN_KEEP))
+
+    def _img_editor_apply_crop(self) -> None:
+        """Ritaglia subito la superficie con il crop corrente (con undo)."""
+        if not any(self._img_editor_crop.values()):
+            self._img_editor_crop_mode = False
+            return
+        self._img_editor_push_undo()
+        self._img_editor_view_surf = self._img_editor_compose_final_surf()
+        self._img_editor_crop = {"l": 0, "r": 0, "t": 0, "b": 0}
+        self._img_editor_crop_mode = False
+        self._img_editor_dirty = True
+        self._img_editor_sync_orig_surf()
+        w, h = self._img_editor_view_surf.get_size()
+        self._status(f"Ritaglio applicato: {w}x{h}", OK_C, 2)
+
+    def _img_editor_cancel_crop(self) -> None:
+        """Annulla il ritaglio manuale in corso (maniglie e modalita')."""
+        self._img_editor_crop = {"l": 0, "r": 0, "t": 0, "b": 0}
+        self._img_editor_crop_mode = False
+
+    def _img_editor_clamp_crop(self) -> None:
+        """Riporta il crop nei limiti della superficie corrente (dopo undo/redo)."""
+        iw, ih = self._img_editor_view_surf.get_size()
+        crop = self._img_editor_crop
+        crop["l"] = max(0, min(crop["l"], iw - CROP_MIN_KEEP))
+        crop["r"] = max(0, min(crop["r"], iw - crop["l"] - CROP_MIN_KEEP))
+        crop["t"] = max(0, min(crop["t"], ih - CROP_MIN_KEEP))
+        crop["b"] = max(0, min(crop["b"], ih - crop["t"] - CROP_MIN_KEEP))
 
     def _img_editor_apply_smooth_edges(self):
         try:
@@ -646,6 +771,9 @@ class ImgEditorMixin:
         if self._img_editor_dragging in ("eraser_active", "eraser"):
             ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
             self._img_editor_erase(mx, my, ix, iy, scale)
+        elif self._img_editor_dragging in ("crop_l", "crop_r", "crop_t", "crop_b"):
+            ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
+            self._img_editor_crop_drag(mx, my, ix, iy, scale)
         elif self._img_editor_dragging == "sl_radius":
             self._img_editor_eraser_r = int(1 + max(0, min(1, (mx - col1_x) / sl_w)) * 63)
         elif self._img_editor_dragging == "sl_hardness":
@@ -662,8 +790,8 @@ class ImgEditorMixin:
 
 
 
-    def _img_editor_erase(self, mx, my, ix, iy, scale):
-        """Gomma a pennello morbido con interpolazione tra frame."""
+    def _img_editor_erase(self, mx: int, my: int, ix: int, iy: int, scale: float) -> None:
+        """Pennello morbido interpolato: gomma (cancella alpha) o Ripristina."""
         if self._img_editor_dragging != "eraser_active":
             self._img_editor_push_undo()
             self._img_editor_dragging = "eraser_active"
@@ -691,24 +819,30 @@ class ImgEditorMixin:
         # Cache del pennello per i parametri correnti
         ri = max(1, int(round(r)))
         brush_key = (shape, ri, int(hardness * 100), int(opacity * 100))
-        if not hasattr(self, "_img_editor_brush_cache"):
-            self._img_editor_brush_cache = {}
+
+        if self._img_editor_tool == "restore":
+            # Il pennello ricopia i pixel RGBA dall'immagine originale.
+            if (self._img_editor_orig_surf is None
+                    or self._img_editor_orig_surf.get_size()
+                    != self._img_editor_view_surf.get_size()):
+                # Undo/redo possono disallineare le dimensioni: risincronizza
+                self._img_editor_sync_orig_surf()
+            if brush_key not in self._img_editor_restore_cache:
+                strength = brush_power_map(shape, ri, hardness) * opacity
+                self._img_editor_restore_cache[brush_key] = strength
+            strength = self._img_editor_restore_cache[brush_key]
+            for px, py in points:
+                restore_stamp(
+                    self._img_editor_view_surf, self._img_editor_orig_surf,
+                    (int(round(px)) - ri, int(round(py)) - ri), strength,
+                )
+            self._img_editor_dirty = True
+            return
 
         if brush_key not in self._img_editor_brush_cache:
             import numpy as np
             size = ri * 2 + 1
-            center = float(ri)
-            y_arr, x_arr = np.ogrid[0:size, 0:size]
-            if shape == "round":
-                dist_arr = np.sqrt((x_arr - center) ** 2 + (y_arr - center) ** 2)
-            else:
-                dist_arr = np.maximum(np.abs(x_arr - center), np.abs(y_arr - center))
-            h_boundary = ri * hardness
-            erase_power = np.zeros((size, size), dtype=float)
-            erase_power[dist_arr <= h_boundary] = 1.0
-            gradient_mask = (dist_arr > h_boundary) & (dist_arr <= ri)
-            if ri > h_boundary:
-                erase_power[gradient_mask] = 1.0 - (dist_arr[gradient_mask] - h_boundary) / (ri - h_boundary)
+            erase_power = brush_power_map(shape, ri, hardness)
             alpha_brush = (255.0 * (1.0 - erase_power * opacity)).astype(np.uint8)
 
             # Brush con RGB=255 (per non sporcare i canali RGB con BLEND_RGBA_MIN)
@@ -727,13 +861,30 @@ class ImgEditorMixin:
 
         self._img_editor_dirty = True
 
-    def _img_editor_push_undo(self):
+    def _img_editor_push_undo(self) -> None:
         self._img_editor_undo_stack.append(self._img_editor_view_surf.copy())
-        if len(self._img_editor_undo_stack) > 20: self._img_editor_undo_stack.pop(0)
+        if len(self._img_editor_undo_stack) > UNDO_STACK_CAP:
+            self._img_editor_undo_stack.pop(0)
+        # Ogni nuova operazione invalida la cronologia di redo
+        self._img_editor_redo_stack.clear()
 
-    def _img_editor_undo(self):
+    def _img_editor_undo(self) -> None:
         if not self._img_editor_undo_stack: return
-        self._img_editor_view_surf = self._img_editor_undo_stack.pop(); self._img_editor_dirty = True
+        self._img_editor_redo_stack.append(self._img_editor_view_surf)
+        if len(self._img_editor_redo_stack) > UNDO_STACK_CAP:
+            self._img_editor_redo_stack.pop(0)
+        self._img_editor_view_surf = self._img_editor_undo_stack.pop()
+        self._img_editor_clamp_crop()
+        self._img_editor_dirty = True
+
+    def _img_editor_redo(self) -> None:
+        if not self._img_editor_redo_stack: return
+        self._img_editor_undo_stack.append(self._img_editor_view_surf)
+        if len(self._img_editor_undo_stack) > UNDO_STACK_CAP:
+            self._img_editor_undo_stack.pop(0)
+        self._img_editor_view_surf = self._img_editor_redo_stack.pop()
+        self._img_editor_clamp_crop()
+        self._img_editor_dirty = True
 
     def _r_img_editor_modal(self, w, h):
         if not self._img_editor_active: return
@@ -790,6 +941,10 @@ class ImgEditorMixin:
             for gy in range(0, sh+1, int(scale)): pygame.draw.line(gs, (100,100,100,50), (0,gy), (sw,gy))
             self.screen.blit(gs, (ix, iy))
 
+        # Ritaglio manuale: overlay zone escluse + maniglie
+        if self._img_editor_crop_mode:
+            self._r_img_editor_crop_overlay(ix, iy, sw, sh, scale)
+
         # HUD Technical Data — collocato nell'header per non sovrapporsi MAI al footer.
         if _in_rect((mx, my), (ix, iy, sw, sh)):
             rx = int((mx - ix) / scale); ry = int((my - iy) / scale)
@@ -805,11 +960,13 @@ class ImgEditorMixin:
         sb_x = ex + ew - sb_w - 15
         col1_x, col2_x = sb_x + 10, sb_x + 165
         
-        # Strumenti
+        # Strumenti (gomma, ripristina dall'originale, bacchetta)
         _draw_text(self.screen, "PENNELLI", "sm", TXT_DIM, col1_x, ey + 60)
         sy = ey + 85
-        for i, (tid, ico) in enumerate([("eraser", "eraser"), ("wand", "wand")]):
-            tr = pygame.Rect(col1_x + i*60, sy, 52, 52); act = (self._img_editor_tool == tid)
+        tools = [("eraser", "eraser"), ("restore", "brush"), ("wand", "wand")]
+        for i, (tid, ico) in enumerate(tools):
+            tr = pygame.Rect(col1_x + i * TOOL_BTN_STEP, sy, TOOL_BTN_SIZE, TOOL_BTN_SIZE)
+            act = (self._img_editor_tool == tid)
             _button(self.screen, tr, "", _in_rect((mx, my), tr), active=act)
             self._r_blit_icon(ico, tr, active=act)
             
@@ -818,10 +975,10 @@ class ImgEditorMixin:
             _button(self.screen, fr, "", _in_rect((mx, my), fr), active=act)
             self._r_blit_icon(ico, fr, active=act)
                   
-        # Pennello
+        # Pennello (impostazioni condivise da gomma e ripristina)
         sy_sl = ey + 255
         sl_w = 145
-        if self._img_editor_tool == "eraser":
+        if self._img_editor_tool in ("eraser", "restore"):
             _draw_text(self.screen, f"RAGGIO: {self._img_editor_eraser_r}px", "sm", TXT_HI, col1_x, sy_sl - 25)
             _slider(self.screen, (col1_x, sy_sl, sl_w, 20), (self._img_editor_eraser_r - 1) / 63, 0, 1)
             _draw_text(self.screen, f"DUREZZA: {int(self._img_editor_eraser_hardness*100)}%", "sm", TXT_DIM, col1_x, sy_sl + 45)
@@ -878,6 +1035,15 @@ class ImgEditorMixin:
         _button(self.screen, r_re, "RECT", _in_rect((mx, my), r_re), active=(self._img_editor_asset_shape=="rect"))
         _button(self.screen, r_ci, "CIRC", _in_rect((mx, my), r_ci), active=(self._img_editor_asset_shape=="circle"))
 
+        # Ritaglio manuale (ALLINEATO al click: sy2 += 75)
+        sy2 += 75; _draw_text(self.screen, "RITAGLIO", "sm", TXT_DIM, col2_x, sy2 - 25)
+        r_cm = pygame.Rect(col2_x, sy2, bw2, 38)
+        r_ca = pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 38)
+        _button(self.screen, r_cm, "RITAGLIA", _in_rect((mx, my), r_cm),
+                active=self._img_editor_crop_mode)
+        can_apply = self._img_editor_crop_mode and any(self._img_editor_crop.values())
+        _button(self.screen, r_ca, "APPLICA", _in_rect((mx, my), r_ca) and can_apply)
+
         # Footer (Compattato e Corretto)
         fy = ey + eh - 65; bw, bh = 150, 42
         total_footer_w = bw * 3 + 40
@@ -898,12 +1064,37 @@ class ImgEditorMixin:
         _button(self.screen, fb_rects[2], el, h2, danger=True, active=self._img_editor_exit_confirm)
         self._r_blit_icon("exit", pygame.Rect(fb_rects[2].x+12, fb_rects[2].y, 25, 42), active=h2)
 
-        # Cursore Strumento (Workspace Wide)
+        # Cursore Strumento (Workspace Wide, non in modalita' ritaglio)
         is_in_work = mx < sb_x and my < fy - 10 and my > ey + 60
-        if is_in_work:
+        if is_in_work and not self._img_editor_crop_mode:
             r_vis = self._img_editor_eraser_r * scale
             if self._img_editor_shape == "round": pygame.draw.circle(self.screen, TXT_HI, (mx, my), int(round(r_vis)), 1)
             else: rv = int(round(r_vis)); pygame.draw.rect(self.screen, TXT_HI, (mx-rv, my-rv, rv*2, rv*2), 1)
+
+    def _r_img_editor_crop_overlay(
+        self, ix: int, iy: int, sw: int, sh: int, scale: float
+    ) -> None:
+        """Overlay scuro sulle zone escluse dal ritaglio e maniglie trascinabili."""
+        iw, ih = self._img_editor_view_surf.get_size()
+        crop = self._img_editor_crop
+        x0 = max(0, min(sw, int(round(crop["l"] * scale))))
+        x1 = max(x0, min(sw, int(round((iw - crop["r"]) * scale))))
+        y0 = max(0, min(sh, int(round(crop["t"] * scale))))
+        y1 = max(y0, min(sh, int(round((ih - crop["b"]) * scale))))
+        overlay = pygame.Surface((sw, sh), pygame.SRCALPHA)
+        dark = (0, 0, 0, CROP_OVERLAY_ALPHA)
+        if x0 > 0: overlay.fill(dark, (0, 0, x0, sh))
+        if x1 < sw: overlay.fill(dark, (x1, 0, sw - x1, sh))
+        if y0 > 0: overlay.fill(dark, (x0, 0, x1 - x0, y0))
+        if y1 < sh: overlay.fill(dark, (x0, y1, x1 - x0, sh - y1))
+        self.screen.blit(overlay, (ix, iy))
+        pygame.draw.rect(self.screen, ACCENT, (ix + x0, iy + y0, x1 - x0, y1 - y0), 1)
+        half = CROP_HANDLE_SIZE // 2
+        for hx, hy in self._img_editor_crop_handle_centers(ix, iy, scale).values():
+            hr = pygame.Rect(int(hx) - half, int(hy) - half,
+                             CROP_HANDLE_SIZE, CROP_HANDLE_SIZE)
+            pygame.draw.rect(self.screen, CROP_HANDLE_FILL, hr)
+            pygame.draw.rect(self.screen, ACCENT, hr, 2)
 
     def _r_blit_icon(self, name: str, rect: pygame.Rect, active: bool = False):
         """Blit di un'icona PNG caricata, con fallback a cerchio se mancante."""
@@ -937,6 +1128,11 @@ class ImgEditorMixin:
         elif name == "wand":
             pygame.draw.line(self.screen, c, (cx-6, cy+6), (cx+6, cy-6), 3)
             pygame.draw.circle(self.screen, c, (cx+6, cy-6), 3)
+        elif name == "brush" or name == "restore":
+            # Pennello: manico obliquo + punta piena (strumento Ripristina)
+            pygame.draw.line(self.screen, c, (cx+2, cy-2), (cx+7, cy-7), 3)
+            pygame.draw.polygon(self.screen, c,
+                                [(cx-7, cy+7), (cx-2, cy+7), (cx+3, cy-1), (cx-1, cy-5)])
         elif name == "save":
             r = rect.inflate(-34, -34)
             pygame.draw.rect(self.screen, c, r, 2, border_radius=2)

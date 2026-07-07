@@ -10,6 +10,75 @@ import pygame
 import logging
 from scipy import ndimage
 
+
+def brush_power_map(shape: str, radius: int, hardness: float) -> np.ndarray:
+    """
+    Mappa (size x size) della potenza del pennello: 1.0 entro il bordo duro,
+    decrescente linearmente fino al raggio. Condivisa da gomma e ripristino
+    cosi' i due strumenti hanno esattamente lo stesso profilo.
+
+    Args:
+        shape: "round" o "square".
+        radius: Raggio del pennello in pixel (>= 1).
+        hardness: Frazione 0..1 del raggio a piena potenza.
+    """
+    size = radius * 2 + 1
+    center = float(radius)
+    y_arr, x_arr = np.ogrid[0:size, 0:size]
+    if shape == "round":
+        dist_arr = np.sqrt((x_arr - center) ** 2 + (y_arr - center) ** 2)
+    else:
+        dist_arr = np.maximum(np.abs(x_arr - center), np.abs(y_arr - center))
+    hard_r = radius * hardness
+    power = np.zeros((size, size), dtype=float)
+    power[dist_arr <= hard_r] = 1.0
+    gradient = (dist_arr > hard_r) & (dist_arr <= radius)
+    if radius > hard_r:
+        power[gradient] = 1.0 - (dist_arr[gradient] - hard_r) / (radius - hard_r)
+    return power
+
+
+def restore_stamp(
+    dst: pygame.Surface,
+    src: pygame.Surface,
+    top_left: tuple[int, int],
+    strength: np.ndarray,
+) -> None:
+    """
+    Ricopia su dst i pixel RGBA di src pesati da strength (0..1, quadrata),
+    con clipping ai bordi. dst e src devono avere le stesse dimensioni.
+
+    Args:
+        dst: Superficie di lavoro (modificata in-place).
+        src: Superficie originale da cui ricopiare.
+        top_left: Angolo alto-sinistra dello stamp in coordinate immagine.
+        strength: Mappa di forza del pennello (brush_power_map * opacita').
+    """
+    w, h = dst.get_size()
+    size = strength.shape[0]
+    bx, by = top_left
+    x0, y0 = max(0, bx), max(0, by)
+    x1, y1 = min(w, bx + size), min(h, by + size)
+    if x0 >= x1 or y0 >= y1:
+        return
+    s = strength[x0 - bx:x1 - bx, y0 - by:y1 - by]
+    if not np.any(s):
+        return
+    s3 = s[:, :, np.newaxis]
+    dst_rgb = pygame.surfarray.pixels3d(dst)
+    src_rgb = pygame.surfarray.pixels3d(src)
+    cur = dst_rgb[x0:x1, y0:y1].astype(float)
+    org = src_rgb[x0:x1, y0:y1].astype(float)
+    dst_rgb[x0:x1, y0:y1] = np.clip(cur * (1.0 - s3) + org * s3, 0, 255).astype(np.uint8)
+    del dst_rgb, src_rgb
+    dst_a = pygame.surfarray.pixels_alpha(dst)
+    src_a = pygame.surfarray.pixels_alpha(src)
+    a_cur = dst_a[x0:x1, y0:y1].astype(float)
+    a_org = src_a[x0:x1, y0:y1].astype(float)
+    dst_a[x0:x1, y0:y1] = np.clip(a_cur * (1.0 - s) + a_org * s, 0, 255).astype(np.uint8)
+    del dst_a, src_a
+
+
 def evolved_trim(surf: pygame.Surface, noise_threshold: int = 2) -> pygame.Surface:
     """
     Esegue un trim intelligente ignorando solo il rumore minuscolo.
