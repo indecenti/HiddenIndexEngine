@@ -202,8 +202,19 @@ def _discover_games(base: Path) -> list:
     gdir = base / "games"
     if not gdir.exists():
         return []
-    return sorted(d.name for d in gdir.iterdir()
-                  if d.is_dir() and not d.name.startswith("."))
+    found = sorted(d.name for d in gdir.iterdir()
+                   if d.is_dir() and not d.name.startswith("."))
+    # Ordine personalizzato dell'utente (drag&drop dashboard), persistito in
+    # .editor_settings.json alla chiave "games_order". Gli id non presenti
+    # nella lista vanno in fondo, in ordine alfabetico.
+    order = _load_json(base / ".editor_settings.json").get("games_order", [])
+    if not isinstance(order, list) or not order:
+        return found
+    order_map = {gid: i for i, gid in enumerate(order)}
+    registered = sorted((g for g in found if g in order_map),
+                        key=lambda g: order_map[g])
+    orphans = [g for g in found if g not in order_map]
+    return registered + orphans
 
 
 def _discover_levels(game_path: Path) -> list:

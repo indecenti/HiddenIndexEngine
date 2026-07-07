@@ -35,6 +35,16 @@ logger = get_logger("game_select")
 class GameSelectMixin:
     """Dashboard selezione progetto (3 colonne) + dialogo creazione."""
 
+    # Geometria dialogo "Sposta scena" (sincronizzata tra _r_gs_move_dialog e _gs_click)
+    _GS_MV_DIALOG_W: int = 480
+    _GS_MV_ROW_H: int = 40
+    _GS_MV_LIST_Y: int = 96
+    _GS_MV_MAX_ROWS: int = 10
+    _GS_MV_FOOTER_H: int = 64
+    # Suffissi per le copie: cartella su disco e nome leggibile multilingua
+    _GS_COPY_SUFFIX: str = "_copy"
+    _GS_COPY_LABEL_SUFFIX: str = " (copia)"
+
     def _gs_migrate_categories(self):
         """Assicura che tutti i giochi abbiano la categoria 'desktop' se mancante."""
         modified = False
@@ -79,7 +89,8 @@ class GameSelectMixin:
             count = [len(self.gs_games), len(self.gs_cur_levels), len(self.gs_cur_scenes)][col]
             if 0 <= new_idx < count:
                 delta = 1 if new_idx > idx else -1
-                if col == 1: self._gs_move_level(idx, delta)
+                if col == 0: self._gs_move_game(idx, delta)
+                elif col == 1: self._gs_move_level(idx, delta)
                 elif col == 2: self._gs_move_scene(idx, delta)
                 self.gs_dragging_idx = new_idx
 
@@ -1526,13 +1537,273 @@ if __name__ == "__main__":
             self.gs_sel_scene = idx + delta
             self._gs_refresh_cache(2)
 
+    def _gs_move_game(self, idx: int, delta: int):
+        """Sposta un gioco su o giu' nell'ordine globale (persistito in .editor_settings.json)."""
+        if not (0 <= idx < len(self.gs_games)) or not (0 <= idx + delta < len(self.gs_games)):
+            return
+        self.gs_games[idx], self.gs_games[idx + delta] = \
+            self.gs_games[idx + delta], self.gs_games[idx]
+        self._save_editor_setting("games_order", list(self.gs_games))
+        # La selezione segue l'elemento spostato senza ricaricare livelli/scene
+        if self.gs_sel_game == idx:
+            self.gs_sel_game = idx + delta
+        elif self.gs_sel_game == idx + delta:
+            self.gs_sel_game = idx
+        self._gs_refresh_cache(0)
+        logger.info(f"Ordine giochi aggiornato: {self.gs_games}")
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # DUPLICAZIONE E SPOSTAMENTO
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def _gs_unique_copy_name(self, parent: Path, base_name: str) -> str:
+        """Genera un nome '<base>_copy' (poi _copy2, _copy3...) libero dentro parent."""
+        candidate = f"{base_name}{self._GS_COPY_SUFFIX}"
+        n = 2
+        while (parent / candidate).exists():
+            candidate = f"{base_name}{self._GS_COPY_SUFFIX}{n}"
+            n += 1
+        return candidate
+
+    def _gs_duplicate_scene(self, idx: int):
+        """Duplica la scena selezionata (cartella completa + registrazione config)."""
+        if self.gs_sel_level is None or idx is None or idx >= len(self.gs_cur_scenes):
+            self._status("Seleziona prima una scena", WARN_C, 2)
+            return
+        self._with_loading(self._gs_duplicate_scene_logic, idx)
+
+    def _gs_duplicate_scene_logic(self, idx: int):
+        """Copia la cartella scena e la registra in level_config.json dopo l'originale."""
+        import shutil
+        lvl = self.gs_cur_levels[self.gs_sel_level]
+        src = self.gs_cur_scenes[idx]
+        new_name = self._gs_unique_copy_name(lvl["path"], src.name)
+        dst = lvl["path"] / new_name
+        try:
+            shutil.copytree(src, dst)
+        except Exception as exc:
+            self._status(f"Errore duplicazione scena: {exc}", ERR_C, 4)
+            return
+        # L'autosave copiato appartiene all'originale: non va ereditato
+        autosave = dst / "scene.json.autosave"
+        if autosave.exists():
+            try:
+                autosave.unlink()
+            except OSError as exc:
+                logger.debug(f"Rimozione autosave copia fallita: {exc}")
+        # Aggiorna l'id nello scene.json della copia
+        sd = _load_json(dst / "scene.json")
+        if sd:
+            sd["id"] = new_name
+            _save_json(dst / "scene.json", sd)
+        # Registrazione in level_config.json subito dopo l'originale.
+        # Se l'originale e' orfano (non registrato) lo registriamo prima,
+        # cosi' la coppia resta adiacente anche nel config.
+        l_cfg_p = lvl["path"] / "level_config.json"
+        if l_cfg_p.exists():
+            l_cfg = _load_json(l_cfg_p)
+            scenes_cfg = l_cfg.get("scenes", [])
+            src_entry = next((s for s in scenes_cfg if s.get("id") == src.name), None)
+            if src_entry is None:
+                src_entry = {"id": src.name, "time_limit": 120, "transition_out": "fade"}
+                scenes_cfg.append(src_entry)
+                logger.info(f"Scena orfana '{src.name}' registrata in level_config.json")
+            new_entry = dict(src_entry)
+            new_entry["id"] = new_name
+            scenes_cfg.insert(scenes_cfg.index(src_entry) + 1, new_entry)
+            for i, s in enumerate(scenes_cfg):
+                s["order"] = i + 1
+            l_cfg["scenes"] = scenes_cfg
+            _save_json(l_cfg_p, l_cfg)
+            logger.info(f"Scena duplicata: '{src.name}' -> '{new_name}' (registrata in config)")
+        # Refresh liste e selezione sulla copia
+        old_sel_lvl = self.gs_sel_level
+        self.gs_cur_levels = _discover_levels(self.game_path)
+        self._gs_select_level(old_sel_lvl)
+        for i, s_p in enumerate(self.gs_cur_scenes):
+            if s_p.name == new_name:
+                self._gs_select_scene(i)
+                break
+        self._status(f"Scena duplicata: {new_name}", OK_C, 3)
+
+    def _gs_duplicate_level(self, idx: int):
+        """Duplica il livello selezionato (tutte le scene incluse + registrazione config)."""
+        if self.gs_sel_game is None or idx is None or idx >= len(self.gs_cur_levels):
+            self._status("Seleziona prima un livello", WARN_C, 2)
+            return
+        self._with_loading(self._gs_duplicate_level_logic, idx)
+
+    def _gs_duplicate_level_logic(self, idx: int):
+        """Copia ricorsiva della cartella livello + registrazione in game_config.json."""
+        import shutil
+        gname = self.gs_games[self.gs_sel_game]
+        lvl = self.gs_cur_levels[idx]
+        src = lvl["path"]
+        new_name = self._gs_unique_copy_name(src.parent, src.name)
+        dst = src.parent / new_name
+        try:
+            shutil.copytree(src, dst)
+        except Exception as exc:
+            self._status(f"Errore duplicazione livello: {exc}", ERR_C, 4)
+            return
+        # Aggiorna id e name_key nel level_config.json della copia
+        l_cfg = _load_json(dst / "level_config.json")
+        old_nk = l_cfg.get("name_key", f"{src.name}_name")
+        new_nk = f"{new_name}_name"
+        l_cfg["id"] = new_name
+        l_cfg["name_key"] = new_nk
+        _save_json(dst / "level_config.json", l_cfg)
+        # Clona i nomi multilingua con suffisso " (copia)"
+        for _l in self.LANGS:
+            base_val = self._gs_get_string_for_lang(gname, _l, old_nk, src.name)
+            self._gs_update_strings(
+                gname, {new_nk: f"{base_val}{self._GS_COPY_LABEL_SUFFIX}"}, lang=_l)
+        # Registra in game_config.json subito dopo l'originale
+        g_cfg_p = self.base_path / "games" / gname / "game_config.json"
+        g_cfg = _load_json(g_cfg_p)
+        levels_list = g_cfg.get("levels", [])
+        if src.name in levels_list:
+            levels_list.insert(levels_list.index(src.name) + 1, new_name)
+        else:
+            # Livello orfano: registriamo prima l'originale, poi la copia
+            levels_list.append(src.name)
+            levels_list.append(new_name)
+            logger.info(f"Livello orfano '{src.name}' registrato in game_config.json")
+        g_cfg["levels"] = levels_list
+        _save_json(g_cfg_p, g_cfg)
+        logger.info(f"Livello duplicato: '{src.name}' -> '{new_name}' (registrato in config)")
+        # Refresh liste e selezione sulla copia
+        self._gs_select_game(self.gs_sel_game)
+        for i, l in enumerate(self.gs_cur_levels):
+            if l["id"] == new_name:
+                self._gs_select_level(i)
+                break
+        self._status(f"Livello duplicato: {new_name}", OK_C, 3)
+
+    def _gs_mv_dest_indices(self) -> list:
+        """Indici dei livelli destinazione validi (tutti tranne quello corrente)."""
+        return [i for i in range(len(self.gs_cur_levels)) if i != self.gs_sel_level]
+
+    def _gs_move_scene_dialog(self, idx: int):
+        """Apre il dialogo di scelta del livello destinazione per la scena selezionata."""
+        if self.gs_sel_level is None or idx is None or idx >= len(self.gs_cur_scenes):
+            self._status("Seleziona prima una scena", WARN_C, 2)
+            return
+        if len(self.gs_cur_levels) < 2:
+            self._status("Nessun altro livello disponibile come destinazione", WARN_C, 3)
+            return
+        self._gs_mv_mode = True
+        self._gs_mv_scene_idx = idx
+        self._gs_mv_scroll = 0
+
+    def _gs_do_move_scene(self, scene_idx: int, dest_lvl_idx: int):
+        """Valida e avvia lo spostamento della scena nel livello destinazione."""
+        if (self.gs_sel_level is None or scene_idx is None
+                or scene_idx >= len(self.gs_cur_scenes)
+                or dest_lvl_idx is None or dest_lvl_idx >= len(self.gs_cur_levels)
+                or dest_lvl_idx == self.gs_sel_level):
+            return
+        self._with_loading(self._gs_do_move_scene_logic, scene_idx, dest_lvl_idx)
+
+    def _gs_do_move_scene_logic(self, scene_idx: int, dest_lvl_idx: int):
+        """Sposta la cartella scena nel livello destinazione e aggiorna i config."""
+        import shutil
+        src_lvl = self.gs_cur_levels[self.gs_sel_level]
+        dest_lvl = self.gs_cur_levels[dest_lvl_idx]
+        scn = self.gs_cur_scenes[scene_idx]
+        scn_name = scn.name
+        # Collisione nome nella destinazione: suffisso _copy come per la duplicazione
+        new_name = scn_name
+        if (dest_lvl["path"] / new_name).exists():
+            new_name = self._gs_unique_copy_name(dest_lvl["path"], scn_name)
+        dst = dest_lvl["path"] / new_name
+        try:
+            shutil.move(str(scn), str(dst))
+        except Exception as exc:
+            self._status(f"Errore spostamento scena: {exc}", ERR_C, 4)
+            return
+        if new_name != scn_name:
+            sd = _load_json(dst / "scene.json")
+            if sd:
+                sd["id"] = new_name
+                _save_json(dst / "scene.json", sd)
+        # Config origine: rimozione entry (preservandola per la destinazione)
+        src_cfg_p = src_lvl["path"] / "level_config.json"
+        src_cfg = _load_json(src_cfg_p)
+        src_entry = next(
+            (s for s in src_cfg.get("scenes", []) if s.get("id") == scn_name), None)
+        if src_cfg_p.exists() and src_entry is not None:
+            remaining = [s for s in src_cfg.get("scenes", []) if s.get("id") != scn_name]
+            for i, s in enumerate(remaining):
+                s["order"] = i + 1
+            src_cfg["scenes"] = remaining
+            _save_json(src_cfg_p, src_cfg)
+        # Config destinazione: registrazione in coda (creato minimale se assente)
+        dest_cfg_p = dest_lvl["path"] / "level_config.json"
+        dest_cfg = _load_json(dest_cfg_p)
+        if not dest_cfg:
+            dest_cfg = {"id": dest_lvl["id"], "name_key": f"{dest_lvl['id']}_name",
+                        "difficulty": "normal", "timer_behavior": "complete",
+                        "scenes": []}
+        dest_scenes = [s for s in dest_cfg.get("scenes", []) if s.get("id") != new_name]
+        entry = dict(src_entry) if src_entry else \
+            {"id": scn_name, "time_limit": 120, "transition_out": "fade"}
+        entry["id"] = new_name
+        dest_scenes.append(entry)
+        for i, s in enumerate(dest_scenes):
+            s["order"] = i + 1
+        dest_cfg["scenes"] = dest_scenes
+        _save_json(dest_cfg_p, dest_cfg)
+        logger.info(
+            f"Scena '{scn_name}' spostata: {src_lvl['id']} -> {dest_lvl['id']} (id: {new_name})")
+        # Aggiorna i progetti recenti che puntavano al vecchio percorso
+        old_p = str(scn)
+        changed = False
+        for r in self.recent_scenes:
+            if r.get("path") == old_p:
+                r["path"] = str(dst)
+                changed = True
+        if changed:
+            self._save_editor_setting("recent_scenes", self.recent_scenes)
+        # Refresh liste (il livello sorgente resta selezionato)
+        old_sel_lvl = self.gs_sel_level
+        self.gs_cur_levels = _discover_levels(self.game_path)
+        self._gs_select_level(old_sel_lvl)
+        self.gs_sel_scene = None
+        self._status(f"Scena spostata in '{dest_lvl['id']}': {new_name}", OK_C, 3)
+
     # ─────────────────────────────────────────────────────────────────────────
     # INPUT
     # ─────────────────────────────────────────────────────────────────────────
 
     def _gs_click(self, mx, my_raw):
         w, h = self.screen.get_size()
-        
+
+        # 0. PRIORITÀ: Click dentro dialog "Sposta scena" (se aperto)
+        if getattr(self, "_gs_mv_mode", False):
+            dest = self._gs_mv_dest_indices()
+            vis = min(len(dest), self._GS_MV_MAX_ROWS)
+            dw = self._GS_MV_DIALOG_W
+            dh = self._GS_MV_LIST_Y + vis * self._GS_MV_ROW_H + self._GS_MV_FOOTER_H
+            dx, dy = (w - dw) // 2, (h - dh) // 2
+            scroll = getattr(self, "_gs_mv_scroll", 0)
+            for row in range(vis):
+                if row + scroll >= len(dest):
+                    break
+                di = dest[row + scroll]
+                row_r = (dx + 20, dy + self._GS_MV_LIST_Y + row * self._GS_MV_ROW_H,
+                         dw - 40, self._GS_MV_ROW_H - 6)
+                if _in_rect((mx, my_raw), row_r):
+                    scene_idx = getattr(self, "_gs_mv_scene_idx", None)
+                    self._gs_mv_mode = False
+                    self._gs_do_move_scene(scene_idx, di)
+                    return
+            # Bottone Annulla (centrato in basso, stessa taglia del dialog eliminazione)
+            if _in_rect((mx, my_raw), (dx + (dw - 210) // 2, dy + dh - 48, 210, 32)):
+                self._gs_mv_mode = False
+                return
+            return
+
         # 0. PRIORITÀ: Click dentro dialog "Eliminazione" (se aperto)
         if hasattr(self, '_gs_del_mode') and self._gs_del_mode:
             stage = getattr(self, "_gs_del_stage", 0)
@@ -1843,6 +2114,30 @@ if __name__ == "__main__":
                         else: self._gs_del_scene(sel)
                         return
 
+                # Bottone DUPLICA (livelli: slot -92, scene: slot -122 dopo il ✎)
+                if i in (1, 2):
+                    dup_x = cx2 + col_w - (92 if i == 1 else 122)
+                    dup_r = (dup_x, cy2 + 5, 26, 24)
+                    if _in_rect((mx, my_raw), dup_r):
+                        sel = self.gs_sel_level if i == 1 else self.gs_sel_scene
+                        if sel is None:
+                            self._status("Seleziona prima un elemento", WARN_C, 2)
+                        elif i == 1:
+                            self._gs_duplicate_level(sel)
+                        else:
+                            self._gs_duplicate_scene(sel)
+                        return
+
+                # Bottone SPOSTA scena in altro livello (solo scene, slot -152)
+                if i == 2:
+                    mv_r = (cx2 + col_w - 152, cy2 + 5, 26, 24)
+                    if _in_rect((mx, my_raw), mv_r):
+                        if self.gs_sel_scene is None:
+                            self._status("Seleziona prima una scena", WARN_C, 2)
+                        else:
+                            self._gs_move_scene_dialog(self.gs_sel_scene)
+                        return
+
                 if i == 0:
                     # Spostato a -182 per fare spazio ai bottoni APK e HTML
                     del_r = (cx2 + col_w - 182, cy2 + 5, 26, 24)
@@ -1888,6 +2183,9 @@ if __name__ == "__main__":
                             self._gs_run_game(idx)
                             return
                     self._gs_select_game(idx)
+                    # Drag Start per i Giochi (riordino globale)
+                    self.gs_dragging_idx = idx
+                    self.gs_dragging_col = i
                 elif i == 1 and idx < len(self.gs_cur_levels):
                     item_y = iy + idx * ITEM_H - scroll_offset * ITEM_H
                     if not (cy2 + 35 <= my_raw <= cy2 + col_h):
@@ -1980,6 +2278,14 @@ if __name__ == "__main__":
         if getattr(self, "_icon_modal", False):
             self._icon_wheel(ev); return
 
+        # Priorità: Scroll lista livelli nel dialog "Sposta scena" (se aperto)
+        if getattr(self, "_gs_mv_mode", False):
+            dest_n = len(self._gs_mv_dest_indices())
+            max_s = max(0, dest_n - self._GS_MV_MAX_ROWS)
+            cur = getattr(self, "_gs_mv_scroll", 0)
+            self._gs_mv_scroll = max(0, min(max_s, cur - ev.y))
+            return
+
         # Priorità: Scroll Playlist in Dialog Modifica (se aperto)
         if hasattr(self, '_gs_edit_mode') and self._gs_edit_mode == "game":
             # Calcolo dinamico allineato con _r_gs_edit_dialog
@@ -2017,6 +2323,11 @@ if __name__ == "__main__":
                 return
 
     def _gs_key(self, ev):
+        # Dialog "Sposta scena" — ESC chiude, il resto viene consumato
+        if getattr(self, "_gs_mv_mode", False):
+            if ev.key == pygame.K_ESCAPE:
+                self._gs_mv_mode = False
+            return
         # Dialog conferma eliminazione — ha priorità su tutto
         if self._gs_del_mode:
             if ev.key == pygame.K_RETURN:
@@ -2355,6 +2666,31 @@ if __name__ == "__main__":
                         del_hov,
                         danger=has_sel_del)
                 if del_hov: self.active_tooltip = self.lang_manager.get("gs_tip_delete_item", "Elimina definitivamente l'elemento selezionato")
+
+            # Pulsante DUPLICA (livelli: slot -92, scene: slot -122 dopo il ✎)
+            if i in (1, 2):
+                has_sel_dup = (i == 1 and self.gs_sel_level is not None) or \
+                              (i == 2 and self.gs_sel_scene is not None)
+                dup_x = cx2 + col_w - (92 if i == 1 else 122)
+                dup_r = pygame.Rect(dup_x, cy2 + 5, 26, 24)
+                dup_hov = _in_rect((mx, my_raw), dup_r)
+                _button(self.screen, dup_r, "DUP", dup_hov, active=has_sel_dup, font="xs")
+                if dup_hov:
+                    tip_key = "gs_tip_dup_level" if i == 1 else "gs_tip_dup_scene"
+                    tip_def = ("Duplica il livello selezionato (tutte le scene incluse)"
+                               if i == 1 else
+                               "Duplica la scena selezionata (cartella completa)")
+                    self.active_tooltip = self.lang_manager.get(tip_key, tip_def)
+
+            # Pulsante SPOSTA scena in altro livello (solo scene, slot -152)
+            if i == 2:
+                mv_r = pygame.Rect(cx2 + col_w - 152, cy2 + 5, 26, 24)
+                mv_hov = _in_rect((mx, my_raw), mv_r)
+                _button(self.screen, mv_r, "MV", mv_hov,
+                        active=(self.gs_sel_scene is not None), font="xs")
+                if mv_hov:
+                    self.active_tooltip = self.lang_manager.get(
+                        "gs_tip_move_scene", "Sposta la scena selezionata in un altro livello")
             self._r_gs_column(i, cx2, cy2 + 35, col_w, col_h - 35)
 
         if self._gs_new_mode:
@@ -2363,6 +2699,8 @@ if __name__ == "__main__":
             self._r_gs_edit_dialog(w, h)
         if self._gs_del_mode:
             self._r_gs_del_dialog(w, h)
+        if getattr(self, "_gs_mv_mode", False):
+            self._r_gs_move_dialog(w, h)
 
     def _r_gs_column(self, col_idx, cx, cy, cw, ch):
         mx, my_raw = pygame.mouse.get_pos()
@@ -2741,6 +3079,54 @@ if __name__ == "__main__":
         ]
         _button(self.screen, ok_r, btn_labels[stage] if stage < 3 else "ERRORE", _in_rect((mx2, my2), ok_r), danger=True)
         _button(self.screen, esc_r, self.lang_manager.get("gs_btn_cancel_esc", "Annulla (Esc)"), _in_rect((mx2, my2), esc_r))
+
+    def _r_gs_move_dialog(self, w: int, h: int):
+        """Dialog di scelta del livello destinazione per lo spostamento scena."""
+        mx2, my2 = pygame.mouse.get_pos()
+        dest = self._gs_mv_dest_indices()
+        vis = min(len(dest), self._GS_MV_MAX_ROWS)
+        dw = self._GS_MV_DIALOG_W
+        dh = self._GS_MV_LIST_Y + vis * self._GS_MV_ROW_H + self._GS_MV_FOOTER_H
+        dx, dy = (w - dw) // 2, (h - dh) // 2
+
+        dim = pygame.Surface((w, h), pygame.SRCALPHA)
+        dim.fill((0, 0, 0, 180)); self.screen.blit(dim, (0, 0))
+        box = pygame.Rect(dx, dy, dw, dh)
+        _rect(self.screen, (40, 42, 54), box, radius=12)
+        _rect(self.screen, ACCENT, box, 2, radius=12)
+
+        title = self.lang_manager.get("gs_modal_move_scene", "Sposta scena in un altro livello")
+        _draw_text(self.screen, title, "lg", TXT_HI, dx + 30, dy + 18)
+        scene_idx = getattr(self, "_gs_mv_scene_idx", None)
+        scn_name = ""
+        if scene_idx is not None and scene_idx < len(self.gs_cur_scenes):
+            scn_name = self.gs_cur_scenes[scene_idx].name
+        sub = self.lang_manager.get(
+            "gs_label_move_dest", "Scena '{0}' — scegli il livello destinazione:"
+        ).format(scn_name)
+        _draw_text(self.screen, sub, "sm", TXT_DIM, dx + 30, dy + 58, dw - 60)
+
+        scroll = getattr(self, "_gs_mv_scroll", 0)
+        for row in range(vis):
+            if row + scroll >= len(dest):
+                break
+            di = dest[row + scroll]
+            row_r = pygame.Rect(dx + 20, dy + self._GS_MV_LIST_Y + row * self._GS_MV_ROW_H,
+                                dw - 40, self._GS_MV_ROW_H - 6)
+            hov = _in_rect((mx2, my2), row_r)
+            label = self._gs_get_human_name("level", di)
+            lvl_id = self.gs_cur_levels[di]["id"]
+            if label != lvl_id:
+                label = f"{label}  [{lvl_id}]"
+            _button(self.screen, row_r, label, hov, font="sm")
+        if len(dest) > vis:
+            _scrollbar(self.screen, dx + dw - 12, dy + self._GS_MV_LIST_Y, 4,
+                       vis * self._GS_MV_ROW_H, scroll, len(dest), vis)
+
+        cancel_r = pygame.Rect(dx + (dw - 210) // 2, dy + dh - 48, 210, 32)
+        _button(self.screen, cancel_r,
+                self.lang_manager.get("gs_btn_cancel_esc", "Annulla (Esc)"),
+                _in_rect((mx2, my2), cancel_r))
 
     def _r_gs_edit_dialog(self, w, h):
         labels = {
