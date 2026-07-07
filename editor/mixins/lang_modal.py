@@ -316,30 +316,22 @@ class LangModalMixin:
             self._lang_cursor = len(self._lang_buf)
 
         elif ctrl and ev.key == pygame.K_c:
-            try:
-                import tkinter as tk
-                root = tk.Tk(); root.withdraw()
-                root.clipboard_clear()
-                root.clipboard_append(self._lang_buf)
-                root.update(); root.destroy()
-            except Exception: pass
+            from editor.ui.widgets import clipboard_set
+            clipboard_set(self._lang_buf)
 
         elif ctrl and ev.key == pygame.K_v:
-            # Incolla da appunti
-            try:
-                import tkinter as tk
-                root = tk.Tk(); root.withdraw()
-                clipped = root.clipboard_get()
-                root.destroy()
-                if clipped:
-                    if self._lang_all_sel:
-                        self._lang_buf = clipped
-                        self._lang_all_sel = False
-                        self._lang_cursor = len(clipped)
-                    else:
-                        self._lang_buf = self._lang_buf[:self._lang_cursor] + clipped + self._lang_buf[self._lang_cursor:]
-                        self._lang_cursor += len(clipped)
-            except Exception: pass
+            # Incolla da appunti (helper unico in ui/widgets)
+            from editor.ui.widgets import clipboard_get
+            clipped = clipboard_get()
+            if clipped:
+                if self._lang_all_sel:
+                    self._lang_buf = clipped
+                    self._lang_all_sel = False
+                    self._lang_cursor = len(clipped)
+                else:
+                    self._lang_buf = (self._lang_buf[:self._lang_cursor] + clipped
+                                      + self._lang_buf[self._lang_cursor:])
+                    self._lang_cursor += len(clipped)
 
         elif ev.unicode and ev.unicode.isprintable() and not ctrl:
             if self._lang_all_sel:

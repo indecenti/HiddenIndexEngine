@@ -30,7 +30,6 @@ class IconModalMixin:
         self._icon_dims = {}  # path -> (w, h)
         self._icon_context = "game_edit" # o "game_new"
         self._icon_del_confirm = None # Path dell'icona in attesa di conferma eliminazione
-        self._icon_del_confirm = None # Path dell'icona in attesa di conferma eliminazione
 
     def _icon_modal_open(self, context="game_edit"):
         self._icon_modal = True
