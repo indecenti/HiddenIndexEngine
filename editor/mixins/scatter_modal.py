@@ -109,6 +109,13 @@ class ScatterModalMixin:
         self._scatter_result = None             # payload worker, consumato dal main
         self._scatter_report = None             # report repair ultima run
         self._scatter_run_token = 0             # invalida risultati di run vecchie
+        # ── Anteprima interattiva (U3/U4) ─────────────────────────────────
+        self._scatter_preview_active = False    # panel nascosto, ghost editabili
+        self._scatter_sel_ghost = None          # indice ghost selezionato
+        self._scatter_drag = None               # (idx, dx, dy) drag in corso
+        self._scatter_ghost_info = []           # verdetti/metriche paralleli ai ghost
+        self._scatter_keep_buffer = ([], [])    # (ghost, info) preservati nella run
+        self._scatter_bg_rgb_cache = None       # array RGB del BG per rimisure U4
 
     def _scatter_save_prefs(self):
         """Salva le preferenze scatter (tier + layer) nei settings dell'editor."""
@@ -218,6 +225,9 @@ class ScatterModalMixin:
         self._scatter_modal_open = False
         self._scatter_drop_open = None
         self._scatter_ghosts = []
+        self._scatter_ghost_info = []
+        self._scatter_preview_exit()
+        self._scatter_bg_rgb_cache = None
         self._scatter_seed_editing = False
         self._scatter_brush_active = False
         self._scatter_forbidden_save()
@@ -236,6 +246,9 @@ class ScatterModalMixin:
         self._scatter_forbidden_cells = set()
         self._scatter_forbidden_dirty = False
         self._scatter_seed_editing = False
+        self._scatter_ghost_info = []
+        self._scatter_preview_exit()
+        self._scatter_bg_rgb_cache = None
 
     # ── zone vietate manuali: persistenza + brush ─────────────────────────
     def _scatter_forbidden_file(self):
@@ -617,10 +630,15 @@ class ScatterModalMixin:
         self._scatter_seed_text = str(seed)
         return seed
 
-    def _scatter_run(self, reroll: bool = False):
+    def _scatter_run(self, reroll: bool = False, keep=None):
         """Avvia la pipeline in un worker thread: la UI resta reattiva, con
         progress (fase + barra) e ANNULLA. Risultato consumato dal render
-        (_scatter_consume_result)."""
+        (_scatter_consume_result).
+
+        keep (U3): lista di ghost da PRESERVARE (bloccati o gia' buoni): non
+        vengono rimpiazzati, contano nel totale e diventano existing_bboxes
+        per i nuovi piazzamenti.
+        """
         import threading
 
         if self._scatter_busy:
@@ -634,11 +652,36 @@ class ScatterModalMixin:
             self._scatter_status_color = WARN_C
             return
 
+        keep = list(keep or [])
+        keep_info: list = []
+        if keep:
+            info_by_id = {}
+            for i, g in enumerate(self._scatter_ghosts):
+                inf = (self._scatter_ghost_info[i]
+                       if i < len(self._scatter_ghost_info) else None)
+                info_by_id[id(g)] = inf
+            keep_info = [info_by_id.get(id(g)) for g in keep]
+        count_total = int(self._scatter_count)
+        count_new = max(0, count_total - len(keep))
+
         seed = self._scatter_pick_seed(reroll)
-        self._scatter_busy = True
         self._scatter_ghosts = []
+        self._scatter_ghost_info = []
+        self._scatter_sel_ghost = None
+        self._scatter_drag = None
+        self._scatter_keep_buffer = (keep, keep_info)
         self._scatter_result = None
-        self._scatter_progress = ("Preparazione", 0, int(self._scatter_count))
+
+        if count_new == 0:
+            # Tutto preservato: nessun worker, risultato immediato.
+            self._scatter_result = {"ghosts": [], "info": [], "report": None,
+                                    "seed": seed, "cancelled": False,
+                                    "error": None}
+            self._scatter_consume_result()
+            return
+
+        self._scatter_busy = True
+        self._scatter_progress = ("Preparazione", 0, count_new)
         self._scatter_status_msg = f"Elaborazione (seed {seed})..."
         self._scatter_status_color = ACCENT
         self._scatter_cancel_event = threading.Event()
@@ -646,17 +689,18 @@ class ScatterModalMixin:
         token = self._scatter_run_token
         cancel_ev = self._scatter_cancel_event
 
+        from editor.tools.scatter_validate import _placed_bboxes
         # Snapshot dei parametri e COPIA del BG sul main thread: il worker non
         # tocca surface condivise col render (pygame non e' thread-safe).
         params = {
             "style": self._scatter_style,
             "tag": self._scatter_tag,
-            "count": int(self._scatter_count),
+            "count": count_new,
             "difficulty": self._scatter_difficulty,
             "layers": [lid for lid, v in self._scatter_layers.items() if v]
                       or list(self._scatter_layers.keys()),
             "forbidden_cells": set(self._scatter_forbidden_cells),
-            "existing": self._scatter_existing_bboxes(),
+            "existing": self._scatter_existing_bboxes() + _placed_bboxes(keep),
             "scene_key": str(self.scene_path),
             "seed": seed,
             "bg_copy": self.bg_surf.copy(),
@@ -772,8 +816,17 @@ class ScatterModalMixin:
                 progress_cb=_cb,
                 cancel_event=cancel_ev,
             )
+            # Verdetti/metriche per ghost (U4): lista parallela a kept.
+            from editor.tools.scatter_validate import results_by_placed
+            try:
+                info = results_by_placed(kept, results, entries,
+                                         self.game_path, self.base_path)
+            except Exception as ie:
+                log.debug(f"[SCATTER] info per-ghost non disponibili: {ie}")
+                info = [None] * len(kept)
             if token == self._scatter_run_token:
-                self._scatter_result = {"ghosts": kept, "report": report,
+                self._scatter_result = {"ghosts": kept, "info": info,
+                                        "report": report,
                                         "seed": params["seed"],
                                         "cancelled": False, "error": None}
         except ScatterCancelled:
@@ -797,22 +850,35 @@ class ScatterModalMixin:
         self._scatter_busy = False
         self._scatter_progress = None
         self._scatter_report = res.get("report")
+        keep, keep_info = self._scatter_keep_buffer
+        self._scatter_keep_buffer = ([], [])
         if res.get("cancelled"):
+            # I preservati restano visibili (non c'e' motivo di perderli)
+            self._scatter_ghosts = list(keep)
+            self._scatter_ghost_info = list(keep_info)
             self._scatter_status_msg = "Elaborazione annullata"
             self._scatter_status_color = WARN_C
             return
         if res.get("error"):
+            self._scatter_ghosts = list(keep)
+            self._scatter_ghost_info = list(keep_info)
             self._scatter_status_msg = f"Errore: {res['error']}"
             self._scatter_status_color = ERR_C
             return
-        placed = res.get("ghosts") or []
+        new_ghosts = res.get("ghosts") or []
+        new_info = res.get("info") or [None] * len(new_ghosts)
+        placed = list(keep) + list(new_ghosts)
         self._scatter_ghosts = placed
+        self._scatter_ghost_info = list(keep_info) + list(new_info)
         report = res.get("report") or {}
+        requested = report.get("requested", len(new_ghosts)) + len(keep)
         if placed:
             avg_vs = sum(p.visibility_score for p in placed) / len(placed)
-            msg = (f"{len(placed)}/{report.get('requested', len(placed))} pronti"
+            msg = (f"{len(placed)}/{requested} pronti"
                    f" | seed {res.get('seed')}"
                    f" | nascondiglio medio {avg_vs:.2f}")
+            if keep:
+                msg += f" | {len(keep)} preservati"
             if report.get("dropped_fail"):
                 msg += f" | {report['dropped_fail']} rimpiazzati (in evidenza)"
             if report.get("warn"):
@@ -822,6 +888,236 @@ class ScatterModalMixin:
         else:
             self._scatter_status_msg = "Nessun oggetto piazzato (pool/spazio insufficiente)"
             self._scatter_status_color = WARN_C
+
+    # ── anteprima interattiva (U3/U4) ─────────────────────────────────────
+    def _scatter_preview_enter(self):
+        if not self._scatter_ghosts:
+            self._scatter_status_msg = "Genera prima un'anteprima"
+            self._scatter_status_color = WARN_C
+            return
+        self._scatter_preview_active = True
+        self._scatter_drop_open = None
+        self._scatter_sel_ghost = None
+        self._scatter_drag = None
+
+    def _scatter_preview_exit(self):
+        self._scatter_preview_active = False
+        self._scatter_sel_ghost = None
+        self._scatter_drag = None
+
+    def _scatter_ghost_center(self, g) -> tuple[float, float, float, float]:
+        """Centro e dimensioni EFFETTIVE (px BG) del ghost: (cx, cy, w, h)."""
+        rw = g.width * g.scale
+        rh = g.height * g.scale
+        if g.detection_type == "circle":
+            return g.x, g.y, rw, rh
+        return g.x + rw / 2, g.y + rh / 2, rw, rh
+
+    def _scatter_ghost_at(self, mx: int, my: int):
+        """Indice del ghost sotto il punto schermo (ultimo disegnato vince)."""
+        rx, ry = self._s2r(mx, my)
+        for i in range(len(self._scatter_ghosts) - 1, -1, -1):
+            g = self._scatter_ghosts[i]
+            cx, cy, rw, rh = self._scatter_ghost_center(g)
+            if abs(rx - cx) <= rw / 2 and abs(ry - cy) <= rh / 2:
+                return i
+        return None
+
+    def _scatter_ghost_move_to(self, idx: int, rx: float, ry: float):
+        """Sposta il CENTRO del ghost idx alle coordinate BG (clampate)."""
+        g = self._scatter_ghosts[idx]
+        cx, cy, rw, rh = self._scatter_ghost_center(g)
+        bw, bh = self.bg_surf.get_size()
+        nx = max(rw / 2, min(bw - rw / 2, rx))
+        ny = max(rh / 2, min(bh - rh / 2, ry))
+        if g.detection_type == "circle":
+            g.x, g.y = nx, ny
+        else:
+            g.x, g.y = nx - rw / 2, ny - rh / 2
+
+    def _scatter_preview_click(self, mx: int, my: int) -> None:
+        """Click sul canvas in anteprima: seleziona e prepara il drag."""
+        idx = self._scatter_ghost_at(mx, my)
+        self._scatter_sel_ghost = idx
+        if idx is None:
+            self._scatter_drag = None
+            return
+        g = self._scatter_ghosts[idx]
+        cx, cy, _rw, _rh = self._scatter_ghost_center(g)
+        rx, ry = self._s2r(mx, my)
+        self._scatter_drag = (idx, cx - rx, cy - ry)
+        self._scatter_show_ghost_info(idx)
+
+    def _scatter_preview_motion(self, mx: int, my: int) -> None:
+        """Drag del ghost selezionato (chiamata da input_handlers su motion)."""
+        if not self._scatter_preview_active or self._scatter_drag is None:
+            return
+        idx, dx, dy = self._scatter_drag
+        if idx >= len(self._scatter_ghosts):
+            self._scatter_drag = None
+            return
+        rx, ry = self._s2r(mx, my)
+        self._scatter_ghost_move_to(idx, rx + dx, ry + dy)
+
+    def _scatter_preview_drag_end(self) -> None:
+        """Fine drag: ricalcola verdetto/metriche del ghost spostato (U4)."""
+        if self._scatter_drag is None:
+            return
+        idx = self._scatter_drag[0]
+        self._scatter_drag = None
+        if idx < len(self._scatter_ghosts):
+            self._scatter_refresh_ghost_info(idx)
+            self._scatter_show_ghost_info(idx)
+
+    def _scatter_refresh_ghost_info(self, idx: int) -> None:
+        """Rimisura il singolo ghost sul BG reale (pop/verdetto aggiornati)."""
+        try:
+            import pygame as _pg
+            from editor.tools import scatter_metrics as _sm
+            from editor.tools.scatter_validate import (
+                SCORE_OK_MAX, SCORE_WARN_MAX,
+            )
+            g = self._scatter_ghosts[idx]
+            entry = next((c for c in self.catalog
+                          if c["id"] == g.catalog_id), None)
+            if entry is None:
+                return
+            bg_rgb = getattr(self, "_scatter_bg_rgb_cache", None)
+            if bg_rgb is None:
+                bg_rgb = _pg.surfarray.array3d(self.bg_surf).swapaxes(0, 1)
+                self._scatter_bg_rgb_cache = bg_rgb
+            m = _sm.measure_placement(self.bg_surf, bg_rgb, g, entry,
+                                      self.game_path, self.base_path,
+                                      with_saliency=False)
+            while len(self._scatter_ghost_info) < len(self._scatter_ghosts):
+                self._scatter_ghost_info.append(None)
+            if m is None:
+                self._scatter_ghost_info[idx] = None
+                return
+            if m.pop_score <= SCORE_OK_MAX:
+                verdict = "ok"
+            elif m.pop_score <= SCORE_WARN_MAX:
+                verdict = "warn"
+            else:
+                verdict = "fail"
+            self._scatter_ghost_info[idx] = {
+                "catalog_id": m.catalog_id, "rect": m.rect,
+                "score": m.pop_score, "verdict": verdict,
+                "delta_e": m.interior_delta_e, "delta_l": m.delta_l,
+                "rim_delta_e": m.rim_delta_e,
+                "boundary_contrast": m.boundary_contrast,
+                "texture_mismatch": m.texture_mismatch,
+                "saliency_delta": m.saliency_delta, "clutter": m.clutter,
+            }
+        except Exception as e:
+            log.debug(f"[SCATTER] refresh info ghost fallito: {e}")
+
+    def _scatter_show_ghost_info(self, idx: int) -> None:
+        """Status con breakdown 'perche' qui' del ghost (U4)."""
+        if idx is None or idx >= len(self._scatter_ghosts):
+            return
+        g = self._scatter_ghosts[idx]
+        inf = (self._scatter_ghost_info[idx]
+               if idx < len(self._scatter_ghost_info) else None)
+        locked = " [BLOCCATO]" if getattr(g, "locked", False) else ""
+        if inf:
+            rim = inf.get("rim_delta_e")
+            rim_s = f"{rim:.0f}" if rim is not None else "-"
+            self._scatter_status_msg = (
+                f"{g.catalog_id}{locked}: {inf['verdict'].upper()}"
+                f" | pop {inf['score']:.0f} | bordo {rim_s}"
+                f" | interno {inf['delta_e']:.0f}"
+                f" | texture {inf['texture_mismatch']:.0f}"
+                f" | clutter {inf['clutter']:.2f}")
+            self._scatter_status_color = {"ok": OK_C, "warn": WARN_C,
+                                          "fail": ERR_C}[inf["verdict"]]
+        else:
+            self._scatter_status_msg = f"{g.catalog_id}{locked}: non validato"
+            self._scatter_status_color = TXT_DIM
+
+    def _scatter_delete_ghost(self, idx: int) -> None:
+        if idx is None or idx >= len(self._scatter_ghosts):
+            return
+        self._scatter_ghosts.pop(idx)
+        if idx < len(self._scatter_ghost_info):
+            self._scatter_ghost_info.pop(idx)
+        self._scatter_sel_ghost = None
+        self._scatter_drag = None
+        self._scatter_status_msg = f"Ghost rimosso ({len(self._scatter_ghosts)} rimasti)"
+        self._scatter_status_color = ACCENT
+
+    def _scatter_toggle_lock(self, idx: int) -> None:
+        if idx is None or idx >= len(self._scatter_ghosts):
+            return
+        g = self._scatter_ghosts[idx]
+        g.locked = not getattr(g, "locked", False)
+        self._scatter_show_ghost_info(idx)
+
+    def _scatter_reroll_single(self, idx: int) -> None:
+        """Rigenera SOLO il ghost idx: gli altri (e la scena) diventano
+        existing_bboxes. Sincrono: un oggetto solo, sotto il secondo."""
+        if idx is None or idx >= len(self._scatter_ghosts):
+            return
+        old = self._scatter_ghosts[idx]
+        analyses = self._scatter_catalog_cache.get(self._scatter_style)
+        bg_an = self._scatter_bg_analysis
+        if not analyses or bg_an is None:
+            self._scatter_status_msg = "Rigenera prima un'anteprima completa"
+            self._scatter_status_color = WARN_C
+            return
+        try:
+            from editor.tools.scatter_engine import build_forbidden_mask
+            from editor.tools.scatter_validate import (
+                _placed_bboxes, run_scatter_with_repair,
+            )
+            entries = {c["id"]: c for c in self.catalog
+                       if c.get("style", "real") == self._scatter_style}
+            others = [g for i, g in enumerate(self._scatter_ghosts) if i != idx]
+            existing = self._scatter_existing_bboxes() + _placed_bboxes(others)
+            forbidden = build_forbidden_mask(bg_an,
+                                             self._scatter_forbidden_cells)
+            render_ctx = {"bg_surface": self.bg_surf,
+                          "game_path": self.game_path,
+                          "repo_root": self.base_path}
+            kept, results, _rep = run_scatter_with_repair(
+                bg_an, analyses, entries, bg_surface=self.bg_surf,
+                game_path=self.game_path, repo_root=self.base_path,
+                count=1, difficulty=self._scatter_difficulty,
+                style=self._scatter_style, tag_filter=self._scatter_tag,
+                existing_bboxes=existing, seed=None,
+                allowed_layers=[old.layer], forbidden_mask=forbidden,
+                render_ctx=render_ctx, max_repair_rounds=1)
+        except Exception as e:
+            log.exception("reroll singolo fallito")
+            self._scatter_status_msg = f"Rigenerazione fallita: {e}"
+            self._scatter_status_color = ERR_C
+            return
+        if not kept:
+            self._scatter_status_msg = "Nessuna posizione alternativa trovata"
+            self._scatter_status_color = WARN_C
+            return
+        self._scatter_ghosts[idx] = kept[0]
+        self._scatter_refresh_ghost_info(idx)
+        self._scatter_sel_ghost = idx
+        self._scatter_show_ghost_info(idx)
+
+    def _scatter_regen_visibili(self) -> None:
+        """Rigenera SOLO i ghost con verdetto warn/fail (i bloccati e gli
+        'ok' restano dove sono)."""
+        keep = []
+        for i, g in enumerate(self._scatter_ghosts):
+            inf = (self._scatter_ghost_info[i]
+                   if i < len(self._scatter_ghost_info) else None)
+            good = inf is not None and inf.get("verdict") == "ok"
+            if getattr(g, "locked", False) or good:
+                keep.append(g)
+        n_regen = len(self._scatter_ghosts) - len(keep)
+        if n_regen == 0:
+            self._scatter_status_msg = "Niente da rigenerare: tutti ok o bloccati"
+            self._scatter_status_color = OK_C
+            return
+        self._scatter_preview_exit()
+        self._scatter_run(reroll=True, keep=keep)
 
     def _scatter_apply(self):
         """Aggiunge i ghost alla scena come oggetti reali."""
@@ -859,6 +1155,8 @@ class ScatterModalMixin:
         self._mark_dirty()
         self._status(f"Scatter applicato: {added} oggetti aggiunti", OK_C, 3)
         self._scatter_ghosts = []
+        self._scatter_ghost_info = []
+        self._scatter_preview_exit()
         self._scatter_modal_open = False
         self._scatter_forbidden_save()
 
@@ -889,6 +1187,12 @@ class ScatterModalMixin:
         # (il canvas resta visibile per dipingere le zone vietate).
         if self._scatter_brush_active:
             self._r_scatter_brush_toolbar(w, h)
+            return
+
+        # Anteprima interattiva (U3): panel nascosto, ghost editabili sul
+        # canvas, toolbar compatta in alto.
+        if self._scatter_preview_active:
+            self._r_scatter_preview_toolbar(w, h)
             return
 
         # Overlay scuro
@@ -1220,10 +1524,12 @@ class ScatterModalMixin:
 
         if ghost_n > 0 and not self._scatter_busy:
             gap = 8
-            half = (pw - 32 - gap) // 2
-            rr_r = pygame.Rect(px + 16, y, half, btn_h)
-            ap_r = pygame.Rect(px + 16 + half + gap, y, half, btn_h)
+            third = (pw - 32 - gap * 2) // 3
+            rr_r = pygame.Rect(px + 16, y, third, btn_h)
+            ed_r = pygame.Rect(px + 16 + third + gap, y, third, btn_h)
+            ap_r = pygame.Rect(px + 16 + (third + gap) * 2, y, third, btn_h)
             hov_rr = _in_rect((mx, my), rr_r)
+            hov_ed = _in_rect((mx, my), ed_r)
             hov_ap = _in_rect((mx, my), ap_r)
             # Ripesca
             _rect(self.screen, (60, 48, 24) if hov_rr else (45, 36, 18), rr_r, radius=5)
@@ -1231,10 +1537,16 @@ class ScatterModalMixin:
             ts = _txt("RIPESCA", "sm", TXT_HI)
             self.screen.blit(ts, (rr_r.centerx - ts.get_width()//2, rr_r.centery - ts.get_height()//2))
             self._scatter_hitboxes["reroll"] = rr_r
+            # Modifica anteprima (U3)
+            _rect(self.screen, (35, 55, 80) if hov_ed else (28, 44, 64), ed_r, radius=5)
+            _rect(self.screen, ACCENT, ed_r, 2 if hov_ed else 1, radius=5)
+            ts = _txt("MODIFICA ANTEPRIMA", "xs", TXT_HI)
+            self.screen.blit(ts, (ed_r.centerx - ts.get_width()//2, ed_r.centery - ts.get_height()//2))
+            self._scatter_hitboxes["preview_edit"] = ed_r
             # Applica
             _rect(self.screen, (30, 90, 45) if hov_ap else (25, 70, 35), ap_r, radius=5)
             _rect(self.screen, OK_C, ap_r, 2 if hov_ap else 1, radius=5)
-            ts = _txt("APPLICA ALLA SCENA", "sm", TXT_HI)
+            ts = _txt("APPLICA", "sm", TXT_HI)
             self.screen.blit(ts, (ap_r.centerx - ts.get_width()//2, ap_r.centery - ts.get_height()//2))
             self._scatter_hitboxes["apply"] = ap_r
             y += btn_h + 8
@@ -1299,6 +1611,60 @@ class ScatterModalMixin:
         hint_bg = pygame.Rect(tx, ty + tb_h + 4, tb_w, 20)
         _rect(self.screen, (24, 26, 32), hint_bg, radius=4)
         self.screen.blit(hs, (hint_bg.centerx - hs.get_width()//2, hint_bg.y + 4))
+
+    def _r_scatter_preview_toolbar(self, w, h):
+        """Toolbar compatta in anteprima interattiva (U3): il canvas resta
+        visibile, i ghost sono selezionabili/trascinabili."""
+        self._scatter_hitboxes = {}
+        tb_w, tb_h = 620, 46
+        tx = (w - tb_w) // 2
+        ty = 52
+        tb_r = pygame.Rect(tx, ty, tb_w, tb_h)
+        _rect(self.screen, (24, 26, 32), tb_r, radius=8)
+        _rect(self.screen, ACCENT, tb_r, 2, radius=8)
+        self._scatter_hitboxes["preview_toolbar"] = tb_r
+
+        mx, my = pygame.mouse.get_pos()
+        n = len(self._scatter_ghosts)
+        n_lock = sum(1 for g in self._scatter_ghosts
+                     if getattr(g, "locked", False))
+        buttons = [
+            ("preview_reroll", f"RIPESCA ({n_lock} bloccati)", WARN_C,
+             (45, 36, 18), (60, 48, 24)),
+            ("preview_regen", "RIGENERA VISIBILI", ACCENT,
+             (28, 44, 64), (35, 55, 80)),
+            ("preview_apply", f"APPLICA ({n})", OK_C,
+             (25, 70, 35), (30, 90, 45)),
+            ("preview_back", "TORNA", TXT_DIM, (38, 38, 44), (50, 50, 58)),
+        ]
+        bx = tx + 10
+        bw, bh, bgap = 146, 30, 6
+        by = ty + 8
+        for key, lbl, border, bg_c, bg_hov in buttons:
+            br = pygame.Rect(bx, by, bw, bh)
+            hov = _in_rect((mx, my), br)
+            _rect(self.screen, bg_hov if hov else bg_c, br, radius=4)
+            _rect(self.screen, border, br, 2 if hov else 1, radius=4)
+            ts = _txt(lbl, "xs", TXT_HI)
+            self.screen.blit(ts, (br.centerx - ts.get_width() // 2,
+                                  br.centery - ts.get_height() // 2))
+            self._scatter_hitboxes[key] = br
+            bx += bw + bgap
+
+        # Hint + status (breakdown U4 del ghost selezionato)
+        hint = ("Click = seleziona | trascina = sposta | CANC = elimina | "
+                "R = rigenera | L = blocca | ESC = torna al pannello")
+        hs = _txt(hint, "xs", TXT_DIM)
+        hint_bg = pygame.Rect(tx, ty + tb_h + 4, tb_w, 20)
+        _rect(self.screen, (24, 26, 32), hint_bg, radius=4)
+        self.screen.blit(hs, (hint_bg.centerx - hs.get_width() // 2,
+                              hint_bg.y + 4))
+        if self._scatter_status_msg:
+            st = _txt(self._scatter_status_msg, "xs", self._scatter_status_color)
+            st_bg = pygame.Rect(tx, hint_bg.bottom + 2, tb_w, 20)
+            _rect(self.screen, (24, 26, 32), st_bg, radius=4)
+            self.screen.blit(st, (st_bg.centerx - st.get_width() // 2,
+                                  st_bg.y + 4))
 
     def _r_scatter_dropdown_style(self, px, py, pw, ph):
         styles = ["real", "cartoon", "line art"]
@@ -1452,6 +1818,31 @@ class ScatterModalMixin:
             self._scatter_brush_paint_at(mx, my)
             return True
 
+        # ── ANTEPRIMA INTERATTIVA (U3): toolbar oppure canvas ────────────
+        if self._scatter_preview_active:
+            hb = self._scatter_hitboxes
+            if _in_rect((mx, my), hb.get("preview_back", pygame.Rect(0, 0, 0, 0))):
+                self._scatter_preview_exit()
+                return True
+            if _in_rect((mx, my), hb.get("preview_apply", pygame.Rect(0, 0, 0, 0))):
+                self._scatter_preview_exit()
+                self._scatter_apply()
+                return True
+            if _in_rect((mx, my), hb.get("preview_reroll", pygame.Rect(0, 0, 0, 0))):
+                locked = [g for g in self._scatter_ghosts
+                          if getattr(g, "locked", False)]
+                self._scatter_preview_exit()
+                self._scatter_run(reroll=True, keep=locked)
+                return True
+            if _in_rect((mx, my), hb.get("preview_regen", pygame.Rect(0, 0, 0, 0))):
+                self._scatter_regen_visibili()
+                return True
+            if _in_rect((mx, my), hb.get("preview_toolbar", pygame.Rect(0, 0, 0, 0))):
+                return True
+            # Canvas: seleziona / inizia drag
+            self._scatter_preview_click(mx, my)
+            return True
+
         # Dropdown options (priority)
         if self._scatter_drop_open:
             for key, r in self._scatter_hitboxes.items():
@@ -1588,7 +1979,11 @@ class ScatterModalMixin:
         if _in_rect((mx, my), hb.get("generate", pygame.Rect(0,0,0,0))):
             self._scatter_run(); return True
         if _in_rect((mx, my), hb.get("reroll", pygame.Rect(0,0,0,0))):
-            self._scatter_run(reroll=True); return True
+            locked = [g for g in self._scatter_ghosts
+                      if getattr(g, "locked", False)]
+            self._scatter_run(reroll=True, keep=locked); return True
+        if _in_rect((mx, my), hb.get("preview_edit", pygame.Rect(0,0,0,0))):
+            self._scatter_preview_enter(); return True
         if _in_rect((mx, my), hb.get("apply", pygame.Rect(0,0,0,0))):
             self._scatter_apply(); return True
 
@@ -1605,9 +2000,20 @@ class ScatterModalMixin:
         finche' il modal e' aperto (comportamento storico)."""
         if not self._scatter_modal_open:
             return False
+        # Anteprima interattiva (U3): DEL/R/L sul ghost selezionato
+        if self._scatter_preview_active and ev.key != pygame.K_ESCAPE:
+            if ev.key == pygame.K_DELETE:
+                self._scatter_delete_ghost(self._scatter_sel_ghost)
+            elif ev.key == pygame.K_r:
+                self._scatter_reroll_single(self._scatter_sel_ghost)
+            elif ev.key == pygame.K_l:
+                self._scatter_toggle_lock(self._scatter_sel_ghost)
+            return True
         if ev.key == pygame.K_ESCAPE:
             if self._scatter_brush_active:
                 self._scatter_brush_exit()
+            elif self._scatter_preview_active:
+                self._scatter_preview_exit()
             elif self._scatter_seed_editing:
                 self._scatter_seed_editing = False
             elif self._scatter_busy:

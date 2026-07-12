@@ -141,6 +141,31 @@ def annotate(canvas_surface, results: list[dict]) -> None:
                          2 if r["verdict"] == "ok" else 5)
 
 
+def results_by_placed(placed: list, results: list[dict], entries: dict,
+                      game_path: Path, repo_root: Path) -> list:
+    """Lista PARALLELA a placed col risultato di validate di ciascun oggetto
+    (o None se non validato). Stesso key-match di filter_failed: serve alla
+    UI per mostrare verdetto/metriche del singolo ghost (U4)."""
+    by_key = {(r["catalog_id"], r["rect"][0], r["rect"][1]): r
+              for r in results}
+    icon_cache: dict = {}
+    out: list = []
+    for p in placed:
+        entry = entries.get(p.catalog_id)
+        rendered = render_sprite(p, entry, game_path, repo_root,
+                                 icon_cache) if entry else None
+        if rendered is None:
+            out.append(None)
+            continue
+        img, cx, cy = rendered
+        sw, sh = img.get_size()
+        key = (p.catalog_id,
+               max(0, int(round(cx - sw / 2))),
+               max(0, int(round(cy - sh / 2))))
+        out.append(by_key.get(key))
+    return out
+
+
 def _placed_bboxes(placed: list) -> list[tuple[float, float, float, float]]:
     """Bbox (x0, y0, x1, y1) in px BG dei piazzati, per existing_bboxes."""
     out: list[tuple[float, float, float, float]] = []

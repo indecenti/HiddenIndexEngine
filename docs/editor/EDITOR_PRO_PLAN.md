@@ -270,5 +270,35 @@ Criteri di successo (misurati con S0):
   con cancel; riduzione prevista in S7 (cache sprite, patch piu' piccoli).
 - Suite: 136 pass / 0 fail (6 test nuovi: render loop, cancel, repair).
 
-Prossima: ondata 3 (U3 ghost interattivi, U4 "perche' qui", S4 footprint
-scoring, S5 appoggio/rotazione naturale).
+### Ondata 3 — FATTA (2026-07-13)
+
+- S4: veto FOOTPRINT via integral image (l'intera area visiva dell'oggetto,
+  bbox ruotato incluso, non copre celle vietate: prima bastava il centro
+  libero e un oggetto grande finiva mezzo su un volto) + gate STRADDLE
+  (std della L Lab sotto il footprint oltre soglia = oggetto a cavallo di
+  due zone, rifiutato; relax con attempts_frac).
+- S5: appoggio da edge ORIZZONTALI (edge_density * |sin(grad_orient)|,
+  hoisted fuori dal loop; chiude il doppio conteggio audit #38) con peso
+  scalato su support_bot; clamp UPRIGHT (+/-10 gradi) per oggetti con base
+  d'appoggio forte o tag 'upright' (niente bottiglie coricate).
+- U3: modalita' ANTEPRIMA INTERATTIVA nel modal (pattern brush): panel
+  nascosto, ghost selezionabili (click), trascinabili (drag con rimisura al
+  rilascio), CANC elimina, R rigenera il singolo, L blocca; toolbar con
+  RIPESCA (preserva i bloccati), RIGENERA VISIBILI (solo warn/fail),
+  APPLICA, TORNA. Bordi ghost per stato: verde bloccato, arancio warn,
+  azzurro selezionato.
+- U4: breakdown "perche' qui" del ghost selezionato nello status (pop,
+  bordo, interno, texture, clutter + verdetto) da results_by_placed
+  (scatter_validate); rimisura live dopo ogni spostamento.
+- Benchmark ondata2 -> ondata3: hard pop 18.2->18.1, rim 10.3->10.2,
+  ok 93.8->90.9; medium pop 18.9->20.1, ok 89.2->86.9 (+1 fail su 480).
+  Peggioramento marginale ATTESO: footprint/straddle/upright vietano
+  posizioni che il pop_score non penalizza (mezzo-su-volto, a cavallo di
+  zone, rotazioni innaturali) — correttezza e naturalezza prima del punto
+  di metrica. Vs baseline il totale resta: medium pop -20%, ok 69->87.
+- Suite: 147 pass / 0 fail (11 test nuovi: footprint/straddle/upright,
+  worker modal, preview interattiva).
+
+Prossima: ondata 4 (P1 robustezza dati: crash recovery autosave, backup
+rotativi, bonifica except nudi, LRU immagini; U5 opzioni APPLICA; U6
+micro-fix UI).

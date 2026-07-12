@@ -605,12 +605,22 @@ class RenderCanvasMixin:
 
 
     def _r_scatter_ghosts(self, ghosts):
-        """Disegna gli oggetti pendenti dell'auto-scatter come ghost gialli."""
-        for g in ghosts:
+        """Disegna gli oggetti pendenti dell'auto-scatter come ghost.
+
+        Colori bordo (U3/U4): giallo = pendente, arancio = verdetto warn,
+        rosso = fail, verde = bloccato, azzurro spesso = selezionato.
+        """
+        sel = getattr(self, "_scatter_sel_ghost", None)
+        infos = getattr(self, "_scatter_ghost_info", [])
+        for i, g in enumerate(ghosts):
             # Un singolo ghost malformato non deve abbattere l'intero render
             # (e quindi il processo): isola e logga una volta per catalog_id.
             try:
-                self._r_scatter_ghost_one(g)
+                inf = infos[i] if i < len(infos) else None
+                self._r_scatter_ghost_one(
+                    g, selected=(i == sel),
+                    locked=getattr(g, "locked", False),
+                    verdict=inf.get("verdict") if inf else None)
             except Exception:
                 errs = getattr(self, "_ghost_render_errs", None)
                 if errs is None:
@@ -623,7 +633,8 @@ class RenderCanvasMixin:
                         "Render ghost fallito per '%s'", cid, exc_info=True
                     )
 
-    def _r_scatter_ghost_one(self, g):
+    def _r_scatter_ghost_one(self, g, selected: bool = False,
+                             locked: bool = False, verdict=None):
         cat = next((c for c in self.catalog if c["id"] == g.catalog_id), None)
         if not cat or not self.game_path:
             return
@@ -653,14 +664,29 @@ class RenderCanvasMixin:
             rect = ghost_surf.get_rect(center=(int(sx), int(sy)))
             self.screen.blit(ghost_surf, rect)
 
-        # Bordo giallo tratteggiato per identificare il ghost
+        # Bordo di stato (U3/U4): bloccato > selezionato > verdetto > default
+        if locked:
+            border_c = (60, 220, 60)
+        elif verdict == "warn":
+            border_c = (255, 170, 0)
+        elif verdict == "fail":
+            border_c = (255, 60, 60)
+        else:
+            border_c = (255, 220, 60)
         bbox_w = int(rw * self.zoom)
         bbox_h = int(rh * self.zoom)
         rect_b = pygame.Rect(int(sx) - bbox_w // 2, int(sy) - bbox_h // 2, bbox_w, bbox_h)
-        pygame.draw.rect(self.screen, (255, 220, 60), rect_b, 2)
+        pygame.draw.rect(self.screen, border_c, rect_b, 2)
+        if selected:
+            pygame.draw.rect(self.screen, (80, 200, 255),
+                             rect_b.inflate(8, 8), 3)
+        if locked:
+            from editor.ui.draw import _txt as _txt_l
+            lk = _txt_l("L", "xs", (60, 220, 60))
+            self.screen.blit(lk, (rect_b.left + 2, rect_b.top + 2))
         # Score label
         from editor.ui.draw import _txt
-        ts = _txt(f"{g.visibility_score:.2f}", "xs", (255, 220, 60))
+        ts = _txt(f"{g.visibility_score:.2f}", "xs", border_c)
         self.screen.blit(ts, (rect_b.right - ts.get_width() - 2, rect_b.top + 2))
 
 

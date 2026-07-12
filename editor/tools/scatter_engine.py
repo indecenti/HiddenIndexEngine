@@ -156,6 +156,23 @@ RENDER_POP_MAX = {"easy": 50.0, "medium": 42.0, "hard": 38.0}
 RENDER_POP_RELAX_GAIN = 0.8
 # Heartbeat di progress_cb anche senza nuovi piazzati (tentativi a vuoto).
 PROGRESS_EVERY_ATTEMPTS = 200
+# ── v4 ondata 3: controlli footprint-aware + naturalezza fisica ──────────────
+# Un oggetto che COPRE celle vietate (volti/manuale/person/cielo) va rifiutato
+# anche se la sua cella CENTRALE e' libera: prima si controllava solo il
+# centro e un oggetto grande poteva finire mezzo sopra un volto.
+# Straddle: se la deviazione std della L (Lab) delle celle sotto il footprint
+# supera la soglia, l'oggetto e' "a cavallo" di due zone (mezzo muro / mezzo
+# pavimento): stacco innaturale. Gate per difficolta', rilassato con
+# attempts_frac; sotto STRADDLE_MIN_CELLS il footprint e' troppo piccolo
+# perche' lo straddle abbia senso.
+STRADDLE_LSTD_MAX = {"easy": 26.0, "medium": 20.0, "hard": 16.0}
+STRADDLE_RELAX_GAIN = 0.9
+STRADDLE_MIN_CELLS = 4
+# Upright: oggetti con base d'appoggio forte (support_bot alto) o tag
+# esplicito 'upright' non vanno coricati: una bottiglia a 130 gradi e'
+# innaturale e attira l'occhio. Rotazione clampata a +/- UPRIGHT_MAX_DEG.
+UPRIGHT_SUPPORT_MIN = 0.55
+UPRIGHT_MAX_DEG = 10.0
 
 
 class ScatterCancelled(Exception):
@@ -2438,7 +2455,8 @@ def place_objects(
     dominant_rgb_cache: dict[str, list[tuple[int, int, int]]] = {}
     total_attempts = 0
     reject_reasons = {"score_neg": 0, "overlap": 0, "too_big": 0,
-                      "color_deltaE": 0, "vis_band": 0, "render_pop": 0}
+                      "color_deltaE": 0, "vis_band": 0, "render_pop": 0,
+                      "footprint_veto": 0, "straddle": 0}
 
     def _render_pop_for(cand: dict) -> Optional[float]:
         """pop_score (scatter_metrics) del candidato compositato sul BG reale.
@@ -2489,6 +2507,55 @@ def place_objects(
             b = _build_base_score_matrix(bg, catalog_analyses[cid_], weights)
             base_score_cache[cid_] = b
         return b
+
+    # ── PRE-CALCOLI ATTEMPT-INVARIANTI (v4 ondata 3) ──────────────────────
+    # APPOGGIO: edge ORIZZONTALI sotto l'oggetto. Sostituisce l'edge_density
+    # grezza (audit #38, doppio conteggio con w_edge): un appoggio e' una
+    # LINEA orizzontale (gradiente verticale), non una zona genericamente
+    # busy. Prima questa matrice veniva ricostruita a ogni tentativo.
+    horiz_edge = (bg.edge_density * np.abs(np.sin(bg.grad_orient))
+                  ).astype(np.float32)
+    anchor_below = np.zeros_like(bg.edge_density)
+    for _offset in (1, 2):
+        _shifted = np.roll(horiz_edge, -_offset, axis=0)
+        _shifted[-_offset:] = 0  # zone fuori BG
+        anchor_below += _shifted
+    anchor_below /= 2.0
+
+    # FOOTPRINT VETO: integral image dei veti duri object-invariant
+    # (volti/manuale/person + cielo semantico). Somma su bbox in O(1).
+    hard_veto = np.zeros((bg.cell_h, bg.cell_w), dtype=bool)
+    if forbidden_mask is not None:
+        hard_veto |= forbidden_mask
+    if bg.semantic_score is not None:
+        hard_veto |= bg.semantic_score <= -0.99
+    veto_int = np.zeros((bg.cell_h + 1, bg.cell_w + 1), dtype=np.int32)
+    veto_int[1:, 1:] = np.cumsum(np.cumsum(hard_veto.astype(np.int32),
+                                           axis=0), axis=1)
+    # STRADDLE: integrali di L e L^2 (Lab) per la std sotto il footprint.
+    lab_l_int = lab_l2_int = None
+    if bg.lab_grid is not None:
+        _L = bg.lab_grid[..., 0].astype(np.float64)
+        lab_l_int = np.zeros((bg.cell_h + 1, bg.cell_w + 1), dtype=np.float64)
+        lab_l_int[1:, 1:] = np.cumsum(np.cumsum(_L, axis=0), axis=1)
+        lab_l2_int = np.zeros((bg.cell_h + 1, bg.cell_w + 1), dtype=np.float64)
+        lab_l2_int[1:, 1:] = np.cumsum(np.cumsum(_L * _L, axis=0), axis=1)
+
+    def _box_sum(integral: np.ndarray, cy0_: int, cy1_: int,
+                 cx0_: int, cx1_: int) -> float:
+        """Somma dell'area [cy0, cy1) x [cx0, cx1) dall'integral image."""
+        return float(integral[cy1_, cx1_] - integral[cy0_, cx1_]
+                     - integral[cy1_, cx0_] + integral[cy0_, cx0_])
+
+    def _footprint_cells(x_min_: float, y_min_: float,
+                         x_max_: float, y_max_: float
+                         ) -> tuple[int, int, int, int]:
+        """Range di celle [cy0, cy1) x [cx0, cx1) coperto dal bbox, clampato."""
+        cx0_ = max(0, min(bg.cell_w, int(x_min_ // cell_px)))
+        cy0_ = max(0, min(bg.cell_h, int(y_min_ // cell_px)))
+        cx1_ = max(cx0_ + 1, min(bg.cell_w, int(x_max_ // cell_px) + 1))
+        cy1_ = max(cy0_ + 1, min(bg.cell_h, int(y_max_ // cell_px) + 1))
+        return cy0_, cy1_, cx0_, cx1_
 
     while len(placed) < count and total_attempts < max_total_attempts:
         if cancel_event is not None and cancel_event.is_set():
@@ -2589,17 +2656,15 @@ def place_objects(
         zone_score[z_y0:z_y1, z_x0:z_x1] = 0.5
         score = score + zone_score
 
-        # ── ANTI-FLOATING: bonus se sotto la cella c'è "qualcosa" ────────
-        # Per una cella (cy, cx), guardo l'edge density delle 2 celle sotto.
-        # Se sotto è "vuoto" (low edge), penalizzo.
-        anchor_below = np.zeros_like(score)
-        for offset in (1, 2):
-            shifted = np.roll(bg.edge_density, -offset, axis=0)
-            shifted[-offset:] = 0  # zone fuori BG
-            anchor_below += shifted
-        anchor_below /= 2.0
-        # Anti-floating weight (forte, sempre attivo)
-        anchor_w = 0.6
+        # ── ANTI-FLOATING: bonus se sotto la cella c'e' un APPOGGIO ──────
+        # anchor_below (hoisted pre-loop, v4 ondata 3) usa gli edge
+        # ORIZZONTALI: linee d'appoggio vere, non zone genericamente busy.
+        # Peso scalato sul support_bot dell'oggetto: un vaso pretende
+        # l'appoggio, una foglia no.
+        _support = 0.5
+        if obj_an.shape is not None:
+            _support = float(obj_an.shape.get("support_bot", 0.5))
+        anchor_w = 0.3 + 0.6 * _support
         score = score + anchor_w * anchor_below
 
         # ── ESCLUDI celle troppo vicine ai bordi BG ─────────────────────
@@ -2845,6 +2910,21 @@ def place_objects(
                     if abs(grad_local) < 0.05 and random.random() < 0.5:
                         rot_deg = random.choice([0, 90, 180, 270])
 
+            # ── UPRIGHT (v4 ondata 3): niente oggetti "coricati" quando hanno
+            # una base d'appoggio forte (support_bot) o il tag 'upright': una
+            # bottiglia a 130 gradi e' innaturale e attira l'occhio. line_art
+            # escluso (il trompe-l'oeil di forma vale piu' della fisica).
+            if style != "line_art":
+                _sup_up = (float(obj_an.shape.get("support_bot", 0.0))
+                           if obj_an.shape is not None else 0.0)
+                if "upright" in entry.get("tags", []) or _sup_up >= UPRIGHT_SUPPORT_MIN:
+                    _r_up = rot_deg % 360.0
+                    if _r_up > 180.0:
+                        _r_up -= 360.0
+                    if abs(_r_up) > UPRIGHT_MAX_DEG:
+                        rot_deg = random.uniform(-UPRIGHT_MAX_DEG,
+                                                 UPRIGHT_MAX_DEG) % 360
+
             # Flip H casuale 30%, flip V mai
             flip_x = random.random() < 0.30
             flip_y = False
@@ -2898,6 +2978,30 @@ def place_objects(
             if bbox_w_check >= bg.bg_w - 2 * edge_margin_px or bbox_h_check >= bg.bg_h - 2 * edge_margin_px:
                 reject_reasons["too_big"] += 1
                 return None
+
+            # ── FOOTPRINT VETO + STRADDLE (v4 ondata 3) ────────────────────
+            # Il centro libero NON basta: l'intera area visiva dell'oggetto
+            # (bbox ruotato per i rect) non deve coprire celle vietate, e non
+            # deve stare "a cavallo" di due zone di luminanza diversa.
+            if dt == "circle":
+                fb = (x_min, y_min, x_max, y_max)
+            else:
+                fb = (x_min_check, y_min_check, x_max_check, y_max_check)
+            fcy0, fcy1, fcx0, fcx1 = _footprint_cells(*fb)
+            if _box_sum(veto_int, fcy0, fcy1, fcx0, fcx1) > 0:
+                reject_reasons["footprint_veto"] += 1
+                return None
+            n_fcells = (fcy1 - fcy0) * (fcx1 - fcx0)
+            if lab_l_int is not None and n_fcells >= STRADDLE_MIN_CELLS:
+                s1 = _box_sum(lab_l_int, fcy0, fcy1, fcx0, fcx1)
+                s2 = _box_sum(lab_l2_int, fcy0, fcy1, fcx0, fcx1)
+                var_l = max(0.0, s2 / n_fcells - (s1 / n_fcells) ** 2)
+                _af_s = total_attempts / max(1, max_total_attempts)
+                straddle_cap = (STRADDLE_LSTD_MAX.get(difficulty, 20.0)
+                                * (1.0 + STRADDLE_RELAX_GAIN * _af_s))
+                if math.sqrt(var_l) > straddle_cap:
+                    reject_reasons["straddle"] += 1
+                    return None
 
             # Overlap check (usa bbox rotato per rect, margine adaptive per density)
             if dt == "circle":

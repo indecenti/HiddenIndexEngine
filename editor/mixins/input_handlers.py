@@ -700,6 +700,11 @@ class InputHandlersMixin:
                         pass
                 self._ctx_open(mx, my_raw)
         if btn == 1:
+            # Fine drag di un ghost in anteprima scatter (U3): rimisura.
+            if (getattr(self, "_scatter_preview_active", False)
+                    and getattr(self, "_scatter_drag", None) is not None):
+                self._scatter_preview_drag_end()
+                return
             if getattr(self, "_dragging_effect_idx", None) is not None:
                 self._drag_active = False
                 self._dragging_effect_idx = None
@@ -721,6 +726,15 @@ class InputHandlersMixin:
             if pygame.mouse.get_pressed(num_buttons=3)[0]:
                 self._scatter_brush_motion(mx, my_raw)
                 return
+
+        # Anteprima scatter (U3): drag del ghost selezionato col sinistro;
+        # al rilascio (perso o meno) chiude il drag e rimisura il ghost.
+        if getattr(self, "_scatter_preview_active", False):
+            if getattr(self, "_scatter_drag", None) is not None:
+                if pygame.mouse.get_pressed(num_buttons=3)[0]:
+                    self._scatter_preview_motion(mx, my_raw)
+                    return
+                self._scatter_preview_drag_end()
 
         # --- LOGICA RESIZE INTERATTIVO ---
         from editor.constants import PANEL_MIN_W, PANEL_MAX_W
