@@ -141,15 +141,9 @@ class InputHandlersMixin:
             self._stats_modal_key(ev)
             return
         if getattr(self, "_scatter_modal_open", False):
-            if ev.key == pygame.K_ESCAPE:
-                # In brush mode ESC esce SOLO dal brush (torna al modal);
-                # altrimenti chiude il modal. _scatter_close pulisce anche i
-                # ghost pendenti: chiudere mutando solo il flag lasciava i
-                # ghost renderizzati senza modo di applicarli.
-                if getattr(self, "_scatter_brush_active", False):
-                    self._scatter_brush_exit()
-                else:
-                    self._scatter_close()
+            # ESC con priorita' brush -> seed -> annulla run -> chiudi, piu'
+            # editing del campo seed: tutto in _scatter_modal_key (U1/U2).
+            self._scatter_modal_key(ev)
             return
         if getattr(self, "_confirm_leave_modal", False):
             if ev.key == pygame.K_ESCAPE:

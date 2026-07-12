@@ -146,6 +146,20 @@ TINT_MIX_CANDIDATES = (0.0, 0.15, 0.30, 0.45, 0.55)
 # l'oggetto col fondo senza comprometterne la leggibilita'. Vetro/cristallo
 # mantiene il range storico (180-215); line_art resta opaco.
 ALPHA_RANGE = {"easy": (255, 255), "medium": (244, 252), "hard": (232, 246)}
+# ── v4 ondata 2: best-of-M render-in-the-loop ────────────────────────────────
+# Con render_ctx attivo, per ogni tentativo si valutano fino a N celle
+# candidate e vince quella col pop_score (scatter_metrics, composito reale)
+# piu' basso. Cap di accettazione per difficolta', rilassato con attempts_frac
+# per non impedire il completamento su BG difficili.
+RENDER_CANDIDATES = {"easy": 2, "medium": 4, "hard": 5}
+RENDER_POP_MAX = {"easy": 50.0, "medium": 42.0, "hard": 38.0}
+RENDER_POP_RELAX_GAIN = 0.8
+# Heartbeat di progress_cb anche senza nuovi piazzati (tentativi a vuoto).
+PROGRESS_EVERY_ATTEMPTS = 200
+
+
+class ScatterCancelled(Exception):
+    """Piazzamento annullato dall'utente (cancel_event settato)."""
 
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -2089,6 +2103,9 @@ def place_objects(
     allowed_layers: Optional[list[str]] = None,
     edge_margin_px: int = 24,
     forbidden_mask: Optional[np.ndarray] = None,
+    render_ctx: Optional[dict] = None,
+    progress_cb=None,
+    cancel_event=None,
 ) -> list[PlacedObject]:
     """Pipeline completa di sampling.
 
@@ -2100,6 +2117,14 @@ def place_objects(
       edge_margin_px: margine di sicurezza dai bordi BG (in px).
       forbidden_mask: bool (cell_h, cell_w), celle vietate object-invariant
                       (volti + zone dipinte + person). None = nessun veto extra.
+      render_ctx: dict opzionale {"bg_surface", "game_path", "repo_root"} (+
+                  "bg_rgb"/"icon_cache" riempiti lazy). Se presente attiva il
+                  best-of-M render-in-the-loop (v4 ondata 2): richiede pygame
+                  con display inizializzato. None = percorso pygame-free.
+      progress_cb: callable(placed_finora, count) opzionale, best-effort
+                   (eccezioni ignorate). Chiamata a ogni commit + heartbeat.
+      cancel_event: threading.Event opzionale: se settato, il piazzamento
+                    solleva ScatterCancelled al tentativo successivo.
     """
     if seed is not None:
         random.seed(seed)
@@ -2288,6 +2313,12 @@ def place_objects(
                 continue
             # Bboxes da passare: existing globali + bbox dei layer gia' piazzati
             sub_existing = list(cross_layer_bboxes)
+            # Progress globale: offset = piazzati nei layer precedenti
+            sub_cb = None
+            if progress_cb is not None:
+                _off = len(all_placed)
+                sub_cb = (lambda done, _tot, off=_off:
+                          progress_cb(off + done, count))
             layer_placed = place_objects(
                 bg, catalog_analyses, catalog_entries,
                 count=lcount, difficulty=difficulty,
@@ -2299,6 +2330,9 @@ def place_objects(
                 allowed_layers=[lid],
                 edge_margin_px=edge_margin_px,
                 forbidden_mask=forbidden_mask,
+                render_ctx=render_ctx,
+                progress_cb=sub_cb,
+                cancel_event=cancel_event,
             )
             all_placed.extend(layer_placed)
             # Accumula bbox di questo layer per i sub-pass successivi
@@ -2404,7 +2438,36 @@ def place_objects(
     dominant_rgb_cache: dict[str, list[tuple[int, int, int]]] = {}
     total_attempts = 0
     reject_reasons = {"score_neg": 0, "overlap": 0, "too_big": 0,
-                      "color_deltaE": 0, "vis_band": 0}
+                      "color_deltaE": 0, "vis_band": 0, "render_pop": 0}
+
+    def _render_pop_for(cand: dict) -> Optional[float]:
+        """pop_score (scatter_metrics) del candidato compositato sul BG reale.
+
+        Attivo solo con render_ctx. bg_rgb e icon_cache sono creati lazy e
+        riusati nel ctx. None = misura non disponibile (icona mancante, patch
+        degenere, errore): il chiamante degrada al comportamento legacy.
+        """
+        if render_ctx is None:
+            return None
+        try:
+            from editor.tools import scatter_metrics as _sm
+            bg_rgb = render_ctx.get("bg_rgb")
+            if bg_rgb is None:
+                import pygame
+                bg_rgb = pygame.surfarray.array3d(
+                    render_ctx["bg_surface"]).swapaxes(0, 1)
+                render_ctx["bg_rgb"] = bg_rgb
+            icon_cache = render_ctx.setdefault("icon_cache", {})
+            obj = cand["obj"]
+            m = _sm.measure_placement(
+                render_ctx["bg_surface"], bg_rgb, obj,
+                catalog_entries[obj.catalog_id],
+                render_ctx["game_path"], render_ctx["repo_root"],
+                icon_cache, with_saliency=False)
+            return None if m is None else float(m.pop_score)
+        except Exception as e:
+            log.debug(f"[SCATTER] render pop non disponibile: {e}")
+            return None
 
     # HARD MASK occupancy: soglia sotto la quale una cella e' considerata gia'
     # presa. Dipende solo da count: loop-invariante (v3.1: spostata fuori dal
@@ -2428,7 +2491,15 @@ def place_objects(
         return b
 
     while len(placed) < count and total_attempts < max_total_attempts:
+        if cancel_event is not None and cancel_event.is_set():
+            raise ScatterCancelled()
         total_attempts += 1
+        if (progress_cb is not None
+                and total_attempts % PROGRESS_EVERY_ATTEMPTS == 0):
+            try:
+                progress_cb(len(placed), count)
+            except Exception:
+                pass
 
         # ── ZONA corrente PRIMA della scelta oggetto (v3.1) ───────────────
         zone_idx = zone_order[len(placed) % len(zone_order)]
@@ -2561,349 +2632,429 @@ def place_objects(
         k_top = min(k_top_base, len(flat))
         top_idxs = np.argpartition(flat, -k_top)[-k_top:]
         top_scores = flat[top_idxs]
+        # Il top-K puo' contenere celle VETATE quando le valide sono meno di K
+        # (argpartition prende comunque K entry): vanno tolte PRIMA del
+        # softmax, altrimenti exp() le manda a probabilita' zero e la scelta
+        # senza replacement (best-of-M) esplode con "fewer non-zero entries
+        # in p than size".
+        _valid = top_scores > SCORE_VETO_THRESHOLD
+        top_idxs = top_idxs[_valid]
+        top_scores = top_scores[_valid]
+        if top_idxs.size == 0:
+            reject_reasons["score_neg"] += 1
+            continue
         s_norm = (top_scores - top_scores.max()) * 1.5  # T leggermente piu' alta (meno greedy)
         probs = np.exp(s_norm)
         probs = probs / probs.sum()
-        cell_idx = int(np.random.choice(top_idxs, p=probs))
-        cy, cx = divmod(cell_idx, bg.cell_w)
+        # ── CANDIDATE CELLE (v4 ondata 2): 1 legacy, best-of-M con render_ctx ─
+        if render_ctx is not None:
+            n_cand = min(RENDER_CANDIDATES.get(difficulty, 4),
+                         int(top_idxs.size), int(np.count_nonzero(probs)))
+            n_cand = max(1, n_cand)
+            cand_cells = [int(c) for c in np.random.choice(
+                top_idxs, size=n_cand, replace=False, p=probs)]
+        else:
+            cand_cells = [int(np.random.choice(top_idxs, p=probs))]
 
-        # LOCAL REFINEMENT: cerca il miglior punto in 3x3 celle attorno
-        # (sub-cell precision tramite multi-sample + best-pick)
-        best_local_x = (cx + 0.5) * cell_px
-        best_local_y = (cy + 0.5) * cell_px
-        best_local_score = float(score[cy, cx])
-        for _ in range(6):  # 6 sample random nel quadrante 3x3 centrato
-            sx_off = random.uniform(-cell_px, cell_px)
-            sy_off = random.uniform(-cell_px, cell_px)
-            try_x = (cx + 0.5) * cell_px + sx_off
-            try_y = (cy + 0.5) * cell_px + sy_off
-            # Mappa il punto in cella della griglia
-            tcy = int(try_y / cell_px)
-            tcx = int(try_x / cell_px)
-            if 0 <= tcy < bg.cell_h and 0 <= tcx < bg.cell_w:
-                ts = float(score[tcy, tcx])
-                if ts > best_local_score:
-                    best_local_score = ts
-                    best_local_x = try_x
-                    best_local_y = try_y
-        center_x = best_local_x + random.uniform(-cell_px / 6, cell_px / 6)
-        center_y = best_local_y + random.uniform(-cell_px / 6, cell_px / 6)
-        # Refresh cy,cx for downstream usage (orientation, semantic, etc)
-        cy = int(min(bg.cell_h - 1, max(0, center_y / cell_px)))
-        cx = int(min(bg.cell_w - 1, max(0, center_x / cell_px)))
+        # Baseline del tentativo: ogni candidato riparte da questi valori (il
+        # region-fit puo' stirare ref_w/ref_h: non deve inquinare gli altri).
+        ref_w_a, ref_h_a, ref_radius_a, scale_a = ref_w, ref_h, ref_radius, scale
 
-        # ── SCALA PER PROFONDITA' (v3, tier>=1): lontano = piu' piccolo ────
-        # depth_grid e' NEARNESS 0..1 (1 = vicino alla camera). Applicata PRIMA
-        # del region-fit cosi' il prior fisico (clamp per size_class) include
-        # gia' la prospettiva. Deterministica (no RNG).
-        if bg.depth_grid is not None:
-            nearness = float(bg.depth_grid[cy, cx])
-            scale *= DEPTH_SCALE_MIN + (DEPTH_SCALE_MAX - DEPTH_SCALE_MIN) * nearness
+        def _try_place_at(cell_idx: int) -> Optional[dict]:
+            """Pipeline per-candidato: refine, region-fit, rotazione, tint,
+            verifiche. Ritorna il candidato pronto al commit o None (reject
+            contato in reject_reasons). Non muta placed/occupied: il commit
+            del solo vincitore lo fa il chiamante."""
+            ref_w = ref_w_a
+            ref_h = ref_h_a
+            ref_radius = ref_radius_a
+            scale = scale_a
             eff_w = ref_w * scale
             eff_h = ref_h * scale
             eff_size = max(eff_w, eff_h)
             eff_radius = ref_radius * scale
+            cy, cx = divmod(cell_idx, bg.cell_w)
 
-        # ── REGION-FIT: dimensiona/orienta l'oggetto sulla porzione di sfondo ─
-        # (Fase 1: scala dalla regione cromatica omogenea sotto la cella;
-        #  Fase 2: orientamento + lieve adattamento aspect; Fase 5: prior fisici.)
-        # Sostituisce il vecchio, debole, blend da solo contour: ora quasi sempre
-        # disponibile e con influenza forte pesata sulla confidence della regione.
-        contour_rot_deg = None
-        default_scale = scale  # scala "fisica" di partenza (prior per-categoria)
-        region_fitted = False
-        if dt != "circle":
-            win_px = min(eff_size * 3.0, 0.22 * min(bg.bg_w, bg.bg_h))
-            win_px = max(48.0, win_px)
-            region = _region_extent_for_cell(bg, center_x, center_y, win_px)
-            if region is not None and region[3] >= 0.30:
-                r_w, r_h, r_angle, r_conf = region
-                r_major = max(r_w, r_h); r_minor = max(1.0, min(r_w, r_h))
-                # target_fill per difficolta': hard nasconde meglio (oggetto piu'
-                # piccolo nella regione), easy lascia oggetti piu' grandi/leggibili.
-                tf = {"easy": 0.85, "medium": 0.70, "hard": 0.55}.get(difficulty, 0.70)
-                obj_long_ref = max(ref_w, ref_h)
-                obj_short_ref = max(1.0, min(ref_w, ref_h))
-                # Lato lungo obj ~ tf * lato lungo regione, ma il lato corto non
-                # deve sforare il lato corto della regione.
-                target_scale_long = (tf * r_major) / obj_long_ref
-                target_scale_short = r_minor / obj_short_ref
-                target_scale = min(target_scale_long, target_scale_short)
-                # Fase 5: prior fisici -> clamp relativo alla scala di default per
-                # categoria (impedisce taglie irrealistiche, es. stampante-portiera).
-                if obj_an.size_class == "small":
-                    rel_min, rel_max = 0.5, 3.0
-                elif obj_an.size_class == "big":
-                    rel_min, rel_max = 0.6, 1.8
-                else:
-                    rel_min, rel_max = 0.5, 2.2
-                target_scale = max(default_scale * rel_min,
-                                   min(default_scale * rel_max, target_scale))
-                # Blend forte pesato sulla confidence della regione.
-                blend = r_conf * 0.85
-                new_scale = default_scale * (1.0 - blend) + target_scale * blend
-                if new_scale > 1e-4 and abs(new_scale - scale) > 1e-3:
-                    scale = new_scale
-                    eff_w = ref_w * scale
-                    eff_h = ref_h * scale
-                    eff_size = max(eff_w, eff_h)
-                    eff_radius = ref_radius * scale
-                    region_fitted = True
-                # Fase 2: orienta verso il lato lungo della regione (se allungata)
-                # e adatta lievemente l'aspect (max +/-15%) alla forma della regione.
-                if r_major / r_minor > 1.25 and r_conf >= 0.45:
-                    obj_axis_deg = (math.degrees(float(obj_an.shape.get("axis_angle", 0.0)))
-                                    if obj_an.shape else 0.0)
-                    contour_rot_deg = (r_angle - obj_axis_deg + random.uniform(-4, 4)) % 360
-                    region_aspect = r_major / r_minor
-                    obj_aspect_now = max(eff_w, eff_h) / max(1.0, min(eff_w, eff_h))
-                    if region_aspect > obj_aspect_now:
-                        f = min(1.15, region_aspect / obj_aspect_now)
-                        # Modifica ref_w/ref_h (NON solo eff_*): sono i valori salvati
-                        # nella scena, lo stretch deve persistere oltre i check locali.
-                        if ref_w >= ref_h:
-                            ref_w *= f
-                        else:
-                            ref_h *= f
+            # LOCAL REFINEMENT: cerca il miglior punto in 3x3 celle attorno
+            # (sub-cell precision tramite multi-sample + best-pick)
+            best_local_x = (cx + 0.5) * cell_px
+            best_local_y = (cy + 0.5) * cell_px
+            best_local_score = float(score[cy, cx])
+            for _ in range(6):  # 6 sample random nel quadrante 3x3 centrato
+                sx_off = random.uniform(-cell_px, cell_px)
+                sy_off = random.uniform(-cell_px, cell_px)
+                try_x = (cx + 0.5) * cell_px + sx_off
+                try_y = (cy + 0.5) * cell_px + sy_off
+                # Mappa il punto in cella della griglia
+                tcy = int(try_y / cell_px)
+                tcx = int(try_x / cell_px)
+                if 0 <= tcy < bg.cell_h and 0 <= tcx < bg.cell_w:
+                    ts = float(score[tcy, tcx])
+                    if ts > best_local_score:
+                        best_local_score = ts
+                        best_local_x = try_x
+                        best_local_y = try_y
+            center_x = best_local_x + random.uniform(-cell_px / 6, cell_px / 6)
+            center_y = best_local_y + random.uniform(-cell_px / 6, cell_px / 6)
+            # Refresh cy,cx for downstream usage (orientation, semantic, etc)
+            cy = int(min(bg.cell_h - 1, max(0, center_y / cell_px)))
+            cx = int(min(bg.cell_w - 1, max(0, center_x / cell_px)))
+
+            # ── SCALA PER PROFONDITA' (v3, tier>=1): lontano = piu' piccolo ─
+            # depth_grid e' NEARNESS 0..1 (1 = vicino alla camera). Applicata
+            # PRIMA del region-fit cosi' il prior fisico (clamp per size_class)
+            # include gia' la prospettiva. Deterministica (no RNG).
+            if bg.depth_grid is not None:
+                nearness = float(bg.depth_grid[cy, cx])
+                scale *= DEPTH_SCALE_MIN + (DEPTH_SCALE_MAX - DEPTH_SCALE_MIN) * nearness
+                eff_w = ref_w * scale
+                eff_h = ref_h * scale
+                eff_size = max(eff_w, eff_h)
+                eff_radius = ref_radius * scale
+
+            # ── REGION-FIT: dimensiona/orienta l'oggetto sulla porzione di sfondo ─
+            # (Fase 1: scala dalla regione cromatica omogenea sotto la cella;
+            #  Fase 2: orientamento + lieve adattamento aspect; Fase 5: prior fisici.)
+            # Sostituisce il vecchio, debole, blend da solo contour: ora quasi sempre
+            # disponibile e con influenza forte pesata sulla confidence della regione.
+            contour_rot_deg = None
+            default_scale = scale  # scala "fisica" di partenza (prior per-categoria)
+            region_fitted = False
+            if dt != "circle":
+                win_px = min(eff_size * 3.0, 0.22 * min(bg.bg_w, bg.bg_h))
+                win_px = max(48.0, win_px)
+                region = _region_extent_for_cell(bg, center_x, center_y, win_px)
+                if region is not None and region[3] >= 0.30:
+                    r_w, r_h, r_angle, r_conf = region
+                    r_major = max(r_w, r_h); r_minor = max(1.0, min(r_w, r_h))
+                    # target_fill per difficolta': hard nasconde meglio (oggetto piu'
+                    # piccolo nella regione), easy lascia oggetti piu' grandi/leggibili.
+                    tf = {"easy": 0.85, "medium": 0.70, "hard": 0.55}.get(difficulty, 0.70)
+                    obj_long_ref = max(ref_w, ref_h)
+                    obj_short_ref = max(1.0, min(ref_w, ref_h))
+                    # Lato lungo obj ~ tf * lato lungo regione, ma il lato corto non
+                    # deve sforare il lato corto della regione.
+                    target_scale_long = (tf * r_major) / obj_long_ref
+                    target_scale_short = r_minor / obj_short_ref
+                    target_scale = min(target_scale_long, target_scale_short)
+                    # Fase 5: prior fisici -> clamp relativo alla scala di default per
+                    # categoria (impedisce taglie irrealistiche, es. stampante-portiera).
+                    if obj_an.size_class == "small":
+                        rel_min, rel_max = 0.5, 3.0
+                    elif obj_an.size_class == "big":
+                        rel_min, rel_max = 0.6, 1.8
+                    else:
+                        rel_min, rel_max = 0.5, 2.2
+                    target_scale = max(default_scale * rel_min,
+                                       min(default_scale * rel_max, target_scale))
+                    # Blend forte pesato sulla confidence della regione.
+                    blend = r_conf * 0.85
+                    new_scale = default_scale * (1.0 - blend) + target_scale * blend
+                    if new_scale > 1e-4 and abs(new_scale - scale) > 1e-3:
+                        scale = new_scale
                         eff_w = ref_w * scale
                         eff_h = ref_h * scale
                         eff_size = max(eff_w, eff_h)
-                if region_fitted:
-                    log.debug(f"[SCATTER] region-fit {cid}: conf={r_conf:.2f} "
-                              f"region=({r_w:.0f}x{r_h:.0f}) scale={scale:.3f}")
-
-        # ── TROMPE-L'OEIL (fallback orientamento): se la regione non ha orientato
-        # e c'e' un contorno BG con forma (Hu) simile, usa il suo angolo. La scala
-        # e' gia' gestita dal region-fit, qui si tocca solo la rotazione.
-        if (contour_rot_deg is None
-                and obj_an.shape is not None
-                and obj_an.shape.get("hu") is not None
-                and bg.contours
-                and weights.get("w_shape_match", 0.0) > 0.0):
-            aspect_real = obj_an.shape.get("aspect_real")
-            matched_c, c_score = _best_contour_for_cell(
-                bg, obj_an.shape["hu"], center_x, center_y,
-                obj_aspect_real=aspect_real,
-            )
-            if matched_c is not None and c_score > 0.50:
-                obj_axis_deg = math.degrees(float(obj_an.shape.get("axis_angle", 0.0)))
-                contour_rot_deg = (matched_c["angle_deg"] - obj_axis_deg
-                                   + random.uniform(-4, 4)) % 360
-                # Se il region-fit NON ha agito, consenti un blend di scala dal
-                # contour (come prima) per non perdere quel comportamento utile.
-                if not region_fitted:
-                    obj_long_ref = max(ref_w, ref_h)
-                    c_long = max(matched_c["w"], matched_c["h"])
-                    if obj_long_ref > 0 and c_long > 0:
-                        target_scale = c_long / obj_long_ref
-                        blend = min(1.0, (c_score - 0.50) / 0.50) * 0.5
-                        new_scale = scale * (1.0 - blend) + target_scale * blend
-                        new_scale = max(scale * 0.60, min(scale * 1.50, new_scale))
-                        if abs(new_scale - scale) > 1e-3:
-                            scale = new_scale
+                        eff_radius = ref_radius * scale
+                        region_fitted = True
+                    # Fase 2: orienta verso il lato lungo della regione (se allungata)
+                    # e adatta lievemente l'aspect (max +/-15%) alla forma della regione.
+                    if r_major / r_minor > 1.25 and r_conf >= 0.45:
+                        obj_axis_deg = (math.degrees(float(obj_an.shape.get("axis_angle", 0.0)))
+                                        if obj_an.shape else 0.0)
+                        contour_rot_deg = (r_angle - obj_axis_deg + random.uniform(-4, 4)) % 360
+                        region_aspect = r_major / r_minor
+                        obj_aspect_now = max(eff_w, eff_h) / max(1.0, min(eff_w, eff_h))
+                        if region_aspect > obj_aspect_now:
+                            f = min(1.15, region_aspect / obj_aspect_now)
+                            # Modifica ref_w/ref_h (NON solo eff_*): sono i valori salvati
+                            # nella scena, lo stretch deve persistere oltre i check locali.
+                            if ref_w >= ref_h:
+                                ref_w *= f
+                            else:
+                                ref_h *= f
                             eff_w = ref_w * scale
                             eff_h = ref_h * scale
                             eff_size = max(eff_w, eff_h)
-                            eff_radius = ref_radius * scale
+                    if region_fitted:
+                        log.debug(f"[SCATTER] region-fit {cid}: conf={r_conf:.2f} "
+                                  f"region=({r_w:.0f}x{r_h:.0f}) scale={scale:.3f}")
 
-        # ── ROTAZIONE prima del clipping (il bbox ruotato e' piu' grande!) ──
-        # Priorita': CONTOUR-MATCH (se forte) -> SHAPE-AWARE SNAP
-        #         -> normal_orient (depth-based) -> grad_orient (edge-based)
-        rot_deg = contour_rot_deg
-        # SHAPE-AWARE: se oggetto allungato (aspect_real basso) E BG ha una linea
-        # strutturale locale, allinea l'asse principale dell'oggetto con quella linea.
-        if (obj_an.shape is not None
-                and bg.structural_orient is not None
-                and float(obj_an.shape.get("aspect_real", 1.0)) < 0.65):
-            so_local = float(bg.structural_orient[cy, cx])
-            if not math.isnan(so_local):
-                obj_axis = float(obj_an.shape.get("axis_angle", 0.0))  # rad
-                # Rotazione richiesta per allineare obj_axis a so_local (entrambi -pi/2..pi/2)
-                delta_rad = so_local - obj_axis
-                # Normalize to [-pi/2, pi/2]
-                delta_rad = ((delta_rad + math.pi / 2) % math.pi) - math.pi / 2
-                rot_deg = (math.degrees(delta_rad) + random.uniform(-6, 6)) % 360
+            # ── TROMPE-L'OEIL (fallback orientamento): se la regione non ha orientato
+            # e c'e' un contorno BG con forma (Hu) simile, usa il suo angolo. La scala
+            # e' gia' gestita dal region-fit, qui si tocca solo la rotazione.
+            if (contour_rot_deg is None
+                    and obj_an.shape is not None
+                    and obj_an.shape.get("hu") is not None
+                    and bg.contours
+                    and weights.get("w_shape_match", 0.0) > 0.0):
+                aspect_real = obj_an.shape.get("aspect_real")
+                matched_c, c_score = _best_contour_for_cell(
+                    bg, obj_an.shape["hu"], center_x, center_y,
+                    obj_aspect_real=aspect_real,
+                )
+                if matched_c is not None and c_score > 0.50:
+                    obj_axis_deg = math.degrees(float(obj_an.shape.get("axis_angle", 0.0)))
+                    contour_rot_deg = (matched_c["angle_deg"] - obj_axis_deg
+                                       + random.uniform(-4, 4)) % 360
+                    # Se il region-fit NON ha agito, consenti un blend di scala dal
+                    # contour (come prima) per non perdere quel comportamento utile.
+                    if not region_fitted:
+                        obj_long_ref = max(ref_w, ref_h)
+                        c_long = max(matched_c["w"], matched_c["h"])
+                        if obj_long_ref > 0 and c_long > 0:
+                            target_scale = c_long / obj_long_ref
+                            blend = min(1.0, (c_score - 0.50) / 0.50) * 0.5
+                            new_scale = scale * (1.0 - blend) + target_scale * blend
+                            new_scale = max(scale * 0.60, min(scale * 1.50, new_scale))
+                            if abs(new_scale - scale) > 1e-3:
+                                scale = new_scale
+                                eff_w = ref_w * scale
+                                eff_h = ref_h * scale
+                                eff_size = max(eff_w, eff_h)
+                                eff_radius = ref_radius * scale
 
-        if rot_deg is None:
-            if bg.normal_orient is not None and abs(float(bg.normal_orient[cy, cx])) > 0.05:
-                orient_local = float(bg.normal_orient[cy, cx])
-                rot_deg = (math.degrees(orient_local) + 90 + random.uniform(-10, 10)) % 360
-            else:
-                grad_local = float(bg.grad_orient[cy, cx])
-                if abs(grad_local) > 0.05:
-                    rot_deg = (math.degrees(grad_local) + random.uniform(-15, 15)) % 360
+            # ── ROTAZIONE prima del clipping (il bbox ruotato e' piu' grande!) ──
+            # Priorita': CONTOUR-MATCH (se forte) -> SHAPE-AWARE SNAP
+            #         -> normal_orient (depth-based) -> grad_orient (edge-based)
+            rot_deg = contour_rot_deg
+            # SHAPE-AWARE: se oggetto allungato (aspect_real basso) E BG ha una linea
+            # strutturale locale, allinea l'asse principale dell'oggetto con quella linea.
+            if (obj_an.shape is not None
+                    and bg.structural_orient is not None
+                    and float(obj_an.shape.get("aspect_real", 1.0)) < 0.65):
+                so_local = float(bg.structural_orient[cy, cx])
+                if not math.isnan(so_local):
+                    obj_axis = float(obj_an.shape.get("axis_angle", 0.0))  # rad
+                    # Rotazione richiesta per allineare obj_axis a so_local (entrambi -pi/2..pi/2)
+                    delta_rad = so_local - obj_axis
+                    # Normalize to [-pi/2, pi/2]
+                    delta_rad = ((delta_rad + math.pi / 2) % math.pi) - math.pi / 2
+                    rot_deg = (math.degrees(delta_rad) + random.uniform(-6, 6)) % 360
+
+            if rot_deg is None:
+                if bg.normal_orient is not None and abs(float(bg.normal_orient[cy, cx])) > 0.05:
+                    orient_local = float(bg.normal_orient[cy, cx])
+                    rot_deg = (math.degrees(orient_local) + 90 + random.uniform(-10, 10)) % 360
                 else:
-                    rot_deg = random.uniform(0, 360) if random.random() < 0.3 else 0
-                if abs(grad_local) < 0.05 and random.random() < 0.5:
-                    rot_deg = random.choice([0, 90, 180, 270])
-
-        # Flip H casuale 30%, flip V mai
-        flip_x = random.random() < 0.30
-        flip_y = False
-
-        # ── BBOX ROTATION-AWARE: il bounding box del rect ruotato e' piu' grande ──
-        # Per CIRCLE: la rotazione non cambia il bbox (cerchio).
-        # Per RECT: |w·cos(θ)| + |h·sin(θ)|, |w·sin(θ)| + |h·cos(θ)|.
-        rot_rad = math.radians(rot_deg)
-        cos_r = abs(math.cos(rot_rad))
-        sin_r = abs(math.sin(rot_rad))
-
-        if dt == "circle":
-            # Clamp del centro per non far uscire il cerchio
-            center_x = max(eff_radius + edge_margin_px,
-                           min(bg.bg_w - eff_radius - edge_margin_px, center_x))
-            center_y = max(eff_radius + edge_margin_px,
-                           min(bg.bg_h - eff_radius - edge_margin_px, center_y))
-            x_min = center_x - eff_radius
-            y_min = center_y - eff_radius
-            x_max = center_x + eff_radius
-            y_max = center_y + eff_radius
-            obj_x, obj_y = center_x, center_y
-            # Per overlap check usa bbox circle (no rotation effect)
-        else:
-            # Rect: bbox rotato
-            rotated_w = eff_w * cos_r + eff_h * sin_r
-            rotated_h = eff_w * sin_r + eff_h * cos_r
-            # center clamp (consideriamo l'oggetto centrato in center_x, center_y)
-            half_rw = rotated_w / 2
-            half_rh = rotated_h / 2
-            center_x = max(half_rw + edge_margin_px,
-                           min(bg.bg_w - half_rw - edge_margin_px, center_x))
-            center_y = max(half_rh + edge_margin_px,
-                           min(bg.bg_h - half_rh - edge_margin_px, center_y))
-            # x_min/y_min per rect e' top-left dell'oggetto NON ruotato (e' come lo salviamo nella scena)
-            x_min = center_x - eff_w / 2
-            y_min = center_y - eff_h / 2
-            x_max = center_x + eff_w / 2
-            y_max = center_y + eff_h / 2
-            obj_x, obj_y = x_min, y_min  # rect stores top-left
-            # Bbox per overlap check: usa quello rotato (piu' largo)
-            x_min_check = center_x - half_rw
-            y_min_check = center_y - half_rh
-            x_max_check = center_x + half_rw
-            y_max_check = center_y + half_rh
-
-        # Sanita': se l'oggetto (anche ruotato) e' piu' grande del BG, skip
-        bbox_w_check = (eff_radius * 2) if dt == "circle" else (eff_w * cos_r + eff_h * sin_r)
-        bbox_h_check = (eff_radius * 2) if dt == "circle" else (eff_w * sin_r + eff_h * cos_r)
-        if bbox_w_check >= bg.bg_w - 2 * edge_margin_px or bbox_h_check >= bg.bg_h - 2 * edge_margin_px:
-            reject_reasons["too_big"] += 1
-            continue
-
-        # Overlap check (usa bbox rotato per rect, margine adaptive per density)
-        if dt == "circle":
-            if _overlaps_any(x_min, y_min, x_max, y_max, placed, existing_bboxes,
-                             eff_size, overlap_margin_factor=overlap_margin_factor):
-                reject_reasons["overlap"] += 1
-                continue
-        else:
-            if _overlaps_any(x_min_check, y_min_check, x_max_check, y_max_check,
-                             placed, existing_bboxes, eff_size,
-                             overlap_margin_factor=overlap_margin_factor):
-                reject_reasons["overlap"] += 1
-                continue
-
-        # Alpha: adattivo per difficolta' (v4: leggera trasparenza = blending
-        # extra col fondo); vetro/cristallo mantiene il range storico piu'
-        # trasparente; line_art resta opaco (il tratto B/N non deve sbiadire).
-        alpha = 255
-        tags = entry.get("tags", [])
-        if "vetro" in tags or "cristallo" in tags or "bottiglia" in tags:
-            alpha = random.randint(180, 215)
-        elif style != "line_art":
-            a_lo, a_hi = ALPHA_RANGE.get(difficulty, (255, 255))
-            if a_hi < 255:
-                alpha = random.randint(a_lo, a_hi)
-
-        # Tint di CAMOUFLAGE (v3, Lab): avvicina il colore dell'oggetto a quello
-        # REALE dello sfondo coperto dal footprint. v4: il mix e' OTTIMIZZATO
-        # sui colori dominanti dell'oggetto (cap TINT_MIX_MAX per difficolta'),
-        # clamp su L e guard sulle zone grigie dentro _lab_harmonize_tint.
-        # Applicato ANCHE agli oggetti translucidi (vetro/cristallo): si
-        # mimetizzano meglio adottando il colore del fondo. Disabilitato per
-        # line_art: lo stile e' B/N, il colore del BG e' rumore.
-        color_filter = (255, 255, 255)
-        dom_rgb: list[tuple[int, int, int]] = []
-        if style != "line_art":
-            cached_dom = dominant_rgb_cache.get(cid)
-            if cached_dom is None:
-                cached_dom = _obj_dominant_rgb(obj_an)
-                dominant_rgb_cache[cid] = cached_dom
-            dom_rgb = cached_dom
-            tint = _lab_harmonize_tint(bg, x_min, y_min, x_max, y_max, difficulty,
-                                       obj_rgbs=dom_rgb or None)
-            if tint is not None:
-                color_filter = tint
-            elif obj_an.palette_ext or obj_an.palette:
-                # Fallback HSV storico (lab_full/cv2 assenti): mix dal delta hue.
-                loc = _sample_footprint_hsv(bg, x_min, y_min, x_max, y_max)
-                if loc is not None:
-                    bg_h, bg_s, bg_v = loc
-                    if obj_an.palette_ext:
-                        _dom = obj_an.palette_ext[0]
-                        obj_h, obj_s, obj_v = _dom["h"], _dom["s"], _dom["v"]
+                    grad_local = float(bg.grad_orient[cy, cx])
+                    if abs(grad_local) > 0.05:
+                        rot_deg = (math.degrees(grad_local) + random.uniform(-15, 15)) % 360
                     else:
-                        obj_h, obj_s, obj_v = obj_an.palette[0]
-                    delta = _hue_distance(obj_h, bg_h)  # 0..0.5
-                    mix = min(0.35, 0.12 + delta * 0.9)
-                    # Su zone quasi grigie l'hue e' rumore: no colore falso.
-                    tint_s = bg_s if bg_s > 0.12 else min(obj_s * 0.4, bg_s)
-                    color_filter = _hsv_to_tint_rgb(bg_h, min(1.0, tint_s),
-                                                    max(0.30, bg_v), mix=mix)
+                        rot_deg = random.uniform(0, 360) if random.random() < 0.3 else 0
+                    if abs(grad_local) < 0.05 and random.random() < 0.5:
+                        rot_deg = random.choice([0, 90, 180, 270])
 
-        # ── VERIFICA FOOTPRINT in Lab (Delta-E 76) POST-TINT (v3.2) ────────
-        # La cella 48px e' una media: puo' dire "marrone" su un patch a
-        # scacchi. Qui controlliamo i PIXEL REALI sotto il footprint contro il
-        # colore EFFETTIVO dell'oggetto (dominanti moltiplicati per il
-        # color_filter, come li rendera' l'engine): e' il look finale che deve
-        # fondersi, non la palette grezza. Cap rilassato con attempts_frac.
-        # Skip per line_art. RNG del tentativo gia' consumato: il reject non
-        # altera la sequenza del seed. dom_rgb gia' risolto dal blocco tint.
-        if style != "line_art":
-            if dom_rgb:
-                if tuple(color_filter) != (255, 255, 255):
-                    cf_r, cf_g, cf_b = color_filter
-                    tinted = [(r * cf_r // 255, g * cf_g // 255, b * cf_b // 255)
-                              for (r, g, b) in dom_rgb]
-                else:
-                    tinted = dom_rgb
-                obj_labs = _rgb_list_to_lab(tinted)
-                de = _footprint_delta_e(bg, obj_labs, x_min, y_min, x_max, y_max)
-                if de is not None:
-                    attempts_frac = total_attempts / max(1, max_total_attempts)
-                    de_cap = (DELTAE_MAX.get(difficulty, DELTAE_MAX["medium"])
-                              * (1.0 + DELTAE_RELAX_GAIN * attempts_frac))
-                    if de > de_cap:
-                        reject_reasons["color_deltaE"] += 1
-                        continue
+            # Flip H casuale 30%, flip V mai
+            flip_x = random.random() < 0.30
+            flip_y = False
 
-        # Layer: round-robin dei layer ammessi (l'utente puo' escludere alcuni)
-        layer = layer_rot[len(placed) % len(layer_rot)]
+            # ── BBOX ROTATION-AWARE: il bounding box del rect ruotato e' piu' grande ──
+            # Per CIRCLE: la rotazione non cambia il bbox (cerchio).
+            # Per RECT: |w·cos(θ)| + |h·sin(θ)|, |w·sin(θ)| + |h·cos(θ)|.
+            rot_rad = math.radians(rot_deg)
+            cos_r = abs(math.cos(rot_rad))
+            sin_r = abs(math.sin(rot_rad))
 
-        # Visibility score (qualita' del nascondiglio) + ENFORCEMENT banda (v3).
-        vs = _visibility_score(bg, obj_an, cy, cx, float(anchor_below[cy, cx]), style)
-        # Banda [min, max] per difficolta': il max e' il floor di risolvibilita'
-        # (nessun oggetto introvabile), il min scarta i piazzamenti banali.
-        # Allargata linearmente con attempts_frac per garantire il completamento.
-        band_lo, band_hi = VISIBILITY_BAND.get(difficulty, VISIBILITY_BAND["medium"])
-        band_relax = VIS_BAND_RELAX_GAIN * (total_attempts / max(1, max_total_attempts))
-        if not (band_lo - band_relax <= vs <= band_hi + band_relax):
-            reject_reasons["vis_band"] += 1
+            x_min_check = y_min_check = x_max_check = y_max_check = 0.0
+            if dt == "circle":
+                # Clamp del centro per non far uscire il cerchio
+                center_x = max(eff_radius + edge_margin_px,
+                               min(bg.bg_w - eff_radius - edge_margin_px, center_x))
+                center_y = max(eff_radius + edge_margin_px,
+                               min(bg.bg_h - eff_radius - edge_margin_px, center_y))
+                x_min = center_x - eff_radius
+                y_min = center_y - eff_radius
+                x_max = center_x + eff_radius
+                y_max = center_y + eff_radius
+                obj_x, obj_y = center_x, center_y
+                # Per overlap check usa bbox circle (no rotation effect)
+            else:
+                # Rect: bbox rotato
+                rotated_w = eff_w * cos_r + eff_h * sin_r
+                rotated_h = eff_w * sin_r + eff_h * cos_r
+                # center clamp (consideriamo l'oggetto centrato in center_x, center_y)
+                half_rw = rotated_w / 2
+                half_rh = rotated_h / 2
+                center_x = max(half_rw + edge_margin_px,
+                               min(bg.bg_w - half_rw - edge_margin_px, center_x))
+                center_y = max(half_rh + edge_margin_px,
+                               min(bg.bg_h - half_rh - edge_margin_px, center_y))
+                # x_min/y_min per rect e' top-left dell'oggetto NON ruotato (e' come lo salviamo nella scena)
+                x_min = center_x - eff_w / 2
+                y_min = center_y - eff_h / 2
+                x_max = center_x + eff_w / 2
+                y_max = center_y + eff_h / 2
+                obj_x, obj_y = x_min, y_min  # rect stores top-left
+                # Bbox per overlap check: usa quello rotato (piu' largo)
+                x_min_check = center_x - half_rw
+                y_min_check = center_y - half_rh
+                x_max_check = center_x + half_rw
+                y_max_check = center_y + half_rh
+
+            # Sanita': se l'oggetto (anche ruotato) e' piu' grande del BG, skip
+            bbox_w_check = (eff_radius * 2) if dt == "circle" else (eff_w * cos_r + eff_h * sin_r)
+            bbox_h_check = (eff_radius * 2) if dt == "circle" else (eff_w * sin_r + eff_h * cos_r)
+            if bbox_w_check >= bg.bg_w - 2 * edge_margin_px or bbox_h_check >= bg.bg_h - 2 * edge_margin_px:
+                reject_reasons["too_big"] += 1
+                return None
+
+            # Overlap check (usa bbox rotato per rect, margine adaptive per density)
+            if dt == "circle":
+                if _overlaps_any(x_min, y_min, x_max, y_max, placed, existing_bboxes,
+                                 eff_size, overlap_margin_factor=overlap_margin_factor):
+                    reject_reasons["overlap"] += 1
+                    return None
+            else:
+                if _overlaps_any(x_min_check, y_min_check, x_max_check, y_max_check,
+                                 placed, existing_bboxes, eff_size,
+                                 overlap_margin_factor=overlap_margin_factor):
+                    reject_reasons["overlap"] += 1
+                    return None
+
+            # Alpha: adattivo per difficolta' (v4: leggera trasparenza = blending
+            # extra col fondo); vetro/cristallo mantiene il range storico piu'
+            # trasparente; line_art resta opaco (il tratto B/N non deve sbiadire).
+            alpha = 255
+            tags = entry.get("tags", [])
+            if "vetro" in tags or "cristallo" in tags or "bottiglia" in tags:
+                alpha = random.randint(180, 215)
+            elif style != "line_art":
+                a_lo, a_hi = ALPHA_RANGE.get(difficulty, (255, 255))
+                if a_hi < 255:
+                    alpha = random.randint(a_lo, a_hi)
+
+            # Tint di CAMOUFLAGE (v3, Lab): avvicina il colore dell'oggetto a quello
+            # REALE dello sfondo coperto dal footprint. v4: il mix e' OTTIMIZZATO
+            # sui colori dominanti dell'oggetto (cap TINT_MIX_MAX per difficolta'),
+            # clamp su L e guard sulle zone grigie dentro _lab_harmonize_tint.
+            # Applicato ANCHE agli oggetti translucidi (vetro/cristallo): si
+            # mimetizzano meglio adottando il colore del fondo. Disabilitato per
+            # line_art: lo stile e' B/N, il colore del BG e' rumore.
+            color_filter = (255, 255, 255)
+            dom_rgb: list[tuple[int, int, int]] = []
+            if style != "line_art":
+                cached_dom = dominant_rgb_cache.get(cid)
+                if cached_dom is None:
+                    cached_dom = _obj_dominant_rgb(obj_an)
+                    dominant_rgb_cache[cid] = cached_dom
+                dom_rgb = cached_dom
+                tint = _lab_harmonize_tint(bg, x_min, y_min, x_max, y_max, difficulty,
+                                           obj_rgbs=dom_rgb or None)
+                if tint is not None:
+                    color_filter = tint
+                elif obj_an.palette_ext or obj_an.palette:
+                    # Fallback HSV storico (lab_full/cv2 assenti): mix dal delta hue.
+                    loc = _sample_footprint_hsv(bg, x_min, y_min, x_max, y_max)
+                    if loc is not None:
+                        bg_h, bg_s, bg_v = loc
+                        if obj_an.palette_ext:
+                            _dom = obj_an.palette_ext[0]
+                            obj_h, obj_s, obj_v = _dom["h"], _dom["s"], _dom["v"]
+                        else:
+                            obj_h, obj_s, obj_v = obj_an.palette[0]
+                        delta = _hue_distance(obj_h, bg_h)  # 0..0.5
+                        mix = min(0.35, 0.12 + delta * 0.9)
+                        # Su zone quasi grigie l'hue e' rumore: no colore falso.
+                        tint_s = bg_s if bg_s > 0.12 else min(obj_s * 0.4, bg_s)
+                        color_filter = _hsv_to_tint_rgb(bg_h, min(1.0, tint_s),
+                                                        max(0.30, bg_v), mix=mix)
+
+            # ── VERIFICA FOOTPRINT in Lab (Delta-E 76) POST-TINT (v3.2) ────
+            # La cella 48px e' una media: puo' dire "marrone" su un patch a
+            # scacchi. Qui controlliamo i PIXEL REALI sotto il footprint contro il
+            # colore EFFETTIVO dell'oggetto (dominanti moltiplicati per il
+            # color_filter, come li rendera' l'engine): e' il look finale che deve
+            # fondersi, non la palette grezza. Cap rilassato con attempts_frac.
+            # Skip per line_art. dom_rgb gia' risolto dal blocco tint.
+            if style != "line_art":
+                if dom_rgb:
+                    if tuple(color_filter) != (255, 255, 255):
+                        cf_r, cf_g, cf_b = color_filter
+                        tinted = [(r * cf_r // 255, g * cf_g // 255, b * cf_b // 255)
+                                  for (r, g, b) in dom_rgb]
+                    else:
+                        tinted = dom_rgb
+                    obj_labs = _rgb_list_to_lab(tinted)
+                    de = _footprint_delta_e(bg, obj_labs, x_min, y_min, x_max, y_max)
+                    if de is not None:
+                        attempts_frac = total_attempts / max(1, max_total_attempts)
+                        de_cap = (DELTAE_MAX.get(difficulty, DELTAE_MAX["medium"])
+                                  * (1.0 + DELTAE_RELAX_GAIN * attempts_frac))
+                        if de > de_cap:
+                            reject_reasons["color_deltaE"] += 1
+                            return None
+
+            # Layer: round-robin dei layer ammessi (l'utente puo' escluderne)
+            layer = layer_rot[len(placed) % len(layer_rot)]
+
+            # Visibility score (qualita' del nascondiglio) + ENFORCEMENT banda (v3).
+            vs = _visibility_score(bg, obj_an, cy, cx, float(anchor_below[cy, cx]), style)
+            # Banda [min, max] per difficolta': il max e' il floor di risolvibilita'
+            # (nessun oggetto introvabile), il min scarta i piazzamenti banali.
+            # Allargata linearmente con attempts_frac per garantire il completamento.
+            band_lo, band_hi = VISIBILITY_BAND.get(difficulty, VISIBILITY_BAND["medium"])
+            band_relax = VIS_BAND_RELAX_GAIN * (total_attempts / max(1, max_total_attempts))
+            if not (band_lo - band_relax <= vs <= band_hi + band_relax):
+                reject_reasons["vis_band"] += 1
+                return None
+
+            return {
+                "obj": PlacedObject(
+                    catalog_id=cid,
+                    x=obj_x, y=obj_y,
+                    scale=scale, rotation=rot_deg,
+                    flip_x=flip_x, flip_y=flip_y,
+                    alpha=alpha, color_filter=color_filter,
+                    detection_type=dt,
+                    width=ref_w,    # dimensione REF nel JSON (scale a runtime)
+                    height=ref_h,
+                    radius=ref_radius,
+                    layer=layer,
+                    visibility_score=vs,
+                ),
+                "x_min": x_min, "y_min": y_min,
+                "x_max": x_max, "y_max": y_max,
+                "eff_size": eff_size,
+            }
+
+        # ── SELEZIONE: primo valido (legacy) o pop minimo (render_ctx) ────
+        best_cand: Optional[dict] = None
+        best_pop: Optional[float] = None
+        for _cell in cand_cells:
+            cand = _try_place_at(_cell)
+            if cand is None:
+                continue
+            if render_ctx is None:
+                best_cand = cand
+                break
+            pop = _render_pop_for(cand)
+            if pop is None:
+                # Misura non disponibile: usalo solo se non c'e' niente di
+                # misurato (preferenza ai candidati con pop reale).
+                if best_cand is None and best_pop is None:
+                    best_cand = cand
+                continue
+            if best_pop is None or pop < best_pop:
+                best_pop = pop
+                best_cand = cand
+        if best_cand is None:
             continue
+        # Cap di accettazione sul pop del vincitore (solo se misurato):
+        # rilassato con attempts_frac per garantire il completamento.
+        if best_pop is not None:
+            _af = total_attempts / max(1, max_total_attempts)
+            pop_cap = (RENDER_POP_MAX.get(difficulty, RENDER_POP_MAX["medium"])
+                       * (1.0 + RENDER_POP_RELAX_GAIN * _af))
+            if best_pop > pop_cap:
+                reject_reasons["render_pop"] += 1
+                continue
 
-        placed.append(PlacedObject(
-            catalog_id=cid,
-            x=obj_x, y=obj_y,
-            scale=scale, rotation=rot_deg,
-            flip_x=flip_x, flip_y=flip_y,
-            alpha=alpha, color_filter=color_filter,
-            detection_type=dt,
-            width=ref_w,        # Dimensione REF nel JSON (lo scale e' applicato a runtime)
-            height=ref_h,
-            radius=ref_radius,
-            layer=layer,
-            visibility_score=vs,
-        ))
+        # ── COMMIT del vincitore ──────────────────────────────────────────
+        placed.append(best_cand["obj"])
+        x_min = best_cand["x_min"]; y_min = best_cand["y_min"]
+        x_max = best_cand["x_max"]; y_max = best_cand["y_max"]
+        eff_size = best_cand["eff_size"]
 
         # Aggiorna occupied: HARD ZERO sul bbox + buffer adaptive
         cx_world = (x_min + x_max) / 2
@@ -2930,6 +3081,11 @@ def place_objects(
         _mark_occupied_gaussian(occupied, bg, cx_world, cy_world,
                                 eff_size=eff_size, strength=anti_cluster_strength,
                                 sigma_scale=gauss_sigma_scale)
+        if progress_cb is not None:
+            try:
+                progress_cb(len(placed), count)
+            except Exception:
+                pass
 
     log.info(f"[SCATTER] placed {len(placed)}/{count} after {total_attempts} attempts "
              f"(layer={allowed_layers[0] if len(allowed_layers)==1 else 'multi'}) "

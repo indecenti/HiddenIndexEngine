@@ -44,9 +44,9 @@ import pygame
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from editor.tools import scatter_engine as se
 from editor.tools import scatter_metrics as sm
-from editor.tools.scatter_engine import build_forbidden_mask, place_objects
+from editor.tools.scatter_engine import build_forbidden_mask
 from editor.tools.scatter_validate import (
-    annotate, filter_failed, summarize, validate_placements,
+    annotate, run_scatter_with_repair, summarize,
 )
 
 log = logging.getLogger("scatter_benchmark")
@@ -186,19 +186,22 @@ def run_one(scene_dir: Path, repo_root: Path, style: str, difficulty: str,
     entries = {c["id"]: c for c in catalog}
     forbidden = build_forbidden_mask(bg, load_manual_forbidden(scene_dir))
 
+    # Pipeline v4 ondata 2: best-of-M render-in-the-loop + repair dei fail.
+    render_ctx = {"bg_surface": surf, "game_path": game_path,
+                  "repo_root": repo_root}
     t0 = time.time()
-    placed = place_objects(
-        bg, analyses, entries, count=count, difficulty=difficulty,
+    kept, results, repair = run_scatter_with_repair(
+        bg, analyses, entries, bg_surface=surf, game_path=game_path,
+        repo_root=repo_root, count=count, difficulty=difficulty,
         style=style, seed=seed, forbidden_mask=forbidden,
         allowed_layers=["objects_low", "objects_mid", "objects_high"],
+        render_ctx=render_ctx,
     )
     t_place = (time.time() - t0) * 1000
-
-    t0 = time.time()
-    results = validate_placements(surf, placed, entries, game_path, repo_root)
-    t_validate = (time.time() - t0) * 1000
+    t_validate = 0.0  # incluso nel repair loop
     verdicts = summarize(results)
-    kept, dropped = filter_failed(placed, results, entries, game_path, repo_root)
+    verdicts["fail"] = verdicts.get("fail", 0) + repair["dropped_fail"]
+    dropped = repair["dropped_fail"]
 
     t0 = time.time()
     metrics = sm.measure_placements(surf, kept, entries, game_path, repo_root,
@@ -230,9 +233,10 @@ def run_one(scene_dir: Path, repo_root: Path, style: str, difficulty: str,
         "difficulty": difficulty,
         "seed": seed,
         "requested": count,
-        "placed": len(placed),
+        "placed": len(kept),        # consegnati (post repair): fill onesto
         "dropped_fail": dropped,
         "kept": len(kept),
+        "repair_rounds": repair["repair_rounds"],
         "verdicts": verdicts,
         "camo": sm.summarize_camouflage(metrics),
         "objects": objects,

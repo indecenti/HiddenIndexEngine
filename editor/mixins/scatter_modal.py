@@ -98,6 +98,17 @@ class ScatterModalMixin:
         self._scatter_debug_map = None          # ndarray (cell_h, cell_w) 0..1
         self._scatter_debug_surf = None         # surface cache per il render
         self._scatter_debug_surf_key = None
+        # ── Seed (U2): riproducibilita' delle run ─────────────────────────
+        self._scatter_seed_text = ""            # campo numerico (vuoto = random)
+        self._scatter_seed_locked = False       # lucchetto: GENERA riusa il seed
+        self._scatter_last_seed = None          # seed dell'ultima run
+        self._scatter_seed_editing = False      # focus tastiera sul campo
+        # ── Worker thread (U1): progress + cancel ─────────────────────────
+        self._scatter_progress = None           # (fase, done, total) dal worker
+        self._scatter_cancel_event = None       # threading.Event della run attiva
+        self._scatter_result = None             # payload worker, consumato dal main
+        self._scatter_report = None             # report repair ultima run
+        self._scatter_run_token = 0             # invalida risultati di run vecchie
 
     def _scatter_save_prefs(self):
         """Salva le preferenze scatter (tier + layer) nei settings dell'editor."""
@@ -193,27 +204,38 @@ class ScatterModalMixin:
             self._scatter_ghosts = []
             log.info(f"[SCATTER] auto-style '{old}' -> '{dominant_style}' ({dominant_n}/{total} = {ratio:.0%})")
 
+    def _scatter_cancel_run(self):
+        """Annulla la run in corso (worker thread): best-effort, idempotente."""
+        ev = self._scatter_cancel_event
+        if ev is not None:
+            ev.set()
+        self._scatter_run_token += 1   # i risultati della run vecchia si buttano
+        self._scatter_busy = False
+        self._scatter_progress = None
+
     def _scatter_close(self):
+        self._scatter_cancel_run()
         self._scatter_modal_open = False
         self._scatter_drop_open = None
         self._scatter_ghosts = []
-        self._scatter_busy = False
+        self._scatter_seed_editing = False
         self._scatter_brush_active = False
         self._scatter_forbidden_save()
 
     def _scatter_reset(self):
         """Reset stato su cambio scena."""
+        self._scatter_cancel_run()
         self._scatter_forbidden_save()
         self._scatter_modal_open = False
         self._scatter_drop_open = None
         self._scatter_ghosts = []
         self._scatter_bg_cache_key = None
         self._scatter_bg_analysis = None
-        self._scatter_busy = False
         self._scatter_tag_scroll = 0
         self._scatter_brush_active = False
         self._scatter_forbidden_cells = set()
         self._scatter_forbidden_dirty = False
+        self._scatter_seed_editing = False
 
     # ── zone vietate manuali: persistenza + brush ─────────────────────────
     def _scatter_forbidden_file(self):
@@ -573,42 +595,99 @@ class ScatterModalMixin:
             n += 1
         return n
 
-    # ── algoritmo: genera anteprima ───────────────────────────────────────
-    def _scatter_run(self):
-        """Esegue la pipeline: pre-process BG, pre-compute catalog, sampling."""
-        from editor.tools.scatter_engine import (
-            analyze_background, precompute_catalog, place_objects,
-            build_forbidden_mask,
-        )
+    # ── algoritmo: genera anteprima (worker thread, U1) ───────────────────
+    def _scatter_pick_seed(self, reroll: bool) -> int:
+        """Seed della run (U2). RIPESCA: sempre nuovo random. GENERA: campo
+        numerico se compilato, altrimenti ultimo seed se lucchetto attivo,
+        altrimenti random. Il seed usato finisce sempre nel campo."""
+        import random as _random
+        seed = None
+        if not reroll:
+            txt = self._scatter_seed_text.strip()
+            if txt:
+                try:
+                    seed = int(txt)
+                except ValueError:
+                    seed = None
+            if seed is None and self._scatter_seed_locked and self._scatter_last_seed:
+                seed = self._scatter_last_seed
+        if seed is None:
+            seed = _random.randint(1, 999999)
+        self._scatter_last_seed = seed
+        self._scatter_seed_text = str(seed)
+        return seed
 
+    def _scatter_run(self, reroll: bool = False):
+        """Avvia la pipeline in un worker thread: la UI resta reattiva, con
+        progress (fase + barra) e ANNULLA. Risultato consumato dal render
+        (_scatter_consume_result)."""
+        import threading
+
+        if self._scatter_busy:
+            return
         if not self.catalog:
             self._scatter_status_msg = "Catalogo vuoto"
             self._scatter_status_color = ERR_C
             return
-
         if self._scatter_filtered_count() == 0:
             self._scatter_status_msg = "Nessun oggetto disponibile con questi filtri"
             self._scatter_status_color = WARN_C
             return
 
+        seed = self._scatter_pick_seed(reroll)
         self._scatter_busy = True
-        # Forza un repaint mostrando lo stato busy prima dell'elaborazione
+        self._scatter_ghosts = []
+        self._scatter_result = None
+        self._scatter_progress = ("Preparazione", 0, int(self._scatter_count))
+        self._scatter_status_msg = f"Elaborazione (seed {seed})..."
+        self._scatter_status_color = ACCENT
+        self._scatter_cancel_event = threading.Event()
+        self._scatter_run_token += 1
+        token = self._scatter_run_token
+        cancel_ev = self._scatter_cancel_event
+
+        # Snapshot dei parametri e COPIA del BG sul main thread: il worker non
+        # tocca surface condivise col render (pygame non e' thread-safe).
+        params = {
+            "style": self._scatter_style,
+            "tag": self._scatter_tag,
+            "count": int(self._scatter_count),
+            "difficulty": self._scatter_difficulty,
+            "layers": [lid for lid, v in self._scatter_layers.items() if v]
+                      or list(self._scatter_layers.keys()),
+            "forbidden_cells": set(self._scatter_forbidden_cells),
+            "existing": self._scatter_existing_bboxes(),
+            "scene_key": str(self.scene_path),
+            "seed": seed,
+            "bg_copy": self.bg_surf.copy(),
+        }
+
+        t = threading.Thread(target=self._scatter_worker_main,
+                             args=(params, token, cancel_ev),
+                             daemon=True, name="ScatterRun")
+        t.start()
+
+    def _scatter_worker_main(self, params: dict, token: int, cancel_ev):
+        """Corpo del worker: NIENTE accessi a self.screen o repaint qui."""
+        from editor.tools.scatter_engine import (
+            ScatterCancelled, analyze_background, precompute_catalog,
+            build_forbidden_mask,
+        )
+        from editor.tools.scatter_validate import run_scatter_with_repair
+
+        def _phase(label, done=0, total=None):
+            if token == self._scatter_run_token:
+                self._scatter_progress = (label, done,
+                                          total or params["count"])
+
         try:
-            self._scatter_status_msg = "Analizzo il background..."
-            self._scatter_status_color = ACCENT
-            w, h = self.screen.get_size()
-            self._r_scatter_modal(w, h)
-            pygame.display.flip()
-        except Exception:
-            pass
-        try:
-            # Carica modello secondo la scelta tier (lazy/cached)
+            # Carica modello secondo la scelta tier (lazy/cached, lock interno)
             if self._scatter_model is None:
+                _phase("Carico modello IA")
                 self._scatter_load_model()
 
             # YuNet face detector (~0.3MB): tentativo silente una volta per
-            # sessione. Se fallisce, la detection degrada al fallback Haar
-            # (builtin opencv) senza bloccare nulla.
+            # sessione; fallback Haar senza bloccare nulla.
             if not getattr(self, "_scatter_yunet_tried", False):
                 self._scatter_yunet_tried = True
                 try:
@@ -620,107 +699,129 @@ class ScatterModalMixin:
                 except Exception as e:
                     log.debug(f"[SCATTER] download YuNet fallito: {e}")
 
-            scene_key = str(self.scene_path)
+            if cancel_ev.is_set():
+                raise ScatterCancelled()
+
             # Invalida cache BG anche se il tier attivo e' cambiato
             bg_cache_invalid = (
-                self._scatter_bg_cache_key != scene_key
+                self._scatter_bg_cache_key != params["scene_key"]
                 or self._scatter_bg_analysis is None
                 or (self._scatter_bg_analysis is not None
                     and self._scatter_bg_analysis.model_tier != self._scatter_model_tier_active)
             )
             if bg_cache_invalid:
-                self._scatter_bg_analysis = analyze_background(
-                    self.bg_surf, ia_model=self._scatter_model,
+                _phase("Analisi background")
+                bg_an = analyze_background(
+                    params["bg_copy"], ia_model=self._scatter_model,
                     base_path=self.base_path, use_cache=True,
                 )
-                self._scatter_bg_cache_key = scene_key
+                self._scatter_bg_analysis = bg_an
+                self._scatter_bg_cache_key = params["scene_key"]
+
+            if cancel_ev.is_set():
+                raise ScatterCancelled()
 
             # Se ULTRA, passa anche il clip_model per pre-compute embedding
             clip_for_catalog = None
             if self._scatter_model is not None and self._scatter_model.tier == 3:
                 clip_for_catalog = getattr(self._scatter_model, "clip", None)
 
-            # Cache key include la presenza CLIP (per non avere precompute parziale)
-            cache_key = (self._scatter_style, clip_for_catalog is not None)
+            cache_key = (params["style"], clip_for_catalog is not None)
             if cache_key not in self._scatter_catalog_cache:
-                self._scatter_status_msg = f"Pre-calcolo catalogo {self._scatter_style}..."
-                w, h = self.screen.get_size()
-                self._r_scatter_modal(w, h); pygame.display.flip()
+                _phase(f"Pre-calcolo catalogo {params['style']}")
                 analyses = precompute_catalog(
-                    self.catalog, self._scatter_style, self.base_path,
+                    self.catalog, params["style"], self.base_path,
                     clip_model=clip_for_catalog,
                 )
                 self._scatter_catalog_cache[cache_key] = analyses
-            # Mantieni compat con resto del codice
-            self._scatter_catalog_cache[self._scatter_style] = self._scatter_catalog_cache[cache_key]
-
-            analyses = self._scatter_catalog_cache[self._scatter_style]
+            self._scatter_catalog_cache[params["style"]] = \
+                self._scatter_catalog_cache[cache_key]
+            analyses = self._scatter_catalog_cache[params["style"]]
             if not analyses:
-                self._scatter_status_msg = f"Nessun oggetto per stile '{self._scatter_style}'"
-                self._scatter_status_color = ERR_C
-                return
+                raise RuntimeError(
+                    f"Nessun oggetto per stile '{params['style']}'")
 
-            entries = {c["id"]: c for c in self.catalog if c.get("style", "real") == self._scatter_style}
-            existing = self._scatter_existing_bboxes()
-
-            allowed = [lid for lid, v in self._scatter_layers.items() if v] or list(self._scatter_layers.keys())
-            # Maschera zone vietate: volti auto + celle dipinte a mano + person
+            entries = {c["id"]: c for c in self.catalog
+                       if c.get("style", "real") == params["style"]}
             forbidden = build_forbidden_mask(
-                self._scatter_bg_analysis, self._scatter_forbidden_cells)
-            placed = place_objects(
-                self._scatter_bg_analysis, analyses, entries,
-                count=int(self._scatter_count),
-                difficulty=self._scatter_difficulty,
-                style=self._scatter_style,
-                tag_filter=self._scatter_tag,
-                existing_bboxes=existing,
-                allowed_layers=allowed,
-                forbidden_mask=forbidden,
-            )
-            # ── VALIDAZIONE POST-RENDER (v3.2): analizza l'immagine composita
-            # e scarta gli oggetti che nell'immagine finale risultano in
-            # evidenza (verdict "fail"). Best-effort: se fallisce, tieni tutto.
-            n_dropped = 0
-            n_warn = 0
-            if placed:
-                try:
-                    self._scatter_status_msg = "Valido il camouflage sul render..."
-                    w, h = self.screen.get_size()
-                    self._r_scatter_modal(w, h); pygame.display.flip()
-                    from editor.tools.scatter_validate import (
-                        validate_placements, summarize, filter_failed,
-                    )
-                    results = validate_placements(
-                        self.bg_surf, placed, entries,
-                        self.game_path, self.base_path)
-                    stats = summarize(results)
-                    n_warn = stats["warn"]
-                    if stats["fail"] > 0:
-                        placed, n_dropped = filter_failed(
-                            placed, results, entries,
-                            self.game_path, self.base_path)
-                except Exception as e:
-                    log.warning(f"[SCATTER] validazione fallita ({e}), tengo tutto")
+                self._scatter_bg_analysis, params["forbidden_cells"])
 
-            self._scatter_ghosts = placed
-            if placed:
-                avg_vs = sum(p.visibility_score for p in placed) / len(placed)
-                msg = f"{len(placed)} oggetti pronti. Nascondiglio medio: {avg_vs:.2f}"
-                if n_dropped:
-                    msg += f" | {n_dropped} scartati (in evidenza)"
-                if n_warn:
-                    msg += f" | {n_warn} ben visibili"
-                self._scatter_status_msg = msg
-                self._scatter_status_color = OK_C
-            else:
-                self._scatter_status_msg = "Nessun oggetto piazzato (pool/spazio insufficiente)"
-                self._scatter_status_color = WARN_C
+            _phase("Piazzamento", 0)
+
+            def _cb(done, total):
+                _phase("Piazzamento", done, total)
+
+            # Best-of-M render-in-the-loop + repair dei fail (S2 + S6). Il
+            # render_ctx usa la COPIA del BG: nessuna surface condivisa.
+            render_ctx = {"bg_surface": params["bg_copy"],
+                          "game_path": self.game_path,
+                          "repo_root": self.base_path}
+            kept, results, report = run_scatter_with_repair(
+                self._scatter_bg_analysis, analyses, entries,
+                bg_surface=params["bg_copy"],
+                game_path=self.game_path, repo_root=self.base_path,
+                count=params["count"],
+                difficulty=params["difficulty"],
+                style=params["style"],
+                tag_filter=params["tag"],
+                existing_bboxes=params["existing"],
+                seed=params["seed"],
+                allowed_layers=params["layers"],
+                forbidden_mask=forbidden,
+                render_ctx=render_ctx,
+                progress_cb=_cb,
+                cancel_event=cancel_ev,
+            )
+            if token == self._scatter_run_token:
+                self._scatter_result = {"ghosts": kept, "report": report,
+                                        "seed": params["seed"],
+                                        "cancelled": False, "error": None}
+        except ScatterCancelled:
+            if token == self._scatter_run_token:
+                self._scatter_result = {"ghosts": [], "report": None,
+                                        "seed": params["seed"],
+                                        "cancelled": True, "error": None}
         except Exception as e:
-            log.exception("Scatter failed")
-            self._scatter_status_msg = f"Errore: {e}"
+            log.exception("Scatter worker failed")
+            if token == self._scatter_run_token:
+                self._scatter_result = {"ghosts": [], "report": None,
+                                        "seed": params["seed"],
+                                        "cancelled": False, "error": str(e)}
+
+    def _scatter_consume_result(self):
+        """Consuma il payload del worker (chiamata dal render, main thread)."""
+        res = self._scatter_result
+        if res is None:
+            return
+        self._scatter_result = None
+        self._scatter_busy = False
+        self._scatter_progress = None
+        self._scatter_report = res.get("report")
+        if res.get("cancelled"):
+            self._scatter_status_msg = "Elaborazione annullata"
+            self._scatter_status_color = WARN_C
+            return
+        if res.get("error"):
+            self._scatter_status_msg = f"Errore: {res['error']}"
             self._scatter_status_color = ERR_C
-        finally:
-            self._scatter_busy = False
+            return
+        placed = res.get("ghosts") or []
+        self._scatter_ghosts = placed
+        report = res.get("report") or {}
+        if placed:
+            avg_vs = sum(p.visibility_score for p in placed) / len(placed)
+            msg = (f"{len(placed)}/{report.get('requested', len(placed))} pronti"
+                   f" | seed {res.get('seed')}"
+                   f" | nascondiglio medio {avg_vs:.2f}")
+            if report.get("dropped_fail"):
+                msg += f" | {report['dropped_fail']} rimpiazzati (in evidenza)"
+            if report.get("warn"):
+                msg += f" | {report['warn']} ben visibili"
+            self._scatter_status_msg = msg
+            self._scatter_status_color = OK_C
+        else:
+            self._scatter_status_msg = "Nessun oggetto piazzato (pool/spazio insufficiente)"
+            self._scatter_status_color = WARN_C
 
     def _scatter_apply(self):
         """Aggiunge i ghost alla scena come oggetti reali."""
@@ -781,6 +882,9 @@ class ScatterModalMixin:
         if not self._scatter_modal_open:
             return
 
+        # Risultati del worker (U1): consumati sul main thread, ogni frame.
+        self._scatter_consume_result()
+
         # Brush mode: niente panel ne' overlay scuro, solo toolbar compatta
         # (il canvas resta visibile per dipingere le zone vietate).
         if self._scatter_brush_active:
@@ -792,8 +896,8 @@ class ScatterModalMixin:
         dim.fill((0, 0, 0, 170))
         self.screen.blit(dim, (0, 0))
 
-        # Panel piu' alto (riga checkbox layer + riga zone vietate)
-        pw, ph = 520, 760
+        # Panel piu' alto (riga checkbox layer + zone vietate + seed)
+        pw, ph = 520, 800
         px, py = (w - pw) // 2, (h - ph) // 2
         panel_r = pygame.Rect(px, py, pw, ph)
         self._scatter_panel_rect = panel_r
@@ -947,6 +1051,38 @@ class ScatterModalMixin:
         _draw_text(self.screen, hint, "xs", TXT_DIM, CTRL_X, y, CTRL_W)
         y += 22
 
+        # ── SEED (U2): riproducibilita' ────────────────────────────────
+        _draw_text(self.screen, "Seed", "sm", TXT_DIM, LBL_X, y + 8)
+        seed_box = pygame.Rect(CTRL_X, y + 2, 130, 26)
+        editing = self._scatter_seed_editing
+        _rect(self.screen, (50, 54, 64) if editing else (45, 48, 56),
+              seed_box, radius=4)
+        _rect(self.screen, ACCENT if editing else BORDER, seed_box, 1, radius=4)
+        seed_shown = self._scatter_seed_text or "(random)"
+        seed_col = TXT_HI if self._scatter_seed_text else TXT_DIM
+        stxt = _txt(seed_shown + ("_" if editing else ""), "sm", seed_col)
+        self.screen.blit(stxt, (seed_box.x + 8,
+                                seed_box.centery - stxt.get_height() // 2))
+        self._scatter_hitboxes["seed_box"] = seed_box
+        # Lucchetto: GENERA riusa lo stesso seed (per iterare i parametri a
+        # parita' di estrazione). RIPESCA forza comunque un seed nuovo.
+        lock_r = pygame.Rect(seed_box.right + 8, y + 2, 110, 26)
+        locked = self._scatter_seed_locked
+        hov_lk = _in_rect((mx, my), lock_r)
+        _rect(self.screen, (30, 50, 40) if locked else (BTN_HO if hov_lk else BTN),
+              lock_r, radius=4)
+        _rect(self.screen, OK_C if locked else BORDER, lock_r, 1, radius=4)
+        lk = _txt("SEED FISSO" if locked else "SEED LIBERO", "xs",
+                  TXT_HI if locked else TXT_DIM)
+        self.screen.blit(lk, (lock_r.centerx - lk.get_width() // 2,
+                              lock_r.centery - lk.get_height() // 2))
+        self._scatter_hitboxes["seed_lock"] = lock_r
+        if self._scatter_last_seed is not None:
+            _draw_text(self.screen, f"ultimo: {self._scatter_last_seed}", "xs",
+                       TXT_DIM, lock_r.right + 10, y + 8,
+                       CTRL_X + CTRL_W - lock_r.right - 12)
+        y += ROW_H
+
         # ── LAYER CHECKBOX ─────────────────────────────────────────────
         _draw_text(self.screen, "Distribuisci su layer", "sm", TXT_DIM, LBL_X, y + 8)
         # 3 checkbox: LOW / MID / HIGH
@@ -1036,25 +1172,53 @@ class ScatterModalMixin:
 
         # ─── BOTTONI AZIONE ──────────────────────────────────────────
         btn_h = 36
-        gen_disabled = filtered_n == 0
-        gen_r = pygame.Rect(px + 16, y, pw - 32, btn_h)
-        hov = _in_rect((mx, my), gen_r) and not gen_disabled
-        if gen_disabled:
-            bg_c, border_c, txt_c = (40, 40, 44), TXT_DIM, TXT_DIM
-        elif hov:
-            bg_c, border_c, txt_c = (40, 80, 110), ACCENT, TXT_HI
+        if self._scatter_busy:
+            # U1: barra di progresso (fase + done/total) + bottone ANNULLA.
+            prog = self._scatter_progress or ("Elaborazione", 0, 1)
+            phase_lbl, done, total = prog
+            bar_w = pw - 32 - 110 - 8
+            bar_r = pygame.Rect(px + 16, y, bar_w, btn_h)
+            _rect(self.screen, (25, 40, 55), bar_r, radius=5)
+            frac = max(0.0, min(1.0, done / max(1, total)))
+            if frac > 0:
+                fill_r = pygame.Rect(bar_r.x, bar_r.y,
+                                     max(6, int(bar_r.w * frac)), bar_r.h)
+                _rect(self.screen, (35, 90, 130), fill_r, radius=5)
+            _rect(self.screen, ACCENT, bar_r, 1, radius=5)
+            plbl = f"{phase_lbl}... {done}/{total}" if total > 1 else f"{phase_lbl}..."
+            ts = _txt(plbl, "sm", TXT_HI)
+            self.screen.blit(ts, (bar_r.centerx - ts.get_width() // 2,
+                                  bar_r.centery - ts.get_height() // 2))
+            # ANNULLA
+            cancel_r = pygame.Rect(bar_r.right + 8, y, 110, btn_h)
+            hov_c = _in_rect((mx, my), cancel_r)
+            _rect(self.screen, (70, 35, 35) if hov_c else (55, 28, 28),
+                  cancel_r, radius=5)
+            _rect(self.screen, ERR_C, cancel_r, 2 if hov_c else 1, radius=5)
+            ts = _txt("ANNULLA", "sm", TXT_HI)
+            self.screen.blit(ts, (cancel_r.centerx - ts.get_width() // 2,
+                                  cancel_r.centery - ts.get_height() // 2))
+            self._scatter_hitboxes["cancel_run"] = cancel_r
+            y += btn_h + 8
         else:
-            bg_c, border_c, txt_c = (30, 60, 85), ACCENT, TXT_HI
-        _rect(self.screen, bg_c, gen_r, radius=5)
-        _rect(self.screen, border_c, gen_r, 2 if hov else 1, radius=5)
-        label = "GENERA ANTEPRIMA" if not self._scatter_busy else "ELABORAZIONE IN CORSO..."
-        ts = _txt(label, "sm", txt_c)
-        self.screen.blit(ts, (gen_r.centerx - ts.get_width()//2, gen_r.centery - ts.get_height()//2))
-        if not gen_disabled:
-            self._scatter_hitboxes["generate"] = gen_r
-        y += btn_h + 8
+            gen_disabled = filtered_n == 0
+            gen_r = pygame.Rect(px + 16, y, pw - 32, btn_h)
+            hov = _in_rect((mx, my), gen_r) and not gen_disabled
+            if gen_disabled:
+                bg_c, border_c, txt_c = (40, 40, 44), TXT_DIM, TXT_DIM
+            elif hov:
+                bg_c, border_c, txt_c = (40, 80, 110), ACCENT, TXT_HI
+            else:
+                bg_c, border_c, txt_c = (30, 60, 85), ACCENT, TXT_HI
+            _rect(self.screen, bg_c, gen_r, radius=5)
+            _rect(self.screen, border_c, gen_r, 2 if hov else 1, radius=5)
+            ts = _txt("GENERA ANTEPRIMA", "sm", txt_c)
+            self.screen.blit(ts, (gen_r.centerx - ts.get_width()//2, gen_r.centery - ts.get_height()//2))
+            if not gen_disabled:
+                self._scatter_hitboxes["generate"] = gen_r
+            y += btn_h + 8
 
-        if ghost_n > 0:
+        if ghost_n > 0 and not self._scatter_busy:
             gap = 8
             half = (pw - 32 - gap) // 2
             rr_r = pygame.Rect(px + 16, y, half, btn_h)
@@ -1326,6 +1490,26 @@ class ScatterModalMixin:
 
         hb = self._scatter_hitboxes
 
+        # Campo seed: il focus si prende cliccandoci, si perde altrove (U2)
+        if _in_rect((mx, my), hb.get("seed_box", pygame.Rect(0, 0, 0, 0))):
+            self._scatter_seed_editing = True
+            return True
+        self._scatter_seed_editing = False
+        if _in_rect((mx, my), hb.get("seed_lock", pygame.Rect(0, 0, 0, 0))):
+            self._scatter_seed_locked = not self._scatter_seed_locked
+            self._scatter_status_msg = ("Seed fisso: GENERA riusa lo stesso seed"
+                                        if self._scatter_seed_locked
+                                        else "Seed libero: ogni GENERA e' random")
+            self._scatter_status_color = ACCENT
+            return True
+
+        # ANNULLA della run in corso (U1)
+        if _in_rect((mx, my), hb.get("cancel_run", pygame.Rect(0, 0, 0, 0))):
+            self._scatter_cancel_run()
+            self._scatter_status_msg = "Elaborazione annullata"
+            self._scatter_status_color = WARN_C
+            return True
+
         if _in_rect((mx, my), hb.get("close", pygame.Rect(0,0,0,0))):
             self._scatter_close(); return True
 
@@ -1404,7 +1588,7 @@ class ScatterModalMixin:
         if _in_rect((mx, my), hb.get("generate", pygame.Rect(0,0,0,0))):
             self._scatter_run(); return True
         if _in_rect((mx, my), hb.get("reroll", pygame.Rect(0,0,0,0))):
-            self._scatter_run(); return True
+            self._scatter_run(reroll=True); return True
         if _in_rect((mx, my), hb.get("apply", pygame.Rect(0,0,0,0))):
             self._scatter_apply(); return True
 
@@ -1412,6 +1596,37 @@ class ScatterModalMixin:
             return True
 
         self._scatter_close()
+        return True
+
+    def _scatter_modal_key(self, ev) -> bool:
+        """Tastiera nel modal scatter (chiamata da input_handlers): ESC con
+        priorita' brush -> campo seed -> run in corso -> chiudi; cifre e
+        backspace quando il campo seed ha il focus. Consuma sempre l'evento
+        finche' il modal e' aperto (comportamento storico)."""
+        if not self._scatter_modal_open:
+            return False
+        if ev.key == pygame.K_ESCAPE:
+            if self._scatter_brush_active:
+                self._scatter_brush_exit()
+            elif self._scatter_seed_editing:
+                self._scatter_seed_editing = False
+            elif self._scatter_busy:
+                self._scatter_cancel_run()
+                self._scatter_status_msg = "Elaborazione annullata"
+                self._scatter_status_color = WARN_C
+            else:
+                self._scatter_close()
+            return True
+        if self._scatter_seed_editing:
+            if ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                self._scatter_seed_editing = False
+            elif ev.key == pygame.K_BACKSPACE:
+                self._scatter_seed_text = self._scatter_seed_text[:-1]
+            elif ev.key == pygame.K_DELETE:
+                self._scatter_seed_text = ""
+            elif getattr(ev, "unicode", "").isdigit() \
+                    and len(self._scatter_seed_text) < 9:
+                self._scatter_seed_text += ev.unicode
         return True
 
     def _scatter_modal_wheel(self, mx, my, dy):

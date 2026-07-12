@@ -245,4 +245,30 @@ Criteri di successo (misurati con S0):
   Costo: place_ms +5-12%.
 - Suite: 130 pass / 0 fail (13 test nuovi: metrics, lab color).
 
-Prossima: ondata 2 (S2 best-of-M, S6 repair loop, U1 progress/cancel, U2 seed).
+### Ondata 2 — FATTA (2026-07-12)
+
+- S2: best-of-M render-in-the-loop in `place_objects` (`render_ctx` opzionale:
+  fino a 5 celle candidate per tentativo, vince il pop_score piu' basso sul
+  composito reale, cap RENDER_POP_MAX con relax; percorso pygame-free
+  invariato senza ctx). Fix: celle vetate filtrate dal top-K prima del
+  softmax (il best-of-M senza replacement esplodeva con poche celle valide).
+- S6: `run_scatter_with_repair` in scatter_validate: place -> validate ->
+  scarta fail -> RIPIAZZA i mancanti (max 2 giri), report onesto
+  delivered/requested. Usata da benchmark e modal.
+- U1: `_scatter_run` del modal in worker thread: barra progresso per fase
+  (modello/analisi BG/catalogo/piazzamento N su M) + bottone ANNULLA + ESC;
+  `place_objects` ha `progress_cb`/`cancel_event` (ScatterCancelled). Il
+  worker lavora su una COPIA del BG (nessuna surface condivisa col render).
+- U2: seed esposto nel modal: campo numerico editabile, lucchetto "seed
+  fisso" (GENERA riusa il seed per iterare i parametri), seed usato sempre
+  mostrato; RIPESCA forza un seed nuovo.
+- Risultati (stesse scene/seed, metro fisso) baseline -> ondata2:
+  medium pop 25.2 -> 18.9 (-25%), rim 15.2 -> 10.6 (-30%), ok% 69.1 -> 89.2,
+  fail% 5.3 -> 0.0, fill 1.0; hard ok% 71.6 -> 93.8, fail 0, fill 0.977.
+  CRITERIO DEL PIANO (hard >=80% ok, 0 fail post-repair) SUPERATO.
+  Costo: place_ms ~2x (5.8s -> 11.2s hard per 40 oggetti) — ora in thread
+  con cancel; riduzione prevista in S7 (cache sprite, patch piu' piccoli).
+- Suite: 136 pass / 0 fail (6 test nuovi: render loop, cancel, repair).
+
+Prossima: ondata 3 (U3 ghost interattivi, U4 "perche' qui", S4 footprint
+scoring, S5 appoggio/rotazione naturale).
