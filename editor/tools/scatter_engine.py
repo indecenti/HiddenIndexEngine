@@ -126,6 +126,26 @@ GRAY_PENALTY_SAT_START = 0.25
 # il termine hue non vale nulla): il match si basa su sat/val con penalita'
 # proporzionale alla saturazione dell'oggetto.
 SAT_ON_GRAY_PENALTY = 0.35
+# ── v4 (ondata 1): colore in Lab ─────────────────────────────────────────────
+# Similarita' Lab per cella: cs = exp(-DeltaE_pesato / LAB_SIGMA_DE).
+# Con sigma 20: DeltaE 0 -> 1.0, 12 -> 0.55, 20 -> 0.37, 30 -> 0.22 (le soglie
+# COLOR_GATE_MIN restano in unita' di similarita' 0..1, semantica invariata).
+LAB_SIGMA_DE = 20.0
+# Peso della componente L nel Delta-E (occhio piu' sensibile alla luminanza).
+LAB_L_WEIGHT = 1.5
+# Asimmetria del tint moltiplicativo (engine: BLEND_RGBA_MULT puo' solo
+# SCURIRE): se l'oggetto e' piu' CHIARO della cella il tint recupera parte del
+# gap di luminanza (gap * LAB_TINT_RECOVER); se e' piu' scuro il gap e' pieno.
+LAB_TINT_RECOVER = 0.45
+# Mix massimo del tint per difficolta' (clamp identita': oltre, l'oggetto
+# perde riconoscibilita'). Il mix effettivo e' OTTIMIZZATO per piazzamento
+# fra TINT_MIX_CANDIDATES (0 = nessun tint).
+TINT_MIX_MAX = {"easy": 0.25, "medium": 0.42, "hard": 0.55}
+TINT_MIX_CANDIDATES = (0.0, 0.15, 0.30, 0.45, 0.55)
+# Alpha adattivo per difficolta' (range inclusivo): leggera trasparenza fonde
+# l'oggetto col fondo senza comprometterne la leggibilita'. Vetro/cristallo
+# mantiene il range storico (180-215); line_art resta opaco.
+ALPHA_RANGE = {"easy": (255, 255), "medium": (244, 252), "hard": (232, 246)}
 
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -182,6 +202,7 @@ class BGAnalysis:
     color_uniformity: Optional[np.ndarray] = None      # (cell_h, cell_w) 0..1, 1=zona cromaticamente uniforme
     hsv_full: Optional[np.ndarray] = None              # (H,W,3) HSV full-res per campionare il footprint reale
     lab_full: Optional[np.ndarray] = None              # (H,W,3) Lab (OpenCV uint8) per verifica Delta-E footprint
+    lab_grid: Optional[np.ndarray] = None              # (cell_h, cell_w, 3) Lab vero per cella (L 0..100, a/b centrati)
     # Zone vietate (v3): persistite in cache; unione in build_forbidden_mask().
     face_mask: Optional[np.ndarray] = None             # (cell_h, cell_w) bool, celle con volti rilevati
     depth_grid: Optional[np.ndarray] = None            # (cell_h, cell_w) 0..1 NEARNESS (1 = vicino alla camera)
@@ -631,11 +652,19 @@ def _attach_runtime_color(analysis: "BGAnalysis", rgb: np.ndarray) -> None:
     try:
         hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV) if _HAS_CV2 else _rgb_to_hsv_np(rgb)
         analysis.hsv_full = hsv
-        # Lab full-res per la verifica Delta-E del footprint (v3). Solo con cv2:
-        # senza, la verifica degrada a no-op (lab_full resta None).
+        ch, cw, cpx = analysis.cell_h, analysis.cell_w, analysis.cell_px
+        # Lab full-res per la verifica Delta-E del footprint (v3) + grid Lab
+        # per cella (v4: sorgente del color matching percettivo). Solo con cv2:
+        # senza, entrambi restano None e il matching degrada al percorso HSV.
         if _HAS_CV2:
             analysis.lab_full = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB)
-        ch, cw, cpx = analysis.cell_h, analysis.cell_w, analysis.cell_px
+            lab_f = analysis.lab_full.astype(np.float32)
+            lab_l = _aggregate_to_grid(lab_f[..., 0] * (100.0 / 255.0),
+                                       ch, cw, cpx, "mean")
+            lab_a = _aggregate_to_grid(lab_f[..., 1] - 128.0, ch, cw, cpx, "mean")
+            lab_b = _aggregate_to_grid(lab_f[..., 2] - 128.0, ch, cw, cpx, "mean")
+            analysis.lab_grid = np.stack([lab_l, lab_a, lab_b],
+                                         axis=-1).astype(np.float32)
         sat_full = hsv[..., 1].astype(np.float32) / 255.0
         val_full = hsv[..., 2].astype(np.float32) / 255.0
         sat_sq = _aggregate_to_grid(sat_full * sat_full, ch, cw, cpx, "mean")
@@ -696,14 +725,19 @@ def _footprint_lab_median(bg: "BGAnalysis", x0: float, y0: float,
 
 
 def _lab_harmonize_tint(bg: "BGAnalysis", x0: float, y0: float, x1: float, y1: float,
-                        difficulty: str) -> Optional[tuple[int, int, int]]:
+                        difficulty: str,
+                        obj_rgbs: Optional[list[tuple[int, int, int]]] = None
+                        ) -> Optional[tuple[int, int, int]]:
     """Tint di harmonization in Lab: colore del footprint mixato verso bianco.
 
-    Sostituisce il vecchio tint HSV (mix fisso max 0.35 dipendente dal delta
-    hue): qui il mix e' funzione della DIFFICOLTA' (hard fonde di piu') e il
-    target e' la mediana Lab reale del footprint, con clamp su L (niente tint
-    nero) e mix dimezzato su zone grigie (chroma bassa: iniettare colore
-    sarebbe un falso). Il contratto PlacedObject.color_filter (RGB
+    v4: se obj_rgbs (colori dominanti dell'oggetto) e' fornito, il mix NON e'
+    piu' fisso per difficolta' ma viene OTTIMIZZATO: fra TINT_MIX_CANDIDATES
+    (cap TINT_MIX_MAX[difficulty], clamp identita') vince il mix che minimizza
+    il Delta-E fra i dominanti TINTATI (come li rendera' l'engine) e la mediana
+    Lab reale del footprint. Un oggetto gia' fuso riceve tint ~0; uno lontano
+    riceve il massimo consentito. Senza obj_rgbs: comportamento storico (mix
+    fisso TINT_MIX). Clamp su L (niente tint nero) e mix dimezzato su zone
+    grigie invariati. Il contratto PlacedObject.color_filter (RGB
     moltiplicativo applicato dall'engine) resta invariato: zero modifiche a
     engine/web. Ritorna None se lab_full/cv2 mancano (fallback HSV storico).
     """
@@ -712,21 +746,45 @@ def _lab_harmonize_tint(bg: "BGAnalysis", x0: float, y0: float, x1: float, y1: f
     med = _footprint_lab_median(bg, x0, y0, x1, y1)
     if med is None:
         return None
-    fl, fa, fb = med
-    fl = max(fl, TINT_MIN_L)
-    mix = TINT_MIX.get(difficulty, TINT_MIX["medium"])
-    if math.hypot(fa, fb) < TINT_MIN_CHROMA:
-        mix *= 0.5
+    fl_t, fa, fb = med                      # target VERO per il Delta-E
+    fl = max(fl_t, TINT_MIN_L)              # L clampata solo per il filtro
+    gray_zone = math.hypot(fa, fb) < TINT_MIN_CHROMA
     lab_px = np.uint8([[[int(round(fl * 255.0 / 100.0)),
                          int(round(min(255.0, max(0.0, fa + 128.0)))),
                          int(round(min(255.0, max(0.0, fb + 128.0))))]]])
     rgb_px = cv2.cvtColor(lab_px, cv2.COLOR_LAB2RGB)[0, 0]
     r, g, b = int(rgb_px[0]), int(rgb_px[1]), int(rgb_px[2])
-    # Mix verso bianco: stesso pattern di _hsv_to_tint_rgb (tint "leggero").
-    wr = int(mix * r + (1.0 - mix) * 255)
-    wg = int(mix * g + (1.0 - mix) * 255)
-    wb = int(mix * b + (1.0 - mix) * 255)
-    return (max(0, min(255, wr)), max(0, min(255, wg)), max(0, min(255, wb)))
+
+    def _filter_for(mix: float) -> tuple[int, int, int]:
+        # Mix verso bianco: stesso pattern di _hsv_to_tint_rgb (tint "leggero").
+        m = mix * 0.5 if gray_zone else mix
+        wr = int(m * r + (1.0 - m) * 255)
+        wg = int(m * g + (1.0 - m) * 255)
+        wb = int(m * b + (1.0 - m) * 255)
+        return (max(0, min(255, wr)), max(0, min(255, wg)), max(0, min(255, wb)))
+
+    mix_max = TINT_MIX_MAX.get(difficulty, TINT_MIX_MAX["medium"])
+    if not obj_rgbs:
+        return _filter_for(min(TINT_MIX.get(difficulty, TINT_MIX["medium"]),
+                               mix_max))
+
+    best_f: Optional[tuple[int, int, int]] = None
+    best_de = float("inf")
+    for mix in TINT_MIX_CANDIDATES:
+        if mix > mix_max + 1e-6:
+            continue
+        f = _filter_for(mix)
+        tinted = [(rr * f[0] // 255, gg * f[1] // 255, bb * f[2] // 255)
+                  for (rr, gg, bb) in obj_rgbs]
+        labs = _rgb_list_to_lab(tinted)
+        if not labs:
+            break
+        de = min(math.sqrt((fl_t - l) ** 2 + (fa - a) ** 2 + (fb - b) ** 2)
+                 for l, a, b in labs)
+        if de < best_de - 1e-9:
+            best_de = de
+            best_f = f
+    return best_f if best_f is not None else _filter_for(0.0)
 
 
 def _obj_dominant_rgb(obj: "ObjAnalysis") -> list[tuple[int, int, int]]:
@@ -769,6 +827,81 @@ def _rgb_list_to_lab(rgbs: list[tuple[int, int, int]]
 def _obj_dominant_lab(obj: "ObjAnalysis") -> list[tuple[float, float, float]]:
     """Colori dominanti dell'oggetto in Lab vero (senza tint)."""
     return _rgb_list_to_lab(_obj_dominant_rgb(obj))
+
+
+def _obj_lab_clusters(obj: "ObjAnalysis") -> list[tuple[float, float, float, float]]:
+    """Cluster colore dell'oggetto in Lab vero CON peso: [(L, a, b, w), ...].
+
+    Sorgente: palette_ext (k=8, pesi reali di frequenza) oppure la palette
+    top-3 legacy (pesi uniformi). Ritorna [] senza cv2 o senza palette:
+    il chiamante in quel caso usa il percorso HSV storico.
+    """
+    if not _HAS_CV2:
+        return []
+    src: list[tuple[float, float, float, float]] = []
+    if obj.palette_ext:
+        for c in obj.palette_ext:
+            w = float(c.get("w", 0.0))
+            if w >= 0.01:
+                src.append((c["h"], c["s"], c["v"], w))
+    elif obj.palette:
+        top = obj.palette[:3]
+        w = 1.0 / max(1, len(top))
+        for h, s, v in top:
+            src.append((h, s, v, w))
+    if not src:
+        return []
+    rgbs: list[tuple[int, int, int]] = []
+    for h, s, v, _w in src:
+        px = np.uint8([[[int(h * 180) % 180, int(s * 255), int(v * 255)]]])
+        rgb = cv2.cvtColor(px, cv2.COLOR_HSV2RGB)[0, 0]
+        rgbs.append((int(rgb[0]), int(rgb[1]), int(rgb[2])))
+    labs = _rgb_list_to_lab(rgbs)
+    return [(l, a, b, src[i][3]) for i, (l, a, b) in enumerate(labs)]
+
+
+def _color_similarity_map_lab(bg: "BGAnalysis", obj: "ObjAnalysis"
+                              ) -> Optional[np.ndarray]:
+    """Similarita' colore per cella in Lab vero: exp(-DeltaE_pesato/LAB_SIGMA_DE).
+
+    Delta-L pesato LAB_L_WEIGHT (l'occhio e' piu' sensibile alla luminanza) e
+    ASIMMETRICO: se il cluster e' piu' CHIARO della cella il tint moltiplicativo
+    dell'engine puo' scurirlo verso il fondo, quindi il gap L conta solo per
+    LAB_TINT_RECOVER; se e' piu' scuro il gap resta pieno (BLEND_RGBA_MULT non
+    schiarisce). Sostituisce le penalita' HSV v3.2 (grigio-su-saturo e
+    saturo-su-grigio): in Lab i neutri vivono a chroma ~0 e il mismatch emerge
+    dal Delta-E stesso, senza casi speciali.
+
+    Ritorna None se lab_grid o i cluster mancano (fallback al percorso HSV).
+    Pura, deterministica, RNG-free: stesso contratto di cacheability della
+    base score matrix.
+    """
+    grid = getattr(bg, "lab_grid", None)
+    if grid is None:
+        return None
+    clusters = _obj_lab_clusters(obj)
+    if not clusters:
+        return None
+    lab_l = grid[..., 0]
+    lab_a = grid[..., 1]
+    lab_b = grid[..., 2]
+    w_sum = sum(w for _l, _a, _b, w in clusters) or 1.0
+    cs_w = np.zeros_like(lab_l)
+    cs_dom = np.zeros_like(lab_l)
+    any_dom = False
+    for l, a, b, w in clusters:
+        dl = np.abs(lab_l - l)
+        dl = np.where(l > lab_l, dl * LAB_TINT_RECOVER, dl)
+        de = np.sqrt((LAB_L_WEIGHT * dl) ** 2 + (lab_a - a) ** 2
+                     + (lab_b - b) ** 2)
+        score = np.exp(-de / LAB_SIGMA_DE).astype(np.float32)
+        cs_w = cs_w + (w / w_sum) * score
+        if w >= 0.15:
+            cs_dom = np.maximum(cs_dom, score)
+            any_dom = True
+    if not any_dom:
+        cs_dom = cs_w
+    return np.clip(0.6 * cs_dom + 0.4 * cs_w, 0.0, 1.0).astype(np.float32)
 
 
 def _footprint_delta_e(bg: "BGAnalysis",
@@ -1487,7 +1620,14 @@ def _color_similarity_map(bg: BGAnalysis, obj: ObjAnalysis) -> np.ndarray:
     mantenere l'ordine delle operazioni bit-identico). Funzione pura e
     deterministica: e' la sorgente sia del termine additivo w_color sia del
     gate colore duro (_build_color_gate).
+
+    v4: se il BG ha lab_grid (cv2 presente) usa il percorso Lab percettivo
+    (_color_similarity_map_lab, con asimmetria del tint); il corpo HSV sotto
+    resta come fallback (no cv2, BG sintetici dei test).
     """
+    cs_lab = _color_similarity_map_lab(bg, obj)
+    if cs_lab is not None:
+        return cs_lab
     cs = np.zeros_like(bg.edge_density)
     palette_iter = None
     if obj.palette_ext:
@@ -2663,21 +2803,35 @@ def place_objects(
                 reject_reasons["overlap"] += 1
                 continue
 
-        # Alpha: 255 di default, ridotto per vetro/cristallo
+        # Alpha: adattivo per difficolta' (v4: leggera trasparenza = blending
+        # extra col fondo); vetro/cristallo mantiene il range storico piu'
+        # trasparente; line_art resta opaco (il tratto B/N non deve sbiadire).
         alpha = 255
         tags = entry.get("tags", [])
         if "vetro" in tags or "cristallo" in tags or "bottiglia" in tags:
             alpha = random.randint(180, 215)
+        elif style != "line_art":
+            a_lo, a_hi = ALPHA_RANGE.get(difficulty, (255, 255))
+            if a_hi < 255:
+                alpha = random.randint(a_lo, a_hi)
 
         # Tint di CAMOUFLAGE (v3, Lab): avvicina il colore dell'oggetto a quello
-        # REALE dello sfondo coperto dal footprint. Mix per DIFFICOLTA' (hard
-        # fonde di piu'), clamp su L e guard sulle zone grigie dentro
-        # _lab_harmonize_tint. Applicato ANCHE agli oggetti translucidi (vetro/
-        # cristallo): si mimetizzano meglio adottando il colore del fondo.
-        # Disabilitato per line_art: lo stile e' B/N, il colore del BG e' rumore.
+        # REALE dello sfondo coperto dal footprint. v4: il mix e' OTTIMIZZATO
+        # sui colori dominanti dell'oggetto (cap TINT_MIX_MAX per difficolta'),
+        # clamp su L e guard sulle zone grigie dentro _lab_harmonize_tint.
+        # Applicato ANCHE agli oggetti translucidi (vetro/cristallo): si
+        # mimetizzano meglio adottando il colore del fondo. Disabilitato per
+        # line_art: lo stile e' B/N, il colore del BG e' rumore.
         color_filter = (255, 255, 255)
+        dom_rgb: list[tuple[int, int, int]] = []
         if style != "line_art":
-            tint = _lab_harmonize_tint(bg, x_min, y_min, x_max, y_max, difficulty)
+            cached_dom = dominant_rgb_cache.get(cid)
+            if cached_dom is None:
+                cached_dom = _obj_dominant_rgb(obj_an)
+                dominant_rgb_cache[cid] = cached_dom
+            dom_rgb = cached_dom
+            tint = _lab_harmonize_tint(bg, x_min, y_min, x_max, y_max, difficulty,
+                                       obj_rgbs=dom_rgb or None)
             if tint is not None:
                 color_filter = tint
             elif obj_an.palette_ext or obj_an.palette:
@@ -2704,12 +2858,8 @@ def place_objects(
         # color_filter, come li rendera' l'engine): e' il look finale che deve
         # fondersi, non la palette grezza. Cap rilassato con attempts_frac.
         # Skip per line_art. RNG del tentativo gia' consumato: il reject non
-        # altera la sequenza del seed.
+        # altera la sequenza del seed. dom_rgb gia' risolto dal blocco tint.
         if style != "line_art":
-            dom_rgb = dominant_rgb_cache.get(cid)
-            if dom_rgb is None:
-                dom_rgb = _obj_dominant_rgb(obj_an)
-                dominant_rgb_cache[cid] = dom_rgb
             if dom_rgb:
                 if tuple(color_filter) != (255, 255, 255):
                     cf_r, cf_g, cf_b = color_filter
