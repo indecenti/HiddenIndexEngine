@@ -34,6 +34,11 @@ Legenda: [x] completo · [~] in corso/parziale · [ ] da fare.
   - Refactor: pipeline build EXE/APK unificata (`build_common.py`),
     `AssetCatalog` condiviso bg/musica/video, export web con progress+cancel,
     open scena asincrono, clipboard unico.
+- [ ] Piano "Editor Pro" (`docs/editor/EDITOR_PRO_PLAN.md`, 2026-07-12):
+  mimetizzazione auto-scatter (metrica render-based unica, best-of-M, colore Lab,
+  repair loop), UX scatter (progress/cancel, seed, ghost interattivi),
+  completezza editor (crash recovery, outline scena, workbench traduzioni,
+  checklist pubblicazione).
 
 ## Sistema menu (skin)
 
