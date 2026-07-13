@@ -137,6 +137,13 @@ class InputHandlersMixin:
             if ev.key == pygame.K_ESCAPE:
                 self._minigame_modal = False
             return
+        if getattr(self, "_recovery_modal", False):
+            # Crash recovery: INVIO ripristina, ESC ignora per la sessione
+            if ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                self._recovery_accept()
+            elif ev.key == pygame.K_ESCAPE:
+                self._recovery_dismiss()
+            return
         if getattr(self, "_stats_modal", False):
             self._stats_modal_key(ev)
             return
@@ -564,6 +571,9 @@ class InputHandlersMixin:
             # Conferma uscita/salvataggio: priorità massima — sopra ogni altra modale
             if self._confirm_leave_modal:
                 self._confirm_leave_click(mx, my_raw); return
+            # Ripristino autosave (crash recovery)
+            if getattr(self, "_recovery_modal", False):
+                self._recovery_modal_click(mx, my_raw); return
             # Scatter modal
             if getattr(self, "_scatter_modal_open", False):
                 if self._scatter_modal_click(mx, my_raw, w, h):

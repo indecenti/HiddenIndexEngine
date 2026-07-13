@@ -361,7 +361,7 @@ class LevelEditor(
 
         # ── Image cache ──────────────────────────────────────────────────────
         from collections import OrderedDict
-        self._img_cache: dict = {}
+        self._img_cache = OrderedDict()  # LRU con cap IMG_CACHE_MAX (evict graduale)
         self._bg_cache_surf: Optional[pygame.Surface] = None
         self._bg_cache_zoom: float = 0.0
         self._obj_draw_cache = OrderedDict()  # Cache per icone trasformate (LRU)
@@ -667,6 +667,9 @@ class LevelEditor(
         # Statistiche scena
         if getattr(self, "_stats_modal", False):
             self._r_stats_modal(w, h)
+        # Ripristino autosave (crash recovery): sopra le modali normali
+        if getattr(self, "_recovery_modal", False):
+            self._r_recovery_modal(w, h)
         # Conferma uscita/salvataggio: sempre sopra TUTTE le altre modali
         if self._confirm_leave_modal:
             self._r_confirm_leave_modal(w, h)

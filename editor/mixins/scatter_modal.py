@@ -103,6 +103,13 @@ class ScatterModalMixin:
         self._scatter_seed_locked = False       # lucchetto: GENERA riusa il seed
         self._scatter_last_seed = None          # seed dell'ultima run
         self._scatter_seed_editing = False      # focus tastiera sul campo
+        # ── U5/U6: opzioni APPLICA + quantita' editabile + filtro tag ─────
+        self._scatter_apply_goal = bool(scatter_pref.get("apply_goal", True))
+        self._scatter_apply_hint = int(scatter_pref.get("apply_hint", 30))
+        self._scatter_apply_always = bool(scatter_pref.get("apply_always", False))
+        self._scatter_count_editing = False     # focus tastiera sul box quantita'
+        self._scatter_count_text = ""
+        self._scatter_tag_filter = ""           # filtro digitato nel dropdown tag
         # ── Worker thread (U1): progress + cancel ─────────────────────────
         self._scatter_progress = None           # (fase, done, total) dal worker
         self._scatter_cancel_event = None       # threading.Event della run attiva
@@ -118,11 +125,14 @@ class ScatterModalMixin:
         self._scatter_bg_rgb_cache = None       # array RGB del BG per rimisure U4
 
     def _scatter_save_prefs(self):
-        """Salva le preferenze scatter (tier + layer) nei settings dell'editor."""
+        """Salva le preferenze scatter (tier + layer + opzioni APPLICA)."""
         try:
             self._save_editor_setting("scatter", {
                 "tier_choice": self._scatter_tier_choice,
                 "layers": dict(self._scatter_layers),
+                "apply_goal": bool(self._scatter_apply_goal),
+                "apply_hint": int(self._scatter_apply_hint),
+                "apply_always": bool(self._scatter_apply_always),
             })
         except Exception as e:
             log.warning(f"[SCATTER] save prefs failed: {e}")
@@ -1125,7 +1135,7 @@ class ScatterModalMixin:
             self._scatter_status_msg = "Niente da applicare. Genera prima l'anteprima"
             self._scatter_status_color = WARN_C
             return
-        self._push_undo()
+        self._push_undo("Auto-scatter")
         added = 0
         for g in self._scatter_ghosts:
             entry = {
@@ -1137,9 +1147,10 @@ class ScatterModalMixin:
                 "flip_x": g.flip_x, "flip_y": g.flip_y,
                 "alpha": int(g.alpha),
                 "layer": g.layer,
-                "is_goal": True,
-                "always_show": False,
-                "hint_delay": 30,
+                # Opzioni APPLICA (U5): prima erano forzate (goal/30/False)
+                "is_goal": bool(self._scatter_apply_goal),
+                "always_show": bool(self._scatter_apply_always),
+                "hint_delay": int(self._scatter_apply_hint),
             }
             # USA g.width e g.height direttamente (proporzionati all'aspect PNG)
             # invece di forzare 2*radius (che produrrebbe quadrati distorti).
@@ -1200,8 +1211,8 @@ class ScatterModalMixin:
         dim.fill((0, 0, 0, 170))
         self.screen.blit(dim, (0, 0))
 
-        # Panel piu' alto (riga checkbox layer + zone vietate + seed)
-        pw, ph = 520, 800
+        # Panel piu' alto (layer + zone vietate + seed + opzioni APPLICA)
+        pw, ph = 520, 840
         px, py = (w - pw) // 2, (h - ph) // 2
         panel_r = pygame.Rect(px, py, pw, ph)
         self._scatter_panel_rect = panel_r
@@ -1318,13 +1329,18 @@ class ScatterModalMixin:
             self._scatter_hitboxes["download_model"] = badge_r
         y += ROW_H
 
-        # QUANTITA
-        _draw_text(self.screen, "Quantita", "sm", TXT_DIM, LBL_X, y + 8)
+        # QUANTITA (1-300): box EDITABILE (click e digita) + slider
+        _draw_text(self.screen, "Quantita (1-300)", "sm", TXT_DIM, LBL_X, y + 8)
         cnt_box = pygame.Rect(CTRL_X, y + 4, 56, 24)
-        _rect(self.screen, (45, 48, 56), cnt_box, radius=4)
-        _rect(self.screen, BORDER, cnt_box, 1, radius=4)
-        cnts = _txt(str(int(self._scatter_count)), "sm", TXT_HI)
+        cnt_edit = self._scatter_count_editing
+        _rect(self.screen, (50, 54, 64) if cnt_edit else (45, 48, 56),
+              cnt_box, radius=4)
+        _rect(self.screen, ACCENT if cnt_edit else BORDER, cnt_box, 1, radius=4)
+        cnt_shown = (self._scatter_count_text + "_") if cnt_edit \
+            else str(int(self._scatter_count))
+        cnts = _txt(cnt_shown, "sm", TXT_HI)
         self.screen.blit(cnts, (cnt_box.centerx - cnts.get_width()//2, cnt_box.centery - cnts.get_height()//2))
+        self._scatter_hitboxes["count_box"] = cnt_box
         sl_r = pygame.Rect(CTRL_X + 70, y + 6, CTRL_W - 70, 20)
         _slider(self.screen, sl_r, self._scatter_count, 1, 300)
         self._scatter_hitboxes["count_slider"] = sl_r
@@ -1444,6 +1460,47 @@ class ScatterModalMixin:
                               zclear_r.centery - ts.get_height()//2))
         if can_clear:
             self._scatter_hitboxes["brush_clear"] = zclear_r
+        y += ROW_H + 4
+
+        # ── OPZIONI APPLICA (U5): niente piu' valori forzati ───────────
+        _draw_text(self.screen, "Applica come", "sm", TXT_DIM, LBL_X, y + 8)
+        ao_gap = 6
+        ao_w = (CTRL_W - ao_gap * 2) // 3
+        goal_r = pygame.Rect(CTRL_X, y, ao_w, 30)
+        hint_r = pygame.Rect(CTRL_X + ao_w + ao_gap, y, ao_w, 30)
+        alws_r = pygame.Rect(CTRL_X + (ao_w + ao_gap) * 2, y, ao_w, 30)
+        # GOAL toggle
+        g_on = self._scatter_apply_goal
+        hov_g = _in_rect((mx, my), goal_r)
+        _rect(self.screen, (30, 50, 40) if g_on else (BTN_HO if hov_g else BTN),
+              goal_r, radius=4)
+        _rect(self.screen, OK_C if g_on else BORDER, goal_r, 1, radius=4)
+        ts = _txt(f"GOAL: {'SI' if g_on else 'NO'}", "xs",
+                  TXT_HI if g_on else TXT_DIM)
+        self.screen.blit(ts, (goal_r.centerx - ts.get_width() // 2,
+                              goal_r.centery - ts.get_height() // 2))
+        self._scatter_hitboxes["apply_goal"] = goal_r
+        # HINT delay (cicla 15/30/60/OFF)
+        hv = self._scatter_apply_hint
+        hint_lbl = f"HINT: {hv}s" if hv > 0 else "HINT: OFF"
+        hov_h = _in_rect((mx, my), hint_r)
+        _rect(self.screen, BTN_HO if hov_h else BTN, hint_r, radius=4)
+        _rect(self.screen, BORDER, hint_r, 1, radius=4)
+        ts = _txt(hint_lbl, "xs", TXT_HI)
+        self.screen.blit(ts, (hint_r.centerx - ts.get_width() // 2,
+                              hint_r.centery - ts.get_height() // 2))
+        self._scatter_hitboxes["apply_hint"] = hint_r
+        # ALWAYS SHOW toggle
+        a_on = self._scatter_apply_always
+        hov_a = _in_rect((mx, my), alws_r)
+        _rect(self.screen, (30, 50, 40) if a_on else (BTN_HO if hov_a else BTN),
+              alws_r, radius=4)
+        _rect(self.screen, OK_C if a_on else BORDER, alws_r, 1, radius=4)
+        ts = _txt(f"VISIBILE: {'SI' if a_on else 'NO'}", "xs",
+                  TXT_HI if a_on else TXT_DIM)
+        self.screen.blit(ts, (alws_r.centerx - ts.get_width() // 2,
+                              alws_r.centery - ts.get_height() // 2))
+        self._scatter_hitboxes["apply_always"] = alws_r
         y += ROW_H + 4
 
         pygame.draw.line(self.screen, BORDER, (px + 16, y), (px + pw - 16, y))
@@ -1727,17 +1784,41 @@ class ScatterModalMixin:
                 ok = status.get("tier3_model_present", False)
             else:
                 ok = True
-            stat_lbl = "OK" if ok else "MANCA"
-            stat_col = OK_C if ok else WARN_C
+            # Costo download visibile PRIMA del click (U6): niente sorprese
+            if ok:
+                stat_lbl, stat_col = "OK", OK_C
+            elif tier in (1, 2):
+                try:
+                    from editor.tools.download_models import model_meta
+                    mb = model_meta(tier).get("size_mb_approx", "?")
+                except Exception:
+                    mb = "?"
+                stat_lbl, stat_col = f"~{mb} MB", WARN_C
+            elif tier == 3:
+                stat_lbl, stat_col = "~267 MB", WARN_C
+            else:
+                stat_lbl, stat_col = "MANCA", WARN_C
             st = _txt(stat_lbl, "xs", stat_col)
             self.screen.blit(st, (r.right - st.get_width() - 8, r.centery - st.get_height()//2))
             self._scatter_hitboxes[f"tier_opt_{val}"] = r
 
     def _r_scatter_dropdown_tag(self, px, py, pw, ph, tags):
-        """Dropdown tag con scroll se molti, riga (TUTTI) sempre in cima."""
+        """Dropdown tag con scroll, riga (TUTTI) in cima e filtro digitabile
+        (U6): le lettere digitate filtrano la lista per sottostringa."""
         base_r = self._scatter_hitboxes["tag_btn"]
+        flt = self._scatter_tag_filter
+        shown_tags = [(t, c) for t, c in tags if flt in t] if flt else tags
         items = [(None, "(TUTTI)", sum(c for _, c in tags))]
-        items += [(t, t.upper(), c) for t, c in tags]
+        items += [(t, t.upper(), c) for t, c in shown_tags]
+
+        # Indicatore filtro sopra il dropdown
+        if flt:
+            f_r = pygame.Rect(base_r.x, base_r.bottom + 2, base_r.w, 20)
+            _rect(self.screen, (40, 44, 54), f_r, radius=3)
+            _rect(self.screen, ACCENT, f_r, 1, radius=3)
+            fs = _txt(f"filtro: {flt}_  ({len(shown_tags)} tag)", "xs", ACCENT)
+            self.screen.blit(fs, (f_r.x + 8, f_r.y + 3))
+            base_r = f_r  # il dropdown parte sotto l'indicatore
 
         dy = base_r.bottom + 2
         # Cap altezza al panel (lascia 16px in basso)
@@ -1861,6 +1942,7 @@ class ScatterModalMixin:
                     val = key[len("tag_opt_"):]
                     self._scatter_tag = None if val == "NONE" else val
                     self._scatter_drop_open = None
+                    self._scatter_tag_filter = ""
                     self._scatter_ghosts = []
                     return True
                 if key.startswith("tier_opt_"):
@@ -1877,15 +1959,42 @@ class ScatterModalMixin:
                     self._scatter_save_prefs()
                     return True
             self._scatter_drop_open = None
+            self._scatter_tag_filter = ""
             return True
 
         hb = self._scatter_hitboxes
 
-        # Campo seed: il focus si prende cliccandoci, si perde altrove (U2)
+        # Campi editabili: il focus si prende cliccandoci, si perde altrove
         if _in_rect((mx, my), hb.get("seed_box", pygame.Rect(0, 0, 0, 0))):
             self._scatter_seed_editing = True
+            self._scatter_count_commit()
+            return True
+        if _in_rect((mx, my), hb.get("count_box", pygame.Rect(0, 0, 0, 0))):
+            self._scatter_count_editing = True
+            self._scatter_count_text = ""
+            self._scatter_seed_editing = False
             return True
         self._scatter_seed_editing = False
+        self._scatter_count_commit()
+
+        # Opzioni APPLICA (U5)
+        if _in_rect((mx, my), hb.get("apply_goal", pygame.Rect(0, 0, 0, 0))):
+            self._scatter_apply_goal = not self._scatter_apply_goal
+            self._scatter_save_prefs()
+            return True
+        if _in_rect((mx, my), hb.get("apply_hint", pygame.Rect(0, 0, 0, 0))):
+            cycle = [15, 30, 60, 0]
+            try:
+                i = cycle.index(int(self._scatter_apply_hint))
+            except ValueError:
+                i = 0
+            self._scatter_apply_hint = cycle[(i + 1) % len(cycle)]
+            self._scatter_save_prefs()
+            return True
+        if _in_rect((mx, my), hb.get("apply_always", pygame.Rect(0, 0, 0, 0))):
+            self._scatter_apply_always = not self._scatter_apply_always
+            self._scatter_save_prefs()
+            return True
         if _in_rect((mx, my), hb.get("seed_lock", pygame.Rect(0, 0, 0, 0))):
             self._scatter_seed_locked = not self._scatter_seed_locked
             self._scatter_status_msg = ("Seed fisso: GENERA riusa lo stesso seed"
@@ -1913,6 +2022,7 @@ class ScatterModalMixin:
         if _in_rect((mx, my), hb.get("tag_btn", pygame.Rect(0,0,0,0))):
             self._scatter_drop_open = "tag"
             self._scatter_tag_scroll = 0
+            self._scatter_tag_filter = ""
             return True
 
         if _in_rect((mx, my), hb.get("tier_btn", pygame.Rect(0,0,0,0))):
@@ -1993,6 +2103,20 @@ class ScatterModalMixin:
         self._scatter_close()
         return True
 
+    def _scatter_count_commit(self):
+        """Applica il testo digitato nel box quantita' (clamp 1-300)."""
+        if not self._scatter_count_editing:
+            return
+        self._scatter_count_editing = False
+        txt = self._scatter_count_text.strip()
+        self._scatter_count_text = ""
+        if not txt:
+            return
+        try:
+            self._scatter_count = max(1, min(300, int(txt)))
+        except ValueError:
+            pass
+
     def _scatter_modal_key(self, ev) -> bool:
         """Tastiera nel modal scatter (chiamata da input_handlers): ESC con
         priorita' brush -> campo seed -> run in corso -> chiudi; cifre e
@@ -2016,6 +2140,12 @@ class ScatterModalMixin:
                 self._scatter_preview_exit()
             elif self._scatter_seed_editing:
                 self._scatter_seed_editing = False
+            elif self._scatter_count_editing:
+                self._scatter_count_editing = False
+                self._scatter_count_text = ""
+            elif self._scatter_drop_open:
+                self._scatter_drop_open = None
+                self._scatter_tag_filter = ""
             elif self._scatter_busy:
                 self._scatter_cancel_run()
                 self._scatter_status_msg = "Elaborazione annullata"
@@ -2033,6 +2163,27 @@ class ScatterModalMixin:
             elif getattr(ev, "unicode", "").isdigit() \
                     and len(self._scatter_seed_text) < 9:
                 self._scatter_seed_text += ev.unicode
+            return True
+        if self._scatter_count_editing:
+            # Quantita' editabile (U6): cifre + invio, clamp 1-300
+            if ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                self._scatter_count_commit()
+            elif ev.key == pygame.K_BACKSPACE:
+                self._scatter_count_text = self._scatter_count_text[:-1]
+            elif getattr(ev, "unicode", "").isdigit() \
+                    and len(self._scatter_count_text) < 3:
+                self._scatter_count_text += ev.unicode
+            return True
+        if self._scatter_drop_open == "tag":
+            # Filtro tastiera nel dropdown tag (U6): digita per filtrare
+            uni = getattr(ev, "unicode", "")
+            if ev.key == pygame.K_BACKSPACE:
+                self._scatter_tag_filter = self._scatter_tag_filter[:-1]
+                self._scatter_tag_scroll = 0
+            elif uni and (uni.isalnum() or uni in "_-") \
+                    and len(self._scatter_tag_filter) < 24:
+                self._scatter_tag_filter += uni.lower()
+                self._scatter_tag_scroll = 0
         return True
 
     def _scatter_modal_wheel(self, mx, my, dy):

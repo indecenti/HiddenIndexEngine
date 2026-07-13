@@ -65,3 +65,4 @@ web_platform/catalog.json
 
 # Editor cache (rigenerabile)
 .editor_cache/
+.editor_backups/

@@ -21,7 +21,7 @@ from typing import Any, Callable, Optional
 import pygame
 
 from editor.constants import (
-    AUTOSAVE_SECS, OK_C, ERR_C, WARN_C, TXT_DIM, STATE_MAIN,
+    AUTOSAVE_SECS, OK_C, ERR_C, WARN_C, TXT, TXT_DIM, TXT_HI, STATE_MAIN,
     TAB_CATALOG,
 )
 from editor.core.io import (
@@ -386,8 +386,11 @@ class IoOpsMixin:
         
         # Auto-detect dello stile dominante (richiesto dall'utente)
         self._auto_detect_style()
-        
+
         self._status(f"Scena: {scene_path.name}  ({n} oggetti)", OK_C, 3)
+
+        # Crash recovery: autosave piu' recente del salvataggio? Proponi.
+        self._check_autosave_recovery()
 
     def _auto_detect_style(self):
         """
@@ -687,8 +690,9 @@ class IoOpsMixin:
             if audio_removed > 0:
                 logging.info(f"[EDITOR] Music Cleanup: rimossi {audio_removed} brani non più usati nel gioco.")
 
-        # 6. Write
+        # 6. Write (con backup rotativo del file precedente)
         save_path = self.scene_path / "scene.json"
+        self._backup_scene_file(save_path)
         
         # Diagnostica B&W pre-scrittura
         gs_found = [o.get("catalog_id") for o in data.get("objects", []) if o.get("grayscale")]
@@ -888,6 +892,158 @@ class IoOpsMixin:
         else:
             logging.debug("[EDITOR] Audit traduzioni: OK — nessuna modifica necessaria")
 
+    def _backup_scene_file(self, save_path: Path) -> None:
+        """Backup rotativo di scene.json PRIMA della sovrascrittura.
+
+        Destinazione CENTRALE fuori da games/ (mai impacchettata in
+        EXE/APK/export web): .editor_backups/<gioco>/<livello>/<scena>/.
+        Tiene gli ultimi SCENE_BACKUPS_KEEP file. Best-effort: un backup
+        fallito non blocca il salvataggio.
+        """
+        from editor.constants import SCENE_BACKUPS_KEEP
+        if not save_path.exists():
+            return
+        try:
+            import shutil
+            game = self.game_path.name if self.game_path else "unknown"
+            level = self.scene_path.parent.name
+            scene = self.scene_path.name
+            bdir = self.base_path / ".editor_backups" / game / level / scene
+            bdir.mkdir(parents=True, exist_ok=True)
+            stamp = time.strftime("%Y%m%d_%H%M%S")
+            dest = bdir / f"scene_{stamp}.json"
+            i = 1
+            while dest.exists():   # salvataggi nello stesso secondo
+                dest = bdir / f"scene_{stamp}_{i}.json"
+                i += 1
+            shutil.copy2(save_path, dest)
+            # Prune per MTIME, non per nome: dopo un prune i nomi base
+            # tornano liberi e l'ordine lessicografico mentirebbe.
+            backups = sorted(bdir.glob("scene_*.json"),
+                             key=lambda p: p.stat().st_mtime)
+            for old in backups[:-SCENE_BACKUPS_KEEP]:
+                old.unlink(missing_ok=True)
+        except Exception as e:
+            logging.warning(f"[EDITOR] Backup scena fallito: {e}")
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # CRASH RECOVERY (autosave)
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def _check_autosave_recovery(self):
+        """Se l'autosave e' PIU' RECENTE di scene.json, proponi il ripristino.
+
+        Prima l'autosave veniva scritto ma MAI riletto: dopo un crash il
+        lavoro non salvato restava sul disco, invisibile. Qui si apre una
+        modale di conferma (render in _r_recovery_modal). Il rifiuto vale per
+        la sessione (niente riproposta continua); dopo un save regolare il
+        confronto mtime si risolve da solo.
+        """
+        self._recovery_modal = False
+        self._recovery_data = None
+        auto_p = self.scene_path / "scene.json.autosave"
+        scene_p = self.scene_path / "scene.json"
+        if not auto_p.exists() or not scene_p.exists():
+            return
+        dismissed = getattr(self, "_recovery_dismissed", set())
+        if str(self.scene_path) in dismissed:
+            return
+        try:
+            if auto_p.stat().st_mtime <= scene_p.stat().st_mtime + 1.0:
+                return
+            data = _load_json(auto_p)
+            if not isinstance(data, dict) or data == self.scene_data:
+                return
+            self._recovery_data = data
+            self._recovery_modal = True
+            n_auto = len(data.get("objects", []))
+            n_cur = len(self.scene_data.get("objects", []))
+            self._recovery_info = (n_auto, n_cur,
+                                   time.strftime("%H:%M:%S", time.localtime(
+                                       auto_p.stat().st_mtime)))
+            logging.info(f"[EDITOR] Autosave piu' recente trovato "
+                         f"({n_auto} oggetti vs {n_cur} salvati)")
+        except Exception as e:
+            logging.warning(f"[EDITOR] Check autosave recovery fallito: {e}")
+
+    def _recovery_accept(self):
+        """Ripristina l'autosave in memoria (scene_dirty: decide l'utente
+        se consolidare con un save)."""
+        if not getattr(self, "_recovery_data", None):
+            self._recovery_modal = False
+            return
+        self._push_undo("Ripristino autosave")
+        self.scene_data = self._recovery_data
+        self._sanitize_effects()
+        self.selected_idx = None
+        self.scene_dirty = True
+        self._recovery_modal = False
+        self._recovery_data = None
+        n = len(self.scene_data.get("objects", []))
+        self._status(f"Autosave ripristinato ({n} oggetti). Salva per consolidare.",
+                     OK_C, 5)
+
+    def _recovery_dismiss(self):
+        self._recovery_modal = False
+        self._recovery_data = None
+        if not hasattr(self, "_recovery_dismissed"):
+            self._recovery_dismissed = set()
+        self._recovery_dismissed.add(str(self.scene_path))
+        self._status("Autosave ignorato per questa sessione", TXT_DIM, 3)
+
+    def _r_recovery_modal(self, w: int, h: int) -> None:
+        """Modale di conferma ripristino autosave (stile confirm compatto)."""
+        if not getattr(self, "_recovery_modal", False):
+            return
+        from editor.ui.draw import _rect, _draw_text, _txt, _in_rect
+        dim = pygame.Surface((w, h), pygame.SRCALPHA)
+        dim.fill((0, 0, 0, 170))
+        self.screen.blit(dim, (0, 0))
+        pw, ph = 460, 170
+        px, py = (w - pw) // 2, (h - ph) // 2
+        panel = pygame.Rect(px, py, pw, ph)
+        _rect(self.screen, (28, 30, 38), panel, radius=10)
+        _rect(self.screen, WARN_C, panel, 2, radius=10)
+        n_auto, n_cur, ts = getattr(self, "_recovery_info", (0, 0, "?"))
+        _draw_text(self.screen, "RIPRISTINO AUTOSAVE", "md", TXT_HI,
+                   px + 20, py + 14)
+        _draw_text(self.screen,
+                   f"Trovato un autosave delle {ts} piu' recente del salvataggio.",
+                   "sm", TXT, px + 20, py + 46, pw - 40)
+        _draw_text(self.screen,
+                   f"Autosave: {n_auto} oggetti | Salvato: {n_cur} oggetti",
+                   "xs", TXT_DIM, px + 20, py + 72, pw - 40)
+        self._recovery_hitboxes = {}
+        mx, my = pygame.mouse.get_pos()
+        bw, bh = 190, 34
+        yes_r = pygame.Rect(px + 20, py + ph - bh - 16, bw, bh)
+        no_r = pygame.Rect(px + pw - bw - 20, py + ph - bh - 16, bw, bh)
+        hov_y = _in_rect((mx, my), yes_r)
+        _rect(self.screen, (30, 90, 45) if hov_y else (25, 70, 35), yes_r, radius=5)
+        _rect(self.screen, OK_C, yes_r, 2 if hov_y else 1, radius=5)
+        ts_y = _txt("RIPRISTINA", "sm", TXT_HI)
+        self.screen.blit(ts_y, (yes_r.centerx - ts_y.get_width() // 2,
+                                yes_r.centery - ts_y.get_height() // 2))
+        hov_n = _in_rect((mx, my), no_r)
+        _rect(self.screen, (55, 40, 20) if hov_n else (45, 36, 18), no_r, radius=5)
+        _rect(self.screen, WARN_C, no_r, 2 if hov_n else 1, radius=5)
+        ts_n = _txt("IGNORA (ESC)", "sm", TXT_HI)
+        self.screen.blit(ts_n, (no_r.centerx - ts_n.get_width() // 2,
+                                no_r.centery - ts_n.get_height() // 2))
+        self._recovery_hitboxes["yes"] = yes_r
+        self._recovery_hitboxes["no"] = no_r
+
+    def _recovery_modal_click(self, mx: int, my: int) -> bool:
+        if not getattr(self, "_recovery_modal", False):
+            return False
+        from editor.ui.draw import _in_rect
+        hb = getattr(self, "_recovery_hitboxes", {})
+        if _in_rect((mx, my), hb.get("yes", pygame.Rect(0, 0, 0, 0))):
+            self._recovery_accept()
+        elif _in_rect((mx, my), hb.get("no", pygame.Rect(0, 0, 0, 0))):
+            self._recovery_dismiss()
+        return True   # modale: consuma comunque il click
+
     def _autosave(self):
         if not self.scene_path or not self.scene_dirty:
             return
@@ -978,8 +1134,14 @@ class IoOpsMixin:
         clamped_size = (min(size[0], MAX_SIZE), min(size[1], MAX_SIZE))
 
         key = (str(path), clamped_size)
-        if key in self._img_cache:
-            return self._img_cache[key]
+        cached = self._img_cache.get(key)
+        if cached is not None:
+            # LRU: tocco = spostamento in coda (il piu' vecchio resta in testa)
+            try:
+                self._img_cache.move_to_end(key)
+            except AttributeError:
+                pass
+            return cached
         if not path.exists():
             # Fallback al repository centrale del motore
             if "games" in str(path):
@@ -1014,6 +1176,14 @@ class IoOpsMixin:
             else:
                 scaled = raw
             self._img_cache[key] = scaled
+            # Cap LRU con evict graduale del piu' vecchio (popitem last=False):
+            # prima la cache cresceva senza limite per tutta la sessione.
+            from editor.constants import IMG_CACHE_MAX
+            try:
+                while len(self._img_cache) > IMG_CACHE_MAX:
+                    self._img_cache.popitem(last=False)
+            except AttributeError:
+                pass
             return scaled
         except Exception:
             return None

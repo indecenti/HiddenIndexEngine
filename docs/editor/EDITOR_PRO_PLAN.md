@@ -299,6 +299,28 @@ Criteri di successo (misurati con S0):
 - Suite: 147 pass / 0 fail (11 test nuovi: footprint/straddle/upright,
   worker modal, preview interattiva).
 
-Prossima: ondata 4 (P1 robustezza dati: crash recovery autosave, backup
-rotativi, bonifica except nudi, LRU immagini; U5 opzioni APPLICA; U6
-micro-fix UI).
+### Ondata 4 — FATTA (2026-07-13)
+
+- P1 robustezza dati:
+  - CRASH RECOVERY: all'apertura scena, se `scene.json.autosave` e' piu'
+    recente del salvataggio (e diverso), modale di ripristino (INVIO
+    ripristina con undo dedicato, ESC ignora per la sessione). Prima
+    l'autosave era scritto e MAI riletto.
+  - BACKUP ROTATIVI: a ogni save, copia del vecchio scene.json in
+    `.editor_backups/<gioco>/<livello>/<scena>/` (ultimi 5, prune per
+    mtime; dir centrale fuori da games/, mai impacchettata; gitignored).
+  - `_img_cache` LRU: OrderedDict con cap IMG_CACHE_MAX=512 ed evict
+    graduale popitem(last=False); prima cresceva senza limite.
+  - Audit stale verificati CHIUSI in passato: zero `except:` nudi residui,
+    negative-cache immagini gia' rimossa.
+- U5: opzioni APPLICA nel modal scatter (GOAL si'/no, HINT 15/30/60/OFF,
+  VISIBILE si'/no) persistite nelle prefs; prima forzate a goal/30/False.
+  Undo dell'APPLICA etichettato "Auto-scatter".
+- U6: quantita' EDITABILE (click sul box, cifre, clamp 1-300, header
+  corretto); filtro TASTIERA nel dropdown tag (digita per filtrare);
+  costo download visibile nel dropdown tier (~MB per LIGHT/PRO/ULTRA).
+- Suite: 152 pass / 0 fail (5 test nuovi robustezza; il test dei backup ha
+  scovato un bug reale di ordinamento nomi -> prune per mtime).
+
+Prossima: ondata 5 (P3 outline scena con edit bulk, P7 workbench
+traduzioni, P8 checklist pubblicazione).

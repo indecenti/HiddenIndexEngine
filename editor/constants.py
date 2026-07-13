@@ -27,6 +27,10 @@ STATUS_H       = 40
 AUTOSAVE_SECS  = 60
 UNDO_MAX       = 50
 HANDLE_R       = 4
+# Cache immagini scalate dell'editor: cap LRU (evict graduale del piu' vecchio)
+IMG_CACHE_MAX  = 512
+# Backup rotativi di scene.json a ogni salvataggio (in .editor_backups/)
+SCENE_BACKUPS_KEEP = 5
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GRIGLIA / SNAP / NUDGE
