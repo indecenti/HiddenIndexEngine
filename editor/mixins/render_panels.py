@@ -115,15 +115,18 @@ class RenderPanelsMixin:
         _rect(self.screen, PANEL,  (0, TOP_BAR_H, self.panel_l_w, h-STATUS_H-TOP_BAR_H))
         _rect(self.screen, BORDER, (0, TOP_BAR_H, self.panel_l_w, h-STATUS_H-TOP_BAR_H), 1)
 
-        from editor.constants import TAB_TREE, TAB_CATALOG, TAB_EFFECTS
-        tabs = [(TAB_TREE, self._TR("tab_scene")), (TAB_CATALOG, self._TR("tab_obj")), (TAB_EFFECTS, self._TR("tab_fx"))]
-        tab_w = self.panel_l_w // 3
+        from editor.constants import TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_OUTLINE
+        tabs = [(TAB_TREE, self._TR("tab_scene")),
+                (TAB_OUTLINE, self._TR("tab_outline", "Outline")),
+                (TAB_CATALOG, self._TR("tab_obj")), (TAB_EFFECTS, self._TR("tab_fx"))]
+        tab_w = self.panel_l_w // len(tabs)
         mx, my_raw = pygame.mouse.get_pos()
         for i, (tid, lbl) in enumerate(tabs):
             tr = pygame.Rect(i * tab_w, TOP_BAR_H, tab_w, 30)
             is_active = (self.l_tab == tid)
             # Disabilita tab Scene e Obj se il layer attivo è quello degli effetti
-            is_disabled = (self.active_layer == "effects" and tid in (TAB_TREE, TAB_CATALOG))
+            is_disabled = (self.active_layer == "effects"
+                           and tid in (TAB_TREE, TAB_CATALOG, TAB_OUTLINE))
             
             hov = _in_rect((mx, my_raw), tr)
             if hov and not is_disabled: self.active_tooltip = self._TR(f"tip_tab_{tid}")
@@ -145,6 +148,11 @@ class RenderPanelsMixin:
 
         if self.l_tab == TAB_TREE:
             self._r_tree(h)
+        elif self.l_tab == TAB_OUTLINE:
+            # The selection also moves from the canvas, undo and the object ops:
+            # the list follows it here instead of at every one of those sites.
+            self._outline_follow_selection()
+            self._r_outline(h)
         elif self.l_tab == TAB_EFFECTS:
             self._r_effects_catalog(h)
         else:

@@ -37,10 +37,14 @@ Legend: [x] done · [~] in progress/partial · [ ] to do.
   message to the user, circuit breaker after `MAIN_LOOP_MAX_CRASHES`), the autosave never
   propagates and backs off on failure, autosave recovery restores the scene in place, the
   theme harvest is a staged swap with rollback. Verified by `pytest tests/test_editor_robustness.py`.
-- [ ] "Editor Pro" plan (`docs/archive/editor/EDITOR_PRO_PLAN.md`, 2026-07-12):
-  auto-scatter camouflage (single render-based metric, best-of-M, Lab color, repair
+- [x] Scene outline (`editor/mixins/outline.py`, plan item P3): Outline tab with the list
+  of the placed objects (layer, goal, minigame, hidden/locked), search and filters, click
+  to select and reveal, double click to frame, ctrl/shift multi-selection feeding the bulk
+  edit of the properties panel. Verified by `pytest tests/test_editor_outline.py`.
+- [ ] "Editor Pro" plan (`docs/archive/editor/EDITOR_PRO_PLAN.md`, 2026-07-12): remaining
+  items - auto-scatter camouflage (single render-based metric, best-of-M, Lab color, repair
   loop), scatter UX (progress/cancel, seed, interactive ghosts), editor completeness
-  (crash recovery, scene outline, translation workbench, publishing checklist).
+  (translation workbench, publishing checklist).
 
 ## Menu system (skins)
 

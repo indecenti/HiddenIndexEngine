@@ -82,6 +82,15 @@ For tests and builds: `pip install -r requirements-dev.txt`, then `pytest`.
 auto-scatter and detection tools in the toolbar. Every object is a `catalog_id` plus a
 detection shape: click to place, drag to move, save to `scene.json`.*
 
+### Scene outline
+
+![Scene outline: list of the objects placed in the scene, two of them selected, with the multi-selection properties on the right](docs/images/editor-outline.jpg)
+
+*The Outline tab lists every object placed in the scene with its layer, goal and minigame
+badges. Search or filter to find one, click to select and bring it into view, double click
+to frame it, ctrl/shift for a multi-selection - the properties panel then edits the whole
+selection at once. The eye and lock buttons hide or freeze objects in the editor only.*
+
 ### One editor, three art styles
 
 | Line art | Cartoon |

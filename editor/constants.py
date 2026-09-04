@@ -41,6 +41,10 @@ CRASH_SAVE_MIN_GAP_S = 1.0
 AUTOSAVE_RETRY_SECS = 15
 UNDO_MAX       = 50
 HANDLE_R       = 4
+# Scene outline: row height and the window a second click still counts as a
+# double click (same feel as the dashboard).
+OUTLINE_ROW_H  = 26
+DOUBLE_CLICK_S = 0.4
 # Cache immagini scalate dell'editor: cap LRU (evict graduale del piu' vecchio)
 IMG_CACHE_MAX  = 512
 # Backup rotativi di scene.json a ogni salvataggio (in .editor_backups/)
@@ -99,6 +103,7 @@ STATE_MAIN        = "main"
 TAB_TREE    = "tree"
 TAB_CATALOG = "catalog"
 TAB_EFFECTS = "effects"
+TAB_OUTLINE = "outline"
 TAB_LAYERS  = "layers"
 TAB_PROPS   = "props"
 

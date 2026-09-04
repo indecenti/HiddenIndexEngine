@@ -141,6 +141,41 @@ class ViewportMixin:
         self.origin_y = cr.top + (cr.height - bh * self.zoom) / 2 - y_min * self.zoom
         self._mark_dirty()
 
+    def _reveal_selection(self, margin: int = 40) -> None:
+        """Bring the selection into view WITHOUT touching the zoom.
+
+        Picking an object from the outline must not re-frame the canvas at a
+        different scale on every click (that is what _zoom_to_selection and the
+        Z shortcut are for): pan only, and only when the selection is not
+        already comfortably inside the canvas.
+        """
+        objs = (self.scene_data or {}).get("objects", [])
+        idxs = list(getattr(self, "selected_indices", []) or [])
+        if self.selected_idx is not None and self.selected_idx not in idxs:
+            idxs.append(self.selected_idx)
+        idxs = [i for i in idxs if 0 <= i < len(objs)]
+        if not idxs:
+            return
+        boxes = [self._get_obj_bbox(objs[i]) for i in idxs]
+        x_min = min(b[0] for b in boxes)
+        y_min = min(b[1] for b in boxes)
+        x_max = max(b[2] for b in boxes)
+        y_max = max(b[3] for b in boxes)
+        cr = self._canvas_rect()
+        if cr.width <= 0 or cr.height <= 0:
+            return
+        sx0, sy0 = self._r2s(x_min, y_min)
+        sx1, sy1 = self._r2s(x_max, y_max)
+        inner = cr.inflate(-margin * 2, -margin * 2)
+        if (inner.left <= sx0 and inner.top <= sy0
+                and sx1 <= inner.right and sy1 <= inner.bottom):
+            return                      # already visible: do not move the view
+        cx = (x_min + x_max) / 2.0
+        cy = (y_min + y_max) / 2.0
+        self.origin_x = cr.centerx - cx * self.zoom
+        self.origin_y = cr.centery - cy * self.zoom
+        self._mark_dirty()
+
     def _zoom_toward(self, sx, sy, factor):
         from editor.ui.draw import _clamp
         old = self.zoom

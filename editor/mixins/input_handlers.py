@@ -17,7 +17,7 @@ from editor.constants import (
     REF_W, REF_H,
     MODE_SELECT, MODE_CIRCLE, MODE_RECT, MODE_EFFECT_PLACE, MODE_SCATTER,
     STATE_GAME_SELECT, STATE_MAIN,
-    TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_LAYERS, TAB_PROPS,
+    TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_OUTLINE, TAB_LAYERS, TAB_PROPS,
     ACCENT, OK_C, ERR_C, WARN_C, TXT, TXT_DIM, FX_C, ALWAYS_C,
     GRID_SIZES, NUDGE_STEP, NUDGE_STEP_FAST, NUDGE_UNDO_GAP_S, OBJ_SNAP_PX,
     UI_SCALE_STEP,
@@ -212,6 +212,9 @@ class InputHandlersMixin:
         # Se siamo in queste modalità e NON è premuto Ctrl, catturiamo l'input.
         if self._editing_prop:
             self._prop_key(ev); return
+
+        if self._outline_key(ev):
+            return
 
         if self.catalog_searching:
             if ev.key in (pygame.K_ESCAPE, pygame.K_RETURN):
@@ -657,9 +660,12 @@ class InputHandlersMixin:
         # 8. CANVAS CONTENT
         cr = self._canvas_rect()
         if _in_rect((mx, my_raw), cr):
-            # Reset stati di ricerca/editing al click sul canvas
+            # Drop every search/edit focus when the canvas is clicked: with the
+            # focus left on a search box the canvas keys (Delete, shortcuts)
+            # would be typed into it instead.
             self.catalog_searching = False
             self.catalog_tag_searching = False
+            self.outline_searching = False
             
             if btn == 1:
                 if self._toolbar_click(mx, my_raw):
@@ -995,6 +1001,8 @@ class InputHandlersMixin:
                     max_scr = max(0, len(getattr(self, "effects_catalog", [])) - visible_items)
                     self.effects_catalog_scroll = _clamp(
                         self.effects_catalog_scroll - ev.y, 0, max_scr)
+                elif self.l_tab == TAB_OUTLINE:
+                    self._outline_scroll_by(ev.y)
                 else:
                     # Scroll Albero Scena
                     self.tree_scroll = _clamp(self.tree_scroll - ev.y, 0, 100)
@@ -1458,16 +1466,16 @@ class InputHandlersMixin:
         
         # 1. Gestione Tab (Area superiore 32px)
         if my < 32:
-            tw = self.panel_l_w // 3
-            new_tab = self.l_tab
-            if mx < tw:     new_tab = TAB_TREE
-            elif mx < tw*2: new_tab = TAB_CATALOG
-            else:           new_tab = TAB_EFFECTS
+            order = (TAB_TREE, TAB_OUTLINE, TAB_CATALOG, TAB_EFFECTS)
+            tw = max(1, self.panel_l_w // len(order))
+            new_tab = order[min(len(order) - 1, mx // tw)]
             
-            is_disabled = (self.active_layer == "effects" and new_tab in (TAB_TREE, TAB_CATALOG))
+            is_disabled = (self.active_layer == "effects"
+                           and new_tab in (TAB_TREE, TAB_CATALOG, TAB_OUTLINE))
             if not is_disabled:
                 self.l_tab = new_tab
                 self.catalog_searching = False
+                self.outline_searching = False
                 self._status(self._TR("ih_tab", "Tab: {0}").format(self.l_tab.upper()), ACCENT, 1)
             else:
                 self._status(self._TR("ih_tab_disabled_fx", "Tab disabled in Effects mode"), (255, 100, 100), 2)
@@ -1477,6 +1485,9 @@ class InputHandlersMixin:
             return True
         if self.l_tab == TAB_TREE:
             self._tree_click(mx, my)
+            return True
+        if self.l_tab == TAB_OUTLINE:
+            self._outline_click(mx, my_raw)
             return True
         if self.l_tab == TAB_EFFECTS:
             self._effects_catalog_click(mx, my_raw)

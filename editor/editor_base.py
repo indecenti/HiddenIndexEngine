@@ -96,6 +96,7 @@ from editor.mixins.scatter_modal import ScatterModalMixin
 from editor.mixins.scene_stats import SceneStatsMixin
 from editor.mixins.presets import PresetsMixin
 from editor.mixins.batch_import import BatchImportMixin
+from editor.mixins.outline import OutlineMixin
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -126,6 +127,7 @@ class LevelEditor(
     SceneStatsMixin,
     PresetsMixin,
     BatchImportMixin,
+    OutlineMixin,
 ):
     """
     Editor di livelli HiddenEngine.
@@ -263,6 +265,15 @@ class LevelEditor(
         self.panel_l_w      = 300
         self.panel_r_w      = 300
         self.panels_visible = True
+
+        # ── Scene outline ────────────────────────────────────────────────────
+        self.outline_search        = ""
+        self.outline_searching     = False
+        self.outline_scroll        = 0
+        self.outline_filter_goal   = False   # only the goal objects
+        self.outline_filter_layer  = False   # only the active layer
+        self._outline_anchor       = None    # shift+click range anchor
+        self._outline_last_sel     = None    # last selection the list followed
 
         # ── Catalog search ───────────────────────────────────────────────────
         self.catalog_search    = ""
