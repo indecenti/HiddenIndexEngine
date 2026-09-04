@@ -40,6 +40,8 @@ export and in the Android APK.*
   is one click from the project browser.
 - **Camouflage-aware auto-scatter** — places objects where they actually blend in, scoring
   the rendered result in Lab color space instead of scattering at random.
+- **Replayable scenes** — every run redraws which objects count as goals, and can swap the
+  whole object layer, so the same scene never plays the same way twice.
 - **Three catalog styles** — photoreal, line art and cartoon, over 1,600 objects ready to
   place, filtered by style and tag.
 - **Plugin minigames** — sudoku, spot the differences, asteroids, centipede, tetran, tower,
@@ -90,6 +92,19 @@ detection shape: click to place, drag to move, save to `scene.json`.*
 badges. Search or filter to find one, click to select and bring it into view, double click
 to frame it, ctrl/shift for a multi-selection - the properties panel then edits the whole
 selection at once. The eye and lock buttons hide or freeze objects in the editor only.*
+
+### Replayable scenes
+
+![Scene properties with Auto Randomization and Random Layer Mode on, and the quantity of objects to find](docs/images/editor-replay.jpg)
+
+*Two scene switches keep a scene worth replaying. **Auto Randomization** rotates the
+objects to find: the scene keeps its full pool of placed objects and every run draws
+`Quantity to find` of them as goals, so the same background asks for a different list each
+time (objects marked as always shown stay in every run). **Random Layer Mode** rotates the
+layers: each run loads only one of the three interchangeable object layers - low, mid,
+high - so one background can hold three alternative sets, while overlay and fixed layers
+are always kept. Both are replicated in the JS runtime, so the EXE, the web build and the
+APK behave the same.*
 
 ### One editor, three art styles
 
