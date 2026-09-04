@@ -1,0 +1,62 @@
+name: Bug report
+description: Segnala un malfunzionamento del gioco o dell'editor
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Per le vulnerabilita' di sicurezza NON usare questo template:
+        vedi [SECURITY.md](../blob/main/SECURITY.md).
+
+  - type: textarea
+    id: descrizione
+    attributes:
+      label: Descrizione
+      description: Cosa succede e cosa ti aspettavi che succedesse.
+    validations:
+      required: true
+
+  - type: textarea
+    id: riproduzione
+    attributes:
+      label: Come riprodurlo
+      description: Passi esatti, incluso il comando lanciato.
+      placeholder: |
+        1. python main.py --game Malonno_Survivors --lang it
+        2. Apri la scena Formis
+        3. Clicca su ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Traceback / log
+      description: Incolla il testo completo, non uno screenshot.
+      render: text
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Engine (runtime di gioco)
+        - Editor
+        - Export web
+        - Build Android
+        - Build desktop / EXE
+        - Minigiochi
+        - Altro / non so
+    validations:
+      required: true
+
+  - type: input
+    id: ambiente
+    attributes:
+      label: Ambiente
+      description: Sistema operativo, versione di Python, versione di HIE (file VERSION).
+      placeholder: "Windows 11, Python 3.12.4, HIE 0.1.0"
+    validations:
+      required: true

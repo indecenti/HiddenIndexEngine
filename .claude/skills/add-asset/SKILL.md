@@ -13,7 +13,7 @@ Pipeline di aggiunta asset oggetto.
    Script di riferimento in `scratch/` (`crop_and_import*.py`, `process_grid*.py`)
    e `tools/process_assets.py`. Leggi l'header dello script prima di usarlo.
 2. **Rimozione sfondo (rembg)**: produce PNG con alpha pulito.
-   Vedi `fix_all_images_rembg.py` (root) e `docs/assets/IMAGE_PROCESSING_GUIDELINES.md`.
+   Vedi `scratch/import_scripts/fix_all_images_rembg.py` e `docs/assets/IMAGE_PROCESSING_GUIDELINES.md`.
    I PNG vivono SEMPRE su filesystem (mai in-JSON).
 3. **Posizione file**: asset condivisi in `engine/assets/objects_cartoon/` (o
    `objects_lineart/`); asset specifici di un gioco in `games/<game>/objects/`.

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Domande d'uso
+    url: https://github.com/indecenti/HiddenIndexEngine/discussions
+    about: Per domande su come usare l'engine o l'editor, usa le Discussions.
+  - name: Vulnerabilita' di sicurezza
+    url: https://github.com/indecenti/HiddenIndexEngine/security/advisories/new
+    about: Segnala privatamente. Non aprire una issue pubblica.

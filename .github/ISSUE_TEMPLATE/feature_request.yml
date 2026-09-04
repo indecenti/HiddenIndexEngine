@@ -1,0 +1,35 @@
+name: Proposta di funzionalita'
+description: Proponi una nuova funzionalita' o un miglioramento
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Problema
+      description: Quale problema concreto risolve? Evita di partire dalla soluzione.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Proposta
+      description: Come immagini che funzioni.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternative
+    attributes:
+      label: Alternative valutate
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: sync
+    attributes:
+      label: Impatto
+      options:
+        - label: Tocca l'engine e quindi va replicato nel runtime web (vedi docs/web/WEB_EXPORT_SYNC.md)
+        - label: Richiede una nuova dipendenza
+        - label: Cambia il formato di scene.json o dei cataloghi

@@ -66,3 +66,15 @@ web_platform/catalog.json
 # Editor cache (rigenerabile)
 .editor_cache/
 .editor_backups/
+
+# Impostazioni locali dell'editor (contengono path assoluti della macchina)
+.editor_settings.json
+
+# Immagini di lavoro sparse nella root: gli asset veri stanno in
+# engine/assets/ o games/<id>/. Tutto il resto in root e' scarto.
+/*.png
+/*.jpg
+/*.jpeg
+
+# Miniature cache della libreria sfondi (rigenerabili)
+engine/assets/backgrounds/.thumbs/

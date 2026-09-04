@@ -1,93 +1,210 @@
-# HiddenIndexEngine
+<p align="center">
+  <img src="docs/images/logo.png" width="180" alt="HiddenIndexEngine">
+</p>
 
-[Italiano](#italiano) | [English](#english) | [Español](#español) | [Français](#français) | [Deutsch](#deutsch)
+<h1 align="center">HiddenIndexEngine</h1>
 
----
+<p align="center">
+  <b>Open source engine and visual editor for Hidden Object Games.</b><br>
+  Build once in Python, ship to Windows, the web and Android.
+</p>
 
-## Italiano
+<p align="center">
+  <a href="https://github.com/indecenti/HiddenIndexEngine/actions/workflows/ci.yml"><img src="https://github.com/indecenti/HiddenIndexEngine/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/code-Apache--2.0-blue.svg" alt="Code license: Apache-2.0"></a>
+  <a href="LICENSE-ASSETS.md"><img src="https://img.shields.io/badge/assets-CC%20BY%204.0-lightgrey.svg" alt="Assets license: CC BY 4.0"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.12-blue.svg" alt="Python 3.12"></a>
+  <a href="https://www.pygame.org/"><img src="https://img.shields.io/badge/pygame-2.6-green.svg" alt="pygame 2.6"></a>
+</p>
 
-**HiddenIndexEngine** è un motore di gioco modulare e performante, specificamente progettato per la creazione professionale di **Hidden Object Games (HOG)**. La sua architettura è ottimizzata per gestire flussi di produzione complessi, garantendo massima flessibilità e scalabilità creativa.
+<p align="center">
+  <a href="#try-it">Try it</a> &nbsp;·&nbsp;
+  <a href="#the-editor">Editor</a> &nbsp;·&nbsp;
+  <a href="#one-project-three-targets">Export</a> &nbsp;·&nbsp;
+  <a href="#scenes-and-minigames">Scenes</a> &nbsp;·&nbsp;
+  <a href="#documentation">Docs</a> &nbsp;·&nbsp;
+  <a href="#license">License</a>
+</p>
 
-### Caratteristiche Principali
+![Malonno Survivors, Villa Rosa scene: HUD with hints, object list, timer and score](docs/images/play-villa-rosa.jpg)
 
-*   **🧩 Sistema di Minigiochi Modulare**: Gestione nativa di minigiochi tramite un'architettura a plugin. Permette di integrare puzzle logici, sfide arcade o meccaniche personalizzate in modo fluido e indipendente.
-*   **🖼️ Gestione Asset Avanzata**: Engine ottimizzato per il caricamento e la manipolazione di cataloghi grafici massivi. Supporta sfondi ad altissima risoluzione e oggetti interattivi con una gestione evoluta del rendering.
-*   **💬 Bubble Tips & Fumetti**: Sistema di narrazione e tutorial tramite elementi visivi interattivi. Supporta trigger automatici, personalizzazione estetica completa e pulsanti di interazione per guidare il giocatore.
-*   **🎵 Audio & Atmosfera**: Gestione dedicata per musiche d'atmosfera dinamiche e layer sonori multipli, con supporto a dissolvenze incrociate ed effetti ambientali.
-*   **🌍 Localizzazione Istantanea**: Supporto nativo multilingua con caricamento dinamico dei contenuti, semplificando la distribuzione globale del gioco.
-*   **⚙️ Integrità dei Dati**: Architettura basata su validazione costante per assicurare che scene, livelli e configurazioni siano sempre coerenti e privi di errori.
-*   **🏗️ Sistema di Build Dedicato**: Strumenti di esportazione automatizzata per la creazione di pacchetti eseguibili ottimizzati e pronti per la distribuzione.
-*   **🖥️ Editor Visuale Integrato**: Suite completa per la creazione di scene e livelli, che permette il posizionamento degli asset e la configurazione degli eventi in tempo reale.
-*   **📏 Scaling Intelligente**: Gestione automatica delle diverse risoluzioni e formati di schermo, garantendo una resa visiva perfetta su ogni dispositivo.
+*Malonno Survivors, Villa Rosa scene, desktop runtime. The same scene, from the same
+`scene.json`, also runs in the web export and in the Android APK.*
 
----
+## Highlights
 
-## English
+- **Visual editor** — scenes, objects, catalog, tags, translations and builds from a single
+  window. No hand-written JSON.
+- **Three targets, one project** — Windows EXE, static HTML5 site, Android APK/AAB. Each
+  is one click from the project browser.
+- **Camouflage-aware auto-scatter** — places objects where they actually blend in, scoring
+  the rendered result in Lab color space instead of scattering at random.
+- **Three catalog styles** — photoreal, line art and cartoon, over 1,600 objects ready to
+  place, filtered by style and tag.
+- **Plugin minigames** — sudoku, spot the differences, asteroids, centipede, tetran, tower,
+  pong, slot machine, arcade. Add your own without touching the core.
+- **Hints, speech bubbles, HUD, save games, results screen** — all included and themed
+  (default, horror, kids, mystery, cyber neon skins).
+- **Five languages** — it, en, es, fr, de. Strings are harvested automatically when a scene
+  is saved.
 
-**HiddenIndexEngine** is a high-performance, modular game engine specifically tailored for the professional creation of **Hidden Object Games (HOG)**. Its architecture is optimized to handle complex production pipelines, ensuring maximum flexibility and creative scalability.
+Status: pre-1.0, under active development. Desktop tested on Windows 10/11; Android
+validated on the emulator.
 
-### Core Features
+## Try it
 
-*   **🧩 Modular Minigame System**: Native minigame management through a plugin architecture. Seamlessly integrate logic puzzles, arcade challenges, or custom mechanics in a fluid and independent manner.
-*   **🖼️ Advanced Asset Management**: Optimized engine for loading and manipulating massive graphical catalogs. Supports ultra-high-resolution backgrounds and interactive objects with evolved rendering management.
-*   **💬 Bubble Tips & Speech Bubbles**: Narrative and tutorial system using interactive visual elements. Supports automatic triggers, full aesthetic customization, and interaction buttons to guide the player.
-*   **🎵 Audio & Atmosphere**: Dedicated management for dynamic atmospheric music and multiple sound layers, with support for cross-fades and environmental effects.
-*   **🌍 Instant Localization**: Native multi-language support with dynamic content loading, simplifying global game distribution.
-*   **⚙️ Data Integrity**: Architecture based on constant validation to ensure that scenes, levels, and configurations are always consistent and error-free.
-*   **🏗️ Dedicated Build System**: Automated export tools for creating optimized executable packages ready for distribution.
-*   **🖥️ Integrated Visual Editor**: A complete suite for creating scenes and levels, allowing real-time asset placement and event configuration.
-*   **📏 Intelligent Scaling**: Automatic management of various resolutions and screen formats, ensuring perfect visual quality on any device.
+Requires **Python 3.12** on Windows 10/11.
 
----
+```bash
+git clone https://github.com/indecenti/HiddenIndexEngine.git
+cd HiddenIndexEngine
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-## Español
+```bash
+python main.py                                        # demo game (Malonno Survivors)
+python main.py --scene Welcome_To_Malonno/Villa_Rosa  # jump straight into one scene
+python main.py --minigame sudoku                      # run a minigame
+python run_editor.py                                  # level editor
+```
 
-**HiddenIndexEngine** es un motor de juego modular y de alto rendimiento, diseñado específicamente para la creación profesional de **Hidden Object Games (HOG)**. Su arquitectura está optimizada para manejar flujos de producción complejos, garantizando la máxima flexibilidad y escalabilidad creativa.
+For tests and builds: `pip install -r requirements-dev.txt`, then `pytest`.
 
-### Características Principales
+## The editor
 
-*   **🧩 Sistema de Minijuegos Modular**: Gestión nativa de minijuegos mediante una arquitectura de complementos. Permite integrar acertijos lógicos, desafíos arcade o mecánicas personalizadas de forma fluida e independiente.
-*   **🖼️ Gestión de Recursos Avanzada**: Motor optimizado para la carga y manipulación de catálogos gráficos masivos. Admite fondos de ultra alta resolución y objetos interactivos con una gestión de renderizado evolucionada.
-*   **💬 Bubble Tips y Bocadillos**: Sistema de narración y tutorial mediante elementos visuales interactivos. Soporta activadores automáticos, personalización estética completa y botones de interacción para guiar al jugador.
-*   **🎵 Audio y Atmósfera**: Gestión dedicada para música atmosférica dinámica y múltiples capas de sonido, con soporte para fundidos cruzados y efectos ambientales.
-*   **🌍 Localización Instantánea**: Soporte multilingüe nativo con carga dinámica de contenidos, simplificando la distribución global del juego.
-*   **⚙️ Integridad de Datos**: Arquitectura basada en la validación constante para asegurar que las escenas, niveles y configuraciones sean siempre coherentes y sin errores.
-*   **🏗️ Sistema de Build Dedicado**: Herramientas de exportación automatizadas para crear paquetes ejecutables optimizados y listos para la distribución.
-*   **🖥️ Editor Visual Integrado**: Suite completa para la creación de escenas y niveles, que permite el posicionamiento de recursos y la configuración de eventos en tiempo real.
-*   **📏 Escalado Inteligente**: Gestión automática de diferentes resoluzioni y formatos de pantalla, garantizando una calidad visual perfecta en cualquier dispositivo.
+![Level editor: Brescia_Edolo scene with the object catalog, detection shapes and the layer panel](docs/images/editor-scene.jpg)
 
----
+*Object catalog with tag filters on the left, layers and scene properties on the right,
+auto-scatter and detection tools in the toolbar. Every object is a `catalog_id` plus a
+detection shape: click to place, drag to move, save to `scene.json`.*
 
-## Français
+### One editor, three art styles
 
-**HiddenIndexEngine** est un moteur de jeu modulaire et performant, spécifiquement conçu pour la création professionnelle de **Hidden Object Games (HOG)**. Son architecture est optimisée pour gérer des pipelines de production complexes, garantissant une flexibilité maximale et une évolutivité créative.
+| Line art | Cartoon |
+|:---:|:---:|
+| ![LineVenture line-art scene in the editor, catalog filtered on the line-art style](docs/images/editor-lineart.jpg) | ![LineVenture cartoon scene in the editor, catalog filtered on the cartoon style](docs/images/editor-cartoon.jpg) |
 
-### Caractéristiques Principales
+*The catalog switches style with the scene. The properties panel handles background,
+randomization, translations, flashlight effect and scene music.*
 
-*   **🧩 Système de Mini-jeux Modulaire**: Gestion native des mini-jeux via une architecture de plugins. Permet d'intégrer des puzzles logiques, des défis d'arcade ou des mécaniques personnalisées de manière fluide et indépendante.
-*   **🖼️ Gestion Avancée des Ressources**: Moteur optimisé pour le chargement et la manipulation de catalogues graphiques massifs. Prend en charge les arrière-plans ultra-haute résolution et les objets interactifs avec une gestion du rendu évoluée.
-*   **💬 Bubble Tips & Bulles**: Système de narration et de tutoriel utilisant des éléments visuels interactifs. Prend en charge les déclencheurs automatiques, la personnalisation esthétique complète et les boutons d'interaction pour guider le joueur.
-*   **🎵 Audio & Atmosphère**: Gestion dédiée pour la musique d'ambiance dynamique et plusieurs couches sonores, avec prise en charge des fondus enchaînés et des effets environnementaux.
-*   **🌍 Localisation Instantanée**: Support multilingue natif avec chargement dynamique du contenu, simplifiant la distribution mondiale du jeu.
-*   **⚙️ Intégrité des Données**: Architecture basée sur une validation constante pour garantir que les scènes, les niveaux et les configurations sont toujours cohérents et sans erreur.
-*   **🏗️ Système de Build Dédié**: Outils d'exportation automatisés pour créer des packages exécutables optimisés et prêts pour la distribution.
-*   **🖥️ Éditeur Visuel Intégré**: Suite complète pour la création de scènes et de niveaux, permettant le placement des ressources et la configuration des événements en temps réel.
-*   **📏 Mise à l'Échelle Intelligente**: Gestion automatique des différentes résolutions et formats d'écran, garantissant une qualité visuelle parfaite sur n'importe quel appareil.
+### Projects and assets
 
----
+| Project browser | Background and tag library |
+|:---:|:---:|
+| ![Project browser: recent scenes, games, levels and scenes](docs/images/editor-browser.jpg) | ![Background library with per-image tags and drag-and-drop upload](docs/images/editor-backgrounds.jpg) |
+| **New game wizard** | **Music library** |
+| ![New game dialog: id, target platform, background image or video, playlist](docs/images/editor-newgame.jpg) | ![Engine music library with playback and per-track tags](docs/images/editor-music.jpg) |
 
-## Deutsch
+## One project, three targets
 
-**HiddenIndexEngine** ist eine leistungsstarke, modulare Game-Engine, die speziell für die professionelle Erstellung von **Wimmelbildspielen (Hidden Object Games, HOG)** entwickelt wurde. Die Architektur ist für komplexe Produktionspipelines optimiert und gewährleistet maximale Flexibilität und kreative Skalierbarkeit.
+![Pipeline: the level editor writes the game project, which ships as a Windows EXE, an HTML5 site or an Android APK](docs/images/pipeline.png)
 
-### Hauptmerkmale
+A game is a folder, `games/<id>/`, and all three builds start from that same folder. The
+project browser has one button per target next to each game, and every build copies only
+the assets the scenes actually reference (smart packaging), so bundles stay small.
 
-*   **🧩 Modulares Minispiel-System**: Natives Minispiel-Management durch eine Plugin-Architektur. Integrieren Sie Logikrätsel, Arcade-Herausforderungen oder benutzerdefinierte Mechaniken nahtlos und unabhängig.
-*   **🖼️ Erweitertes Asset-Management**: Optimierte Engine zum Laden und Bearbeiten massiver grafischer Kataloge. Unterstützt ultra-hochauflösende Hintergründe und interaktive Objekte mit fortschrittlichem Rendering-Management.
-*   **💬 Bubble Tips & Sprechblasen**: Narratives und Tutorial-System mit interaktiven visuellen Elementen. Unterstützt automatische Trigger, vollständige ästhetische Anpassung und Interaktionsschaltflächen zur Spielerführung.
-*   **🎵 Audio & Atmosphäre**: Dediziertes Management für dynamische atmosphärische Musik und mehrere Soundebenen, einschließlich Cross-Fades und Umgebungseffekten.
-*   **🌍 Sofortige Lokalisierung**: Native mehrsprachige Unterstützung mit dynamischem Laden von Inhalten, was den weltweiten Spielevertrieb vereinfacht.
-*   **⚙️ Datenintegrität**: Architektur basierend auf ständiger Validierung, um sicherzustellen, dass Szenen, Levels und Konfigurationen immer konsistent und fehlerfrei sind.
-*   **🏗️ Dediziertes Build-System**: Automatisierte Export-Tools zur Erstellung optimierter, vertriebsbereiter ausführbarer Pakete.
-*   **🖥️ Integrierter Visueller Editor**: Komplette Suite zur Erstellung von Szenen und Levels, die das Platzieren von Assets und das Konfigurieren von Events in Echtzeit ermöglicht.
-*   **📏 Intelligente Skalierung**: Automatische Verwaltung verschiedener Auflösungen und Bildschirmformate, die eine perfekte visuelle Qualität auf jedem Gerät garantiert.
+### Windows EXE
+
+- **What you get** — a one-folder PyInstaller bundle in `dist/`: the engine, `main.py`, a
+  ready `config.ini` and the game, nothing else. Typically 100-150 MB for a full game.
+- **How** — the *Build EXE* button in the project browser. A progress window with a
+  watchdog runs PyInstaller, then validates the bundle. The CI does the same for the editor
+  itself (`HiddenEditor.spec`) and publishes it as a workflow artifact.
+- **Docs** — [docs/build/](docs/build/).
+
+### Web (HTML5)
+
+- **What you get** — a self-contained static site in `build_web/<id>/v<X.Y>/`: HTML, CSS,
+  a JavaScript runtime and every asset copied or transcoded next to it. Builds are
+  versioned, `index.html` redirects to the latest one, `builds.json` keeps the history.
+- **How** — the *Export HTML* button, or from the command line:
+
+  ```bash
+  python -m editor.web_exporter Malonno_Survivors
+  ```
+
+  Open `build_web/Malonno_Survivors/index.html` with a double-click (it works from
+  `file://`), run `avvia_server.bat` for a local server, or upload the folder to any static
+  host: GitHub Pages, Netlify, itch.io.
+- **Under the hood** — the JavaScript runtime does not wrap Python: it re-implements the
+  engine's scaling, click detection, level flow, hints, effects, save games and minigames.
+  Shared constants come from a single source (`editor/web_rules.py`) and the contract
+  between the two runtimes is enforced by `pytest tests/test_web_sync.py`.
+- **Docs** — [docs/web/WEB_EXPORT.md](docs/web/WEB_EXPORT.md),
+  [docs/web/WEB_EXPORT_SYNC.md](docs/web/WEB_EXPORT_SYNC.md).
+
+### Android APK and AAB
+
+- **What you get** — one APK per game (`--release` produces an AAB for the Play Store),
+  arm64, minSdk 24 (Android 7+), landscape, pinch-to-zoom and pan on the scene. Asset
+  pruning cut the LineVenture APK from 558 MB to 135 MB.
+- **How** — the *Build APK* button, or from the command line:
+
+  ```bash
+  python editor/android_build_manager.py Malonno_Survivors 1.0 build/Malonno_Survivors/1.0
+  ```
+
+  The build runs buildozer and python-for-android inside **WSL2** (Ubuntu 24.04) with
+  pygame-ce and NDK 28 (16 KB page alignment, required by Android 15+). Setup and helper
+  scripts are in [scripts/](scripts/), starting with `setup_android_wsl.sh`.
+- **Docs** — [docs/android/](docs/android/).
+
+## Scenes and minigames
+
+![Three scenes, one per art style: Villa Rosa cellar (photoreal), toy shop (line art), camping (cartoon)](docs/images/scenes.jpg)
+
+*One scene per art style: photoreal, line art, cartoon.* Two sample games are included:
+**Malonno Survivors** (horror, 14 photoreal scenes) and **LineVenture** (line art and
+cartoon, 3 scenes). Backgrounds and objects are AI-generated and refined with the editor
+pipeline (cropping, background removal, cataloging).
+
+![Spot the differences and sudoku minigames](docs/images/minigames.jpg)
+
+*Two of the nine bundled minigames: spot the differences on line-art assets, and sudoku
+with its tutorial bubble.*
+
+## How it works
+
+A scene is `games/<game>/levels/<level>/<scene>/scene.json` plus a `background.png`.
+Each object has a `catalog_id`, a position in the background's native pixel space and a
+detection shape (`circle`, `rect`, `mask`). The `catalog_id` resolves against the merged
+catalog: the shared one in `engine/data/` plus the game's own `objects_catalog.json`, which
+wins on conflicts. The editor writes all of this; the runtime scales it to any screen.
+
+| Path | What lives there |
+|------|------------------|
+| `engine/` | Game runtime: core loop, scene loader, catalog, HUD, scaling, hints, menus, minigames |
+| `engine/assets/` | Shared backgrounds, objects, music, themes, engine strings |
+| `editor/` | Level editor, desktop and Android build systems, web exporter and JS runtime |
+| `games/<id>/` | One game: config, local catalog, levels, scenes, translations |
+| `tools/` | Catalog audit, tag normalization, headless preview, MCP server |
+| `tests/` | pytest suite, including the engine-to-web sync contract |
+
+## Documentation
+
+Written in Italian. Full index in [docs/README.md](docs/README.md); useful entry points:
+
+- [Coordinate system](docs/engine/COORDINATE_SYSTEM.md) and [hint system](docs/engine/HINT_SYSTEM.md)
+- [Writing a minigame](docs/engine/MINIGAMES_DEVELOPMENT.md)
+- [Web export](docs/web/WEB_EXPORT.md) and the [engine-to-web sync contract](docs/web/WEB_EXPORT_SYNC.md)
+- [Android porting plan](docs/android/ANDROID_PORTING_PLAN.md) and [mobile UX audit](docs/android/ANDROID_MOBILE_UX_AUDIT.md)
+- [Asset workflow](docs/assets/ASSETS_WORKFLOW.md) and [tag taxonomy](docs/assets/TAGS_TAXONOMY.md)
+- [Roadmap](docs/ROADMAP.md)
+
+## Contributing
+
+Rules and setup in [CONTRIBUTING.md](CONTRIBUTING.md). Issues and pull requests are welcome
+in English or Italian. Security issues: see [SECURITY.md](SECURITY.md), do not open a
+public issue.
+
+## License
+
+- **Code** — [Apache 2.0](LICENSE). Fine for closed-source commercial games too.
+- **Assets** (images, music, sounds, README media) — [CC BY 4.0](LICENSE-ASSETS.md).
+- **Third party** — fonts, pygame and other dependencies, Lucide icons in the diagram:
+  [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). pygame is LGPL: distributed builds
+  must ship its license text.
+
+Copyright 2026 Indecenti.

@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="760" viewBox="0 0 1600 760">
+<defs><marker id="m_acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3b7ddd"/></marker><marker id="m_win" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4aa3ff"/></marker><marker id="m_web" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3ddc97"/></marker><marker id="m_and" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a4c639"/></marker></defs>
+<rect width="1600" height="760" fill="#12161e"/>
+<text x="800.0" y="58" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="34" fill="#e6e9ef" font-weight="600" text-anchor="middle">One project, three targets</text>
+<text x="800.0" y="92" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="19" fill="#8e98aa" font-weight="normal" text-anchor="middle">Build in the editor, ship the same game everywhere</text>
+<rect x="60" y="150" width="400" height="540" rx="14" fill="#1a2130" stroke="#2b3548" stroke-width="2"/>
+<text x="88" y="194" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15" fill="#3b7ddd" font-weight="600" text-anchor="start">CREATE</text>
+<g transform="translate(88,212) scale(1.667)" fill="none" stroke="#3b7ddd" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13" />
+  <path d="m8 6 2-2" />
+  <path d="m18 16 2-2" />
+  <path d="m17 11 4.3 4.3c.94.94.94 2.46 0 3.4l-2.6 2.6c-.94.94-2.46.94-3.4 0L11 17" />
+  <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+  <path d="m15 5 4 4" /></g>
+<text x="144" y="242" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="26" fill="#e6e9ef" font-weight="600" text-anchor="start">Level editor</text>
+<g transform="translate(90,300) scale(1.250)" fill="none" stroke="#8e98aa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
+  <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
+  <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" /></g>
+<text x="136" y="322" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="19" fill="#e6e9ef" font-weight="normal" text-anchor="start">Scenes, objects, detection shapes</text>
+<g transform="translate(90,360) scale(1.250)" fill="none" stroke="#8e98aa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72" />
+  <path d="m14 7 3 3" />
+  <path d="M5 6v4" />
+  <path d="M19 14v4" />
+  <path d="M10 2v2" />
+  <path d="M7 8H3" />
+  <path d="M21 16h-4" />
+  <path d="M11 3H9" /></g>
+<text x="136" y="382" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="19" fill="#e6e9ef" font-weight="normal" text-anchor="start">Camouflage-aware auto-scatter</text>
+<g transform="translate(90,420) scale(1.250)" fill="none" stroke="#8e98aa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 11-1.296-1.296a2.4 2.4 0 0 0-3.408 0L11 16" />
+  <path d="M4 8a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2" />
+  <circle cx="13" cy="7" r="1" fill="currentColor" />
+  <rect x="8" y="2" width="14" height="14" rx="2" /></g>
+<text x="136" y="442" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="19" fill="#e6e9ef" font-weight="normal" text-anchor="start">Backgrounds and object catalog</text>
+<g transform="translate(90,480) scale(1.250)" fill="none" stroke="#8e98aa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13" />
+  <circle cx="6" cy="18" r="3" />
+  <circle cx="18" cy="16" r="3" /></g>
+<text x="136" y="502" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="19" fill="#e6e9ef" font-weight="normal" text-anchor="start">Music library and playlists</text>
+<g transform="translate(90,540) scale(1.250)" fill="none" stroke="#8e98aa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6" />
+  <path d="m4 14 6-6 2-3" />
+  <path d="M2 5h12" />
+  <path d="M7 2h1" />
+  <path d="m22 22-5-10-5 10" />
+  <path d="M14 18h6" /></g>
+<text x="136" y="562" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="19" fill="#e6e9ef" font-weight="normal" text-anchor="start">Translations, five languages</text>
+<g transform="translate(90,600) scale(1.250)" fill="none" stroke="#8e98aa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.39 4.39a1 1 0 0 0 1.68-.474 2.5 2.5 0 1 1 3.014 3.015 1 1 0 0 0-.474 1.68l1.683 1.682a2.414 2.414 0 0 1 0 3.414L19.61 15.39a1 1 0 0 1-1.68-.474 2.5 2.5 0 1 0-3.014 3.015 1 1 0 0 1 .474 1.68l-1.683 1.682a2.414 2.414 0 0 1-3.414 0L8.61 19.61a1 1 0 0 0-1.68.474 2.5 2.5 0 1 1-3.014-3.015 1 1 0 0 0 .474-1.68l-1.683-1.682a2.414 2.414 0 0 1 0-3.414L4.39 8.61a1 1 0 0 1 1.68.474 2.5 2.5 0 1 0 3.014-3.015 1 1 0 0 1-.474-1.68l1.683-1.682a2.414 2.414 0 0 1 3.414 0z" /></g>
+<text x="136" y="622" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="19" fill="#e6e9ef" font-weight="normal" text-anchor="start">Minigame triggers</text>
+<rect x="560" y="150" width="420" height="540" rx="14" fill="#1a2130" stroke="#2b3548" stroke-width="2"/>
+<text x="588" y="194" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15" fill="#3b7ddd" font-weight="600" text-anchor="start">PROJECT</text>
+<g transform="translate(588,212) scale(1.667)" fill="none" stroke="#3b7ddd" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2.5a1 1 0 0 1-.8-.4l-.9-1.2A1 1 0 0 0 15 3h-2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z" />
+  <path d="M20 21a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1h-2.9a1 1 0 0 1-.88-.55l-.42-.85a1 1 0 0 0-.92-.6H13a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z" />
+  <path d="M3 5a2 2 0 0 0 2 2h3" />
+  <path d="M3 3v13a2 2 0 0 0 2 2h3" /></g>
+<text x="644" y="242" font-family="Consolas, 'Courier New', monospace" font-size="26" fill="#e6e9ef" font-weight="600" text-anchor="start">games/&lt;id&gt;/</text>
+<text x="592" y="300" font-family="Consolas, 'Courier New', monospace" font-size="19" fill="#e6e9ef" font-weight="normal" text-anchor="start">game_config.json</text>
+<text x="592" y="334" font-family="Consolas, 'Courier New', monospace" font-size="19" fill="#e6e9ef" font-weight="normal" text-anchor="start">objects_catalog.json</text>
+<text x="592" y="368" font-family="Consolas, 'Courier New', monospace" font-size="19" fill="#e6e9ef" font-weight="normal" text-anchor="start">levels/&lt;level&gt;/&lt;scene&gt;/</text>
+<text x="628" y="402" font-family="Consolas, 'Courier New', monospace" font-size="19" fill="#8e98aa" font-weight="normal" text-anchor="start">scene.json</text>
+<text x="628" y="436" font-family="Consolas, 'Courier New', monospace" font-size="19" fill="#8e98aa" font-weight="normal" text-anchor="start">background.png</text>
+<text x="592" y="470" font-family="Consolas, 'Courier New', monospace" font-size="19" fill="#e6e9ef" font-weight="normal" text-anchor="start">objects/*.png</text>
+<text x="592" y="504" font-family="Consolas, 'Courier New', monospace" font-size="19" fill="#e6e9ef" font-weight="normal" text-anchor="start">strings/{it,en,es,fr,de}.json</text>
+<rect x="584" y="562" width="372" height="96" rx="12" fill="#16213a" stroke="#3b7ddd" stroke-width="1.5"/>
+<g transform="translate(600,578) scale(1.250)" fill="none" stroke="#3b7ddd" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="11" y2="11" />
+  <line x1="8" x2="8" y1="9" y2="13" />
+  <line x1="15" x2="15.01" y1="12" y2="12" />
+  <line x1="18" x2="18.01" y1="10" y2="10" />
+  <path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z" /></g>
+<text x="644" y="602" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="20" fill="#e6e9ef" font-weight="600" text-anchor="start">Engine runtime</text>
+<text x="600" y="636" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="16" fill="#8e98aa" font-weight="normal" text-anchor="start">Python 3.12 + pygame: scaling, hints, HUD, saves</text>
+<rect x="1080" y="150" width="460" height="150" rx="14" fill="#1a2130" stroke="#4aa3ff" stroke-width="2"/>
+<g transform="translate(1108,180) scale(2.000)" fill="none" stroke="#4aa3ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2" />
+  <line x1="8" x2="16" y1="21" y2="21" />
+  <line x1="12" x2="12" y1="17" y2="21" /></g>
+<text x="1176" y="208" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="26" fill="#e6e9ef" font-weight="600" text-anchor="start">Windows EXE</text>
+<text x="1176" y="242" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="17" fill="#8e98aa" font-weight="normal" text-anchor="start">PyInstaller, one folder, smart asset packaging</text>
+<text x="1176" y="272" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15" fill="#4aa3ff" font-weight="normal" text-anchor="start">one click from the project browser</text>
+<path d="M980,420.0 C1028.0,420.0 1028.0,225.0 1076,225.0" fill="none" stroke="#4aa3ff" stroke-width="3" marker-end="url(#m_win)"/>
+<rect x="1080" y="345" width="460" height="150" rx="14" fill="#1a2130" stroke="#3ddc97" stroke-width="2"/>
+<g transform="translate(1108,375) scale(2.000)" fill="none" stroke="#3ddc97" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
+  <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+  <path d="M2 12h20" /></g>
+<text x="1176" y="403" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="26" fill="#e6e9ef" font-weight="600" text-anchor="start">Web (HTML5)</text>
+<text x="1176" y="437" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="17" fill="#8e98aa" font-weight="normal" text-anchor="start">Static site, JS runtime mirrors the engine</text>
+<text x="1176" y="467" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15" fill="#3ddc97" font-weight="normal" text-anchor="start">one click from the project browser</text>
+<path d="M980,420.0 C1028.0,420.0 1028.0,420.0 1076,420.0" fill="none" stroke="#3ddc97" stroke-width="3" marker-end="url(#m_web)"/>
+<rect x="1080" y="540" width="460" height="150" rx="14" fill="#1a2130" stroke="#a4c639" stroke-width="2"/>
+<g transform="translate(1108,570) scale(2.000)" fill="none" stroke="#a4c639" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+  <path d="M12 18h.01" /></g>
+<text x="1176" y="598" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="26" fill="#e6e9ef" font-weight="600" text-anchor="start">Android APK / AAB</text>
+<text x="1176" y="632" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="17" fill="#8e98aa" font-weight="normal" text-anchor="start">python-for-android via WSL, arm64, landscape</text>
+<text x="1176" y="662" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15" fill="#a4c639" font-weight="normal" text-anchor="start">one click from the project browser</text>
+<path d="M980,420.0 C1028.0,420.0 1028.0,615.0 1076,615.0" fill="none" stroke="#a4c639" stroke-width="3" marker-end="url(#m_and)"/>
+<path d="M460,420.0 C508.0,420.0 508.0,420.0 556,420.0" fill="none" stroke="#3b7ddd" stroke-width="3" marker-end="url(#m_acc)"/>
+<text x="1540" y="738" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" fill="#8e98aa" font-weight="normal" text-anchor="end">Icons: Lucide (ISC)</text>
+</svg>
