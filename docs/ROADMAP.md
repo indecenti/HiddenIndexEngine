@@ -10,9 +10,9 @@ Legend: [x] done · [~] in progress/partial · [ ] to do.
 
 - [x] Foundation tier (steps 1-10): scaling, coordinates, click detection, hints, saves, validation.
 - [ ] "Later" tier (steps 11-14): non-blocking improvements.
-- [ ] Open decisions:
-  - miss penalty: align the Python formula with the JS one in the web runtime.
-  - glow indicator: define the behavior of the visual indicator.
+- [x] miss penalty: the progressive curve is replicated in `game.js::_missPenalty` and
+  exported by `editor/web_rules.py` (was listed as an open decision, it is aligned).
+- [ ] Open decision: glow indicator, define the behavior of the visual indicator.
 - Permanent constraint: the runtime is duplicated in Python (engine) and JS (web). Every
   change to shared logic must be propagated to both (see `docs/web/WEB_EXPORT_SYNC.md`).
 
@@ -73,6 +73,13 @@ object list, find, minigame).
 - [ ] Leaderboard: best score / best time per level with trend.
 - [ ] Render quality profiles (high/medium/low) with auto-downgrade below an FPS threshold.
 - [ ] New levels/scenes and completion of the translations (it/en/es/fr/de) for the active games.
+
+## Stability
+
+Measured findings and the priority order are in [STABILITY_PLAN.md](STABILITY_PLAN.md):
+runtime test coverage (11 engine modules and 8 of 9 minigames untested), blocking lint
+(196 pyflakes findings, 2 real defects), 79 silently swallowed exceptions, publishing
+checklist, Android phases 2 and 4.
 
 ## Development tooling
 

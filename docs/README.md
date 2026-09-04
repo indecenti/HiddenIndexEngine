@@ -4,6 +4,10 @@ Index of the project documentation, organized by area. For the day-to-day operat
 rules see `CLAUDE.md` in the root. For the status and the remaining work see
 [ROADMAP.md](ROADMAP.md).
 
+## Stability
+
+- [STABILITY_PLAN.md](STABILITY_PLAN.md) — measured weak spots and the priority order for the next hardening work (runtime tests, lint, silent exceptions, publishing checklist, Android).
+
 ## Engine
 
 - [engine/COORDINATE_SYSTEM.md](engine/COORDINATE_SYSTEM.md) — coordinate system (1280x720 reference space, background space, transforms).
