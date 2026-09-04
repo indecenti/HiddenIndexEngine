@@ -282,7 +282,7 @@ class ObjectOpsMixin:
         obj = _default_obj(cat["id"], cx, cy, "circle", radius=r,
                            hint_delay=cat.get("default_hint_delay", 30),
                            layer=lyr)
-        self._push_undo("Nuovo cerchio")
+        self._push_undo(self._TR("undo_new_circle", "New circle"))
         self.scene_data.setdefault("objects", []).append(obj)
         new_idx = len(self.scene_data["objects"]) - 1
         self.selected_idx = new_idx
@@ -337,7 +337,7 @@ class ObjectOpsMixin:
         obj = _default_obj(cat["id"], x, y, "rect", width=max(10, w), height=max(10, h),
                            hint_delay=cat.get("default_hint_delay", 30),
                            layer=lyr)
-        self._push_undo("Nuovo rettangolo")
+        self._push_undo(self._TR("undo_new_rect", "New rectangle"))
         self.scene_data.setdefault("objects", []).append(obj)
         self.scene_dirty = True
         new_idx = len(self.scene_data["objects"]) - 1
@@ -396,7 +396,7 @@ class ObjectOpsMixin:
         if not pool_large: pool_large = chosen_pool
 
         rx, ry = self._s2r(mx, my_raw)
-        self._push_undo("Cluster oggetti")
+        self._push_undo(self._TR("undo_cluster", "Object cluster"))
 
         # --- 2. Parametri Densità (Shift = Massive Cluster) ---
         is_shift = bool(pygame.key.get_mods() & pygame.KMOD_SHIFT)
@@ -542,7 +542,7 @@ class ObjectOpsMixin:
                                           n=skipped_locked), ERR_C, 3)
             return
 
-        self._push_undo("Elimina selezione")
+        self._push_undo(self._TR("undo_delete_selection", "Delete selection"))
         # Pop in ordine decrescente: pop(i) shifta tutti gli indici > i di -1,
         # quindi se cancelliamo prima gli indici alti gli altri restano validi.
         for idx in sorted(to_delete, reverse=True):
@@ -737,7 +737,7 @@ class ObjectOpsMixin:
                                       "Cannot duplicate: layer '{layer}' is locked").format(
                                           layer=lid), ERR_C, 2)
                 return
-        self._push_undo("Duplica")
+        self._push_undo(self._TR("undo_duplicate", "Duplicate"))
         new_indices = []
         for idx in sorted(indices):
             obj = copy.deepcopy(self.scene_data["objects"][idx])
@@ -773,7 +773,7 @@ class ObjectOpsMixin:
                                        "Paste denied: layer '{layer}' is locked").format(
                                            layer=lid), ERR_C, 2)
                  return
-        self._push_undo("Incolla")
+        self._push_undo(self._TR("undo_paste", "Paste"))
         new_indices = []
         for obj in self.clipboard:
             new_obj = copy.deepcopy(obj)
@@ -816,7 +816,7 @@ class ObjectOpsMixin:
                                   "layer only"), (230, 170, 60), 3)
             return
         if idxs:
-            self._push_undo("Cambia layer")
+            self._push_undo(self._TR("undo_change_layer", "Change layer"))
             for idx in idxs:
                 if idx < len(self.scene_data["objects"]):
                     obj = self.scene_data["objects"][idx]
@@ -1278,7 +1278,7 @@ class ObjectOpsMixin:
             def _apply(color):
                 if not color:
                     return
-                self._push_undo("Filtro colore")
+                self._push_undo(self._TR("undo_color_filter", "Colour filter"))
                 c_list = [int(x) for x in color]
                 for o in objs_sel:
                     o["color_filter"] = c_list
@@ -1300,7 +1300,7 @@ class ObjectOpsMixin:
         Mantiene la posizione X/Y per non disorientare l'utente."""
         objs_sel = self._get_objs_selection()
         if not objs_sel: return
-        self._push_undo("Reset trasformazioni")
+        self._push_undo(self._TR("undo_reset_transforms", "Reset transforms"))
         for o in objs_sel:
             o["rotation"] = 0
             o["scale"]    = 1.0
@@ -1318,7 +1318,7 @@ class ObjectOpsMixin:
         """Rimuove tint (color_filter → bianco) per la selezione corrente."""
         objs_sel = self._get_objs_selection()
         if not objs_sel: return
-        self._push_undo("Reset tint")
+        self._push_undo(self._TR("undo_reset_tint", "Reset tint"))
         for o in objs_sel:
             o["color_filter"] = [255, 255, 255]
         self.scene_dirty = True
@@ -1354,7 +1354,7 @@ class ObjectOpsMixin:
         rcx = (rx_min + rx_max) / 2
         rcy = (ry_min + ry_max) / 2
 
-        self._push_undo("Allinea")
+        self._push_undo(self._TR("undo_align", "Align"))
         for i in idxs:
             obj = objs[i]
             if obj is ref: continue
@@ -1401,7 +1401,7 @@ class ObjectOpsMixin:
         n = len(idxs)
         step = (last_c - first_c) / (n - 1)
 
-        self._push_undo("Distribuisci")
+        self._push_undo(self._TR("undo_distribute", "Distribute"))
         for k, i in enumerate(idxs):
             if k == 0 or k == n - 1: continue
             target_c = first_c + k * step
@@ -1432,7 +1432,7 @@ class ObjectOpsMixin:
         if visual:    keys += VISUAL_KEYS
         if gameplay:  keys += GAMEPLAY_KEYS
         if not keys: return
-        self._push_undo("Copia proprieta'")
+        self._push_undo(self._TR("undo_copy_props", "Copy properties"))
         for i in idxs:
             if i == self.selected_idx: continue
             for k in keys:
@@ -1454,7 +1454,7 @@ class ObjectOpsMixin:
             def _apply(color):
                 if not color:
                     return
-                self._push_undo("Colore effetto")
+                self._push_undo(self._TR("undo_effect_color", "Effect colour"))
                 fx[key] = [int(x) for x in color]
                 self.scene_dirty = True
                 self._mark_dirty()

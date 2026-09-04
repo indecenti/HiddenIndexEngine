@@ -21,7 +21,8 @@ from typing import Any, Callable, Optional
 import pygame
 
 from editor.constants import (
-    AUTOSAVE_SECS, OK_C, ERR_C, WARN_C, TXT, TXT_DIM, TXT_HI, STATE_MAIN,
+    AUTOSAVE_SECS, AUTOSAVE_RETRY_SECS,
+    OK_C, ERR_C, WARN_C, TXT, TXT_DIM, TXT_HI, STATE_MAIN,
     TAB_CATALOG,
 )
 from editor.core.io import (
@@ -975,15 +976,26 @@ class IoOpsMixin:
             logging.warning(f"[EDITOR] Check autosave recovery fallito: {e}")
 
     def _recovery_accept(self):
-        """Ripristina l'autosave in memoria (scene_dirty: decide l'utente
-        se consolidare con un save)."""
+        """Restore the autosave in memory (scene_dirty: the user decides whether
+        to consolidate it with a save)."""
         if not getattr(self, "_recovery_data", None):
             self._recovery_modal = False
             return
-        self._push_undo("Ripristino autosave")
-        self.scene_data = self._recovery_data
+        self._push_undo(self._TR("undo_autosave_restore", "Autosave restore"))
+        # Restore IN PLACE: rebinding scene_data would leave every mixin that
+        # captured the previous dict pointing at the stale scene.
+        self.scene_data.clear()
+        self.scene_data.update(self._recovery_data)
         self._sanitize_effects()
+        # The restored scene has different objects: drop the whole selection and
+        # invalidate the canvas cache, or the canvas keeps painting the old one.
         self.selected_idx = None
+        if hasattr(self, "selected_indices"):
+            self.selected_indices = []
+        if hasattr(self, "sel_effect_idx"):
+            self.sel_effect_idx = None
+        if hasattr(self, "_mark_dirty"):
+            self._mark_dirty()
         self.scene_dirty = True
         self._recovery_modal = False
         self._recovery_data = None
@@ -1015,13 +1027,17 @@ class IoOpsMixin:
         _rect(self.screen, (28, 30, 38), panel, radius=10)
         _rect(self.screen, WARN_C, panel, 2, radius=10)
         n_auto, n_cur, ts = getattr(self, "_recovery_info", (0, 0, "?"))
-        _draw_text(self.screen, "RIPRISTINO AUTOSAVE", "md", TXT_HI,
-                   px + 20, py + 14)
+        _draw_text(self.screen, self._TR("io_recovery_title", "AUTOSAVE RECOVERY"),
+                   "md", TXT_HI, px + 20, py + 14)
         _draw_text(self.screen,
-                   f"Trovato un autosave delle {ts} piu' recente del salvataggio.",
+                   self._TR("io_recovery_body",
+                            "Found an autosave from {ts}, newer than the saved scene."
+                            ).format(ts=ts),
                    "sm", TXT, px + 20, py + 46, pw - 40)
         _draw_text(self.screen,
-                   f"Autosave: {n_auto} oggetti | Salvato: {n_cur} oggetti",
+                   self._TR("io_recovery_counts",
+                            "Autosave: {n_auto} objects | Saved: {n_cur} objects"
+                            ).format(n_auto=n_auto, n_cur=n_cur),
                    "xs", TXT_DIM, px + 20, py + 72, pw - 40)
         self._recovery_hitboxes = {}
         mx, my = pygame.mouse.get_pos()
@@ -1031,13 +1047,13 @@ class IoOpsMixin:
         hov_y = _in_rect((mx, my), yes_r)
         _rect(self.screen, (30, 90, 45) if hov_y else (25, 70, 35), yes_r, radius=5)
         _rect(self.screen, OK_C, yes_r, 2 if hov_y else 1, radius=5)
-        ts_y = _txt("RIPRISTINA", "sm", TXT_HI)
+        ts_y = _txt(self._TR("io_recovery_restore", "RESTORE"), "sm", TXT_HI)
         self.screen.blit(ts_y, (yes_r.centerx - ts_y.get_width() // 2,
                                 yes_r.centery - ts_y.get_height() // 2))
         hov_n = _in_rect((mx, my), no_r)
         _rect(self.screen, (55, 40, 20) if hov_n else (45, 36, 18), no_r, radius=5)
         _rect(self.screen, WARN_C, no_r, 2 if hov_n else 1, radius=5)
-        ts_n = _txt("IGNORA (ESC)", "sm", TXT_HI)
+        ts_n = _txt(self._TR("io_recovery_ignore", "IGNORE (ESC)"), "sm", TXT_HI)
         self.screen.blit(ts_n, (no_r.centerx - ts_n.get_width() // 2,
                                 no_r.centery - ts_n.get_height() // 2))
         self._recovery_hitboxes["yes"] = yes_r
@@ -1054,22 +1070,40 @@ class IoOpsMixin:
             self._recovery_dismiss()
         return True   # modale: consuma comunque il click
 
-    def _autosave(self):
-        if not self.scene_path or not self.scene_dirty:
-            return
-        logging.info(f"[EDITOR] Autosaving scene...")
-        # Deep copy per evitare di sporcare self.scene_data durante il cleanup
-        data = copy.deepcopy(self.scene_data)
-        for obj in data.get("objects", []):
-            for k in list(obj.keys()):
-                if k.startswith("_"): obj.pop(k)
-        for fx in data.get("effects", []):
-            for k in list(fx.keys()):
-                if k.startswith("_"): fx.pop(k)
+    def _autosave(self, force: bool = False) -> bool:
+        """Write scene.json.autosave. `force` also saves a scene that is not dirty.
 
-        _save_json(self.scene_path / "scene.json.autosave", data)
-        logging.info(f"[EDITOR] Autosave complete")
-        self.last_autosave = time.time()
+        Never propagates: it runs from the main loop (and from the crash guard),
+        where an exception would cost the user the work it is meant to protect.
+        A failure backs off by AUTOSAVE_RETRY_SECS instead of retrying on every
+        frame.
+        """
+        if not self.scene_path or not (self.scene_dirty or force):
+            return False
+        try:
+            logging.info("[EDITOR] Autosaving scene...")
+            # Deep copy so the cleanup does not touch self.scene_data
+            data = copy.deepcopy(self.scene_data)
+            for obj in data.get("objects", []):
+                for k in list(obj.keys()):
+                    if k.startswith("_"): obj.pop(k)
+            for fx in data.get("effects", []):
+                for k in list(fx.keys()):
+                    if k.startswith("_"): fx.pop(k)
+
+            ok = _save_json(self.scene_path / "scene.json.autosave", data)
+            self.last_autosave = time.time()
+            if not ok:
+                logging.error("[EDITOR] Autosave refused by the writer")
+                self.last_autosave += AUTOSAVE_RETRY_SECS - AUTOSAVE_SECS
+                return False
+            logging.info("[EDITOR] Autosave complete")
+            return True
+        except Exception as e:
+            logging.error(f"[EDITOR] Autosave failed: {e}", exc_info=True)
+            # Back off, otherwise a permanent failure retries 60 times a second.
+            self.last_autosave = time.time() + AUTOSAVE_RETRY_SECS - AUTOSAVE_SECS
+            return False
 
     # ─────────────────────────────────────────────────────────────────────────
     # IMPOSTAZIONI & RECENTI

@@ -1,17 +1,21 @@
 """
 engine/menu_skins/mystery_skin.py
 
-MysterySkin — direzione "The Detective": noir investigativo, toni caldi
-desaturati, vignettatura forte, pulviscolo che fluttua nella luce, titolo serif
-spaziato. Eredita da DefaultSkin (il quale applica gia' la seppia alle card del
-tema mystery via la flag sepia_overlay).
+MysterySkin - "The Detective" direction: investigative noir, warm desaturated
+tones, strong vignette, dust floating in the light, spaced serif title. Inherits
+from DefaultSkin (which already applies the sepia to the mystery cards through
+the sepia_overlay flag).
 """
 
 import math
 import random
 import pygame
 
+from .base import SurfaceCache, as_float, as_int, as_rgb, cached_title
 from .default_skin import DefaultSkin
+
+# Dust bounds: density comes from theme.json (authored data).
+DUST_MAX = 120
 
 
 class MysterySkin(DefaultSkin):
@@ -21,17 +25,18 @@ class MysterySkin(DefaultSkin):
         super().__init__(theme)
         self._dust: list[dict] = []
         self._vig = None
-        # Cache dei glow del pulviscolo, keyed da (raggio, colore). Evita di
-        # allocare+disegnare una nuova Surface SRCALPHA per ogni mote ogni frame
-        # (era ~density blit ricostruiti per-frame nel path di disegno).
-        self._mote_cache: dict = {}
+        # Dust glow cache, keyed by (radius, colour). Avoids allocating + drawing
+        # a new SRCALPHA surface for every mote every frame (it used to rebuild
+        # ~density surfaces per frame in the draw path). Bounded LRU: a plain
+        # dict would keep one entry per colour a theme ever asks for.
+        self._mote_cache = SurfaceCache()
 
     def draw_background_pre(self, ms, screen, sw, sh) -> None:
         if self.fx_on(ms, "vignette"):
             self._vignette(screen, sw, sh)
 
     def _vignette(self, screen, sw, sh) -> None:
-        amt = float(self.theme.decor("vignette", 0.7))
+        amt = as_float(self.theme.decor("vignette", 0.7), 0.7)
         if amt <= 0:
             return
         v = self._vig
@@ -53,9 +58,11 @@ class MysterySkin(DefaultSkin):
             if self._dust:
                 self._dust = []
             return
-        target = int(self.theme.particles_cfg("density", 22))
+        target = max(0, min(DUST_MAX, as_int(self.theme.particles_cfg("density", 22), 22)))
         while len(self._dust) < target:
             self._dust.append(self._new_mote())
+        del self._dust[target:]   # a lowered density must shed the extras
+        dt = as_float(dt, 0.0)
         for p in self._dust:
             p["x"] += p["vx"] * dt
             p["y"] += p["vy"] * dt
@@ -75,21 +82,20 @@ class MysterySkin(DefaultSkin):
         p["y"] = -0.02
 
     def _mote_glow(self, rr, col):
-        # Glow del mote pre-renderizzato a alpha pieno (255). L'alpha variabile
-        # per-frame viene applicato via set_alpha sul blit -> stessi pixel del
-        # disegno diretto ma senza alloc+draw ogni frame.
-        key = (rr, col[0], col[1], col[2])
-        g = self._mote_cache.get(key)
-        if g is None:
+        # Mote glow pre-rendered at full alpha (255). The per-frame alpha is
+        # applied with set_alpha on the blit -> same pixels as drawing it
+        # directly, without an allocation + draw every frame.
+        def _build():
             g = pygame.Surface((rr * 4, rr * 4), pygame.SRCALPHA)
             pygame.draw.circle(g, (col[0], col[1], col[2], 255), (rr * 2, rr * 2), rr)
-            self._mote_cache[key] = g
-        return g
+            return g
+
+        return self._mote_cache.get_or_build((rr, col[0], col[1], col[2]), _build)
 
     def draw_overlay(self, ms, screen, sw, sh) -> None:
         if not self._dust:
             return
-        col = self.theme.particles_cfg("color", [185, 150, 92])
+        col = as_rgb(self.theme.particles_cfg("color", None), (185, 150, 92))
         for p in self._dust:
             a = int(60 + 55 * math.sin(p["ph"] * 1.5))
             a = max(0, min(120, a))
@@ -106,14 +112,23 @@ class MysterySkin(DefaultSkin):
         text = ms._state_title_text()
         if not text:
             return
-        size = theme.layout("title_font_size", 44)
-        font = theme.get_font_role("title", size, sm)
-        spacing = sm.scale_value(int((theme._typography.get("title", {}) or {}).get("spacing", 2)))
+        size = as_int(theme.layout("title_font_size", 44), 44)
+        spacing = sm.scale_value(
+            as_int((theme._typography.get("title", {}) or {}).get("spacing", 2), 2))
         col = theme.color3("text_hover")
-        surf = theme.render_spaced(font, text, col, spacing)
+        # render_spaced is one font.render PER CHARACTER, and the title was
+        # composed twice (text + shadow) EVERY frame although nothing about it
+        # animates. Cache both, keyed on the SCALED size so a resize rebuilds.
+        key = (text, sm.scale_value(size), spacing, col)
+
+        def _build():
+            font = theme.get_font_role("title", size, sm)
+            shadow = theme.render_spaced(font, text, (10, 6, 2), spacing)
+            shadow.set_alpha(185)
+            return (theme.render_spaced(font, text, col, spacing), shadow)
+
+        surf, shadow = cached_title(self, key, _build)
         tx = (screen.get_width() - surf.get_width()) // 2
-        ty = sm.scale_value(theme.layout("title_y_offset", 105))
-        shadow = theme.render_spaced(font, text, (10, 6, 2), spacing)
-        shadow.set_alpha(185)
+        ty = sm.scale_value(as_int(theme.layout("title_y_offset", 105), 105))
         screen.blit(shadow, (tx + 2, ty + 2))
         screen.blit(surf, (tx, ty))

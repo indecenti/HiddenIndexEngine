@@ -12,6 +12,20 @@ import math
 
 from engine.utils import get_logger, get_resource_path, is_android_runtime
 from engine.menu_theme import MenuTheme, load_theme_for_game
+from engine.menu_skins import skin_call
+
+
+def _jitter_pair(value) -> tuple[float, float]:
+    """Normalise the button_jitter return value to a (dx, dy) float pair.
+
+    The hook is skin authored: anything that is not a numeric pair is treated
+    as "no jitter" instead of raising inside the per-button draw loop.
+    """
+    try:
+        dx, dy = value
+        return (float(dx), float(dy))
+    except (TypeError, ValueError):
+        return (0.0, 0.0)
 
 
 class MenuButton:
@@ -114,7 +128,9 @@ class MenuSystem:
         # Caricamento tema dal gioco
         self.theme: MenuTheme = load_theme_for_game(game_id)
 
-        # Skin attivo: look & feel pluggabile selezionato da ui_theme (fallback default).
+        # Active skin: pluggable look & feel selected by ui_theme (fallback default).
+        # Every hook goes through skin_call: a broken theme degrades the look,
+        # it never crashes the menu (see engine/menu_skins/base.py).
         from engine.menu_skins import get_skin
         self.skin = get_skin(self.theme)
 
@@ -553,9 +569,9 @@ class MenuSystem:
             for i, (lbl, act) in enumerate(labels_actions):
                 self.buttons.append(self._std_btn(lbl, act, i, total))
 
-        # Lo skin puo' ricomporre il layout (arco kids, sparse horror) prima
-        # del calcolo di scroll/focus. Agisce solo su offset verticali.
-        self.skin.arrange(self)
+        # The skin may recompose the layout (kids arc, horror sparse) before the
+        # scroll/focus computation. It only acts on vertical offsets.
+        skin_call(self.skin, "arrange", self)
 
         # --- Calcolo scroll carosello + auto-focus su ultimo sbloccato ---
         
@@ -730,7 +746,7 @@ class MenuSystem:
         """Aggiorna hover, slider e animazioni tema."""
         self.mouse_pos = (mouse_x, mouse_y)
         self.theme.update(dt)
-        self.skin.update(self, dt)
+        skin_call(self.skin, "update", self, dt)
         tick = self.theme._tick
 
         # Update Scroll (Carosello fluido)
@@ -813,8 +829,8 @@ class MenuSystem:
         # Lista differita per i tooltips (per gestire correttamente lo Z-index)
         tooltip_queue = []
 
-        # Atmosfera di sfondo per-skin (aurora/nebbia/cielo) sopra il bg del core.
-        self.skin.draw_background_pre(self, screen, sw, sh)
+        # Per-skin background atmosphere (aurora/fog/sky) over the core bg.
+        skin_call(self.skin, "draw_background_pre", self, screen, sw, sh)
 
         # ââ 1. Effetto Torcia (Flashlight)
         if theme.has_flashlight():
@@ -823,7 +839,7 @@ class MenuSystem:
             self._draw_flashlight(screen, sw, sh, f_pos, f_radius)
 
         # ── 1.5 Titolo dello Stato
-        self.skin.draw_title(self, screen)
+        skin_call(self.skin, "draw_title", self, screen)
 
         # ââ 2. Render Bottoni (Con supporto Carosello)
         for b in self.buttons:
@@ -861,12 +877,13 @@ class MenuSystem:
                 draw_rect.x += int(sm.scale_value(b.mag_offset[0]))
                 draw_rect.y += int(sm.scale_value(b.mag_offset[1]))
 
-            # Hook skin: jitter posizionale + decoro DIETRO al bottone.
-            jdx, jdy = self.skin.button_jitter(self, b)
+            # Skin hooks: positional jitter + decoration BEHIND the button.
+            # A skin returning a malformed jitter must not break the draw pass.
+            jdx, jdy = _jitter_pair(skin_call(self.skin, "button_jitter", self, b))
             if jdx or jdy:
                 draw_rect.x += int(sm.scale_value(jdx))
                 draw_rect.y += int(sm.scale_value(jdy))
-            self.skin.behind_button(self, screen, b, draw_rect, is_locked)
+            skin_call(self.skin, "behind_button", self, screen, b, draw_rect, is_locked)
 
             if b.image:
                 # Bottone Scena/Anteprima. PERF: smoothscale + overlay seppia/scurente
@@ -1205,8 +1222,8 @@ class MenuSystem:
         # Posizionata qui per ingrandire anche i bottoni e le voci di menu.
         # Su Android (touch) NON va mostrata: seguirebbe il punto di tocco
         # lasciando un cerchio fisso a schermo (nessun puntatore deve comparire).
-        # Decoro frontale per-skin (grana/coriandoli) sopra i contenuti.
-        self.skin.draw_overlay(self, screen, sw, sh)
+        # Per-skin front decoration (grain/confetti) over the contents.
+        skin_call(self.skin, "draw_overlay", self, screen, sw, sh)
 
         if theme.has_magnifier() and not is_android_runtime():
             self._draw_magnifier(screen)
@@ -1231,18 +1248,26 @@ class MenuSystem:
             self.scroll_x = self.target_scroll_x
 
     def _load_scene_preview(self, lvl_path, scene_id, w, h, is_unlocked) -> pygame.Surface | None:
-        """Helper per caricare l'anteprima di una scena."""
+        """Load a scene preview (None when it is missing or unreadable).
+
+        Typed exceptions only: a bare `except` here used to swallow
+        KeyboardInterrupt and real bugs together with the expected
+        missing/corrupt file.
+        """
         try:
-            import pygame
             raw = self._load_preview_raw(lvl_path / scene_id)
-            if raw is not None:
-                preview = pygame.transform.smoothscale(raw, (w, h))
-                if not is_unlocked:
-                    try: preview = pygame.transform.grayscale(preview)
-                    except: pass
-                return preview
-        except: pass
-        return None
+            if raw is None:
+                return None
+            preview = pygame.transform.smoothscale(raw, (w, h))
+            if not is_unlocked:
+                try:
+                    preview = pygame.transform.grayscale(preview)
+                except (pygame.error, AttributeError):
+                    pass  # grayscale missing on old SDL builds: keep the colour preview
+            return preview
+        except (pygame.error, OSError, ValueError) as e:
+            self.logger.warning("Scene preview '%s' not loadable: %s", scene_id, e)
+            return None
 
     def _state_title_text(self) -> str:
         """Testo del titolo per lo stato corrente (vuoto se lo stato non ne ha uno).

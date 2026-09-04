@@ -63,8 +63,8 @@ from editor.constants import (
     MODE_SELECT, MODE_CIRCLE, MODE_RECT, MODE_EFFECT_PLACE,
     DEFAULT_LAYERS, DEFAULT_GRID_SIZE,
     UI_SCALE_DEFAULT, UI_SCALE_MIN, UI_SCALE_MAX, UI_SCALE_STEP,
-    BG, TXT_DIM, TXT_HI, ACCENT,
-    AUTOSAVE_SECS, SND_CLICK,
+    BG, TXT_DIM, TXT_HI, ACCENT, ERR_C,
+    AUTOSAVE_SECS, MAIN_LOOP_MAX_CRASHES, CRASH_SAVE_MIN_GAP_S, SND_CLICK,
 )
 from editor.ui.draw import _init_fonts, _draw_tooltip, _rect, _draw_text, _draw_shape_icon
 from editor.core.io import _discover_games
@@ -552,6 +552,17 @@ class LevelEditor(
     # ─────────────────────────────────────────────────────────────────────────
 
     def run(self):
+        """Main loop. A crashing frame saves the work and keeps the editor up.
+
+        A single exception used to kill the editor and take the unsaved scene
+        with it (the autosave only runs every AUTOSAVE_SECS). Now the frame is
+        logged, the scene is flushed to the autosave file and the loop carries
+        on, so the user can save and close cleanly. Only a loop that keeps
+        crashing (MAIN_LOOP_MAX_CRASHES frames in a row, i.e. an unrecoverable
+        state) is re-raised, and even then after the work was written out.
+        KeyboardInterrupt/SystemExit are not caught: Ctrl+C still quits.
+        """
+        crashes = 0
         try:
             while self.running:
                 self.clock.tick(60)
@@ -564,17 +575,44 @@ class LevelEditor(
                     self._render()
                     phase = "flip"
                     pygame.display.flip()
+                    crashes = 0            # a clean frame closes the burst
                 except Exception:
-                    import logging
+                    crashes += 1
                     logging.getLogger("crash").critical(
-                        "Crash nel main loop (fase=%s)", phase, exc_info=True
+                        "Crash in the main loop (phase=%s, %d/%d)",
+                        phase, crashes, MAIN_LOOP_MAX_CRASHES, exc_info=True
                     )
-                    raise
+                    self._crash_guard(phase, crashes)
+                    if crashes >= MAIN_LOOP_MAX_CRASHES:
+                        raise
         finally:
-            # Chiusura pulita: termina i processi di build pendenti e libera pygame.
-            # Questo e' l'UNICO punto in cui pygame.quit() deve essere chiamato.
+            # Clean shutdown: terminate the pending build processes and release
+            # pygame. This is the ONLY place where pygame.quit() must be called.
             self._cleanup_processes()
             pygame.quit()
+
+    def _crash_guard(self, phase: str, crashes: int) -> None:
+        """Save the work and warn the user after a crashed frame.
+
+        Runs inside the exception handler of the main loop: it must never raise
+        again, or the recovery would be worse than the original failure.
+        """
+        try:
+            # Throttled: a crash/clean alternation must not write the scene on
+            # every other frame. _autosave stamps last_autosave on success.
+            if time.time() - getattr(self, "last_autosave", 0.0) > CRASH_SAVE_MIN_GAP_S:
+                self._autosave(force=True)
+        except Exception:
+            logging.getLogger("crash").critical(
+                "Emergency autosave failed too", exc_info=True)
+        try:
+            self._status(
+                self._TR("ed_crash_recovered",
+                         "Internal error ({phase}): work saved to the autosave file. "
+                         "Save the scene and restart the editor.").format(phase=phase),
+                ERR_C, 12)
+        except Exception:
+            pass   # the status bar is the last thing that may block the recovery
 
     def _with_loading(self, action, *args, **kwargs):
         """
@@ -620,7 +658,7 @@ class LevelEditor(
         self._build_processes.clear()
 
     def _update(self):
-        self._fx_editor_time += 1 / 60.0   # avanza preview animazioni effetti
+        self._fx_editor_time += 1 / 60.0   # advances the effect preview animations
         if self.scene_dirty and self.scene_path:
             if time.time() - self.last_autosave > AUTOSAVE_SECS:
                 self._autosave()

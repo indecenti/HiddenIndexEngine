@@ -126,7 +126,8 @@ class PresetsMixin:
         off_x = self._snap(cx - w_max / 2)
         off_y = self._snap(cy - h_max / 2)
 
-        self._push_undo(f"Inserisci preset '{preset.get('name', '')}'")
+        self._push_undo(self._TR("undo_insert_preset", "Insert preset '{name}'")
+                        .format(name=preset.get("name", "")))
         objs = self.scene_data.setdefault("objects", [])
         first_new = len(objs)
         for it in items:

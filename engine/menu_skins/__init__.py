@@ -1,13 +1,14 @@
 """
 engine/menu_skins/
 
-Registry degli skin dei menu. Ogni skin e' un modulo pluggabile selezionato per
-id (= ui_theme). Aggiungere un tema = aggiungere uno skin qui, senza toccare il
-MENU CORE. Temi non registrati ricadono su DefaultSkin (nessuna regressione).
+Registry of the menu skins. Every skin is a pluggable module selected by id
+(= ui_theme). Adding a theme = adding a skin here, without touching the MENU
+CORE. Unregistered themes fall back to DefaultSkin (no regression).
 """
 
 from engine.utils import get_logger
-from .base import MenuSkin
+from .base import (MenuSkin, SurfaceCache, cached_title, skin_call,
+                   as_bool, as_float, as_int, as_rgb)
 from .default_skin import DefaultSkin
 from .horror_skin import HorrorSkin
 from .kids_skin import KidsSkin
@@ -16,32 +17,44 @@ from .mystery_skin import MysterySkin
 
 logger = get_logger(__name__)
 
-# id tema -> classe skin. I temi assenti usano DefaultSkin.
+# theme id -> skin class. Missing themes use DefaultSkin.
 _REGISTRY: dict[str, type] = {
     "default": DefaultSkin,
     "horror": HorrorSkin,
     "kids": KidsSkin,
     "cyber_neon": CyberNeonSkin,
     "mystery": MysterySkin,
-    # android_std: nessuno skin dedicato -> DefaultSkin (variante leggera/performance).
+    # android_std: no dedicated skin -> DefaultSkin (light/performance variant).
 }
 
 
 def register_skin(theme_id: str, skin_cls: type) -> None:
-    """Registra (o sovrascrive) lo skin per un id tema."""
+    """Register (or override) the skin for a theme id."""
     _REGISTRY[theme_id] = skin_cls
 
 
 def get_skin(theme) -> MenuSkin:
-    """Istanzia lo skin per il tema dato (fallback DefaultSkin)."""
+    """Instantiate the skin for the given theme (fallback DefaultSkin).
+
+    A skin whose __init__ raises must not take the menu down: DefaultSkin is
+    tried next and, if even that fails (broken theme object), the neutral
+    MenuSkin keeps the core look alive.
+    """
     theme_id = getattr(theme, "theme_id", "default")
     cls = _REGISTRY.get(theme_id, DefaultSkin)
     try:
         return cls(theme)
     except Exception as e:
-        logger.warning("menu_skins: skin '%s' non inizializzabile (%s); uso DefaultSkin.", theme_id, e)
+        logger.warning("menu_skins: skin '%s' cannot be initialised (%s); using DefaultSkin.",
+                       theme_id, e)
+    try:
         return DefaultSkin(theme)
+    except Exception as e:
+        logger.error("menu_skins: DefaultSkin cannot be initialised (%s); using the base skin.", e)
+        return MenuSkin(theme)
 
 
 __all__ = ["MenuSkin", "DefaultSkin", "HorrorSkin", "KidsSkin",
-           "CyberNeonSkin", "MysterySkin", "get_skin", "register_skin"]
+           "CyberNeonSkin", "MysterySkin", "get_skin", "register_skin",
+           "SurfaceCache", "cached_title", "skin_call",
+           "as_bool", "as_float", "as_int", "as_rgb"]

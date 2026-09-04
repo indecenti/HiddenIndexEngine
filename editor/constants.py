@@ -29,6 +29,16 @@ PANEL_MIN_W    = 150
 PANEL_MAX_W    = 600
 STATUS_H       = 40
 AUTOSAVE_SECS  = 60
+# Main loop: consecutive frames that may crash before giving up. A single bad
+# frame (a modal with stale state, a missing asset) must not throw away the
+# unsaved scene; a loop that crashes every frame must not spin forever.
+MAIN_LOOP_MAX_CRASHES = 5
+# Minimum gap between two emergency saves: a crash/clean alternation must not
+# rewrite the scene on every other frame.
+CRASH_SAVE_MIN_GAP_S = 1.0
+# Back-off after a failed autosave (locked file, full disk): without it the
+# retry would run on every frame of the main loop.
+AUTOSAVE_RETRY_SECS = 15
 UNDO_MAX       = 50
 HANDLE_R       = 4
 # Cache immagini scalate dell'editor: cap LRU (evict graduale del piu' vecchio)

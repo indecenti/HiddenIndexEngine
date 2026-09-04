@@ -76,7 +76,8 @@ class HistoryMixin:
         self._restore_snapshot(snap)
         self._undo_last_key = None
 
-        msg = f"Annullato: {label}" if label else "Undo eseguito"
+        msg = (self._TR("hist_undone", "Undone: {label}").format(label=label)
+               if label else self._TR("hist_undone_generic", "Undo done"))
         self._status(msg, TXT_DIM, 1.5)
 
     def _redo(self):
@@ -89,5 +90,6 @@ class HistoryMixin:
         self._restore_snapshot(snap)
         self._undo_last_key = None
 
-        msg = f"Ripristinato: {label}" if label else "Redo eseguito"
+        msg = (self._TR("hist_redone", "Redone: {label}").format(label=label)
+               if label else self._TR("hist_redone_generic", "Redo done"))
         self._status(msg, TXT_DIM, 1.5)

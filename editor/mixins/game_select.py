@@ -883,39 +883,72 @@ class GameSelectMixin:
                     except Exception: pass
         return used
 
-    def _gs_harvest_theme(self, game_id: str, theme_id: str) -> None:
+    def _gs_harvest_theme(self, game_id: str, theme_id: str) -> bool:
+        """Harvest a theme: copy engine/assets/themes/<theme_id>/ into
+        games/<game_id>/ui_theme/. Returns True when the game ends up with the
+        requested theme.
+
+        STAGED swap. The previous version deleted ui_theme/ FIRST and only then
+        looked for the source, so a missing theme - or a copy that failed on a
+        locked file or a full disk - left the game with NO theme at all and only
+        a line in the log. Here the source is validated and copied to a sibling
+        staging folder before the old theme is touched, and any failure rolls
+        the previous theme back and tells the user.
         """
-        Harvesting tema: copia la cartella engine/assets/themes/<theme_id>/
-        in games/<game_id>/ui_theme/.
-        Cleanup atomico: la cartella ui_theme esistente viene rimossa prima
-        della copia, garantendo che il gioco contenga SOLO il tema attivo.
-        """
+        import json as _json
         import shutil as _shutil
         from engine.utils import get_resource_path
 
-        game_theme_dir = self.base_path / "games" / game_id / "ui_theme"
-
-        # 1. Cleanup: rimuovi il vecchio tema (se presente)
-        if game_theme_dir.exists():
-            try:
-                _shutil.rmtree(game_theme_dir)
-                logger.info("[THEME] Rimosso tema precedente da '%s/ui_theme/'", game_id)
-            except Exception as e:
-                logger.error("[THEME] Errore rimozione tema precedente: %s", e)
-
-        # 2. Sorgente: engine/assets/themes/<theme_id>/
+        # 1. Validate the source BEFORE touching anything in the game.
         src_dir = get_resource_path("engine", "assets", "themes", theme_id)
-        if not src_dir.exists():
-            logger.warning("[THEME] Tema '%s' non trovato in engine/assets/themes/.", theme_id)
-            return
-
-        # 3. Copia nella cartella del gioco
+        src_file = src_dir / "theme.json"
+        if not src_dir.is_dir() or not src_file.is_file():
+            logger.warning("[THEME] Theme '%s' not found in engine/assets/themes/.", theme_id)
+            self._status(self._TR("gs_theme_missing",
+                                  "Theme '{0}' not found: the game keeps the current one"
+                                  ).format(theme_id), ERR_C, 4)
+            return False
         try:
-            _shutil.copytree(str(src_dir), str(game_theme_dir))
-            logger.info("[THEME] Tema '%s' harvestato in '%s/ui_theme/'", theme_id, game_id)
-            self._status(self._TR("gs_theme_applied", "Theme '{0}' applied to the game").format(theme_id), OK_C, 2)
+            _json.loads(src_file.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            logger.error("[THEME] Theme '%s' unreadable: %s", theme_id, e)
+            self._status(self._TR("gs_theme_invalid",
+                                  "Theme '{0}' is not valid: the game keeps the current one"
+                                  ).format(theme_id), ERR_C, 4)
+            return False
+
+        game_theme_dir = self.base_path / "games" / game_id / "ui_theme"
+        staging = game_theme_dir.with_name("ui_theme.__new__")
+        backup = game_theme_dir.with_name("ui_theme.__old__")
+        for leftover in (staging, backup):
+            if leftover.exists():
+                _shutil.rmtree(leftover, ignore_errors=True)
+
+        # 2. Copy into staging, then swap. Only the swap touches the game.
+        try:
+            game_theme_dir.parent.mkdir(parents=True, exist_ok=True)
+            _shutil.copytree(str(src_dir), str(staging))
+            if game_theme_dir.exists():
+                game_theme_dir.rename(backup)
+            staging.rename(game_theme_dir)
         except Exception as e:
-            logger.error("[THEME] Errore harvesting tema '%s': %s", theme_id, e)
+            logger.error("[THEME] Harvest of theme '%s' failed: %s", theme_id, e)
+            _shutil.rmtree(staging, ignore_errors=True)
+            if backup.exists() and not game_theme_dir.exists():
+                try:
+                    backup.rename(game_theme_dir)   # rollback: keep the old theme
+                except OSError as re:
+                    logger.error("[THEME] Rollback of the previous theme failed: %s", re)
+            self._status(self._TR("gs_theme_failed",
+                                  "Theme '{0}' not applied: {1}"
+                                  ).format(theme_id, e), ERR_C, 5)
+            return False
+        finally:
+            _shutil.rmtree(backup, ignore_errors=True)
+
+        logger.info("[THEME] Theme '%s' harvested into '%s/ui_theme/'", theme_id, game_id)
+        self._status(self._TR("gs_theme_applied", "Theme '{0}' applied to the game").format(theme_id), OK_C, 2)
+        return True
 
     def _gs_update_strings(self, game_id: str, new_data: dict, remove_keys: list = None, lang: str = None):
         """Aggiorna traduzioni, invalida la cache in memoria e sincronizza il lang_manager."""

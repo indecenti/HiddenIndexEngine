@@ -33,6 +33,10 @@ Legend: [x] done · [~] in progress/partial · [ ] to do.
   - Dashboard: duplicate scene/level, move scene between levels, reorder games.
   - Refactor: unified EXE/APK build pipeline (`build_common.py`), shared `AssetCatalog`
     for backgrounds/music/video, web export with progress+cancel, unified clipboard.
+- [x] Crash resilience: the main loop survives an isolated exception (emergency autosave,
+  message to the user, circuit breaker after `MAIN_LOOP_MAX_CRASHES`), the autosave never
+  propagates and backs off on failure, autosave recovery restores the scene in place, the
+  theme harvest is a staged swap with rollback. Verified by `pytest tests/test_editor_robustness.py`.
 - [ ] "Editor Pro" plan (`docs/archive/editor/EDITOR_PRO_PLAN.md`, 2026-07-12):
   auto-scatter camouflage (single render-based metric, best-of-M, Lab color, repair
   loop), scatter UX (progress/cancel, seed, interactive ghosts), editor completeness
@@ -41,6 +45,9 @@ Legend: [x] done · [~] in progress/partial · [ ] to do.
 ## Menu system (skins)
 
 - [x] Skin architecture (core + pluggable skin) on the Python side: `default`, `horror`, `kids`, `cyber_neon`, `mystery`.
+- [x] Robustness: fail-soft hook dispatch (`skin_call`), coercion of the theme values,
+  capped particle densities, shared caches (`SurfaceCache`, `cached_title`).
+  Contract in `docs/engine/MENU_SKINS.md`, verified by `pytest tests/test_menu_skins.py`.
 - [ ] Web skins (hybrid DOM/CSS): approach approved, still to implement in the web runtime.
 
 ## Android / mobile UX
