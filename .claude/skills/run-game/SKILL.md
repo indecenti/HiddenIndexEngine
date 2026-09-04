@@ -1,46 +1,45 @@
 ---
 name: run-game
-description: Avvia il gioco o l'editor di HiddenIndexEngine e verifica visivamente una scena, il menu o un minigioco. Usala quando l'utente chiede di lanciare/provare il gioco, vedere una scena renderizzata, testare un minigioco o l'editor, o catturare uno screenshot per confermare una modifica.
+description: Starts the HiddenIndexEngine game or editor and visually verifies a scene, the menu or a minigame. Use it when the user asks to launch/try the game, see a rendered scene, test a minigame or the editor, or capture a screenshot to confirm a change.
 ---
 
 # run-game
 
-Verifica visiva e avvio di HiddenIndexEngine.
+Visual verification and startup of HiddenIndexEngine.
 
-## Decidere COME verificare
+## Deciding HOW to verify
 
-- **Solo una scena HOG** (layout oggetti, sfondo, posizioni): NON serve avviare il
-  gioco. Usa il tool MCP `render_scene` (server `hie`), molto piu' veloce e headless.
-  Per un singolo asset usa `render_asset`.
-- **Menu, transizioni, minigiochi, editor, input reale**: avvia l'app.
+- **A HOG scene only** (object layout, background, positions): NO need to start the
+  game. Use the MCP tool `render_scene` (server `hie`), much faster and headless.
+  For a single asset use `render_asset`.
+- **Menus, transitions, minigames, editor, real input**: start the app.
 
-## Avvio dell'app
+## Starting the app
 
 ```powershell
-# Gioco (usa default_game da config.ini)
+# Game (uses default_game from config.ini)
 python main.py
 python main.py --game Malonno_Survivors --lang it
 
-# Minigioco diretto
+# Direct minigame
 python main.py --minigame sudoku
 
-# Editor di livelli
+# Level editor
 python run_editor.py
 python run_editor.py --game Malonno_Survivors
 ```
 
-Giochi disponibili: vedi `list_games` (MCP) o le cartelle in `games/` con
-`game_config.json`. Minigiochi: cartelle in `engine/minigames/`.
+Available games: see `list_games` (MCP) or the folders in `games/` with a
+`game_config.json`. Minigames: folders in `engine/minigames/`.
 
-## Verifica e screenshot
+## Verification and screenshots
 
-L'app e' una finestra pygame desktop. Per catturare uno screenshot a fini di
-verifica usa gli strumenti desktop (computer-use) se disponibili, altrimenti
-chiedi all'utente. Per le scene preferisci sempre il render headless dell'MCP:
-e' deterministico e non richiede interazione.
+The app is a desktop pygame window. To capture a screenshot for verification use
+the desktop tools (computer-use) if available, otherwise ask the user. For scenes
+always prefer the MCP headless render: it is deterministic and needs no interaction.
 
-## Note
+## Notes
 
-- Niente `pygame.SCALED` (conflitto con `ScalingManager`). Vedi `CLAUDE.md`.
-- I log girano in `saves/engine.log`.
-- Se l'avvio fallisce al boot, controlla `saves/engine.log` e `saves/crash_native.log`.
+- No `pygame.SCALED` (conflicts with `ScalingManager`). See `CLAUDE.md`.
+- Logs go to `saves/engine.log`.
+- If startup fails at boot, check `saves/engine.log` and `saves/crash_native.log`.

@@ -1,46 +1,46 @@
 # Web Export (HTML/JS/Canvas)
 
-Esportazione di un gioco HiddenEngine in un **sito statico** HTML/JS/CSS, pronto
-alla pubblicazione online o all'apertura locale (anche con doppio clic).
+Export of a HiddenEngine game as a **static site** in HTML/JS/CSS, ready to publish
+online or to open locally (even with a double-click).
 
-> Per mantenere allineati engine e web a fronte di modifiche future, vedi
-> **[WEB_EXPORT_SYNC.md](WEB_EXPORT_SYNC.md)** (contratto di sincronizzazione).
-> Questa e' la parte critica: il runtime web **replica** la logica dell'engine.
+> To keep the engine and the web aligned through future changes, see
+> **[WEB_EXPORT_SYNC.md](WEB_EXPORT_SYNC.md)** (synchronization contract).
+> This is the critical part: the web runtime **replicates** the engine logic.
 
 ---
 
-## 1. Come si usa
+## 1. Usage
 
 ```bash
-# Esporta un gioco. Build VERSIONATO: build_web/<game>/v<X.Y>/
-# + index.html (redirect all'ultima versione) + builds.json (storico).
+# Export a game. VERSIONED build: build_web/<game>/v<X.Y>/
+# + index.html (redirect to the latest version) + builds.json (history).
 python -m editor.web_exporter LineVenture
 
-# Forza una versione, oppure output 'flat' senza versionamento:
+# Force a version, or a 'flat' output without versioning:
 python -m editor.web_exporter LineVenture --version 2.0
 python -m editor.web_exporter LineVenture --out build_web/test_flat
 ```
 
-La versione parte da `game_config.version`; se `v<version>` esiste gia', il minor
-viene auto-incrementato (1.0 -> 1.1 -> ...). Ogni build scrive `version.json`
-(gioco, versione, runtime_version, timestamp). `build_web/<game>/index.html`
-reindirizza sempre alla versione piu' recente.
+The version starts from `game_config.version`; if `v<version>` already exists, the
+minor is auto-incremented (1.0 -> 1.1 -> ...). Every build writes `version.json`
+(game, version, runtime_version, timestamp). `build_web/<game>/index.html` always
+redirects to the most recent version.
 
-Per provarlo:
-- **Doppio clic** su `build_web/<game>/index.html` (funziona da `file://`), oppure
-- **Doppio clic** su `build_web/<game>/avvia_server.bat` (server locale + browser), oppure
-- pubblica la cartella `build_web/<game>/` su qualsiasi hosting statico.
+To try it:
+- **Double-click** `build_web/<game>/index.html` (it works from `file://`), or
+- **Double-click** `build_web/<game>/avvia_server.bat` (local server + browser), or
+- publish the `build_web/<game>/` folder on any static host.
 
 ---
 
-## 2. Principio fondante: pacchetto autosufficiente
+## 2. Founding principle: a self-contained package
 
-L'exporter risolve gli asset sorgente da `engine/` e `games/` **in fase di build**,
-ma **copia/transcodifica/incorpora tutto** dentro `build_web/<game>/`. A **runtime**
-il sito non legge MAI da `engine/` o `games/`: tutti i path puntano a `assets/...`
-e i dati (manifest) sono incorporati.
+The exporter resolves the source assets from `engine/` and `games/` **at build time**,
+but **copies/transcodes/embeds everything** into `build_web/<game>/`. At **runtime**
+the site NEVER reads from `engine/` or `games/`: every path points to `assets/...`
+and the data (manifest) is embedded.
 
-Verifica rapida (deve dare 0 path verso engine/games):
+Quick check (must report 0 paths towards engine/games):
 ```bash
 python3 -c "import json,re; m=open('build_web/LineVenture/manifest.json',encoding='utf-8').read(); \
 print('bad:', [p for p in re.findall(r'\"((?:assets|engine|games)/[^\"]+)\"', m) if not p.startswith('assets/')])"
@@ -48,65 +48,65 @@ print('bad:', [p for p in re.findall(r'\"((?:assets|engine|games)/[^\"]+)\"', m)
 
 ---
 
-## 3. Struttura dell'output
+## 3. Output structure
 
 ```
 build_web/
-├── index.json                  # CATALOGO aggregato di tutti i giochi (per il portale)
+├── index.json                  # aggregated CATALOG of all games (for the portal)
 └── <game>/
-    ├── index.html              # landing: meta social/SEO + redirect alla versione latest
-    ├── game.json               # metadati del gioco (per il portale)
-    ├── builds.json             # storico versioni (latest + lista)
-    ├── avvia_server.bat        # avvio server locale (Windows)
-    └── v<X.Y>/                 # build versionato
-        ├── index.html          # shell: meta SEO/OG/PWA + canvas + loading screen
-        ├── style.css           # canvas full-viewport + loading screen
-        ├── runtime.js          # IL MOTORE WEB (replica dell'engine) — bundle generato da runtime/
-        ├── manifest.js         # window.__MANIFEST__ = {...}  (per file://, senza fetch)
-        ├── manifest.json       # stesso contenuto (per setup http)
-        ├── manifest.webmanifest# PWA (installabile)
+    ├── index.html              # landing: social/SEO meta + redirect to the latest version
+    ├── game.json               # game metadata (for the portal)
+    ├── builds.json             # version history (latest + list)
+    ├── avvia_server.bat        # local server launcher (Windows)
+    └── v<X.Y>/                 # versioned build
+        ├── index.html          # shell: SEO/OG/PWA meta + canvas + loading screen
+        ├── style.css           # full-viewport canvas + loading screen
+        ├── runtime.js          # THE WEB ENGINE (replica of the engine) — bundle generated from runtime/
+        ├── manifest.js         # window.__MANIFEST__ = {...}  (for file://, no fetch)
+        ├── manifest.json       # same content (for http setups)
+        ├── manifest.webmanifest# PWA (installable)
         ├── sw.js               # service worker: offline + cache (cache <game>-v<X.Y>)
-        ├── version.json        # gioco, versione, runtime_version, timestamp
+        ├── version.json        # game, version, runtime_version, timestamp
         └── assets/
-            ├── scenes/<level>__<scene>/<bg>.webp|.mp4  # sfondi (WebP q82, cap 1920px) o video
-            ├── thumbs/<level>__<scene>.jpg             # anteprime menu (480px)
-            ├── icons/<obj>.webp                         # icone oggetti (WebP lossless, piena risoluzione)
-            ├── icon.<ext>, menu_poster.<ext>            # favicon/OG + poster menu
-            ├── video/<menu>.mp4                         # video di sfondo del menu
-            ├── audio/sfx/*.mp3                          # SFX globali (96k mono)
-            ├── audio/music/*.mp3                        # musica scene/menu (112k stereo)
-            └── minigames/<id>/...                       # asset SOLO dei minigiochi triggerati (+ dipendenze)
+            ├── scenes/<level>__<scene>/<bg>.webp|.mp4  # backgrounds (WebP q82, cap 1920px) or video
+            ├── thumbs/<level>__<scene>.jpg             # menu previews (480px)
+            ├── icons/<obj>.webp                         # object icons (lossless WebP, full resolution)
+            ├── icon.<ext>, menu_poster.<ext>            # favicon/OG + menu poster
+            ├── video/<menu>.mp4                         # menu background video
+            ├── audio/sfx/*.mp3                          # global SFX (96k mono)
+            ├── audio/music/*.mp3                        # scene/menu music (112k stereo)
+            └── minigames/<id>/...                       # assets ONLY of the triggered minigames (+ dependencies)
 ```
 
 ---
 
-## 4. Componenti
+## 4. Components
 
 ### Exporter — `editor/web_exporter.py`
-- `export_web_game(game_id, output_dir)`: punto d'ingresso.
-- Costruisce il **manifest** (vedi sezione 5) rispecchiando 1:1 `engine/scene_loader.py`.
-- Risolve le icone (prima `games/<id>/`, poi `engine/assets/`), copia sfondi, genera thumbnail.
-- Transcodifica audio con **ffmpeg** (SFX engine + musica scene/menu); fallback a copia raw se ffmpeg assente.
-- Incorpora le **stringhe** (engine + gioco uniti) e il **tema** UI nel manifest.
-- Copia gli asset dei **minigiochi** usati (+ dipendenze, vedi `MINIGAME_ASSET_DEPS`).
-- Genera `runtime.js` concatenando i moduli di `runtime/` (vedi sotto), includendo
-  **solo i minigiochi triggerati** nelle scene (`_bundle_runtime`).
+- `export_web_game(game_id, output_dir)`: entry point.
+- Builds the **manifest** (see section 5) mirroring `engine/scene_loader.py` 1:1.
+- Resolves icons (first `games/<id>/`, then `engine/assets/`), copies backgrounds, generates thumbnails.
+- Transcodes audio with **ffmpeg** (engine SFX + scene/menu music); falls back to a raw copy if ffmpeg is missing.
+- Embeds the **strings** (engine + game merged) and the UI **theme** in the manifest.
+- Copies the assets of the **minigames** in use (+ dependencies, see `MINIGAME_ASSET_DEPS`).
+- Generates `runtime.js` by concatenating the `runtime/` modules (see below), including
+  **only the minigames triggered** in the scenes (`_bundle_runtime`).
 
 ### Runtime — `editor/web_template/{index.html,style.css}` + `editor/web_template/runtime/`
-- `index.html`/`style.css`: template statici copiati in ogni export.
-- `runtime/`: sorgenti modulari (script classici, niente ES module → funzionano da `file://`):
-  - `core.js`: `ScalingManager`, hit-test, rendering oggetti, `AudioEngine`, `Theme`,
-    `Save`, `RULES_DEFAULTS`, effetti; inizializza `window.MINIGAME_CLASSES`.
-  - `game.js`: classe `Game` (state machine, scene, HUD, hint, pausa, impostazioni, results).
-  - `minigames/<id>.js`: un file per minigioco; ognuno si **auto-registra** in
-    `window.MINIGAME_CLASSES["<id>"]`. Aggiungere un minigioco = creare il file.
-  - `bootstrap.js`: `main()` (carica manifest, istanzia `Game`).
-- L'exporter li concatena in un unico `runtime.js` (bundle), includendo solo i
-  minigiochi effettivamente usati dal gioco.
+- `index.html`/`style.css`: static templates copied into every export.
+- `runtime/`: modular sources (classic scripts, no ES modules -> they work from `file://`):
+  - `core.js`: `ScalingManager`, hit test, object rendering, `AudioEngine`, `Theme`,
+    `Save`, `RULES_DEFAULTS`, effects; initializes `window.MINIGAME_CLASSES`.
+  - `game.js`: `Game` class (state machine, scenes, HUD, hints, pause, settings, results).
+  - `minigames/<id>.js`: one file per minigame; each **self-registers** in
+    `window.MINIGAME_CLASSES["<id>"]`. Adding a minigame = creating the file.
+  - `bootstrap.js`: `main()` (loads the manifest, instantiates `Game`).
+- The exporter concatenates them into a single `runtime.js` (bundle), including only
+  the minigames actually used by the game.
 
 ---
 
-## 5. Manifest (formato dati)
+## 5. Manifest (data format)
 
 ```jsonc
 {
@@ -116,11 +116,11 @@ build_web/
   "ref": { "w": 1280, "h": 720 },
   "theme": { "id": "cyber_neon", "colors": {...}, "effects": {...} },
   "languages": ["de","en","es","fr","it"],
-  "strings": { "it": {...}, "en": {...}, ... },          // engine + gioco uniti
+  "strings": { "it": {...}, "en": {...}, ... },          // engine + game merged
   "sfx": { "found": "assets/audio/sfx/found.mp3", ... }, // found/complete/miss/click/levelup
   "menu_music": "assets/audio/music/..." | null,
-  "minigames": ["tetran"],                                // id implementati e usati
-  "minigame_strings": { "tetran": { "it": {...} } },      // namespaced per minigioco
+  "minigames": ["tetran"],                                // implemented and used ids
+  "minigame_strings": { "tetran": { "it": {...} } },      // namespaced per minigame
   "levels": [{
     "id": "One", "name_key": "One_name",
     "scenes": [{
@@ -149,58 +149,57 @@ build_web/
 }
 ```
 
-I campi degli oggetti rispecchiano **esattamente** la costruzione di
-`SceneObject` in `engine/scene_loader.py` (stessi default; nessun default di
-catalogo applicato a runtime).
+The object fields mirror **exactly** the construction of `SceneObject` in
+`engine/scene_loader.py` (same defaults; no catalog default applied at runtime).
 
 ---
 
-## 6. Funzionalita' implementate
+## 6. Implemented features
 
-| Area | Stato | Note |
+| Area | Status | Notes |
 |---|---|---|
-| Coordinate oggetti (rect/cerchio/rotazione/flip/warp) | OK | pixel-perfect vs engine |
-| Filtri oggetto (stretch/alpha/grayscale/color_filter) | OK | **pixel-esatti** (grayscale+tint via feColorMatrix sRGB) |
-| Hit detection (ellisse/rect ruotato/poligono warp/ray casting) | OK | identica a `click_detector.py` |
-| Sfondi (immagine **e video**) + icone + thumbnail | OK | copiati in `assets/`; video via `<video>` in loop |
-| Video di sfondo menu/scena (.mp4/.webm) | OK | dimensioni via ffprobe, anteprima dal primo frame |
-| Audio (SFX + musica) compresso | OK | `<audio>` (no fetch, file://-friendly) |
-| HUD con nomi oggetti | OK | barra inferiore, palette colori, max 7 |
-| Hint (manuale + auto-glow) | OK | 2 gratis, cooldown 20s, penalita', max 3 |
-| Pausa + menu pausa | OK | timer congelato |
-| Effetti glint/smoke/flies | OK | matematica 1:1 |
-| Torcia (flashlight) + hint-flash | OK | maschera offscreen |
-| Fumetti bubble_tip (`start_scene` + `end_scene`) | OK | coda; end_scene prima dei results |
-| Particelle + popup punteggio + screen shake | OK | feedback alla scoperta |
-| Versionamento build (versioni, version.json, builds.json, redirect) | OK | auto-incremento |
-| Meta SEO/Open Graph/Twitter + favicon + theme-color | OK | per gioco, anteprime social |
-| PWA (manifest.webmanifest, installabile, landscape) | OK | icona + theme/bg color |
-| Loading screen + transizioni fade + hover card menu | OK | UX moderna |
-| Catalogo per portale (game.json + build_web/index.json) | OK | metadati per piattaforma |
-| Selezione casuale layer/oggetti | OK | `random_layer_selection`/`auto_random_finds` |
-| Salvataggio + lock (localStorage) | OK | scene/livelli, autosave, stelle |
-| Impostazioni (volume + 5 lingue) | OK | persistite, cambio lingua live |
-| Temi UI (cyber_neon/mystery/...) | OK | colori dal manifest |
-| Level-select curata (thumb/stelle/lock) | OK | a tema |
-| Results appaganti (stelle/coriandoli/score) | OK | scoring 1:1 |
-| Minigiochi | tetran, arcade_eleven, asteroids | host + interfaccia + asset reali |
+| Object coordinates (rect/circle/rotation/flip/warp) | OK | pixel-perfect vs engine |
+| Object filters (stretch/alpha/grayscale/color_filter) | OK | **pixel-exact** (grayscale+tint via sRGB feColorMatrix) |
+| Hit detection (ellipse/rotated rect/warp polygon/ray casting) | OK | identical to `click_detector.py` |
+| Backgrounds (image **and video**) + icons + thumbnails | OK | copied to `assets/`; video via looping `<video>` |
+| Menu/scene background video (.mp4/.webm) | OK | dimensions via ffprobe, preview from the first frame |
+| Compressed audio (SFX + music) | OK | `<audio>` (no fetch, file://-friendly) |
+| HUD with object names | OK | bottom bar, color palette, max 7 |
+| Hints (manual + auto-glow) | OK | 2 free, 20 s cooldown, penalties, max 3 |
+| Pause + pause menu | OK | timer frozen |
+| Glint/smoke/flies effects | OK | 1:1 math |
+| Flashlight + hint-flash | OK | offscreen mask |
+| bubble_tip speech bubbles (`start_scene` + `end_scene`) | OK | queue; end_scene before the results |
+| Particles + score popup + screen shake | OK | discovery feedback |
+| Build versioning (versions, version.json, builds.json, redirect) | OK | auto-increment |
+| SEO/Open Graph/Twitter meta + favicon + theme-color | OK | per game, social previews |
+| PWA (manifest.webmanifest, installable, landscape) | OK | icon + theme/bg color |
+| Loading screen + fade transitions + menu hover cards | OK | modern UX |
+| Portal catalog (game.json + build_web/index.json) | OK | platform metadata |
+| Random layer/object selection | OK | `random_layer_selection`/`auto_random_finds` |
+| Save + locks (localStorage) | OK | scenes/levels, autosave, stars |
+| Settings (volume + 5 languages) | OK | persisted, live language switch |
+| UI themes (cyber_neon/mystery/...) | OK | colors from the manifest |
+| Curated level select (thumb/stars/lock) | OK | themed |
+| Rewarding results (stars/confetti/score) | OK | 1:1 scoring |
+| Minigames | tetran, arcade_eleven, asteroids | host + interface + real assets |
 
 ---
 
-## 7. Limiti noti / non ancora portato
+## 7. Known limits / not yet ported
 
-- **Minigiochi**: portati i 3 usati dai giochi (tetran, arcade_eleven, asteroids).
-  Mancano: centipede, minipong, slot_classic, spot_differences, sudoku, tower.
-- **detection_type `mask`** pixel-perfect: fallback a cerchio (0 usi nei giochi attuali).
-- **intro zoom** e **transizioni fade** tra scene: non portati (estetica minore).
-- Multi-touch nei minigiochi: un controllo alla volta (tastiera completa su desktop).
+- **Minigames**: the 3 used by the games are ported (tetran, arcade_eleven, asteroids).
+  Missing: centipede, minipong, slot_classic, spot_differences, sudoku, tower.
+- **detection_type `mask`** pixel-perfect: falls back to a circle (0 uses in the current games).
+- **Intro zoom** and **fade transitions** between scenes: not ported (minor aesthetics).
+- Multi-touch in minigames: one control at a time (full keyboard on desktop).
 
 ---
 
-## 8. Verifica (in assenza di screenshot)
+## 8. Verification (without screenshots)
 
-La fedelta' e' stata validata via **ispezione di stato** e **campionamento pixel**
-sul canvas (lo strumento screenshot della preview era inaffidabile). Esempi:
-- `bg_to_screen` JS vs `ScalingManager` Python: delta < 0.005px su tutti gli oggetti.
-- Hit-test rect ruotato (270.1 gradi): 961/961 celle identiche a `ClickDetector`.
-- Round-trip render→click: ogni oggetto colpito al proprio centro renderizzato.
+Fidelity was validated through **state inspection** and **pixel sampling** on the
+canvas (the preview screenshot tool was unreliable). Examples:
+- JS `bg_to_screen` vs Python `ScalingManager`: delta < 0.005 px on every object.
+- Rotated rect hit test (270.1 degrees): 961/961 cells identical to `ClickDetector`.
+- Render -> click round trip: every object hit at its own rendered center.

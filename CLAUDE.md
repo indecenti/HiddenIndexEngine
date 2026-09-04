@@ -1,115 +1,118 @@
 # CLAUDE.md — HiddenIndexEngine (HIE)
 
-Guida operativa per Claude Code su questo repository. Le regole qui sono vincolanti.
-Per le preferenze globali condivise con altri tool vedi anche `GEMINI.md`.
+Operating guide for Claude Code on this repository. The rules here are binding.
+Global preferences shared with other tools live in `GEMINI.md`.
 
-## Cos'e' HIE
+## What HIE is
 
-Motore modulare in **Python 3.12 + pygame 2.6.1** per **Hidden Object Games (HOG)**.
-Tre target di distribuzione dallo stesso progetto:
+A modular engine in **Python 3.12 + pygame 2.6.1** for **Hidden Object Games (HOG)**.
+Three distribution targets from the same project:
 
 - **Desktop** (Windows): EXE via PyInstaller.
-- **Web**: export che *replica* la logica engine in JavaScript (non la importa).
+- **Web**: an export that *replicates* the engine logic in JavaScript (it does not import it).
 - **Android**: APK/AAB via python-for-android / buildozer (WSL).
 
-Include un **editor visuale** completo (`editor/`) per creare scene, posizionare
-oggetti, gestire catalogo/tag/lingue e lanciare le build.
+It ships a complete **visual editor** (`editor/`) to create scenes, place objects, manage
+the catalog, tags and languages, and launch the builds.
 
-## Layout del repository
+## Repository layout
 
-| Path | Contenuto |
-|------|-----------|
-| `engine/` | Runtime del gioco: `core.py`, `scene_loader.py`, `catalog_manager.py`, `menu_system.py`, `menu_skins/`, `minigames/`, `hud_manager.py`, `scaling_manager.py`, `haptics.py`. |
-| `engine/data/` | Cataloghi globali `global_*_catalog.json` (cartoon, lineart, ...). |
-| `engine/assets/` | Asset condivisi: `objects_cartoon/`, `objects_lineart/`, `strings/`. |
-| `engine/schemas/` | JSON Schema (`scene_schema.json`, `catalog_schema.json`). |
-| `editor/` | Editor di livelli (mixins, build desktop/android, web exporter). |
-| `games/<id>/` | Giochi: `game_config.json`, `objects_catalog.json`, `levels/<level>/<scene>/scene.json`, `strings/`. |
-| `tools/` | Utility di sviluppo (audit catalogo, normalizzazione tag, preview). |
-| `tools/hie_mcp_server.py` | **MCP server del progetto** (render headless, validazione scene, ricerca catalogo). |
-| `.claude/skills/` | Skill di progetto (build-apk, run-game, add-asset, validate-scene). |
-| `scripts/` | Script shell per build Android (WSL). |
-| `docs/` | Documentazione organizzata per area (vedi `docs/README.md`). |
-| `scratch/` | Script usa-e-getta e PNG temporanei. NON e' codice di produzione. |
+| Path | Contents |
+|------|----------|
+| `engine/` | Game runtime: `core.py`, `scene_loader.py`, `catalog_manager.py`, `menu_system.py`, `menu_skins/`, `minigames/`, `hud_manager.py`, `scaling_manager.py`, `haptics.py`. |
+| `engine/data/` | Global catalogs `global_*_catalog.json` (cartoon, lineart, ...). |
+| `engine/assets/` | Shared assets: `objects_cartoon/`, `objects_lineart/`, `strings/`. |
+| `engine/schemas/` | JSON Schemas (`scene_schema.json`, `catalog_schema.json`). |
+| `editor/` | Level editor (mixins, desktop/Android builds, web exporter). |
+| `games/<id>/` | Games: `game_config.json`, `objects_catalog.json`, `levels/<level>/<scene>/scene.json`, `strings/`. |
+| `tools/` | Development utilities (catalog audit, tag normalization, preview). |
+| `tools/hie_mcp_server.py` | **Project MCP server** (headless render, scene validation, catalog search). |
+| `.claude/skills/` | Project skills (build-apk, run-game, add-asset, validate-scene). |
+| `scripts/` | Shell scripts for Android builds (WSL). |
+| `docs/` | Documentation organized by area (see `docs/README.md`). |
+| `scratch/` | Throwaway scripts and temporary PNGs. NOT production code. |
 
-## Comandi
+## Commands
 
 ```powershell
-# Gioco (usa default_game da config.ini, oppure --game)
+# Game (uses default_game from config.ini, or --game)
 python main.py
 python main.py --game Malonno_Survivors --lang it
-python main.py --minigame sudoku        # avvia un minigioco diretto
+python main.py --minigame sudoku        # start a minigame directly
 
-# Editor di livelli
+# Level editor
 python run_editor.py
 
-# Test
-pytest                                   # suite completa
-pytest tests/test_web_sync.py            # contratto engine <-> web (vedi sotto)
+# Tests
+pytest                                   # full suite
+pytest tests/test_web_sync.py            # engine <-> web contract (see below)
 
-# Dipendenze
+# Dependencies
 pip install -r requirements.txt -r requirements-dev.txt
 ```
 
-Build desktop/web/Android si lanciano dall'editor; gli script Android stanno in
-`scripts/` (richiedono WSL). Vedi `docs/build/` e `docs/android/`.
+Desktop/web/Android builds are launched from the editor; the Android scripts live in
+`scripts/` (they require WSL). See `docs/build/` and `docs/android/`.
 
-## Modello dati (scene + catalogo)
+## Data model (scenes + catalog)
 
-- Una **scena** e' `games/<id>/levels/<level>/<scene>/scene.json`, validata contro
-  `engine/schemas/scene_schema.json`. Le coordinate oggetti sono nello **spazio
-  pixel nativo del background** (`background.png` accanto al `scene.json`).
-- Ogni oggetto ha `catalog_id` + `x,y` + `detection_type` (`circle`/`rect`/`mask`).
-  Convenzione ancora: per **rect** `(x,y)` e' il **top-left** (centro = `x+w/2, y+h/2`);
-  per **circle/mask** `(x,y)` e' il **centro** (dimensione = `width|radius*2`).
-- Il `catalog_id` si risolve nel **catalogo unito**: `catalog_manager.load_catalog(game_id)`
-  fonde globale (`engine/data/global_*_catalog.json`) + locale (`games/<id>/objects_catalog.json`),
-  con il locale che sovrascrive il globale a parita' di `id`.
-- L'immagine di un oggetto (`icon` nel catalogo) si cerca prima in
-  `games/<id>/<icon>`, poi in `engine/assets/<icon>`.
+- A **scene** is `games/<id>/levels/<level>/<scene>/scene.json`, validated against
+  `engine/schemas/scene_schema.json`. Object coordinates live in the **native pixel space
+  of the background** (`background.png` next to `scene.json`).
+- Every object has `catalog_id` + `x,y` + `detection_type` (`circle`/`rect`/`mask`).
+  Anchor convention: for **rect** `(x,y)` is the **top-left** (center = `x+w/2, y+h/2`);
+  for **circle/mask** `(x,y)` is the **center** (size = `width|radius*2`).
+- The `catalog_id` resolves against the **merged catalog**: `catalog_manager.load_catalog(game_id)`
+  merges global (`engine/data/global_*_catalog.json`) + local (`games/<id>/objects_catalog.json`),
+  with the local entry overriding the global one on equal `id`.
+- An object's image (`icon` in the catalog) is looked up first in
+  `games/<id>/<icon>`, then in `engine/assets/<icon>`.
 
-## Convenzioni vincolanti
+## Binding conventions
 
-- **Lingua**: italiano nelle risposte, nei commenti e nella doc. Tono diretto, niente filler.
-- **Mai emoji** in codice, doc, UI o output verso l'utente. (Il `README.md` storico ne contiene: non e' un modello da seguire.)
-- **Mai `print()`** — usa `logging` via `engine.utils.get_logger(__name__)`.
-- **Mai magic number** — costanti o config.
-- **Path risorse**: usa `engine.utils.get_resource_path(...)`; scritture via `get_writable_path(...)`.
-- **Scritture JSON**: sempre `engine.utils.safe_write_json` (atomico). Cancellazioni: `safe_delete` (cestino `.editor_trash/` + audit log).
-- **Type hints obbligatori**, PEP8, max ~100 char/linea, codice completo (no snippet con `# ...`).
-- **Niente nuove dipendenze** senza approvazione esplicita. Le versioni in `requirements*.txt` sono pinned.
-- **Rendering**: mai `pygame.SCALED` su `set_mode` (conflitto con `ScalingManager`); usa `DOUBLEBUF`/`FULLSCREEN`. Cache rendering LRU con evict graduale `popitem(last=False)`. Posizionamento con `int(round(float))`.
+- **Language**: everything committed to the repository is in **English** — documentation,
+  code comments, docstrings, log messages, commit messages. Legacy Italian comments are
+  migrated when the surrounding code is touched. Reply to the user in the language they
+  write in (the maintainer writes in Italian). Direct tone, no filler.
+- **Never emoji** in code, docs, UI or output.
+- **Never `print()`** — use `logging` via `engine.utils.get_logger(__name__)`.
+- **Never magic numbers** — constants or config.
+- **Resource paths**: use `engine.utils.get_resource_path(...)`; writes via `get_writable_path(...)`.
+- **JSON writes**: always `engine.utils.safe_write_json` (atomic). Deletions: `safe_delete` (`.editor_trash/` bin + audit log).
+- **Type hints required**, PEP 8, ~100 chars per line max, complete code (no `# ...` snippets).
+- **No new dependencies** without explicit approval. Versions in `requirements*.txt` are pinned.
+- **Rendering**: never `pygame.SCALED` on `set_mode` (it conflicts with `ScalingManager`); use `DOUBLEBUF`/`FULLSCREEN`. LRU render caches with gradual eviction via `popitem(last=False)`. Positioning with `int(round(float))`.
 
-## Regola BLINDATA: sync engine <-> web
+## HARD rule: engine <-> web sync
 
-L'export web (`editor/web_exporter.py` + `editor/web_template/runtime/`) **replica** in
-JavaScript la logica di `engine/{scaling_manager,click_detector,level_manager,hint_system,
-scene_loader,effect_renderer,save_manager}` e di `engine/minigames/*`. Se modifichi uno di
-questi, DEVI leggere e aggiornare **`docs/web/WEB_EXPORT_SYNC.md`** e propagare la modifica al
-runtime web nella stessa change. Le costanti condivise hanno fonte unica in
-`editor/web_rules.py::engine_rules()`. Verifica obbligatoria: `pytest tests/test_web_sync.py`.
+The web export (`editor/web_exporter.py` + `editor/web_template/runtime/`) **replicates** in
+JavaScript the logic of `engine/{scaling_manager,click_detector,level_manager,hint_system,
+scene_loader,effect_renderer,save_manager}` and of `engine/minigames/*`. If you change any of
+these, you MUST read and update **`docs/web/WEB_EXPORT_SYNC.md`** and propagate the change to
+the web runtime in the same change. Shared constants have a single source of truth in
+`editor/web_rules.py::engine_rules()`. Mandatory check: `pytest tests/test_web_sync.py`.
 
 ## i18n
 
-**EN e' la lingua di default e l'UNICO fallback** (`engine.language_manager.DEFAULT_LANG` /
-`FALLBACK_LANG`, `editor.constants.DEFAULT_LANG`). `LanguageManager` risolve:
-`games/<id>/strings/` -> `engine/assets/strings/` -> fallback EN -> default inline -> chiave.
+**EN is the default language and the ONLY fallback** (`engine.language_manager.DEFAULT_LANG` /
+`FALLBACK_LANG`, `editor.constants.DEFAULT_LANG`). `LanguageManager` resolves:
+`games/<id>/strings/` -> `engine/assets/strings/` -> EN fallback -> inline default -> key.
 
-Niente testo hardcoded nella UI: si usa `self._TR("chiave", "English default")` (o `tr(...)` da
-`engine.language_manager` nei modali standalone) e `str.format` con placeholder nominali. Ogni
-chiave nuova va aggiunta a **tutte e 5** le lingue in `engine/assets/strings/`.
-Verifica obbligatoria: `pytest tests/test_editor_i18n.py`. Dettagli in `docs/engine/I18N.md`.
+No hardcoded UI text: use `self._TR("key", "English default")` (or `tr(...)` from
+`engine.language_manager` in standalone modals) and `str.format` with named placeholders.
+Every new key goes into **all 5** languages in `engine/assets/strings/`.
+Mandatory check: `pytest tests/test_editor_i18n.py`. Details in `docs/engine/I18N.md`.
 
-Al salvataggio scena l'editor fa **harvesting**: copia nel `.json` locale del gioco le stringhe
-necessarie (oggetti, HUD, menu) cosi' il gioco e' distribuibile standalone.
+On scene save the editor performs **harvesting**: it copies into the game's local `.json`
+the strings it needs (objects, HUD, menus) so the game can be shipped standalone.
 
-## Tooling per Claude
+## Tooling for Claude
 
-- **MCP** (`tools/hie_mcp_server.py`): registrato in `.mcp.json`. Espone `render_scene`,
-  `render_asset` (PNG headless via engine), `validate_scene`, `search_catalog`,
-  `check_missing_assets`, `list_games`, `build_status`. Si ricarica al riavvio del client.
-- **Skill** (`.claude/skills/`): `build-apk`, `run-game`, `add-asset`, `validate-scene`.
+- **MCP** (`tools/hie_mcp_server.py`): registered in `.mcp.json`. Exposes `render_scene`,
+  `render_asset` (headless PNG through the engine), `validate_scene`, `search_catalog`,
+  `check_missing_assets`, `list_games`, `build_status`. Reloads when the client restarts.
+- **Skills** (`.claude/skills/`): `build-apk`, `run-game`, `add-asset`, `validate-scene`.
 
-## Stato e prossimi passi
+## Status and next steps
 
-Vedi `docs/ROADMAP.md` per lo stato per area e il lavoro residuo.
+See `docs/ROADMAP.md` for the per-area status and the remaining work.

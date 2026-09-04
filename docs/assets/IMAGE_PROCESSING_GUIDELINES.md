@@ -1,36 +1,36 @@
-# 🖼️ Linee Guida per il Processamento Immagini (Background Removal)
+# Image Processing Guidelines (Background Removal)
 
-## ❌ Il Problema: OpenCV FloodFill & Range Globale
-In passato l'approccio prevedeva l'utilizzo di `cv2.inRange()` (che eliminava tutti i pixel bianchi, compresi gli occhi, i denti o i riflessi all'interno degli oggetti) oppure del `FloodFill` perimetrale (che salvaguardava gli interni, ma lasciava lo sfondo intatto dentro ai "buchi" chiusi, come l'interno di un hula hoop o di un nunchaku). Entrambi gli approcci classici basati sulle soglie si sono rivelati inadeguati per ottenere un **"lavoro pulito perfetto"**.
+## The problem: OpenCV FloodFill and global ranges
+The old approach used `cv2.inRange()` (which removed every white pixel, including eyes, teeth or reflections inside the objects) or a perimeter `FloodFill` (which protected the interiors but left the background intact inside closed "holes", such as the inside of a hula hoop or a nunchaku). Both classic threshold-based approaches proved inadequate for a **"perfectly clean job"**.
 
-## ✅ La Soluzione Ufficiale Definitiva: Intelligenza Artificiale (Rembg)
-Poiché il nostro ambiente dispone di `rembg` (modulo basato su rete neurale U2-Net), esso è diventato l'**unico standard accettato** per rimuovere lo sfondo dalle icone generate.
+## The official solution: artificial intelligence (Rembg)
+Since our environment has `rembg` (a module based on the U2-Net neural network), it has become the **only accepted standard** for removing the background from generated icons.
 
-**Perché Rembg?**
-- È un algoritmo di matting semantico: **riconosce il soggetto** rispetto allo sfondo.
-- **Pulisce gli sfondi interni:** rimuove perfettamente il bianco dai "buchi" e dagli spazi vuoti chiusi degli oggetti.
-- **Protegge i colori interni:** non cancellerà MAI i riflessi, i denti, o la sclera bianca degli occhi, poiché sa che fanno parte del soggetto.
-- L'anti-aliasing sui bordi generato dalle maschere alpha è di qualità superiore rispetto a qualsiasi thresholding manuale.
+**Why Rembg?**
+- It is a semantic matting algorithm: it **recognizes the subject** against the background.
+- **Cleans inner backgrounds:** it perfectly removes the white from the "holes" and the closed empty spaces of the objects.
+- **Protects inner colors:** it will NEVER erase reflections, teeth, or the white sclera of the eyes, because it knows they belong to the subject.
+- The edge anti-aliasing produced by the alpha masks is of higher quality than any manual thresholding.
 
-### Esempio di Codice Python (Rembg) Sicuro
-Per ogni griglia generata o singolo asset, utilizzare sempre la seguente logica:
+### Safe Python code example (Rembg)
+For every generated grid or single asset, always use the following logic:
 
 ```python
 import rembg
 from PIL import Image
 
 def process_asset_with_ai(image_path, out_path):
-    # Carica l'immagine originale (anche se ha bordi bianchi, sfondi complessi o buchi interni)
+    # Load the original image (even with white borders, complex backgrounds or inner holes)
     img = Image.open(image_path)
-    
-    # Rimuovi lo sfondo magicamente con AI
+
+    # Remove the background with AI
     out = rembg.remove(img)
-    
-    # Salva il PNG pulito
+
+    # Save the clean PNG
     out.save(out_path)
 ```
 
-### Regole d'Oro per Script Futuri:
-1. **NON USARE PIÙ OPENCV PER LE TRASPARENZE:** Non tentare più di indovinare la tolleranza del floodfill. Scarta `cv2.floodFill` o `cv2.inRange` per il ritaglio.
-2. **TAGLIO PRIMA, REMBG DOPO:** Se l'AI ha generato una griglia (es. 4x4), taglia prima le celle singole con `img.crop()`, dopodiché passa ogni singola cella a `rembg.remove()`. Passare l'intera griglia a Rembg confonderebbe la rete neurale su quale sia il "soggetto principale".
-3. **VELOCITÀ:** Il primo avvio di `rembg` potrebbe impiegare qualche secondo in più per caricare i pesi del modello. Le elaborazioni successive saranno istantanee.
+### Golden rules for future scripts:
+1. **NO MORE OPENCV FOR TRANSPARENCY:** stop trying to guess the floodfill tolerance. Drop `cv2.floodFill` and `cv2.inRange` for cutouts.
+2. **CROP FIRST, REMBG AFTER:** if the AI generated a grid (e.g. 4x4), first cut the single cells with `img.crop()`, then pass each cell to `rembg.remove()`. Passing the whole grid to Rembg would confuse the neural network about what the "main subject" is.
+3. **SPEED:** the first run of `rembg` may take a few extra seconds to load the model weights. Subsequent runs are instant.

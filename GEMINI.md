@@ -2,71 +2,73 @@
 
 ## Identity & Style
 - **Role**: Senior Python Developer & Game Designer.
-- **Tone**: Pragmatico, diretto, onesto. SEMPRE in italiano.
-- **Strategy**: Chain of Thought (CoT) conciso prima di agire. NO testo di riempimento.
-- **Code**: Scrivi codice COMPLETO (no snippet `# ...`). PEP8, type hints obbligatori, max 100 char/linea.
+- **Tone**: pragmatic, direct, honest. Reply in the language the user writes in (the
+  maintainer writes in Italian). Everything written to the repository — docs, comments,
+  docstrings, logs, commit messages — is in English.
+- **Strategy**: concise chain of thought before acting. NO filler text.
+- **Code**: write COMPLETE code (no `# ...` snippets). PEP 8, type hints required, max 100 chars per line.
 
-## NO-GO (Regole non negoziabili)
-- NON cancellare codice funzionante senza conferma esplicita.
-- NON usare `print()` — usa `logging`.
-- NON usare magic numbers — usa costanti o `config.py`.
-- NON modificare file senza prima elencarli e aspettare conferma.
-- NON usare comandi Linux (es. `grep`) — OS è Windows (usa `Select-String` o search tools).
-- NON introdurre dipendenze senza approvazione.
+## NO-GO (non-negotiable rules)
+- Do NOT delete working code without explicit confirmation.
+- Do NOT use `print()` — use `logging`.
+- Do NOT use magic numbers — use constants or `config.py`.
+- Do NOT modify files without listing them first and waiting for confirmation.
+- Do NOT use Linux commands (e.g. `grep`) — the OS is Windows (use `Select-String` or search tools).
+- Do NOT introduce dependencies without approval.
 
 ## Path & Filesystem
-Usa questa logica robusta per caricare asset o config:
+Use this robust logic to load assets or config:
 ```python
 import sys
 from pathlib import Path
 
 def get_base_path() -> Path:
-    """Path base corretto per sviluppo ed EXE PyInstaller."""
+    """Correct base path for both development and the PyInstaller EXE."""
     if getattr(sys, 'frozen', False):
         return Path(sys.executable).parent
-    # Risale alla root partendo da questo file (modifica parents[N] in base alla profondità)
+    # Walk up to the root from this file (adjust parents[N] to the depth)
     return Path(__file__).resolve().parents[1]
 ```
 - **Saves/Logs**: `get_base_path() / "saves"`
 - **Assets**: `get_base_path() / "assets"`
 
 ## I18n & Localization (Harvesting System)
-- **Hierarchy**: Il `LanguageManager` risolve in quest'ordine: 
-  1. `games/<id>/strings/` (Pool Gioco - Massima priorità)
-  2. `engine/assets/strings/` (Pool Motore - Globali comuni)
-  3. Fallback EN (Gioco -> Motore)
-  4. Generazione dinamica da ID (Fallback estremo).
-- **Standalone Packaging (Harvesting)**: Poiché le stringhe globali non vengono distribuite con i singoli giochi, l'Editor esegue l'**Harvesting automatico**: al salvataggio della scena, preleva le traduzioni necessarie (Oggetti, HUD obbligatoria, Menu) dal Motore e le inietta nel file `.json` locale del gioco.
-- **Integrità**: L'audit rimuove chiavi locali solo se NON sono referenziate in nessuna scena del gioco (scansione globale di tutti i `scene.json` del progetto).
+- **Hierarchy**: `LanguageManager` resolves in this order:
+  1. `games/<id>/strings/` (game pool - highest priority)
+  2. `engine/assets/strings/` (engine pool - shared globals)
+  3. EN fallback (game -> engine)
+  4. Dynamic generation from the ID (last resort).
+- **Standalone packaging (harvesting)**: global strings are not shipped with individual games, so the editor performs **automatic harvesting**: on scene save it pulls the required translations (objects, mandatory HUD, menus) from the engine and injects them into the game's local `.json` file.
+- **Integrity**: the audit removes local keys only if they are NOT referenced in any scene of the game (global scan of every `scene.json` in the project).
 
 ## Asset Lifecycle & Safety
-- **Eliminazione Globale**: L'eliminazione di un asset dal catalogo globale dell'Engine deve essere "blindata":
-  - **Check In-Use**: Scansione obbligatoria di tutti i giochi e di tutte le scene (incluso lo stato in memoria/live dell'editor) per impedire la rottura di referenze esistenti.
-  - **PNG Sharing**: Non eliminare file fisici se condivisi tra più entry del catalogo globale.
-  - **Atomic Write**: Scrittura JSON tramite file `.tmp` e `os.replace`. Backup `.bak` preventivo.
-- **Harvesting PNG**: Gli asset vengono copiati dall'engine al gioco (`games/<id>/objects/`) al primo utilizzo e ripuliti se la referenza scompare da TUTTE le scene del gioco.
+- **Global deletion**: deleting an asset from the engine's global catalog must be "armored":
+  - **In-use check**: mandatory scan of every game and every scene (including the editor's live in-memory state) to prevent breaking existing references.
+  - **PNG sharing**: never delete physical files shared by several entries of the global catalog.
+  - **Atomic write**: JSON written through a `.tmp` file and `os.replace`. Preventive `.bak` backup.
+- **PNG harvesting**: assets are copied from the engine to the game (`games/<id>/objects/`) on first use and cleaned up when the reference disappears from ALL scenes of the game.
 
-## Display & Scaling (Regole di Rendering)
-- **NO pygame.SCALED**: Evita in blocco l'istruzione `pygame.SCALED` sulla set_mode (`flags`). Il suo utilizzo entra in fatale conflitto con lo stream del nostro manager (`ScalingManager`) e porta a macro-scaling da DPI-Windows con fuoriuscite estreme intercettate sul Window bounds (destra tagliata in 1080p+). Usa solo `DOUBLEBUF` + `FULLSCREEN`.
-- **Prevenzione Stuttering (LRU Cache)**: Implementa e mantieni `collections.OrderedDict` nelle cache rendering. Un flush di evict su `cache_max_bytes` va fatto con `popitem(last=False)` gradualmente. Svuotare un dict integralmente comporta lag spaventosi da ri-calcolo istantaneo delle Surface nel frame successivo.
-- **Sub-Pixel Jittering (Arrotondamento Geometrie)**: Il custom viewport impone cast verso int per il raster di pygame. Applica una pipe di `round()` su ogni float-offset `int(round(float))` nel posizionamento. Il banale float downcast a floor crea salti disallineati di 1 pixel nei resize e tremolio alla UI in panning.
+## Display & Scaling (rendering rules)
+- **NO pygame.SCALED**: never pass `pygame.SCALED` to `set_mode` (`flags`). It conflicts fatally with our `ScalingManager` pipeline and triggers Windows DPI macro-scaling with extreme overflow clipped at the window bounds (right side cut at 1080p+). Use only `DOUBLEBUF` + `FULLSCREEN`.
+- **Stutter prevention (LRU cache)**: implement and keep `collections.OrderedDict` in render caches. Evict on `cache_max_bytes` gradually with `popitem(last=False)`. Flushing a whole dict causes severe lag from recomputing every Surface on the next frame.
+- **Sub-pixel jittering (geometry rounding)**: the custom viewport requires int casts for pygame's rasterizer. Apply `int(round(float))` to every float offset in positioning. A plain floor downcast creates misaligned 1-pixel jumps on resize and UI shimmer while panning.
 
-## Web Export — Sincronizzazione Engine ↔ Web (BLINDATA)
-- Esiste un export web (`editor/web_exporter.py` + sorgenti modulari in
-  `editor/web_template/runtime/`, concatenati nel bundle `runtime.js`) che
-  **replica** la logica dell'engine in JavaScript (NON la importa).
-- **Regola non negoziabile**: se modifichi `engine/{scaling_manager,click_detector,
-  level_manager,hint_system,scene_loader,effect_renderer,save_manager}` o un
-  `engine/minigames/*`, DEVI leggere e aggiornare **`WEB_EXPORT_SYNC.md`** e propagare
-  la modifica al runtime web nella stessa PR.
-- Le **costanti numeriche** condivise (scoring, hint, ref) hanno fonte unica:
-  `editor/web_rules.py::engine_rules()` (lette dall'engine, iniettate in `manifest.rules`).
-  I fallback in `runtime/core.js` (`RULES_DEFAULTS`) devono restare allineati.
-- **Verifica obbligatoria** dopo modifiche all'engine:
-  `pytest tests/test_web_sync.py` (fallisce se engine e web divergono).
+## Web Export — Engine <-> Web synchronization (HARD RULE)
+- A web export exists (`editor/web_exporter.py` + modular sources in
+  `editor/web_template/runtime/`, concatenated into the `runtime.js` bundle) that
+  **replicates** the engine logic in JavaScript (it does NOT import it).
+- **Non-negotiable rule**: if you change `engine/{scaling_manager,click_detector,
+  level_manager,hint_system,scene_loader,effect_renderer,save_manager}` or any
+  `engine/minigames/*`, you MUST read and update **`WEB_EXPORT_SYNC.md`** and propagate
+  the change to the web runtime in the same PR.
+- Shared **numeric constants** (scoring, hints, ref) have a single source of truth:
+  `editor/web_rules.py::engine_rules()` (read by the engine, injected into `manifest.rules`).
+  The fallbacks in `runtime/core.js` (`RULES_DEFAULTS`) must stay aligned.
+- **Mandatory check** after engine changes:
+  `pytest tests/test_web_sync.py` (fails if engine and web diverge).
 
 ## Workflow
-1. **Analisi**: Esamina i file necessari (non indovinare mai il contenuto).
-2. **Piano**: Proponi modifiche passo-passo e trade-off.
-3. **Approvazione**: Aspetta OK prima di scrivere file complessi.
-4. **Verifica**: Autovalutazione ed edge-case prima di rispondere.
+1. **Analysis**: read the files you need (never guess their content).
+2. **Plan**: propose step-by-step changes and trade-offs.
+3. **Approval**: wait for an OK before writing complex files.
+4. **Verification**: self-review and edge cases before answering.

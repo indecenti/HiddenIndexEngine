@@ -1,112 +1,112 @@
-# Piano Builder APK Android integrato nell'editor
+# Android APK Builder integrated in the editor — plan
 
-**Status**: Approvato — F1 completata, prossimo step F0 (setup WSL) oppure F2 (prototipo manuale)
-**Versione piano**: 2.0
-**Data revisione**: 2026-05-13
-**Sostituisce**: piano v1.0 (obsoleto su toolchain e disallineato sull'architettura editor)
+**Status**: Approved — F1 completed, next step F0 (WSL setup) or F2 (manual prototype)
+**Plan version**: 2.0
+**Revision date**: 2026-05-13
+**Replaces**: plan v1.0 (obsolete toolchain, misaligned with the editor architecture)
 
-**Decisioni approvate (2026-05-13)**:
-- APK separati per gioco (un APK per LineVenture, uno per Malonno_Survivors)
-- Setup WSL gestito da wizard nell'editor (mostra istruzioni + verifica, non installa silenziosamente)
-- Orientation: landscape forzato (coerente con 1920x1080 del motore)
-
----
-
-## 1. Obiettivo
-
-Estendere l'editor con una procedura di pacchettizzazione APK Android **parallela** a quella che oggi produce l'EXE Windows tramite PyInstaller. L'editor stesso **non** finisce nell'APK: gli APK contengono solo `engine/` + `main.py` + `games/<id>/` di un singolo gioco. Un APK per gioco (LineVenture, Malonno_Survivors).
-
-Risultato atteso: dall'editor, accanto al bottone "Compila gioco (Windows EXE)", un bottone "Compila APK Android" che produce `bin/<game_id>-<version>-debug.apk` (o `-release.aab` per Play Store).
+**Approved decisions (2026-05-13)**:
+- Separate APKs per game (one for LineVenture, one for Malonno_Survivors)
+- WSL setup handled by a wizard in the editor (shows instructions + verifies, does not install silently)
+- Orientation: forced landscape (consistent with the engine's 1920x1080)
 
 ---
 
-## 2. Stato della codebase e dipendenze runtime
+## 1. Goal
 
-Verificato in questa sessione:
+Extend the editor with an Android APK packaging procedure **parallel** to the one that produces the Windows EXE through PyInstaller today. The editor itself does **not** end up in the APK: APKs contain only `engine/` + `main.py` + `games/<id>/` of a single game. One APK per game (LineVenture, Malonno_Survivors).
 
-| Aspetto | Verifica | Esito |
-|---------|----------|-------|
-| `engine/` importa `editor/`? | `grep "from editor\|import editor" engine/` | ❌ nessun import — `engine` è standalone |
-| `main.py` importa `editor/`? | stesso grep | ❌ nessun import |
-| Networking runtime | grep `requests/socket/urllib` | ❌ assente |
-| `subprocess` nel runtime | grep `subprocess` in `engine/` | ❌ solo `editor/build_system.py` (non runtime) |
-| Threading | `engine/audio_manager.py:10-41` | ✅ daemon thread + Queue — supportato su Android |
-| File I/O | `engine/save_manager.py:57-63` open() su path locali | ⚠️ va dirottato su Android internal storage |
-| Main loop | `engine/core.py:235-246` | ✅ sincrono Pygame standard |
-| Input | `engine/core.py:265` MOUSEBUTTONDOWN | ✅ pygame mappa touch→mouse automaticamente |
-| `get_base_path()` | `engine/utils.py:32-37` | ⚠️ da estendere con detection p4a |
+Expected result: in the editor, next to the "Build game (Windows EXE)" button, a "Build Android APK" button that produces `bin/<game_id>-<version>-debug.apk` (or `-release.aab` for the Play Store).
 
-**Bundle attuale**:
-- `engine/` 398 MB di cui `engine/assets/` 383 MB (backgrounds 180 + objects 141 + music 37)
-- `engine/*.py` < 300 KB (codice motore)
+---
+
+## 2. Codebase status and runtime dependencies
+
+Verified in this session:
+
+| Aspect | Check | Result |
+|--------|-------|--------|
+| Does `engine/` import `editor/`? | `grep "from editor\|import editor" engine/` | no import — `engine` is standalone |
+| Does `main.py` import `editor/`? | same grep | no import |
+| Runtime networking | grep `requests/socket/urllib` | absent |
+| `subprocess` in the runtime | grep `subprocess` in `engine/` | only `editor/build_system.py` (not runtime) |
+| Threading | `engine/audio_manager.py:10-41` | daemon thread + Queue — supported on Android |
+| File I/O | `engine/save_manager.py:57-63` open() on local paths | must be redirected to Android internal storage |
+| Main loop | `engine/core.py:235-246` | standard synchronous Pygame |
+| Input | `engine/core.py:265` MOUSEBUTTONDOWN | pygame maps touch -> mouse automatically |
+| `get_base_path()` | `engine/utils.py:32-37` | to be extended with p4a detection |
+
+**Current bundle**:
+- `engine/` 398 MB, of which `engine/assets/` 383 MB (backgrounds 180 + objects 141 + music 37)
+- `engine/*.py` < 300 KB (engine code)
 - `games/LineVenture/` 55 MB, `games/Malonno_Survivors/` 102 MB
 
-L'editor esistente ha **già** uno smart packaging che riduce drasticamente l'output: `editor/build_system.py:34` `_analyze_game_usage()` traccia gli asset effettivamente referenziati dalle scene del gioco e copia solo quelli. La logica APK riuserà queste stesse funzioni.
+The existing editor **already** has a smart packaging that drastically reduces the output: `editor/build_system.py:34` `_analyze_game_usage()` tracks the assets actually referenced by the game's scenes and copies only those. The APK logic reuses these same functions.
 
 ---
 
-## 3. Architettura proposta
+## 3. Proposed architecture
 
-Riproduce in parallelo la triade EXE già funzionante.
+Mirrors the already working EXE triad.
 
 ```
-EXE Windows (esistente)               APK Android (nuovo)
-─────────────────────────             ───────────────────────────
-editor/build_ui.py            ◄──►    editor/android_build_ui.py
-editor/build_manager.py       ◄──►    editor/android_build_manager.py
-editor/build_system.py        ◄──►    editor/android_build_system.py
-   └─ PyInstaller                       └─ Buildozer (via WSL)
+Windows EXE (existing)               Android APK (new)
+─────────────────────────            ───────────────────────────
+editor/build_ui.py            <-->   editor/android_build_ui.py
+editor/build_manager.py       <-->   editor/android_build_manager.py
+editor/build_system.py        <-->   editor/android_build_system.py
+   └─ PyInstaller                      └─ Buildozer (via WSL)
 ```
 
-Funzioni condivise senza duplicazione:
-- `_analyze_game_usage()` — riusata 1:1
-- `_copy_smart_assets()` — riusata 1:1
-- `next_build_version()` — riusata 1:1
+Shared functions, no duplication:
+- `_analyze_game_usage()` — reused 1:1
+- `_copy_smart_assets()` — reused 1:1
+- `next_build_version()` — reused 1:1
 
-Nuove funzioni in `android_build_system.py`:
-- `_verify_wsl_toolchain()` — controlla `wsl --status`, presenza `buildozer` nel venv Linux configurato
-- `_generate_buildozer_spec(game_id, version, workspace)` — produce `buildozer.spec` parametrizzato per il gioco
-- `_run_buildozer_with_timeout()` — analogo a `_run_pyinstaller_with_timeout`, lancia `wsl -e bash -lc "cd … && buildozer android debug"` e parsa output
-- `build_game_apk()` — orchestratore principale (firma simmetrica a `build_game()`)
+New functions in `android_build_system.py`:
+- `_verify_wsl_toolchain()` — checks `wsl --status` and the presence of `buildozer` in the configured Linux venv
+- `_generate_buildozer_spec(game_id, version, workspace)` — produces a `buildozer.spec` parameterized for the game
+- `_run_buildozer_with_timeout()` — analogous to `_run_pyinstaller_with_timeout`, runs `wsl -e bash -lc "cd … && buildozer android debug"` and parses the output
+- `build_game_apk()` — main orchestrator (signature symmetric to `build_game()`)
 
-Il bottone APK nell'editor lancia un subprocess `python editor/android_build_manager.py <game_id> <version> <build_dir> <status_file> [--release]`, che a sua volta apre `BuildProgressWindow` versione Android. Stesso paradigma di comunicazione via `status.json` con watchdog.
+The APK button in the editor launches a subprocess `python editor/android_build_manager.py <game_id> <version> <build_dir> <status_file> [--release]`, which in turn opens the Android version of `BuildProgressWindow`. Same communication paradigm via `status.json` with a watchdog.
 
 ---
 
-## 4. Toolchain target 2026
+## 4. Target toolchain 2026
 
-Stack aggiornato ai requisiti Google Play 2026:
+Stack updated to the Google Play 2026 requirements:
 
-| Componente | Versione | Note |
-|------------|----------|------|
-| WSL2 + Ubuntu | 24.04 LTS | Buildozer non gira su Windows nativo |
-| JDK | 17 (Temurin) | Richiesto da Android Gradle Plugin attuale |
-| Python (in WSL) | 3.12 | Compatibile p4a stable |
-| Android SDK platform | `android-35` | targetSdk obbligatorio per nuove app/aggiornamenti dal 2025 |
+| Component | Version | Notes |
+|-----------|---------|-------|
+| WSL2 + Ubuntu | 24.04 LTS | Buildozer does not run on native Windows |
+| JDK | 17 (Temurin) | Required by the current Android Gradle Plugin |
+| Python (in WSL) | 3.12 | Compatible with p4a stable |
+| Android SDK platform | `android-35` | targetSdk mandatory for new apps/updates from 2025 |
 | Android SDK build-tools | `35.0.0` | |
-| Android NDK | `28.2.13676358` (28b stable) | **Aggiornato 2026-05-13 da 27c**: necessario per 16 KB ELF page-size alignment richiesto da Android 15+ su Pixel 9 e successivi (emulatori Pixel_10 incluso `sdk_gphone16k_x86_64`). NDK 27c allinea a 4 KB → `dlopen` fallisce con `program alignment (4096) cannot be smaller than system page size (16384)` |
-| minSdkVersion | `24` (Android 7 Nougat) | Inizialmente pianificato 23, alzato a 24 dopo F2: Python 3.14 di p4a usa `preadv()`/`pwritev()` di bionic, esposti solo da API 24. >99% device attivi sono comunque ≥ API 24 |
-| Buildozer | `1.5.x` (stable PyPI) | Niente `develop` branch |
+| Android NDK | `28.2.13676358` (28b stable) | **Updated 2026-05-13 from 27c**: required for the 16 KB ELF page-size alignment demanded by Android 15+ on Pixel 9 and later (Pixel_10 emulators included, `sdk_gphone16k_x86_64`). NDK 27c aligns at 4 KB -> `dlopen` fails with `program alignment (4096) cannot be smaller than system page size (16384)` |
+| minSdkVersion | `24` (Android 7 Nougat) | Initially planned 23, raised to 24 after F2: p4a's Python 3.14 uses bionic's `preadv()`/`pwritev()`, exposed only from API 24. >99% of active devices are >= API 24 anyway |
+| Buildozer | `1.5.x` (stable PyPI) | No `develop` branch |
 | python-for-android | `2024.x` (stable) | |
-| pygame-ce | `2.5.x` | NON pygame originale — pygame-ce è il drop-in moderno usato da p4a |
-| Output | APK debug (test) + AAB release (Play Store) | Play Store accetta solo AAB |
+| pygame-ce | `2.5.x` | NOT the original pygame — pygame-ce is the modern drop-in used by p4a |
+| Output | debug APK (testing) + release AAB (Play Store) | The Play Store accepts only AAB |
 
-Detection Android corretta (env vars effettive di p4a):
+Correct Android detection (actual p4a env vars):
 
 ```python
 def is_android_runtime() -> bool:
     return 'ANDROID_ARGUMENT' in os.environ or 'P4A_BOOTSTRAP' in os.environ
 ```
 
-`ANDROID_APP_PATH` citato nel piano v1.0 **non esiste** in p4a.
+`ANDROID_APP_PATH`, mentioned in plan v1.0, **does not exist** in p4a.
 
 ---
 
-## 5. Fix runtime necessari nel motore
+## 5. Runtime fixes needed in the engine
 
-Modifiche minime e localizzate, nessun refactor.
+Minimal, localized changes, no refactor.
 
-### 5.1 `engine/utils.py` — `get_base_path()` e `get_writable_path()`
+### 5.1 `engine/utils.py` — `get_base_path()` and `get_writable_path()`
 
 ```python
 import os
@@ -116,7 +116,7 @@ def is_android_runtime() -> bool:
 
 def get_base_path() -> Path:
     if is_android_runtime():
-        # p4a unpacka l'app in /data/data/<package>/files/app
+        # p4a unpacks the app into /data/data/<package>/files/app
         return Path(os.environ.get('ANDROID_PRIVATE', '/data/data')) / 'app'
     if getattr(sys, 'frozen', False):
         return Path(sys.executable).parent
@@ -124,7 +124,7 @@ def get_base_path() -> Path:
 
 def get_writable_path(*parts: str) -> Path:
     if is_android_runtime():
-        # Storage privato app, sopravvive a reboot, non richiede permessi runtime
+        # App-private storage, survives reboots, needs no runtime permission
         base = Path(os.environ['ANDROID_PRIVATE']) / 'saves'
     else:
         base = get_base_path() / 'saves'
@@ -137,25 +137,25 @@ def get_writable_path(*parts: str) -> Path:
     return path
 ```
 
-Impatto: zero su Windows/desktop (i nuovi rami sono dietro `if is_android_runtime()`). `SaveManager` non cambia: chiama `get_writable_path()` come oggi.
+Impact: zero on Windows/desktop (the new branches sit behind `if is_android_runtime()`). `SaveManager` does not change: it calls `get_writable_path()` as it does today.
 
 ### 5.2 Touch input
 
-Già funzionante: pygame su Android mappa automaticamente `FINGERDOWN` → `MOUSEBUTTONDOWN` con `event.pos` in pixel device. Il motore (`engine/core.py:265`) usa già `MOUSEBUTTONDOWN`. Nessuna modifica.
+Already working: pygame on Android automatically maps `FINGERDOWN` -> `MOUSEBUTTONDOWN` with `event.pos` in device pixels. The engine (`engine/core.py:265`) already uses `MOUSEBUTTONDOWN`. No change.
 
-### 5.3 Lifecycle pause/resume
+### 5.3 Pause/resume lifecycle
 
-Non bloccante per MVP. Su Android quando l'app va in background, pygame riceve `pygame.APP_WILLENTERBACKGROUND` / `APP_DIDENTERBACKGROUND`. Per la prima versione l'app può semplicemente continuare il loop a basso framerate. Hook proprio (pyjnius) sarà aggiunto in F6 se servirà.
+Not blocking for the MVP. On Android, when the app goes to the background, pygame receives `pygame.APP_WILLENTERBACKGROUND` / `APP_DIDENTERBACKGROUND`. For the first version the app can simply keep looping at a low frame rate. A proper hook (pyjnius) will be added in F6 if needed.
 
 ### 5.4 AudioManager
 
-Nessuna modifica. Daemon thread + Queue sono supportati nativamente da p4a/Android.
+No change. Daemon thread + Queue are natively supported by p4a/Android.
 
 ---
 
 ## 6. Buildozer.spec template
 
-Generato dinamicamente da `_generate_buildozer_spec()` per ogni gioco. Bozza:
+Generated dynamically by `_generate_buildozer_spec()` for each game. Draft:
 
 ```ini
 [app]
@@ -175,7 +175,7 @@ orientation = landscape
 fullscreen = 1
 
 android.api = 35
-android.minapi = 24   # vedi nota sezione 4: Python 3.14 richiede API 24+
+android.minapi = 24   # see the note in section 4: Python 3.14 requires API 24+
 android.ndk = 27c
 android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = False
@@ -183,7 +183,7 @@ android.accept_sdk_license = True
 
 android.permissions = 
 
-# Icona del gioco (presa da games/<id>/icon.png)
+# Game icon (taken from games/<id>/icon.png)
 icon.filename = games/{game_id}/icon.png
 
 # Splash
@@ -194,79 +194,79 @@ log_level = 2
 warn_on_root = 0
 ```
 
-Note:
-- `requirements`: minimo indispensabile, nessuna libreria editor (cv2, numpy, scipy, PyInstaller). pygame-ce su p4a è già pacchettizzato per Android.
-- `source.exclude_dirs = editor` esclude esplicitamente la cartella editor dall'APK.
-- `arm64-v8a + armeabi-v7a`: copre 100% device moderni.
-- `orientation = landscape`: i giochi sono pensati 1920x1080. Lo `scaling_manager` esistente già adatta.
-- File generato in workspace temporaneo, non versionato.
+Notes:
+- `requirements`: bare minimum, no editor library (cv2, numpy, scipy, PyInstaller). pygame-ce on p4a is already packaged for Android.
+- `source.exclude_dirs = editor` explicitly excludes the editor folder from the APK.
+- `arm64-v8a + armeabi-v7a`: covers 100% of modern devices.
+- `orientation = landscape`: the games are designed for 1920x1080. The existing `scaling_manager` already adapts.
+- The file is generated in a temporary workspace, not versioned.
 
 ---
 
-## 7. Workflow di build APK (lato editor)
+## 7. APK build workflow (editor side)
 
-Specchio simmetrico di quello EXE. Passo-passo dentro `build_game_apk()`:
+Symmetric mirror of the EXE one. Step by step inside `build_game_apk()`:
 
-1. **Validazione** — `game_id` esiste, `game_config.json` valido. (Identico a `build_game()`.)
-2. **Verifica toolchain WSL** — esecuzione di `wsl -e bash -lc "buildozer --version"`. Se fallisce → errore con istruzioni setup.
-3. **Workspace temporaneo** in `<temp>/apk_<game_id>/`. Su Windows è una path Windows; Buildozer la userà via path WSL `/mnt/g/...`.
-4. **Smart copy engine + game** — riusa `_analyze_game_usage()` e `_copy_smart_assets()`. **Esclude** `editor/`, `tests/`, `scratch/`, `build/`, `dist/`, `saves/`.
-5. **Generazione `buildozer.spec`** parametrizzato per il gioco.
-6. **Generazione `main.py` shim** se necessario (Buildozer cerca `main.py` come entry; quello esistente va bene così com'è, basta che `config.ini` sia accanto).
-7. **Compressione asset** (opzionale, attivabile da UI checkbox):
-   - PNG → `oxipng -o4` (lossless, ~30%)
-   - WAV/MP3 → `ffmpeg -q:a 5 *.ogg` (lossy ~50%)
-8. **Lancio Buildozer**: `wsl -e bash -lc "cd <workspace_wsl_path> && source ~/venv_p4a/bin/activate && buildozer android debug"` con timeout 30 min e parsing output per progress.
-9. **Copia APK risultato** da `<workspace>/bin/*.apk` a `build/<game_id>/<version>/<game_id>-<version>-debug.apk`.
-10. **Verifica APK** (`aapt dump badging` per leggere package name, version, min/target SDK).
-11. **Cleanup workspace temporaneo**.
+1. **Validation** — `game_id` exists, `game_config.json` valid. (Identical to `build_game()`.)
+2. **WSL toolchain check** — run `wsl -e bash -lc "buildozer --version"`. On failure -> error with setup instructions.
+3. **Temporary workspace** in `<temp>/apk_<game_id>/`. On Windows it is a Windows path; Buildozer uses it through the WSL path `/mnt/g/...`.
+4. **Smart copy of engine + game** — reuses `_analyze_game_usage()` and `_copy_smart_assets()`. **Excludes** `editor/`, `tests/`, `scratch/`, `build/`, `dist/`, `saves/`.
+5. **Generation of `buildozer.spec`** parameterized for the game.
+6. **Generation of the `main.py` shim** if needed (Buildozer looks for `main.py` as the entry point; the existing one is fine as is, as long as `config.ini` sits next to it).
+7. **Asset compression** (optional, enabled by a UI checkbox):
+   - PNG -> `oxipng -o4` (lossless, ~30%)
+   - WAV/MP3 -> `ffmpeg -q:a 5 *.ogg` (lossy ~50%)
+8. **Launch Buildozer**: `wsl -e bash -lc "cd <workspace_wsl_path> && source ~/venv_p4a/bin/activate && buildozer android debug"` with a 30-minute timeout and output parsing for progress.
+9. **Copy the resulting APK** from `<workspace>/bin/*.apk` to `build/<game_id>/<version>/<game_id>-<version>-debug.apk`.
+10. **APK check** (`aapt dump badging` to read package name, version, min/target SDK).
+11. **Temporary workspace cleanup**.
 
-Per AAB release: identico ma `buildozer android release`, con firma `jarsigner` da chiavi configurate (cfg utente in `editor/android_signing.json`, fuori dal repo).
-
----
-
-## 8. UI dell'editor
-
-Modifica minima a `editor/build_ui.py` (o pulsante nella schermata principale che invoca la build). Da progettare in dettaglio guardando la UI attuale del builder, ma logicamente:
-
-- Dialog scelta gioco (già esistente per EXE)
-- Due bottoni: **"Compila EXE Windows"** | **"Compila APK Android"**
-- Per APK, un check "release (firma per Play Store)" opzionale
-- Stessa progress window, label di passi adattate a Buildozer
-
-Prima volta che si preme "Compila APK": l'editor verifica WSL/Buildozer. Se mancano, mostra un wizard con i comandi da eseguire (vedi F0) e il bottone "Verifica di nuovo".
+For the release AAB: identical but `buildozer android release`, signed with `jarsigner` using configured keys (user config in `editor/android_signing.json`, outside the repo).
 
 ---
 
-## 9. Fasi di lavoro
+## 8. Editor UI
 
-| Fase | Descrizione | Output | Tempo stima |
-|------|-------------|--------|------------|
-| **F0** | Setup WSL2 + JDK17 + Android SDK + NDK 27c + Buildozer in venv (one-time, lato user con istruzioni dell'editor) | Toolchain WSL funzionante | 1 giorno (download pesanti) |
-| **F1** ✅ | Fix runtime motore: `engine/utils.py` `get_base_path()` + `get_writable_path()` + helper `is_android_runtime()` | Completato 2026-05-13. Smoke test Windows: nessuna regressione. | — |
-| **F2** | Prototipo standalone APK: copiare manualmente un workspace minimo in WSL e lanciare `buildozer android debug` su LineVenture. Validare che l'APK parta su emulatore Android 15 (API 35) | 1 APK funzionante a mano | 1-2 giorni |
-| **F3** | `editor/android_build_system.py` + `editor/android_build_manager.py` (riuso massimo di `build_system.py`) | 2 file nuovi | 1-2 giorni |
-| **F4** | Estensione UI editor: bottone APK + finestra progress | Modifica `build_ui.py` (o equivalente) | 0.5-1 giorno |
-| **F5** | Asset compression integrata (opt-in) + audit asset effettivamente usati per gioco | APK ridotti del 30-50% | 1 giorno |
-| **F6** | Build AAB release firmato + push Play Console (lifecycle hooks se necessari) | App pubblicabile | 1-2 giorni |
-| **TOTALE F0–F4 (MVP testabile)** | | APK debug compilabile dall'editor | **3-5 giorni** + F0 setup |
+Minimal change to `editor/build_ui.py` (or a button in the main screen that invokes the build). To be designed in detail by looking at the current builder UI, but logically:
 
-F5–F6 sono iterazioni successive.
+- Game selection dialog (already existing for the EXE)
+- Two buttons: **"Build Windows EXE"** | **"Build Android APK"**
+- For the APK, an optional "release (sign for the Play Store)" checkbox
+- Same progress window, step labels adapted to Buildozer
+
+The first time "Build APK" is pressed: the editor verifies WSL/Buildozer. If missing, it shows a wizard with the commands to run (see F0) and a "Check again" button.
 
 ---
 
-## 10. F0 — Setup WSL (istruzioni one-time)
+## 9. Work phases
 
-Da eseguire prima che il builder APK dell'editor possa funzionare. Verrà incluso come wizard nell'editor (F4) ma documentato qui per primo run manuale.
+| Phase | Description | Output | Estimate |
+|-------|-------------|--------|----------|
+| **F0** | WSL2 + JDK17 + Android SDK + NDK 27c + Buildozer setup in a venv (one-time, user side with the editor's instructions) | Working WSL toolchain | 1 day (heavy downloads) |
+| **F1** (done) | Engine runtime fixes: `engine/utils.py` `get_base_path()` + `get_writable_path()` + `is_android_runtime()` helper | Completed 2026-05-13. Windows smoke test: no regression. | — |
+| **F2** | Standalone APK prototype: manually copy a minimal workspace into WSL and run `buildozer android debug` on LineVenture. Validate that the APK starts on an Android 15 emulator (API 35) | 1 hand-made working APK | 1-2 days |
+| **F3** | `editor/android_build_system.py` + `editor/android_build_manager.py` (maximum reuse of `build_system.py`) | 2 new files | 1-2 days |
+| **F4** | Editor UI extension: APK button + progress window | Change to `build_ui.py` (or equivalent) | 0.5-1 day |
+| **F5** | Integrated asset compression (opt-in) + audit of the assets actually used per game | APKs reduced by 30-50% | 1 day |
+| **F6** | Signed release AAB build + Play Console push (lifecycle hooks if needed) | Publishable app | 1-2 days |
+| **TOTAL F0–F4 (testable MVP)** | | Debug APK buildable from the editor | **3-5 days** + F0 setup |
 
-### 10.1 WSL2 + Ubuntu 24.04 (PowerShell admin, dal sistema Windows)
+F5–F6 are later iterations.
+
+---
+
+## 10. F0 — WSL setup (one-time instructions)
+
+To be done before the editor's APK builder can work. It will be included as a wizard in the editor (F4) but is documented here first for a manual first run.
+
+### 10.1 WSL2 + Ubuntu 24.04 (admin PowerShell, from Windows)
 
 ```powershell
 wsl --install -d Ubuntu-24.04
-# Riavvio richiesto
+# Reboot required
 ```
 
-### 10.2 Dipendenze dentro WSL Ubuntu (sessione `wsl`)
+### 10.2 Dependencies inside WSL Ubuntu (`wsl` session)
 
 ```bash
 sudo apt update && sudo apt upgrade -y
@@ -305,7 +305,7 @@ yes | sdkmanager --licenses
 sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
 ```
 
-### 10.4 Verifica
+### 10.4 Verification
 
 ```bash
 buildozer --version  # 1.5.x
@@ -313,56 +313,56 @@ java -version        # 17.x
 sdkmanager --list_installed
 ```
 
-Tutta questa procedura sarà rieseguibile via un comando dall'editor; in caso di errore l'editor mostrerà esattamente quale step ha fallito.
+This whole procedure will be re-runnable through a command from the editor; on error the editor shows exactly which step failed.
 
 ---
 
-## 11. Limiti noti e mitigazioni
+## 11. Known limits and mitigations
 
-| Problema | Impatto | Mitigazione |
-|----------|---------|-------------|
-| Bundle game ancora pesante (LineVenture ~55 MB, Malonno_Survivors ~102 MB + engine/assets condivisi) | APK potrebbe superare 150 MB | F5 asset compression + valutare Play Asset Delivery per AAB > 200 MB |
-| WSL latency Windows ↔ Linux filesystem | Build APK 2-3× più lento di EXE | Workspace clonato dentro `~/` Linux (non `/mnt/g/`) — gestito dal builder |
-| Prima build scarica 1-2 GB (NDK, SDK, recipe p4a) | F0 lunga | Una volta sola, cache persistente in `~/.buildozer/` |
-| Risoluzione fissa 1920x1080 | Distorsione su schermi 18:9 o pieghevoli | `scaling_manager` esistente già scala con letterboxing — verificare in F2 |
-| Audio MP3 con licenza | Tracce ottenute da fonti libere? | Da verificare prima del Play Store release (F6) |
-| Save su `ANDROID_PRIVATE` non condiviso tra device | OK per ora, eventuale cloud-save futuro | Non scope del piano |
-
----
-
-## 12. Punti aperti che richiedono decisione
-
-Prima di partire con F1 vorrei una conferma su:
-
-1. **APK separato per gioco vs APK launcher con scelta gioco** — il piano assume APK separati (un APK per LineVenture, uno per Malonno_Survivors). Confermi?
-2. **Configurazione di firma Play Store** — keystore esistente o da generare in F6?
-3. **Wizard setup WSL nell'editor** — è OK avere uno schermo dell'editor che esegue `wsl --install` per l'utente, o preferisci che la prima volta sia manuale e l'editor solo verifichi?
-4. **Tablet/orientation** — landscape forzato OK, o vogliamo supportare anche portrait con auto-rotate?
+| Problem | Impact | Mitigation |
+|---------|--------|------------|
+| Game bundle still heavy (LineVenture ~55 MB, Malonno_Survivors ~102 MB + shared engine/assets) | The APK could exceed 150 MB | F5 asset compression + evaluate Play Asset Delivery for AAB > 200 MB |
+| WSL latency between the Windows and Linux filesystems | APK build 2-3x slower than the EXE | Workspace cloned inside Linux `~/` (not `/mnt/g/`) — handled by the builder |
+| The first build downloads 1-2 GB (NDK, SDK, p4a recipes) | Long F0 | Once only, persistent cache in `~/.buildozer/` |
+| Fixed 1920x1080 resolution | Distortion on 18:9 or foldable screens | The existing `scaling_manager` already scales with letterboxing — verify in F2 |
+| Licensed MP3 audio | Tracks from free sources? | To verify before the Play Store release (F6) |
+| Saves on `ANDROID_PRIVATE` not shared between devices | Fine for now, possible future cloud save | Out of scope for the plan |
 
 ---
 
-## 13. Criteri di accettazione MVP (fine F4)
+## 12. Open points requiring a decision
 
-1. Dall'editor, su Windows, premendo "Compila APK Android" su LineVenture:
-   - Si apre la progress window
-   - Buildozer parte dentro WSL senza interazione utente
-   - Al termine produce `build/LineVenture/<v>/LineVenture-<v>-debug.apk`
-2. L'APK installato su emulatore Android 15 (API 35) parte, mostra il menu principale, carica almeno una scena di gioco, riproduce audio, accetta tap.
-3. La stessa procedura, ripetuta su Malonno_Survivors, produce un APK distinto (package name diverso).
-4. L'editor non viene impacchettato nell'APK (verifica con `unzip -l <apk> | grep editor` → vuoto).
-5. Nessuna regressione sul builder EXE esistente.
+Before starting F1 I would like confirmation on:
+
+1. **Separate APK per game vs a launcher APK with a game chooser** — the plan assumes separate APKs (one for LineVenture, one for Malonno_Survivors). Confirmed?
+2. **Play Store signing configuration** — existing keystore or one to generate in F6?
+3. **WSL setup wizard in the editor** — is it OK to have an editor screen that runs `wsl --install` for the user, or should the first time be manual with the editor only verifying?
+4. **Tablet/orientation** — forced landscape OK, or do we also want portrait with auto-rotate?
 
 ---
 
-## 14. Cosa NON facciamo in questa iterazione
+## 13. MVP acceptance criteria (end of F4)
 
-Per evitare scope creep:
+1. From the editor, on Windows, pressing "Build Android APK" on LineVenture:
+   - The progress window opens
+   - Buildozer starts inside WSL without user interaction
+   - At the end it produces `build/LineVenture/<v>/LineVenture-<v>-debug.apk`
+2. The APK installed on an Android 15 emulator (API 35) starts, shows the main menu, loads at least one game scene, plays audio, accepts taps.
+3. The same procedure, repeated on Malonno_Survivors, produces a distinct APK (different package name).
+4. The editor is not packaged in the APK (check with `unzip -l <apk> | grep editor` -> empty).
+5. No regression on the existing EXE builder.
 
-- Niente porting iOS (toolchain completamente diversa)
-- Niente in-app purchase / ads / Google Play Services
-- Niente cloud save
-- Niente leaderboard / achievements native Android
-- Niente multi-window / split-screen specifico Android
-- Niente refactor del motore oltre i 2-3 metodi in `engine/utils.py`
+---
 
-Tutto questo è territorio post-F6 se mai servirà.
+## 14. What we do NOT do in this iteration
+
+To avoid scope creep:
+
+- No iOS port (completely different toolchain)
+- No in-app purchases / ads / Google Play Services
+- No cloud save
+- No native Android leaderboards / achievements
+- No Android-specific multi-window / split-screen
+- No engine refactor beyond the 2-3 methods in `engine/utils.py`
+
+All of this is post-F6 territory, if ever needed.

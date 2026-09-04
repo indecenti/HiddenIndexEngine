@@ -18,10 +18,10 @@ There are **two distinct coordinate spaces**, and they must not be confused:
 1. **Scene object data space = background-image pixels.** Every `x`, `y`,
    `radius`, `width`, `height` of objects and effects in `scene.json` is an
    absolute pixel coordinate in the scene background's **native resolution**
-   (per-scene and variable — e.g. 1920×1080, 5120×2880). It is **not** a fixed
+   (per-scene and variable — e.g. 1920x1080, 5120x2880). It is **not** a fixed
    reference space. See `engine/click_detector.py` (`screen_to_bg_scenic`) and
    `engine/scaling_manager.py`.
-2. **UI / menu / HUD space = 1280×720 reference space** (`REF_W × REF_H`). Menu,
+2. **UI / menu / HUD space = 1280x720 reference space** (`REF_W x REF_H`). Menu,
    HUD and results-screen layout coordinates use this fixed reference, mapped to
    screen via letterbox scaling.
 
@@ -32,13 +32,13 @@ offset; `ScalingManager` exposes a separate conversion pipeline for each.
 
 ## 1. Coordinate Spaces
 
-### 1.1 Reference Space (1280×720)
+### 1.1 Reference Space (1280x720)
 **The UI/menu/HUD coordinate system** — menu, HUD and results-screen layout use this fixed reference space.
 
 - Origin **(0, 0)** at top-left
 - X increases to the right
 - Y increases downward
-- **Applies to UI/HUD only — NOT to `scene.json` object/effect coordinates** (those are in background-image pixels, see §1.1b)
+- **Applies to UI/HUD only — NOT to `scene.json` object/effect coordinates** (those are in background-image pixels, see 1.1b)
 
 ### 1.1b Background-Image Pixel Space (scene object data)
 **The "truth" for saved scene data** — every object/effect `x`, `y`, `radius`, `width`, `height` in `scene.json` is an absolute pixel in the background image's native resolution (per-scene, variable).
@@ -81,42 +81,42 @@ Where:
 
 ### 2.1 Circle Objects
 
-| Property | Meaning | Reference Space | Example |
-|----------|---------|-----------------|---------|
-| `x` | Center X | Reference | 640 |
-| `y` | Center Y | Reference | 360 |
-| `radius` | Distance from center to edge | Reference | 30 |
+| Property | Meaning | Space | Example |
+|----------|---------|-------|---------|
+| `x` | Center X | Background pixels | 640 |
+| `y` | Center Y | Background pixels | 360 |
+| `radius` | Distance from center to edge | Background pixels | 30 |
 
 **Hit detection**:
 ```python
-distance = sqrt((click_x - obj.x)² + (click_y - obj.y)²)
+distance = sqrt((click_x - obj.x)**2 + (click_y - obj.y)**2)
 is_hit = distance <= obj.radius
 ```
 
 **Rendering** (game):
 ```python
-center_screen = ref_to_screen(obj.x, obj.y)
-radius_screen = obj.radius * scale_manager.scale
+center_screen = bg_to_screen(obj.x, obj.y)
+radius_screen = obj.radius * scale_manager.bg_display_scale
 draw_circle(center_screen, radius_screen)
 ```
 
 **Rendering** (editor):
 ```python
-center_screen = ref_to_screen(obj.x, obj.y)
+center_screen = _r2s(obj.x, obj.y)
 radius_screen = obj.radius * editor.zoom
 draw_circle(center_screen, radius_screen)
 ```
 
 ### 2.2 Rect Objects
 
-| Property | Meaning | Reference Space | Example |
-|----------|---------|-----------------|---------|
-| `x` | **Top-left corner X** | Reference | 600 |
-| `y` | **Top-left corner Y** | Reference | 330 |
-| `width` | Width (x increases rightward) | Reference | 80 |
-| `height` | Height (y increases downward) | Reference | 60 |
+| Property | Meaning | Space | Example |
+|----------|---------|-------|---------|
+| `x` | **Top-left corner X** | Background pixels | 600 |
+| `y` | **Top-left corner Y** | Background pixels | 330 |
+| `width` | Width (x increases rightward) | Background pixels | 80 |
+| `height` | Height (y increases downward) | Background pixels | 60 |
 
-**Bounds** (always in reference space):
+**Bounds** (always in background pixel space):
 ```
 left   = x
 top    = y
@@ -127,14 +127,14 @@ center_y = y + height / 2
 ```
 
 **Hit detection** (with rotation):
-1. Rotate click point backward around center by `-rotation`
-2. Check if rotated point is within [x, x+width] × [y, y+height]
+1. Rotate the click point backward around the center by `-rotation`
+2. Check whether the rotated point is within [x, x+width] x [y, y+height]
 
 **Rendering** (game):
 ```python
-center_ref = (x + width/2, y + height/2)
-center_screen = ref_to_screen(*center_ref)
-# Render icon at center_screen, apply rotation
+center_bg = (x + width/2, y + height/2)
+center_screen = bg_to_screen(*center_bg)
+# Render the icon at center_screen, apply rotation
 ```
 
 ---
@@ -147,31 +147,31 @@ The editor allows pan and zoom. These transformations are **purely visual** and 
 
 **Coordinate pipeline (editor)**:
 ```
-Mouse (screen) → _s2r() → Reference → scene coordinates
-                                          ↓
-                                    (unchanged in JSON)
+Mouse (screen) -> _s2r() -> background pixels -> scene coordinates
+                                                    |
+                                              (unchanged in JSON)
 ```
 
 Code:
 ```python
 def _s2r(self, sx, sy):
-    """Screen → reference coords (inverse of pan/zoom)."""
+    """Screen -> background coords (inverse of pan/zoom)."""
     return (sx - self.origin_x) / self.zoom, (sy - self.origin_y) / self.zoom
 
 def _r2s(self, rx, ry):
-    """Reference → screen coords."""
+    """Background -> screen coords."""
     return rx * self.zoom + self.origin_x, ry * self.zoom + self.origin_y
 ```
 
 ### 3.2 Game Pan/Zoom (Affects Only Display, NOT Hit Detection)
 
-During gameplay, the engine may apply pan/zoom (e.g., smooth camera). These are stored in `ScalingManager`:
+During gameplay, the engine may apply pan/zoom (e.g. a smooth camera). These are stored in `ScalingManager`:
 
 ```python
 def screen_to_scene(self, sx: int, sy: int) -> tuple[float, float]:
     """
-    Screen → reference space, accounting for game pan/zoom.
-    Pipeline: screen → viewport (ref) → scene
+    Screen -> reference space, accounting for game pan/zoom.
+    Pipeline: screen -> viewport (ref) -> scene
     """
     rx, ry = self.screen_to_ref(sx, sy)
     # Invert game zoom and pan
@@ -180,21 +180,21 @@ def screen_to_scene(self, sx: int, sy: int) -> tuple[float, float]:
     return scene_x, scene_y
 ```
 
-**Important**: All hit detection uses coordinates in **scene space** (with pan/zoom applied). All JSON and editor coordinates are **reference space**.
+**Important**: All hit detection uses coordinates in **scene space** (with pan/zoom applied). All JSON and editor coordinates are in **background pixel space**.
 
 ---
 
-## 4. Data Flow: Editor → Game
+## 4. Data Flow: Editor -> Game
 
 ### 4.1 Save Pipeline
 
-**Editor** (reference space) → **JSON file** (reference space) → **Game** (reference space)
+**Editor** (background pixels) -> **JSON file** (background pixels) -> **Game** (background pixels)
 
-1. User places object in editor (coordinates in reference space)
-2. Editor stores in memory:
+1. The user places an object in the editor (coordinates in background pixel space)
+2. The editor stores it in memory:
    ```json
    {
-     "catalog_id": "chiave",
+     "catalog_id": "old_key",
      "x": 640.0,
      "y": 360.0,
      "detection_type": "circle",
@@ -202,19 +202,19 @@ def screen_to_scene(self, sx: int, sy: int) -> tuple[float, float]:
      ...
    }
    ```
-3. Editor saves JSON (exact same coordinates)
-4. Game loads JSON (exact same coordinates)
-5. Game uses coordinates for rendering and hit detection
+3. The editor saves the JSON (exact same coordinates)
+4. The game loads the JSON (exact same coordinates)
+5. The game uses the coordinates for rendering and hit detection
 
 ### 4.2 No Transformation at Any Step
 
 ```
-Editor position (640, 360) 
-  ↓ (no change)
+Editor position (640, 360)
+  | (no change)
 JSON: "x": 640, "y": 360
-  ↓ (no change)
+  | (no change)
 Game: SceneObject.x = 640.0, SceneObject.y = 360.0
-  ↓ (scaled for display only)
+  | (scaled for display only)
 Rendered on screen based on screen resolution
 ```
 
@@ -222,35 +222,35 @@ Rendered on screen based on screen resolution
 
 ## 5. Critical Invariants
 
-### ✅ Invariant 1: Reference Space Integrity
-**All JSON coordinates are in 1280×720 reference space, never in screen space or zoomed space.**
+### Invariant 1: Data Space Integrity
+**All JSON coordinates are in background pixel space, never in screen space or zoomed space.**
 
 **Verification**:
 ```python
-# ✅ CORRECT - storing reference coordinates
-obj["x"] = self._snap(self._drag_start_x + dx)  # dx is in reference space
+# CORRECT - storing background coordinates
+obj["x"] = self._snap(self._drag_start_x + dx)  # dx is in background space
 
-# ❌ WRONG - storing screen coordinates
-obj["x"] = screen_x  # NEVER do this!
+# WRONG - storing screen coordinates
+obj["x"] = screen_x  # NEVER do this
 ```
 
-### ✅ Invariant 2: Coordinate Type Consistency
+### Invariant 2: Coordinate Type Consistency
 **Circle**: (x, y) = **center**  
 **Rect**: (x, y) = **top-left**
 
 **Verification**:
 ```python
 # CIRCLE hit test
-distance = sqrt((sx - obj.x)² + (sy - obj.y)²)
-# ✅ assumes (x,y) is center
+distance = sqrt((sx - obj.x)**2 + (sy - obj.y)**2)
+# assumes (x,y) is the center
 
 # RECT hit test
 is_hit = (obj.x <= sx <= obj.x + obj.width and
           obj.y <= sy <= obj.y + obj.height)
-# ✅ assumes (x,y) is top-left
+# assumes (x,y) is the top-left
 ```
 
-### ✅ Invariant 3: Rotation Center Consistency
+### Invariant 3: Rotation Center Consistency
 **Circle**: center of rotation = (x, y)  
 **Rect**: center of rotation = (x + width/2, y + height/2)
 
@@ -265,19 +265,19 @@ cx, cy = ox + ow/2, oy + oh/2
 rotated = rotate_point(point, cx, cy, rotation)
 ```
 
-### ✅ Invariant 4: Screen Space Never Leaks into JSON
-**All display operations work in screen/pixel space, but JSON always stays in reference space.**
+### Invariant 4: Screen Space Never Leaks into JSON
+**All display operations work in screen/pixel space, but JSON always stays in background pixel space.**
 
 ```python
-# ✅ CORRECT
-ref_x, ref_y = (640.0, 360.0)
-screen_x, screen_y = ref_to_screen(ref_x, ref_y)
+# CORRECT
+bg_x, bg_y = (640.0, 360.0)
+screen_x, screen_y = bg_to_screen(bg_x, bg_y)
 display(screen_x, screen_y)
-save(ref_x, ref_y)  # ← JSON sees reference space
+save(bg_x, bg_y)  # JSON sees background space
 
-# ❌ WRONG
+# WRONG
 screen_x, screen_y = (1920, 1080)
-save(screen_x, screen_y)  # ← JSON sees screen space (BROKEN!)
+save(screen_x, screen_y)  # JSON sees screen space (BROKEN)
 ```
 
 ---
@@ -288,44 +288,44 @@ save(screen_x, screen_y)  # ← JSON sees screen space (BROKEN!)
 
 ```python
 def test_circle_placement():
-    """Verify circle placement in reference space."""
+    """Verify circle placement in background space."""
     obj = {"x": 640, "y": 360, "radius": 30, "detection_type": "circle"}
-    
-    # Click exactly at center
+
+    # Click exactly at the center
     assert hit_circle(obj, 640, 360) == True
-    
-    # Click at radius boundary
+
+    # Click at the radius boundary
     assert hit_circle(obj, 670, 360) == True
-    
+
     # Click outside
     assert hit_circle(obj, 700, 360) == False
 
 def test_rect_placement():
-    """Verify rect placement in reference space."""
+    """Verify rect placement in background space."""
     obj = {"x": 600, "y": 330, "width": 80, "height": 60, "detection_type": "rect"}
-    
-    # Click at top-left
+
+    # Click at the top-left
     assert hit_rect(obj, 600, 330) == True
-    
-    # Click at center
+
+    # Click at the center
     assert hit_rect(obj, 640, 360) == True
-    
+
     # Click outside
     assert hit_rect(obj, 500, 250) == False
 
 def test_coordinate_consistency():
     """Verify editor save == game load."""
-    # Editor saves object
+    # The editor saves an object
     editor_obj = {
-        "catalog_id": "chiave",
+        "catalog_id": "old_key",
         "x": 640.0,
         "y": 360.0,
         "radius": 30.0,
     }
-    
-    # Game loads it
+
+    # The game loads it
     game_obj = SceneObject(**editor_obj)
-    
+
     # Coordinates must be identical
     assert game_obj.x == 640.0
     assert game_obj.y == 360.0
@@ -334,11 +334,11 @@ def test_coordinate_consistency():
 
 ### 6.2 Integration Tests
 
-- [ ] Place object in editor at (640, 360)
-- [ ] Save scene to JSON
-- [ ] Load scene in game
-- [ ] Verify object renders at same position
-- [ ] Click on object in game — must be registered as hit
+- [ ] Place an object in the editor at (640, 360)
+- [ ] Save the scene to JSON
+- [ ] Load the scene in the game
+- [ ] Verify the object renders at the same position
+- [ ] Click on the object in the game — it must register as a hit
 - [ ] Test with various zoom levels (editor)
 - [ ] Test with various screen resolutions (game)
 
@@ -346,14 +346,14 @@ def test_coordinate_consistency():
 
 ## 7. Common Mistakes to Avoid
 
-| ❌ Mistake | ✅ Correct | Impact |
-|-----------|-----------|--------|
-| Storing screen coordinates in JSON | Always use reference coordinates | Objects appear in wrong places |
-| Using screen space for hit detection | Always convert to reference first | Clicks miss or hit wrong objects |
-| Confusing circle center with rect top-left | Keep types consistent | Hit detection completely broken |
+| Mistake | Correct | Impact |
+|---------|---------|--------|
+| Storing screen coordinates in JSON | Always use background coordinates | Objects appear in the wrong places |
+| Using screen space for hit detection | Always convert to background space first | Clicks miss or hit the wrong objects |
+| Confusing circle center with rect top-left | Keep the types consistent | Hit detection completely broken |
 | Applying editor zoom to JSON | Editor zoom is display-only | Objects shift when zooming |
-| Forgetting rotation center differs by type | Circle: center, Rect: computed center | Rotation errors at boundaries |
-| Pan offset in editor affecting JSON | Pan is display-only | Objects drift with camera pans |
+| Forgetting that the rotation center differs by type | Circle: center, Rect: computed center | Rotation errors at the boundaries |
+| Editor pan offset affecting JSON | Pan is display-only | Objects drift with camera pans |
 
 ---
 
@@ -361,21 +361,21 @@ def test_coordinate_consistency():
 
 ### Editor (viewport.py)
 ```python
-def _s2r(self, sx, sy):  # Screen → Reference
+def _s2r(self, sx, sy):  # Screen -> Background
     return (sx - self.origin_x) / self.zoom, (sy - self.origin_y) / self.zoom
 
-def _r2s(self, rx, ry):  # Reference → Screen
+def _r2s(self, rx, ry):  # Background -> Screen
     return rx * self.zoom + self.origin_x, ry * self.zoom + self.origin_y
 ```
 
 ### Game (scaling_manager.py)
 ```python
-def ref_to_screen(self, rx: float, ry: float):  # Reference → Screen
+def ref_to_screen(self, rx: float, ry: float):  # Reference -> Screen (UI/HUD)
     sx = int(rx * self._scale + self._offset_x)
     sy = int(ry * self._scale + self._offset_y)
     return sx, sy
 
-def screen_to_ref(self, sx: int, sy: int):  # Screen → Reference
+def screen_to_ref(self, sx: int, sy: int):  # Screen -> Reference (UI/HUD)
     rx = (sx - self._offset_x) / self._scale
     ry = (sy - self._offset_y) / self._scale
     return rx, ry
@@ -393,23 +393,23 @@ def screen_to_scene(self, sx: int, sy: int):  # With game pan/zoom
 
 When adding new features that involve positioning:
 
-- [ ] Objects are placed in reference space
-- [ ] JSON stores reference space coordinates
-- [ ] Rendering converts reference → screen for display only
-- [ ] Hit detection works in reference space
-- [ ] Rotation uses correct center (circle vs rect)
-- [ ] Pan/zoom in editor doesn't affect JSON
-- [ ] Pan/zoom in game doesn't affect hit detection
-- [ ] Test with multiple screen resolutions
-- [ ] Test with multiple zoom levels (editor)
-- [ ] Document coordinate assumptions
+- [ ] Objects are placed in background pixel space
+- [ ] JSON stores background pixel coordinates
+- [ ] Rendering converts background -> screen for display only
+- [ ] Hit detection works in background pixel space
+- [ ] Rotation uses the correct center (circle vs rect)
+- [ ] Pan/zoom in the editor does not affect JSON
+- [ ] Pan/zoom in the game does not affect hit detection
+- [ ] Tested with multiple screen resolutions
+- [ ] Tested with multiple zoom levels (editor)
+- [ ] Coordinate assumptions documented
 
 ---
 
 ## 10. Contact & Updates
 
 For questions or corrections, refer to:
-- `engine/scaling_manager.py` — Game coordinate transforms
-- `editor/mixins/viewport.py` — Editor coordinate transforms
-- `engine/click_detector.py` — Hit detection logic
-- `games/villa_segreta/levels/level1_giardino/scene1/scene.json` — Example scene
+- `engine/scaling_manager.py` — game coordinate transforms
+- `editor/mixins/viewport.py` — editor coordinate transforms
+- `engine/click_detector.py` — hit detection logic
+- `games/Malonno_Survivors/levels/Welcome_To_Malonno/Villa_Rosa/scene.json` — example scene

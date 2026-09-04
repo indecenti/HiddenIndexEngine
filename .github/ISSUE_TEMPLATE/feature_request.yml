@@ -1,35 +1,35 @@
-name: Proposta di funzionalita'
-description: Proponi una nuova funzionalita' o un miglioramento
+name: Feature request
+description: Propose a new feature or an improvement
 labels: ["enhancement"]
 body:
   - type: textarea
-    id: problema
+    id: problem
     attributes:
-      label: Problema
-      description: Quale problema concreto risolve? Evita di partire dalla soluzione.
+      label: Problem
+      description: Which concrete problem does it solve? Avoid starting from the solution.
     validations:
       required: true
 
   - type: textarea
-    id: proposta
+    id: proposal
     attributes:
-      label: Proposta
-      description: Come immagini che funzioni.
+      label: Proposal
+      description: How you imagine it working.
     validations:
       required: true
 
   - type: textarea
-    id: alternative
+    id: alternatives
     attributes:
-      label: Alternative valutate
+      label: Alternatives considered
     validations:
       required: false
 
   - type: checkboxes
-    id: sync
+    id: impact
     attributes:
-      label: Impatto
+      label: Impact
       options:
-        - label: Tocca l'engine e quindi va replicato nel runtime web (vedi docs/web/WEB_EXPORT_SYNC.md)
-        - label: Richiede una nuova dipendenza
-        - label: Cambia il formato di scene.json o dei cataloghi
+        - label: Touches the engine, so it must be replicated in the web runtime (see docs/web/WEB_EXPORT_SYNC.md)
+        - label: Requires a new dependency
+        - label: Changes the format of scene.json or of the catalogs

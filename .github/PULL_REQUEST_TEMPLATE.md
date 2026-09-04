@@ -1,31 +1,32 @@
-## Cosa cambia
+## What changes
 
-<!-- Una frase. Cosa fa questa PR. -->
+<!-- One sentence. What this PR does. -->
 
-## Perche'
+## Why
 
-<!-- Il problema che risolve. Se e' un fix, come si riproduceva il bug. -->
+<!-- The problem it solves. For a fix, how the bug was reproduced. -->
 
 ## Checklist
 
-- [ ] `pytest` passa in locale
-- [ ] Type hints presenti sulle firme nuove o modificate
-- [ ] Nessun `print()`, nessun magic number, nessuna emoji
-- [ ] Path risorse via `get_resource_path` / `get_writable_path`
-- [ ] Scritture JSON via `safe_write_json`
-- [ ] Nessuna dipendenza nuova (o discussa prima in una issue)
+- [ ] `pytest` passes locally
+- [ ] Type hints on new or changed signatures
+- [ ] No `print()`, no magic numbers, no emoji
+- [ ] Resource paths via `get_resource_path` / `get_writable_path`
+- [ ] JSON writes via `safe_write_json`
+- [ ] No new dependency (or discussed first in an issue)
+- [ ] Docs, comments and commit messages in English
 
-### Se tocca engine/ (regola vincolante)
+### If it touches engine/ (binding rule)
 
-- [ ] Non tocca i moduli replicati nel runtime web
-- [ ] Oppure: `docs/web/WEB_EXPORT_SYNC.md` aggiornato, runtime JS propagato e
-      `pytest tests/test_web_sync.py` verde
+- [ ] It does not touch the modules replicated in the web runtime
+- [ ] Or: `docs/web/WEB_EXPORT_SYNC.md` updated, JS runtime propagated and
+      `pytest tests/test_web_sync.py` green
 
-### Se tocca scene o cataloghi
+### If it touches scenes or catalogs
 
-- [ ] `python tools/audit_catalog.py` eseguito
-- [ ] Stringhe nuove passate dal sistema i18n
+- [ ] `python tools/audit_catalog.py` executed
+- [ ] New strings go through the i18n system
 
-## Screenshot
+## Screenshots
 
-<!-- Obbligatorio se cambia qualcosa a schermo. -->
+<!-- Required if anything on screen changes. -->

@@ -1,17 +1,19 @@
-# Contribuire a HiddenIndexEngine
+# Contributing to HiddenIndexEngine
 
-Grazie per l'interesse. Questo documento raccoglie le regole minime per aprire
-una issue o una pull request.
+Thanks for your interest. This document collects the minimum rules for opening an
+issue or a pull request.
 
-## Lingua
+## Language
 
-Il progetto e' sviluppato in **italiano**: commenti, docstring, documentazione,
-messaggi di commit e log. Le issue e le PR possono essere in italiano o in inglese.
-Le stringhe rivolte al giocatore passano sempre dal sistema i18n, mai hardcoded.
+Everything committed to the repository is in **English**: documentation, code comments,
+docstrings, log messages and commit messages. Part of the codebase still carries comments
+in Italian from before the project went public; when you touch such a file, translate the
+comments you edit. Issues and pull requests are best in English; Italian is fine too.
+Player-facing strings always go through the i18n system, never hardcoded.
 
 ## Setup
 
-Serve **Python 3.12** su Windows 10/11 (piattaforma testata).
+You need **Python 3.12** on Windows 10/11 (the tested platform).
 
 ```bash
 git clone https://github.com/indecenti/HiddenIndexEngine.git
@@ -21,7 +23,7 @@ python -m venv .venv
 pip install -r requirements.txt -r requirements-dev.txt
 ```
 
-Verifica che tutto giri:
+Check that everything runs:
 
 ```bash
 pytest
@@ -29,79 +31,78 @@ python main.py
 python run_editor.py
 ```
 
-## Regole di codice
+## Code rules
 
-Sono vincolanti, la CI e la review le applicano.
+They are binding; the CI and the review enforce them.
 
-- **Type hints obbligatori** su tutte le firme pubbliche. PEP 8, righe ~100 caratteri.
-- **Mai `print()`** — usa `logging` tramite `engine.utils.get_logger(__name__)`.
-- **Mai magic number** — costanti a modulo o valori da configurazione.
-- **Mai emoji** in codice, documentazione, UI o output. Il `README.md` storico ne
-  contiene: non e' un modello da seguire.
-- **Path risorse**: sempre `engine.utils.get_resource_path(...)`. Per le scritture
-  `engine.utils.get_writable_path(...)`. Mai path assoluti o `os.getcwd()`.
-- **Scritture JSON**: sempre `engine.utils.safe_write_json` (atomico).
-  Cancellazioni: `engine.utils.safe_delete` (cestino `.editor_trash/` + audit log).
-- **Rendering**: mai `pygame.SCALED` su `set_mode` (va in conflitto con
-  `ScalingManager`); usa `DOUBLEBUF` / `FULLSCREEN`. Cache di rendering LRU con
-  evict graduale `popitem(last=False)`. Posizionamento con `int(round(float))`.
-- **Niente nuove dipendenze** senza discussione preventiva in una issue. Le versioni
-  in `requirements*.txt` sono pinned di proposito.
+- **Type hints required** on every public signature. PEP 8, lines of ~100 characters.
+- **Never `print()`** — use `logging` through `engine.utils.get_logger(__name__)`.
+- **Never magic numbers** — module constants or configuration values.
+- **Never emoji** in code, documentation, UI or output.
+- **Resource paths**: always `engine.utils.get_resource_path(...)`. For writes,
+  `engine.utils.get_writable_path(...)`. Never absolute paths or `os.getcwd()`.
+- **JSON writes**: always `engine.utils.safe_write_json` (atomic).
+  Deletions: `engine.utils.safe_delete` (`.editor_trash/` bin + audit log).
+- **Rendering**: never `pygame.SCALED` on `set_mode` (it conflicts with
+  `ScalingManager`); use `DOUBLEBUF` / `FULLSCREEN`. LRU render caches with gradual
+  eviction via `popitem(last=False)`. Positioning with `int(round(float))`.
+- **No new dependencies** without discussing them first in an issue. Versions in
+  `requirements*.txt` are pinned on purpose.
 
-## Regola vincolante: sincronia engine <-> web
+## Binding rule: engine <-> web sync
 
-L'export web (`editor/web_exporter.py` + `editor/web_template/runtime/`) **replica**
-in JavaScript la logica di `engine/scaling_manager.py`, `click_detector.py`,
+The web export (`editor/web_exporter.py` + `editor/web_template/runtime/`) **replicates**
+in JavaScript the logic of `engine/scaling_manager.py`, `click_detector.py`,
 `level_manager.py`, `hint_system.py`, `scene_loader.py`, `effect_renderer.py`,
-`save_manager.py` e di `engine/minigames/*`.
+`save_manager.py` and `engine/minigames/*`.
 
-Se tocchi uno di questi file **devi**, nella stessa PR:
+If you touch any of these files you **must**, in the same PR:
 
-1. leggere e aggiornare `docs/web/WEB_EXPORT_SYNC.md`;
-2. propagare la modifica al runtime JavaScript;
-3. far passare `pytest tests/test_web_sync.py`.
+1. read and update `docs/web/WEB_EXPORT_SYNC.md`;
+2. propagate the change to the JavaScript runtime;
+3. make `pytest tests/test_web_sync.py` pass.
 
-Le costanti condivise hanno fonte unica in `editor/web_rules.py::engine_rules()`.
-Una PR che desincronizza Python e JavaScript non viene accettata.
+Shared constants have a single source of truth in `editor/web_rules.py::engine_rules()`.
+A PR that desynchronizes Python and JavaScript is not accepted.
 
-## Modello dati
+## Data model
 
-- Una scena e' `games/<id>/levels/<level>/<scene>/scene.json`, validata contro
+- A scene is `games/<id>/levels/<level>/<scene>/scene.json`, validated against
   `engine/schemas/scene_schema.json`.
-- Le coordinate degli oggetti sono nello **spazio pixel nativo del background**.
-- Convenzione ancora: per `rect` la coppia `(x, y)` e' il **top-left**;
-  per `circle` e `mask` e' il **centro**.
-- Il `catalog_id` si risolve nel catalogo unito globale + locale, con il locale
-  che vince a parita' di `id`.
+- Object coordinates live in the **native pixel space of the background**.
+- Anchor convention: for `rect` the `(x, y)` pair is the **top-left**;
+  for `circle` and `mask` it is the **center**.
+- The `catalog_id` resolves against the merged global + local catalog, with the local
+  entry winning on equal `id`.
 
-Prima di aprire una PR che tocca le scene: `python tools/audit_catalog.py`.
+Before opening a PR that touches scenes: `python tools/audit_catalog.py`.
 
-## Pull request
+## Pull requests
 
-1. Fai un fork e lavora su un branch dedicato (`feat/...`, `fix/...`, `docs/...`).
-2. Un argomento per PR. PR grandi e miste vengono rimandate indietro.
-3. `pytest` deve passare in locale prima di aprire la PR.
-4. Messaggi di commit in formato Conventional Commits:
+1. Fork and work on a dedicated branch (`feat/...`, `fix/...`, `docs/...`).
+2. One topic per PR. Large mixed PRs are sent back.
+3. `pytest` must pass locally before opening the PR.
+4. Commit messages in Conventional Commits format:
    `feat(editor): ...`, `fix(engine): ...`, `docs: ...`, `test: ...`, `refactor: ...`.
-5. Descrivi **cosa** cambia e **perche'**. Se e' un fix, indica come riprodurre il bug.
-6. Se cambi il comportamento a schermo, allega uno screenshot o una GIF.
+5. Describe **what** changes and **why**. For a fix, say how to reproduce the bug.
+6. If on-screen behavior changes, attach a screenshot or a GIF.
 
-## Segnalare bug
+## Reporting bugs
 
-Apri una issue con il template Bug report. Servono sempre:
+Open an issue with the Bug report template. Always include:
 
-- versione di Python e sistema operativo;
-- comando esatto eseguito;
-- traceback completo (non uno screenshot del traceback);
-- se riguarda una scena: il `scene.json` o l'output di `tools/audit_catalog.py`.
+- Python version and operating system;
+- the exact command you ran;
+- the full traceback (not a screenshot of it);
+- for scene issues: the `scene.json` or the output of `tools/audit_catalog.py`.
 
-## Asset
+## Assets
 
-Gli asset grafici e audio del repository sono CC BY 4.0 (vedi
-[LICENSE-ASSETS.md](LICENSE-ASSETS.md)). **Non aprire PR che aggiungono asset di
-terze parti** di cui non puoi dimostrare la licenza: verranno rifiutate.
+The graphic and audio assets in the repository are CC BY 4.0 (see
+[LICENSE-ASSETS.md](LICENSE-ASSETS.md)). **Do not open PRs that add third-party assets**
+whose license you cannot prove: they will be rejected.
 
-## Licenza dei contributi
+## License of contributions
 
-Contribuendo accetti che il tuo codice sia rilasciato sotto **Apache License 2.0**,
-la stessa del progetto (vedi [LICENSE](LICENSE)).
+By contributing you agree that your code is released under the **Apache License 2.0**,
+the same license as the project (see [LICENSE](LICENSE)).

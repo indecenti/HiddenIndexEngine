@@ -1,234 +1,234 @@
-# 🎯 Sistema Hint Professionale — Hidden Engine
+# Hint System — Hidden Engine
 
-## Panoramica
+## Overview
 
-Sistema hint **avanzato e configurabile** per giochi hidden object professionali:
+An **advanced, configurable** hint system for professional hidden object games:
 
-- ✅ **Auto-hint visuale**: dopo N secondi di inattività, l'oggetto riceve un glow crescente
-- ✅ **Hint manuale**: pulsante con cooldown, penalità punti progressiva
-- ✅ **Layer intensity**: oggetti nascosti ricevono hint più visibili
-- ✅ **Disabilitazione progressiva**: dopo 3 hint, il pulsante si disabilita
-- ✅ **Statistiche**: traccia hints usati per achievement e regiocabilità
-
----
-
-## 🎮 Uso Nel Gioco
-
-### Hint Automatico
-
-1. **Cerca un oggetto** durante la scena
-2. Dopo ~30 secondi di inattività (configurabile), l'oggetto riceve un **glow ciano** crescente
-3. Il glow aumenta per 10 secondi fino a raggiungere massima visibilità
-4. Quando l'oggetto è trovato, il timer si resetta
-
-### Hint Manuale
-
-1. Premi **H** durante la scena (o clicca il pulsante "?" nella HUD)
-2. L'oggetto non ancora trovato riceve un effetto particellare ciano + glow
-3. Il pulsante entra in **cooldown per 20 secondi**
-4. **Penalità punti**:
-   - 1° hint: -50 pt
-   - 2° hint: -75 pt
-   - 3° hint: -100 pt + pulsante disabilitato
-
-### Nessun Hint
-
-Completare il livello con 0 hint utilizzati sblocca l'achievement **"Senza Hint"** e fornisce bonus punti.
+- **Visual auto-hint**: after N seconds of inactivity the object receives a growing glow
+- **Manual hint**: button with cooldown and a progressive score penalty
+- **Layer intensity**: hidden objects receive more visible hints
+- **Progressive disabling**: after 3 hints the button is disabled
+- **Statistics**: hints used are tracked for achievements and replayability
 
 ---
 
-## 📋 Configurazione
+## In-game usage
 
-### Game Config (game_config.json)
+### Automatic hint
+
+1. **Look for an object** during the scene
+2. After ~30 seconds of inactivity (configurable) the object receives a growing **cyan glow**
+3. The glow grows for 10 seconds until it reaches maximum visibility
+4. When the object is found, the timer resets
+
+### Manual hint
+
+1. Press **H** during the scene (or click the "?" button in the HUD)
+2. An object not yet found receives a cyan particle effect + glow
+3. The button enters a **20-second cooldown**
+4. **Score penalty**:
+   - 1st hint: -50 pts
+   - 2nd hint: -75 pts
+   - 3rd hint: -100 pts + button disabled
+
+### No hints
+
+Completing the level with 0 hints unlocks the **"No Hints"** achievement and grants bonus points.
+
+---
+
+## Configuration
+
+### Game config (game_config.json)
 
 ```json
 {
   "layer_hint_intensity": {
-    "objects_low": 1.8,      // Oggetti nascosti = hint 80% più visibile
-    "objects_mid": 1.0,      // Intensità standard
-    "objects_high": 0.6,     // Oggetti evidenti = hint sottile
+    "objects_low": 1.8,      // Hidden objects = hint 80% more visible
+    "objects_mid": 1.0,      // Standard intensity
+    "objects_high": 0.6,     // Obvious objects = subtle hint
     "overlay": 0.4
   }
 }
 ```
 
-**Come funziona**:
-- Il glow base è moltiplicato per il fattore del layer
-- Oggetti su `objects_low` ricevono glow 1.8× più intenso
-- Questo bilanzia la difficoltà: oggetti nascosti sono più facili da trovare con gli hint
+**How it works**:
+- The base glow is multiplied by the layer factor
+- Objects on `objects_low` receive a 1.8x more intense glow
+- This balances difficulty: hidden objects are easier to find with hints
 
-### Oggetto (objects_catalog.json)
+### Object (objects_catalog.json)
 
 ```json
 {
-  "id": "chiave_arrugginita",
-  "default_hint_delay": 30   // Secondi prima del primo glow auto-hint
+  "id": "rusty_key",
+  "default_hint_delay": 30   // Seconds before the first auto-hint glow
 }
 ```
 
-Questo valore può essere sovrascritto **per scena** in scene.json:
+This value can be overridden **per scene** in scene.json:
 
 ```json
 {
-  "instance_id": "chiave_1",
-  "catalog_id": "chiave_arrugginita",
-  "hint_delay": 45           // Override: aspetta 45 sec prima del glow
+  "instance_id": "key_1",
+  "catalog_id": "rusty_key",
+  "hint_delay": 45           // Override: wait 45 s before the glow
 }
 ```
 
 ---
 
-## 🔧 Implementazione Tecnica
+## Technical implementation
 
-### Flusso
+### Flow
 
 ```
 [core.py]
-  ↓
-  hint.update(dt, objects, layer_config)  ← Ogni frame
-  ↓
-  [per ogni oggetto non trovato]
-    - Incrementa inactivity_timer
-    - Se > hint_delay, attiva glow crescente
-    - Glow = 0.3 + (tempo_dopo_delay / 10) × 0.7
-    - Moltiplica per layer_hint_intensity
-  ↓
-  [Giocatore preme H o clicca pulsante]
-    ↓
-    use_manual_hint() → (success, penalty)
-    ↓
+  |
+  hint.update(dt, objects, layer_config)  <- every frame
+  |
+  [for every object not yet found]
+    - increment inactivity_timer
+    - if > hint_delay, activate the growing glow
+    - glow = 0.3 + (time_after_delay / 10) x 0.7
+    - multiply by layer_hint_intensity
+  |
+  [player presses H or clicks the button]
+    |
+    use_manual_hint() -> (success, penalty)
+    |
     level_manager.apply_score_penalty(penalty)
-    ↓
-    effects.spawn_hint_effect()  ← Particelle ciano
+    |
+    effects.spawn_hint_effect()  <- cyan particles
 ```
 
-### Statistiche
+### Statistics
 
-Quando la scena termina:
+When the scene ends:
 
 ```python
 SceneResult {
-  hints_used: 2,  # Tracciato automaticamente
-  score: 450,     # Già sconta penalità
-  # Achievement "no_hints" = hints_used == 0
+  hints_used: 2,  # tracked automatically
+  score: 450,     # penalties already applied
+  # "no_hints" achievement = hints_used == 0
 }
 ```
 
-Viene salvato in SaveManager per statistiche permanenti.
+It is saved through SaveManager for permanent statistics.
 
 ---
 
-## 🎨 Effetti Visivi
+## Visual effects
 
-### Glow Auto-Hint (Azzurro)
+### Auto-hint glow (cyan)
 
-- **Colore**: Ciano (100, 180-255, 255)
-- **Intensità**: Cresce gradualmente da 0.3 a 1.0 nei 10 secondi dopo delay
-- **Layer modulation**: moltiplicato per layer_hint_intensity
-- **Rendering**: Integrato nel rendering degli oggetti
+- **Color**: cyan (100, 180-255, 255)
+- **Intensity**: grows gradually from 0.3 to 1.0 in the 10 seconds after the delay
+- **Layer modulation**: multiplied by layer_hint_intensity
+- **Rendering**: integrated into object rendering
 
-### Effetto Hint Manuale (Particelle)
+### Manual hint effect (particles)
 
-- **Colore**: Ciano luminoso
-- **Particelle**: 20 particelle in esplosione
-- **Velocità**: 60-140 px/sec
-- **Durata**: ~1 secondo
-- **Suono**: Opzionale (via audio_manager)
+- **Color**: bright cyan
+- **Particles**: 20 particles in a burst
+- **Speed**: 60-140 px/s
+- **Duration**: ~1 second
+- **Sound**: optional (via audio_manager)
 
 ---
 
-## 📊 Achievement & Regiocabilità
+## Achievements and replayability
 
-### Achievement "Senza Hint"
+### "No Hints" achievement
 
 ```json
 {
-  "id": "no_hints_giardino",
+  "id": "no_hints_garden",
   "condition": "level_no_hints",
   "unlock_on": "hints_used == 0 AND level_complete"
 }
 ```
 
-### Motivazione Ricorsiva
+### Recurring motivation
 
-Il sistema crea **4 motivi diversi** per rigiocare:
+The system creates **4 different reasons** to replay:
 
-1. **Punteggio**: "Posso fare di più?"
-2. **Velocità**: "Posso finire in 2 min?"
-3. **Precisione**: "Posso evitare click sbagliati?"
-4. **Difficoltà**: "Posso farcela senza hint?"
+1. **Score**: "Can I do better?"
+2. **Speed**: "Can I finish in 2 minutes?"
+3. **Precision**: "Can I avoid wrong clicks?"
+4. **Difficulty**: "Can I make it without hints?"
 
-Ogni metrica è **indipendente**: il giocatore che ha il massimo punti può tornare per il tempo record.
+Every metric is **independent**: the player with the top score can come back for the time record.
 
 ---
 
-## ⚙️ Parametri Sintonizzabili
+## Tunable parameters
 
-Nel `HintSystem.__init__()`:
+In `HintSystem.__init__()`:
 
 ```python
-self.manual_hint_cooldown_max = 20.0  # Secondi tra un hint e l'altro
-self.max_hints_before_disable = 3     # Max hint prima di disabilitare
-self.hint_penalties = [0, -50, -75, -100]  # Penalità progressive
+self.manual_hint_cooldown_max = 20.0  # seconds between hints
+self.max_hints_before_disable = 3     # max hints before disabling
+self.hint_penalties = [0, -50, -75, -100]  # progressive penalties
 ```
 
-**Bilanciamento consigliato**:
-- **Facile**: cooldown=10, max_hints=5, penalties=[-25, -50, -50]
-- **Normale**: cooldown=20, max_hints=3, penalties=[-50, -75, -100]
-- **Difficile**: cooldown=30, max_hints=2, penalties=[-100, -150]
+**Suggested balancing**:
+- **Easy**: cooldown=10, max_hints=5, penalties=[-25, -50, -50]
+- **Normal**: cooldown=20, max_hints=3, penalties=[-50, -75, -100]
+- **Hard**: cooldown=30, max_hints=2, penalties=[-100, -150]
 
 ---
 
-## 🐛 Debug
+## Debug
 
-### Log Completo
+### Full log
 
 ```bash
-# core.py: Tasto H premuto
-[INFO] Hint usato: chiave_1 | Penalità: -50 pt | Hints: 1
+# core.py: H key pressed
+[INFO] Hint used: key_1 | Penalty: -50 pts | Hints: 1
 
-# hint_system.py: Statistiche a fine scena
+# hint_system.py: end-of-scene statistics
 hints_used_total: 2
-per_object: { "chiave_1": 2, "orologio_1": 0 }
+per_object: { "key_1": 2, "clock_1": 0 }
 no_hints_achievement: false
 ```
 
-### Disabilita Auto-Hint (Test)
+### Disable auto-hint (testing)
 
 ```python
 # core.py
 self.hint.auto_hint_enabled = False
 ```
 
-### Fuerza Hint Manuale (Debug)
+### Force a manual hint (debug)
 
 ```python
-# console durante debug
-self.hint.hints_used_total = 0  # Reset
-self.hint.manual_hint_cooldown = 0.0  # Disponibile subito
+# console during debugging
+self.hint.hints_used_total = 0  # reset
+self.hint.manual_hint_cooldown = 0.0  # available immediately
 ```
 
 ---
 
-## 📚 Files Coinvolti
+## Files involved
 
-- **engine/hint_system.py** — Logica core (180 righe)
-- **engine/effects_engine.py** — Rendering particelle
-- **engine/level_manager.py** — Integrazione punteggio + statistiche
-- **engine/core.py** — Game loop + input H
-- **game_config.json** — Configurazione layer_hint_intensity
-
----
-
-## 🚀 Next Steps
-
-- [ ] Pulsante "?" nella HUD per hint visuale
-- [ ] Suono hint (whoosh ciano)
-- [ ] Animazione glow pulsante invece di crescente (opzionale)
-- [ ] Hint context: "Guarda in basso a destra" (testo, opzionale)
-- [ ] Statistiche leaderboard: "Run without hints" categoria
+- **engine/hint_system.py** — core logic (180 lines)
+- **engine/effects_engine.py** — particle rendering
+- **engine/level_manager.py** — score integration + statistics
+- **engine/core.py** — game loop + H key input
+- **game_config.json** — layer_hint_intensity configuration
 
 ---
 
-**Status**: ✅ Implementazione completa e professionale
-**Ultima modifica**: 2026-04-16
+## Next steps
+
+- [ ] "?" button in the HUD for the visual hint
+- [ ] Hint sound (cyan whoosh)
+- [ ] Pulsing glow animation instead of growing (optional)
+- [ ] Hint context: "Look at the bottom right" (text, optional)
+- [ ] Leaderboard statistics: "Run without hints" category
+
+---
+
+**Status**: implementation complete
+**Last modified**: 2026-04-16

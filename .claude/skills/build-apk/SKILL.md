@@ -1,46 +1,46 @@
 ---
 name: build-apk
-description: Compila o ricompila l'APK/AAB Android di HiddenIndexEngine applicando le ricette pygame note (fix SIMD a livello recipe, NDK28, arm64, asset pruning). Usala quando l'utente vuole buildare per Android, rigenerare l'APK, diagnosticare un build Android fallito, o ispezionare un APK.
+description: Builds or rebuilds the HiddenIndexEngine Android APK/AAB applying the known pygame recipes (recipe-level SIMD fix, NDK 28, arm64, asset pruning). Use it when the user wants to build for Android, regenerate the APK, diagnose a failed Android build, or inspect an APK.
 ---
 
 # build-apk
 
-Build Android (python-for-android / buildozer) di HiddenIndexEngine.
+Android build (python-for-android / buildozer) of HiddenIndexEngine.
 
-## Prerequisiti
+## Prerequisites
 
-- Toolchain Android in **WSL** (gli script di build sono `.sh`). Setup:
+- Android toolchain in **WSL** (the build scripts are `.sh`). Setup:
   `scripts/setup_android_wsl.sh`.
-- Vincoli noti gia' risolti a livello recipe: fix **SIMD** di pygame, **NDK 28**,
-  target **arm64**, **asset pruning** (APK 558 -> 135 MB).
+- Known constraints already solved at recipe level: pygame **SIMD** fix, **NDK 28**,
+  **arm64** target, **asset pruning** (APK 558 -> 135 MB).
 
-## Script (in `scripts/`)
+## Scripts (in `scripts/`)
 
-Leggi sempre l'header dello script prima di lanciarlo. Principali:
+Always read the script header before running it. Main ones:
 
-- `rebuild_apk_quick.sh` — rebuild incrementale veloce.
-- `rebuild_apk_arm64.sh` / `rebuild_apk_ndk28.sh` — varianti toolchain/target.
-- `rebuild_apk_pygame.sh` / `rebuild_apk_with_numpy.sh` — gestione ricette native.
-- `rebuild_apk_x86_verify.sh` — build x86 per verifica su emulatore.
-- `fix_pygame_simd.sh` / `update_pygame_recipe.sh` — patch ricetta pygame.
-- `inspect_apk.sh` — ispeziona contenuto/peso di un APK.
+- `rebuild_apk_quick.sh` — fast incremental rebuild.
+- `rebuild_apk_arm64.sh` / `rebuild_apk_ndk28.sh` — toolchain/target variants.
+- `rebuild_apk_pygame.sh` / `rebuild_apk_with_numpy.sh` — native recipe handling.
+- `rebuild_apk_x86_verify.sh` — x86 build for emulator verification.
+- `fix_pygame_simd.sh` / `update_pygame_recipe.sh` — pygame recipe patches.
+- `inspect_apk.sh` — inspects the content/size of an APK.
 
-In alternativa, build dall'editor: `editor/android_build_system.py`
+Alternatively, build from the editor: `editor/android_build_system.py`
 (UI: `editor/android_build_ui.py`).
 
-## Diagnosi build bloccate
+## Diagnosing stuck builds
 
-- Guida: `docs/build/DEBUG_GUIDE.md`.
-- Contesto Android: `docs/android/` (porting plan, packaging, mobile UX, package size).
-- Per il peso APK: `docs/android/SMART_ASSET_PACKAGING.md` e `optimize_assets_mobile.py`.
+- Guide: `docs/build/DEBUG_GUIDE.md`.
+- Android context: `docs/android/` (porting plan, packaging, mobile UX, package size).
+- For the APK size: `docs/android/SMART_ASSET_PACKAGING.md` and `optimize_assets_mobile.py`.
 
-## Verifica post-build
+## Post-build verification
 
-- `inspect_apk.sh` per contenuto e dimensione.
-- Tool MCP `build_status` per elencare gli artefatti (apk/aab) presenti nel repo.
-- Test su emulatore con la build x86 (`rebuild_apk_x86_verify.sh`).
+- `inspect_apk.sh` for content and size.
+- MCP tool `build_status` to list the artifacts (apk/aab) present in the repo.
+- Emulator test with the x86 build (`rebuild_apk_x86_verify.sh`).
 
-## Regole
+## Rules
 
-- Non bypassare hook/firma se non richiesto esplicitamente.
-- Le versioni delle dipendenze native sono pinned: non cambiarle senza approvazione.
+- Do not bypass hooks/signing unless explicitly requested.
+- Native dependency versions are pinned: do not change them without approval.

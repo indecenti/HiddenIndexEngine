@@ -1,72 +1,70 @@
-# ROADMAP HiddenIndexEngine
+# HiddenIndexEngine ROADMAP
 
-Stato per area e lavoro residuo. Questo file sostituisce i vecchi `NEXT_STEPS.md`
-e gli `*_STATUS`/`*_SUMMARY` sparsi nella root (rimossi perche' obsoleti).
-Aggiornare quando un'area cambia stato.
+Status per area and remaining work. This file replaces the old `NEXT_STEPS.md` and the
+`*_STATUS`/`*_SUMMARY` files that used to sit in the root (removed as obsolete).
+Update it whenever an area changes status.
 
-Legenda: [x] completo · [~] in corso/parziale · [ ] da fare.
+Legend: [x] done · [~] in progress/partial · [ ] to do.
 
-## Fondamenta engine (remediation)
+## Engine foundations (remediation)
 
-- [x] Tier fondamenta (step 1-10): scaling, coordinate, click detection, hint, save, validazione.
-- [ ] Tier "dopo" (step 11-14): miglioramenti non bloccanti.
-- [ ] Decisioni aperte:
-  - miss penalty: allineare la formula Python e quella JS del runtime web.
-  - glow indicator: definire il comportamento dell'indicatore visivo.
-- Vincolo permanente: il runtime e' duplicato Python (engine) e JS (web). Ogni
-  modifica alla logica condivisa va propagata su entrambi (vedi `docs/web/WEB_EXPORT_SYNC.md`).
+- [x] Foundation tier (steps 1-10): scaling, coordinates, click detection, hints, saves, validation.
+- [ ] "Later" tier (steps 11-14): non-blocking improvements.
+- [ ] Open decisions:
+  - miss penalty: align the Python formula with the JS one in the web runtime.
+  - glow indicator: define the behavior of the visual indicator.
+- Permanent constraint: the runtime is duplicated in Python (engine) and JS (web). Every
+  change to shared logic must be propagated to both (see `docs/web/WEB_EXPORT_SYNC.md`).
 
 ## Editor
 
-- [x] Audit P1-P4 (273 rilievi): critici, alti, bug medi, codice morto. Vedi `docs/editor/EDITOR_AUDIT_REPORT.md`.
-- [x] Piano di miglioramento (5 fasi, `docs/editor/EDITOR_IMPROVEMENT_PLAN.md`) COMPLETATO:
-  - Fondamenta UI: widget layer (`ui/widgets.py`), stack modale unificato,
-    editing testo centralizzato, DPI awareness + scala UI, hitbox menubar dinamiche.
-  - UX canvas: nudge frecce, zoom-to-selection, griglia configurabile, snap a
-    oggetti con guide, undo con etichette/coalescing/selezione preservata.
-  - Studio asset (PNG): crop con maniglie, redo, pennello restore, rimozione
-    sfondo AI (rembg), resize, filtri colore, contorno; import con processing e
-    import batch con registrazione catalogo + i18n.
-  - Level design: playtest scena (`main.py --scene`, bottone in status bar),
-    statistiche scena con stima difficolta' (scoring scatter_engine), anteprima
-    come-in-gioco (F5), preset gruppi oggetti, auditor esteso (6 nuovi check).
-  - Dashboard: duplica scena/livello, sposta scena tra livelli, riordino giochi.
-  - Refactor: pipeline build EXE/APK unificata (`build_common.py`),
-    `AssetCatalog` condiviso bg/musica/video, export web con progress+cancel,
-    open scena asincrono, clipboard unico.
-- [ ] Piano "Editor Pro" (`docs/editor/EDITOR_PRO_PLAN.md`, 2026-07-12):
-  mimetizzazione auto-scatter (metrica render-based unica, best-of-M, colore Lab,
-  repair loop), UX scatter (progress/cancel, seed, ghost interattivi),
-  completezza editor (crash recovery, outline scena, workbench traduzioni,
-  checklist pubblicazione).
+- [x] Audit P1-P4 (273 findings): critical, high, medium bugs, dead code. See `docs/archive/editor/EDITOR_AUDIT_REPORT.md`.
+- [x] Improvement plan (5 phases, `docs/archive/editor/EDITOR_IMPROVEMENT_PLAN.md`) COMPLETED:
+  - UI foundations: widget layer (`ui/widgets.py`), unified modal stack,
+    centralized text editing, DPI awareness + UI scale, dynamic menubar hitboxes.
+  - Canvas UX: arrow-key nudge, zoom-to-selection, configurable grid, object snapping
+    with guides, undo with labels/coalescing/preserved selection.
+  - Asset studio (PNG): crop with handles, redo, restore brush, AI background removal
+    (rembg), resize, color filters, outline; import with processing and batch import
+    with catalog registration + i18n.
+  - Level design: scene playtest (`main.py --scene`, status bar button), scene
+    statistics with difficulty estimate (scatter_engine scoring), as-in-game preview
+    (F5), object group presets, extended auditor (6 new checks).
+  - Dashboard: duplicate scene/level, move scene between levels, reorder games.
+  - Refactor: unified EXE/APK build pipeline (`build_common.py`), shared `AssetCatalog`
+    for backgrounds/music/video, web export with progress+cancel, unified clipboard.
+- [ ] "Editor Pro" plan (`docs/archive/editor/EDITOR_PRO_PLAN.md`, 2026-07-12):
+  auto-scatter camouflage (single render-based metric, best-of-M, Lab color, repair
+  loop), scatter UX (progress/cancel, seed, interactive ghosts), editor completeness
+  (crash recovery, scene outline, translation workbench, publishing checklist).
 
-## Sistema menu (skin)
+## Menu system (skins)
 
-- [x] Architettura a skin (core + skin pluggabile) lato Python: `default`, `horror`, `kids`, `cyber_neon`, `mystery`.
-- [ ] Skin web (hybrid DOM/CSS): approccio approvato, ancora da implementare nel runtime web.
+- [x] Skin architecture (core + pluggable skin) on the Python side: `default`, `horror`, `kids`, `cyber_neon`, `mystery`.
+- [ ] Web skins (hybrid DOM/CSS): approach approved, still to implement in the web runtime.
 
 ## Android / mobile UX
 
-Dettaglio in `docs/android/ANDROID_MOBILE_UX_AUDIT.md`. Decisioni prese: landscape,
-pinch-zoom + pan, target mid-range. Validato su emulatore (boot, menu, scena HOG,
-lista oggetti, find, minigioco).
+Details in `docs/android/ANDROID_MOBILE_UX_AUDIT.md`. Decisions taken: landscape,
+pinch-zoom + pan, mid-range target. Validated on the emulator (boot, menu, HOG scene,
+object list, find, minigame).
 
-- [x] Fase 0/1/3 (input, scena, lista oggetti) + asset pruning (APK 558 -> 135 MB).
-- [x] Fix build pygame SIMD a livello recipe + persistenza config su path scrivibile.
-- [ ] Fase 2: nitidezza a 720p.
-- [ ] Fase 4: navigazione e integrazione col sistema (back, lifecycle).
-- [ ] Fase 5: packaging finale (icone, splash, store).
-- [ ] Fase 6: performance e minigiochi su mid-range.
+- [x] Phases 0/1/3 (input, scene, object list) + asset pruning (APK 558 -> 135 MB).
+- [x] pygame SIMD build fix at recipe level + config persistence on a writable path.
+- [ ] Phase 2: sharpness at 720p.
+- [ ] Phase 4: navigation and system integration (back, lifecycle).
+- [ ] Phase 5: final packaging (icons, splash, store).
+- [ ] Phase 6: performance and minigames on mid-range devices.
 
-## Contenuti (evergreen)
+## Content (evergreen)
 
-- [ ] Achievements: `engine/achievements_manager.py` + valutazione a fine livello.
-- [ ] Leaderboard: best score / best time per livello con trend.
-- [ ] Profili qualita' rendering (high/medium/low) con auto-downgrade sotto soglia FPS.
-- [ ] Nuovi livelli/scene e completamento traduzioni (it/en/es/fr/de) per i giochi attivi.
+- [ ] Achievements: `engine/achievements_manager.py` + end-of-level evaluation.
+- [ ] Leaderboard: best score / best time per level with trend.
+- [ ] Render quality profiles (high/medium/low) with auto-downgrade below an FPS threshold.
+- [ ] New levels/scenes and completion of the translations (it/en/es/fr/de) for the active games.
 
-## Tooling sviluppo
+## Development tooling
 
-- [x] MCP server di progetto (`tools/hie_mcp_server.py`): render headless, validazione scene, ricerca catalogo.
-- [x] Skill di progetto (`.claude/skills/`): `build-apk`, `run-game`, `add-asset`, `validate-scene`.
-- [ ] Eventuale pulizia di `scratch/` (decine di script usa-e-getta e PNG temporanei tracciati da git).
+- [x] Project MCP server (`tools/hie_mcp_server.py`): headless render, scene validation, catalog search.
+- [x] Project skills (`.claude/skills/`): `build-apk`, `run-game`, `add-asset`, `validate-scene`.
+- [ ] Possible cleanup of `scratch/` (dozens of throwaway scripts and temporary PNGs tracked by git).

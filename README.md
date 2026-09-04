@@ -107,7 +107,7 @@ A game is a folder, `games/<id>/`, and all three builds start from that same fol
 project browser has one button per target next to each game, and every build copies only
 the assets the scenes actually reference (smart packaging), so bundles stay small.
 
-### Windows EXE
+### <img src="docs/images/icons/windows.svg" width="22" alt="Windows"> Windows EXE
 
 - **What you get** — a one-folder PyInstaller bundle in `dist/`: the engine, `main.py`, a
   ready `config.ini` and the game, nothing else. Typically 100-150 MB for a full game.
@@ -116,7 +116,7 @@ the assets the scenes actually reference (smart packaging), so bundles stay smal
   itself (`HiddenEditor.spec`) and publishes it as a workflow artifact.
 - **Docs** — [docs/build/](docs/build/).
 
-### Web (HTML5)
+### <img src="docs/images/icons/html5.svg" width="22" alt="HTML5"> Web (HTML5)
 
 - **What you get** — a self-contained static site in `build_web/<id>/v<X.Y>/`: HTML, CSS,
   a JavaScript runtime and every asset copied or transcoded next to it. Builds are
@@ -137,7 +137,7 @@ the assets the scenes actually reference (smart packaging), so bundles stay smal
 - **Docs** — [docs/web/WEB_EXPORT.md](docs/web/WEB_EXPORT.md),
   [docs/web/WEB_EXPORT_SYNC.md](docs/web/WEB_EXPORT_SYNC.md).
 
-### Android APK and AAB
+### <img src="docs/images/icons/android.svg" width="22" alt="Android"> Android APK and AAB
 
 - **What you get** — one APK per game (`--release` produces an AAB for the Play Store),
   arm64, minSdk 24 (Android 7+), landscape, pinch-to-zoom and pan on the scene. Asset
@@ -186,7 +186,7 @@ wins on conflicts. The editor writes all of this; the runtime scales it to any s
 
 ## Documentation
 
-Written in Italian. Full index in [docs/README.md](docs/README.md); useful entry points:
+Full index in [docs/README.md](docs/README.md); useful entry points:
 
 - [Coordinate system](docs/engine/COORDINATE_SYSTEM.md) and [hint system](docs/engine/HINT_SYSTEM.md)
 - [Writing a minigame](docs/engine/MINIGAMES_DEVELOPMENT.md)

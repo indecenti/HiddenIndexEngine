@@ -1,103 +1,101 @@
-# Workflow Assets - Stile LINE ART
+# Asset Workflow - LINE ART style
 
-Documento operativo per generare, processare e integrare oggetti in stile
-**line art (bianco/nero vettoriale)** nel motore.
+Operating document to generate, process and integrate objects in the
+**line art (black/white vector)** style into the engine.
 
-> **Riferimenti rapidi**
-> - Catalogo: [engine/data/global_lineart_catalog.json](../engine/data/global_lineart_catalog.json)
-> - Cartella asset: [engine/assets/objects_lineart/](../engine/assets/objects_lineart/)
-> - Valore `style` nel catalogo: `"line art"` (con spazio)
-> - Prefisso ID obbligatorio: `la_` (es. `la_corona`, `la_telescopio`)
-> - Tool di processing: [tools/process_assets.py](../tools/process_assets.py) `--style lineart`
-> - Storico batch: [ASSETS_INTEGRATION_LOG.md](ASSETS_INTEGRATION_LOG.md)
-
----
-
-## 1. Specifiche di generazione (AI)
-
-### 1.1 Sfondo e composizione
-- **Sfondo**: **Cool Gray** `#788088` (grigio azzurrato — NON verde)
-- **Motivazione**: la componente blu dominante (B > R) permette di distinguere
-  matematicamente lo sfondo dai pixel grigi di antialiasing dell'oggetto,
-  preservando l'interno bianco puro
-- **Griglia**: 3×3 standard (9 oggetti) o 4×4 (16 oggetti)
-- **Margine**: ≥ 120-150 px di spazio grigio tra oggetti e bordi
-- **Vietato**: griglie grafiche, linee di divisione, cornici, separatori
-
-### 1.2 Strategia di prompting
-- **Stile grafico rigoroso**: "Line art vettoriale o a inchiostro, nero puro
-  (#000000) per i contorni e bianco puro (#FFFFFF) per i riempimenti interni.
-  **Assolutamente nessuna sfumatura di grigio, gradienti, ombreggiature o
-  tratteggi (no cross-hatching)**"
-- **Tratto uniforme**: spessore costante e definito, niente sketching
-  disordinato. **Tutte le forme devono essere chiuse** (per non far penetrare
-  lo sfondo grigio nell'oggetto)
-- **Sfondo**: "Cool gray background `#788088`"
-- **Semplicità materiale**: essendo line art, il vetro è uno spazio bianco
-  delineato (niente distorsioni ottiche o trasparenze AI)
-
-### 1.3 Vincoli universali
-- Visuale frontale, laterale o isometrica — mai obliqua
-- Niente figure umane (se non esplicitamente richieste)
-- Niente testo o watermark
-- Risoluzione consigliata griglia 3×3: 2048×2048; 4×4: 2560×2560
+> **Quick references**
+> - Catalog: [engine/data/global_lineart_catalog.json](../../engine/data/global_lineart_catalog.json)
+> - Asset folder: [engine/assets/objects_lineart/](../../engine/assets/objects_lineart/)
+> - `style` value in the catalog: `"line art"` (with a space)
+> - Mandatory ID prefix: `la_` (e.g. `la_corona`, `la_telescopio`)
+> - Processing tool: [tools/process_assets.py](../../tools/process_assets.py) `--style lineart`
+> - Batch history: [ASSETS_INTEGRATION_LOG.md](ASSETS_INTEGRATION_LOG.md)
 
 ---
 
-## 2. Pipeline di processing
+## 1. Generation specs (AI)
 
-### 2.1 Algoritmo
-**Chrominance Offset** + **Forzatura Monocromatica** + **Auto-Trim**.
+### 1.1 Background and composition
+- **Background**: **Cool Gray** `#788088` (bluish gray — NOT green)
+- **Reason**: the dominant blue component (B > R) makes it possible to
+  mathematically distinguish the background from the object's gray
+  anti-aliasing pixels, preserving the pure white interior
+- **Grid**: standard 3x3 (9 objects) or 4x4 (16 objects)
+- **Margin**: >= 120-150 px of gray space between the objects and the edges
+- **Forbidden**: drawn grids, division lines, frames, separators
 
-A differenza degli stili a colori, l'estrazione lineart è **binaria**:
+### 1.2 Prompting strategy
+- **Strict graphic style**: "Vector or ink line art, pure black (#000000) for
+  the outlines and pure white (#FFFFFF) for the inner fills.
+  **Absolutely no gray shades, gradients, shading or hatching (no cross-hatching)**"
+- **Uniform stroke**: constant, well-defined thickness, no messy sketching.
+  **All shapes must be closed** (so the gray background cannot leak into the object)
+- **Background**: "Cool gray background `#788088`"
+- **Material simplicity**: being line art, glass is an outlined white space
+  (no optical distortion or AI transparency)
+
+### 1.3 Universal constraints
+- Front, side or isometric view — never oblique
+- No human figures (unless explicitly required)
+- No text or watermarks
+- Recommended resolution for a 3x3 grid: 2048x2048; 4x4: 2560x2560
+
+---
+
+## 2. Processing pipeline
+
+### 2.1 Algorithm
+**Chrominance Offset** + **Monochrome Forcing** + **Auto-Trim**.
+
+Unlike the color styles, line art extraction is **binary**:
 
 ```python
-# 1. Riconoscimento sfondo via offset cromatico (Blu > Rosso)
+# 1. Background recognition via chromatic offset (blue > red)
 is_cool_gray_bg = (b > r + 5) & (abs(g - 128) < 40)
 is_dark_line   = (r + g + b) / 3 < 100
 
-# 2. Trasparenza sullo sfondo
+# 2. Transparency on the background
 alpha[is_cool_gray_bg] = 0
 
-# 3. Forza nero puro sulle linee
+# 3. Force pure black on the lines
 r[~is_cool_gray_bg & is_dark_line] = 0
 g[~is_cool_gray_bg & is_dark_line] = 0
 b[~is_cool_gray_bg & is_dark_line] = 0
 
-# 4. Forza bianco puro sui riempimenti
+# 4. Force pure white on the fills
 r[~is_cool_gray_bg & ~is_dark_line] = 255
 g[~is_cool_gray_bg & ~is_dark_line] = 255
 b[~is_cool_gray_bg & ~is_dark_line] = 255
 ```
 
-La componente blu dello sfondo è la firma che lo rende unico, salvaguardando
-i pixel grigi-bianchi dell'oggetto da sbavature antialiasing.
+The blue component of the background is the signature that makes it unique,
+protecting the object's gray-white pixels from anti-aliasing smears.
 
 ### 2.2 Output
-- Formato: **PNG con palette ottimizzata** (a 2 colori + trasparenza)
-- Alpha: **hard clipping**, taglio netto vettoriale (no AA morbido)
-- Auto-trim: ogni oggetto ritagliato ai pixel effettivi via `getbbox()`
-- File salvati in: `engine/assets/objects_lineart/`
+- Format: **PNG with an optimized palette** (2 colors + transparency)
+- Alpha: **hard clipping**, a clean vector-like cut (no soft AA)
+- Auto-trim: every object cropped to its actual pixels via `getbbox()`
+- Files saved in: `engine/assets/objects_lineart/`
 
 ---
 
-## 3. Uso del tool
+## 3. Tool usage
 
 ```bash
-python tools/process_assets.py --style lineart <grid.png> engine/assets/objects_lineart/ "la_nome1,la_nome2,la_nome3,la_nome4,la_nome5,la_nome6,la_nome7,la_nome8,la_nome9"
+python tools/process_assets.py --style lineart <grid.png> engine/assets/objects_lineart/ "la_name1,la_name2,la_name3,la_name4,la_name5,la_name6,la_name7,la_name8,la_name9"
 ```
 
-Note:
-- Il flag `--style lineart` è obbligatorio.
-- I nomi **devono** iniziare con prefisso `la_`.
-- Il numero di nomi nella lista determina la dimensione della griglia
-  (9 = 3×3, 16 = 4×4) tramite **rilevamento dinamico**.
+Notes:
+- The `--style lineart` flag is mandatory.
+- Names **must** start with the `la_` prefix.
+- The number of names in the list determines the grid size
+  (9 = 3x3, 16 = 4x4) through **dynamic detection**.
 
 ---
 
-## 4. Integrazione nel catalogo
+## 4. Catalog integration
 
-Aggiungere ogni oggetto a [engine/data/global_lineart_catalog.json](../engine/data/global_lineart_catalog.json):
+Add every object to [engine/data/global_lineart_catalog.json](../../engine/data/global_lineart_catalog.json):
 
 ```json
 {
@@ -113,63 +111,63 @@ Aggiungere ogni oggetto a [engine/data/global_lineart_catalog.json](../engine/da
 }
 ```
 
-**Campi obbligatori**:
-- `id` — identificativo univoco snake_case, **prefisso `la_` obbligatorio**
-- `label_key` — chiave traduzione (convenzione: `obj_<id>`)
-- `icon` — path relativo a `engine/assets/`, in `objects_lineart/`
-- `default_detection` — `"circle"` o `"rect"`
-- `default_radius` (se circle) **oppure** `default_width` + `default_height` (se rect)
-- `tags` — lista di tag dalla [tassonomia canonica](TAGS_TAXONOMY.md)
-- `style` — sempre `"line art"` (con spazio) per questo catalogo
+**Required fields**:
+- `id` — unique snake_case identifier, **`la_` prefix mandatory**
+- `label_key` — translation key (convention: `obj_<id>`)
+- `icon` — path relative to `engine/assets/`, inside `objects_lineart/`
+- `default_detection` — `"circle"` or `"rect"`
+- `default_radius` (if circle) **or** `default_width` + `default_height` (if rect)
+- `tags` — list of tags from the [canonical taxonomy](TAGS_TAXONOMY.md)
+- `style` — always `"line art"` (with a space) for this catalog
 
-> **Attenzione al valore `style`**: per ragioni storiche è `"line art"` con
-> uno spazio, NON `"lineart"`. Verificato in [engine/data/global_lineart_catalog.json](../engine/data/global_lineart_catalog.json).
+> **Mind the `style` value**: for historical reasons it is `"line art"` with
+> a space, NOT `"lineart"`. Verified in [engine/data/global_lineart_catalog.json](../../engine/data/global_lineart_catalog.json).
 
 ---
 
-## 5. Localizzazione
+## 5. Localization
 
-Ogni `label_key` **deve** essere presente in tutti i 5 file lingua ufficiali:
+Every `label_key` **must** be present in all 5 official language files:
 
-| File                                     | Lingua    |
+| File                                     | Language  |
 |------------------------------------------|-----------|
-| `engine/assets/strings/it.json`          | Italiano  |
-| `engine/assets/strings/en.json`          | Inglese   |
-| `engine/assets/strings/fr.json`          | Francese  |
-| `engine/assets/strings/es.json`          | Spagnolo  |
-| `engine/assets/strings/de.json`          | Tedesco   |
+| `engine/assets/strings/it.json`          | Italian   |
+| `engine/assets/strings/en.json`          | English   |
+| `engine/assets/strings/fr.json`          | French    |
+| `engine/assets/strings/es.json`          | Spanish   |
+| `engine/assets/strings/de.json`          | German    |
 
-Override per gioco (opzionale): `games/<gioco>/strings/{it,en,fr,es,de}.json`.
+Per-game override (optional): `games/<game>/strings/{it,en,fr,es,de}.json`.
 
-Esempio entry:
+Example entry:
 ```json
-"obj_la_corona": "Corona"
+"obj_la_corona": "Crown"
 ```
 
 ---
 
-## 6. Tag
+## 6. Tags
 
-**Fonte canonica**: [docs/TAGS_TAXONOMY.md](TAGS_TAXONOMY.md) → [engine/data/tags_taxonomy.json](../engine/data/tags_taxonomy.json).
+**Canonical source**: [TAGS_TAXONOMY.md](TAGS_TAXONOMY.md) -> [engine/data/tags_taxonomy.json](../../engine/data/tags_taxonomy.json).
 
-Regole tassative (vedi documento dedicato per dettagli):
-- **Obbligo**: almeno un tag DIMENSIONE + MATERIALE + DOMINIO per oggetto
-- **Vietato** creare nuovi tag senza modificare la tassonomia ufficiale
-- **Vietato** usare tag generici (`strumento`, `contenitore`, `equipaggiamento`) — mappare sempre su tag fisici validi (es. `attrezzo`, `scatola`, `viaggio`)
+Strict rules (see the dedicated document for details):
+- **Required**: at least one SIZE + MATERIAL + DOMAIN tag per object
+- **Forbidden** to create new tags without changing the official taxonomy
+- **Forbidden** to use generic tags (`strumento`, `contenitore`, `equipaggiamento`) — always map to valid physical tags (e.g. `attrezzo`, `scatola`, `viaggio`)
 
-L'aggiunta di tag orfani frammenta il database e impedisce la visualizzazione
-corretta nei chip UI dell'editor.
+Adding orphan tags fragments the database and breaks the display of the
+UI chips in the editor.
 
 ---
 
 ## 7. Quality checklist (pre-merge)
 
-- [ ] Tutte le icone esistono in `engine/assets/objects_lineart/`
-- [ ] Tutti gli ID hanno prefisso `la_`
-- [ ] Ogni oggetto ha `label_key` tradotta in IT/EN/FR/ES/DE
-- [ ] Tutti i tag esistono in `engine/data/tags_taxonomy.json`
-- [ ] Campo `style: "line art"` (con spazio!) presente su tutte le entry
-- [ ] Solo nero puro `#000000` e bianco puro `#FFFFFF` nei pixel non-trasparenti
-- [ ] Nessuna sfumatura di grigio residua
-- [ ] Auto-trim applicato (nessuno spazio trasparente residuo)
-- [ ] Audit catalogo passa: `python -X utf8 tools/audit_catalog.py`
+- [ ] All icons exist in `engine/assets/objects_lineart/`
+- [ ] All IDs have the `la_` prefix
+- [ ] Every object has its `label_key` translated in IT/EN/FR/ES/DE
+- [ ] All tags exist in `engine/data/tags_taxonomy.json`
+- [ ] `style: "line art"` (with the space) present on every entry
+- [ ] Only pure black `#000000` and pure white `#FFFFFF` in the non-transparent pixels
+- [ ] No residual gray shades
+- [ ] Auto-trim applied (no residual transparent space)
+- [ ] The catalog audit passes: `python -X utf8 tools/audit_catalog.py`

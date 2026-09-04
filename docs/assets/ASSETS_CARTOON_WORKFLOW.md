@@ -1,73 +1,73 @@
-# Workflow Assets - Stile CARTOON
+# Asset Workflow - CARTOON style
 
-Documento operativo per generare, processare e integrare oggetti in stile
-**cartoon cell-shaded** (Adventure Family) nel motore.
+Operating document to generate, process and integrate objects in the
+**cel-shaded cartoon** style (Adventure Family) into the engine.
 
-> **Riferimenti rapidi**
-> - Catalogo: [engine/data/global_cartoon_catalog.json](../engine/data/global_cartoon_catalog.json)
-> - Cartella asset: [engine/assets/objects_cartoon/](../engine/assets/objects_cartoon/)
-> - Valore `style` nel catalogo: `"cartoon"`
-> - Prefisso ID obbligatorio: `ca_` (es. `ca_backpack_adv`)
-> - Tool di processing: [tools/process_assets.py](../tools/process_assets.py) `--style cartoon`
-
----
-
-## 1. Specifiche di generazione (AI)
-
-### 1.1 Sfondo e composizione
-- **Sfondo**: **Pure Neon Green** `#00FF00`
-- **Griglia**: 3×3 standard (9 oggetti) o 4×4 (16 oggetti) disposti ordinatamente nello spazio
-- **Margine**: ≥ 150 px di spazio verde tra oggetti e bordi
-- **TASSATIVAMENTE VIETATO**: griglie grafiche disegnate, linee di divisione (righe orizzontali o verticali di separazione), cornici, riquadri, separatori, ombre proiettate (drop shadows) sul verde.
-
-### 1.2 Strategia di prompting
-- **Stile visivo**: "Adventure book illustration style, clean black outlines, cell shaded, vibrant but natural colors, flat shading with sharp shadows"
-- **Dettaglio**: "Moderate detail, no gradients, no textures, bold lines"
-- **Composizione singolo oggetto**: "Individual objects, isolated, front view or 3/4 isometric view"
-- **Keyword di riferimento**: "Ligne claire, comic book style, high readability"
-
-### 1.3 Vincoli universali
-- Niente figure umane (se non esplicitamente richieste)
-- **DIVIETO ASSOLUTO DI TESTO**: nessuna parola, lettera, numero, etichetta, didascalia, sottotitolo o watermark sull'immagine (nemmeno finto testo AI / gibberish sotto gli oggetti)
-- Outline neri costanti, riempimenti a colori piatti
-- Risoluzione consigliata griglia 3×3: 2048×2048; 4×4: 2560×2560
+> **Quick references**
+> - Catalog: [engine/data/global_cartoon_catalog.json](../../engine/data/global_cartoon_catalog.json)
+> - Asset folder: [engine/assets/objects_cartoon/](../../engine/assets/objects_cartoon/)
+> - `style` value in the catalog: `"cartoon"`
+> - Mandatory ID prefix: `ca_` (e.g. `ca_backpack_adv`)
+> - Processing tool: [tools/process_assets.py](../../tools/process_assets.py) `--style cartoon`
 
 ---
 
-## 2. Pipeline di processing
+## 1. Generation specs (AI)
 
-### 2.1 Algoritmo
+### 1.1 Background and composition
+- **Background**: **Pure Neon Green** `#00FF00`
+- **Grid**: standard 3x3 (9 objects) or 4x4 (16 objects) laid out neatly
+- **Margin**: >= 150 px of green space between the objects and the edges
+- **STRICTLY FORBIDDEN**: drawn grids, division lines (horizontal or vertical separators), frames, boxes, separators, drop shadows on the green.
+
+### 1.2 Prompting strategy
+- **Visual style**: "Adventure book illustration style, clean black outlines, cel shaded, vibrant but natural colors, flat shading with sharp shadows"
+- **Detail**: "Moderate detail, no gradients, no textures, bold lines"
+- **Single-object composition**: "Individual objects, isolated, front view or 3/4 isometric view"
+- **Reference keywords**: "Ligne claire, comic book style, high readability"
+
+### 1.3 Universal constraints
+- No human figures (unless explicitly required)
+- **ABSOLUTE BAN ON TEXT**: no words, letters, numbers, labels, captions, subtitles or watermarks on the image (not even fake AI text / gibberish under the objects)
+- Constant black outlines, flat color fills
+- Recommended resolution for a 3x3 grid: 2048x2048; 4x4: 2560x2560
+
+---
+
+## 2. Processing pipeline
+
+### 2.1 Algorithm
 **Chroma Key** + **Hard Spill Suppression** + **Alpha Clipping** + **Auto-Trim**.
 
-Lo stile cartoon ha colori piatti e outline neri spessi, quindi:
-1. **Chroma Key**: isola lo sfondo verde puro `#00FF00`.
-2. **Spill Suppression (Hard)**: neutralizza ogni alone verde sui contorni neri esterni, preservando integralmente il colore nero dell'outline.
-3. **Preservazione dell'Outline (TASSATIVA)**: il ritaglio dell'alpha deve avvenire **esattamente lungo il contorno nero esterno dell'oggetto**. È severamente vietato erodere o assottigliare l'outline nero (no outline erosion), l'immagine dell'oggetto deve rimanere grafica ed esteticamente inalterata al 100%.
-4. **Alpha Clipping**: la trasparenza è **decisa**, non sfumata (niente AA morbido che crea aloni), per mantenere l'estetica "tagliata a mano" lungo l'outline esterno.
+The cartoon style has flat colors and thick black outlines, so:
+1. **Chroma Key**: isolates the pure green background `#00FF00`.
+2. **Spill Suppression (hard)**: neutralizes every green halo on the outer black outlines, fully preserving the black of the outline.
+3. **Outline preservation (MANDATORY)**: the alpha cut must happen **exactly along the outer black outline of the object**. Eroding or thinning the black outline is strictly forbidden (no outline erosion); the object image must remain graphically and aesthetically 100% intact.
+4. **Alpha Clipping**: transparency is **hard**, not feathered (no soft AA that creates halos), to keep the "hand-cut" look along the outer outline.
 
 ### 2.2 Output
-- Formato: **PNG RGBA 32-bit** con alpha binaria pulita sul contorno esterno
-- Auto-trim: ogni oggetto ritagliato ai pixel effettivi del bordo esterno via `getbbox()`
-- File salvati in: `engine/assets/objects_cartoon/`
+- Format: **32-bit RGBA PNG** with a clean binary alpha on the outer outline
+- Auto-trim: every object cropped to the actual pixels of the outer edge via `getbbox()`
+- Files saved in: `engine/assets/objects_cartoon/`
 
 ---
 
-## 3. Uso del tool
+## 3. Tool usage
 
 ```bash
-python tools/process_assets.py --style cartoon <grid.png> engine/assets/objects_cartoon/ "ca_nome1,ca_nome2,ca_nome3,ca_nome4,ca_nome5,ca_nome6,ca_nome7,ca_nome8,ca_nome9"
+python tools/process_assets.py --style cartoon <grid.png> engine/assets/objects_cartoon/ "ca_name1,ca_name2,ca_name3,ca_name4,ca_name5,ca_name6,ca_name7,ca_name8,ca_name9"
 ```
 
-Note:
-- Il flag `--style cartoon` è obbligatorio.
-- I nomi **devono** iniziare con prefisso `ca_`.
-- Il numero di nomi nella lista determina la dimensione della griglia (9 = 3×3, 16 = 4×4) tramite **rilevamento dinamico**.
+Notes:
+- The `--style cartoon` flag is mandatory.
+- Names **must** start with the `ca_` prefix.
+- The number of names in the list determines the grid size (9 = 3x3, 16 = 4x4) through **dynamic detection**.
 
 ---
 
-## 4. Integrazione nel catalogo
+## 4. Catalog integration
 
-Aggiungere ogni oggetto a [engine/data/global_cartoon_catalog.json](../engine/data/global_cartoon_catalog.json):
+Add every object to [engine/data/global_cartoon_catalog.json](../../engine/data/global_cartoon_catalog.json):
 
 ```json
 {
@@ -82,57 +82,57 @@ Aggiungere ogni oggetto a [engine/data/global_cartoon_catalog.json](../engine/da
 }
 ```
 
-**Campi obbligatori**:
-- `id` — identificativo univoco snake_case, **prefisso `ca_` obbligatorio**
-- `label_key` — chiave traduzione (convenzione: `obj_<id>`)
-- `icon` — path relativo a `engine/assets/`, in `objects_cartoon/`
-- `default_detection` — `"circle"` o `"rect"`
-- `default_radius` (se circle) **oppure** `default_width` + `default_height` (se rect)
-- `tags` — lista di tag dalla [tassonomia canonica](TAGS_TAXONOMY.md)
-- `style` — sempre `"cartoon"` per questo catalogo
+**Required fields**:
+- `id` — unique snake_case identifier, **`ca_` prefix mandatory**
+- `label_key` — translation key (convention: `obj_<id>`)
+- `icon` — path relative to `engine/assets/`, inside `objects_cartoon/`
+- `default_detection` — `"circle"` or `"rect"`
+- `default_radius` (if circle) **or** `default_width` + `default_height` (if rect)
+- `tags` — list of tags from the [canonical taxonomy](TAGS_TAXONOMY.md)
+- `style` — always `"cartoon"` for this catalog
 
 ---
 
-## 5. Localizzazione
+## 5. Localization
 
-Ogni `label_key` **deve** essere presente in tutti i 5 file lingua ufficiali:
+Every `label_key` **must** be present in all 5 official language files:
 
-| File                                     | Lingua    |
+| File                                     | Language  |
 |------------------------------------------|-----------|
-| `engine/assets/strings/it.json`          | Italiano  |
-| `engine/assets/strings/en.json`          | Inglese   |
-| `engine/assets/strings/fr.json`          | Francese  |
-| `engine/assets/strings/es.json`          | Spagnolo  |
-| `engine/assets/strings/de.json`          | Tedesco   |
+| `engine/assets/strings/it.json`          | Italian   |
+| `engine/assets/strings/en.json`          | English   |
+| `engine/assets/strings/fr.json`          | French    |
+| `engine/assets/strings/es.json`          | Spanish   |
+| `engine/assets/strings/de.json`          | German    |
 
-Override per gioco (opzionale): `games/<gioco>/strings/{it,en,fr,es,de}.json`.
+Per-game override (optional): `games/<game>/strings/{it,en,fr,es,de}.json`.
 
-Esempio entry:
+Example entry:
 ```json
-"obj_ca_backpack_adv": "Zaino da avventuriero"
+"obj_ca_backpack_adv": "Adventurer's backpack"
 ```
 
 ---
 
-## 6. Tag
+## 6. Tags
 
-**Fonte canonica**: [docs/TAGS_TAXONOMY.md](TAGS_TAXONOMY.md) → [engine/data/tags_taxonomy.json](../engine/data/tags_taxonomy.json).
+**Canonical source**: [TAGS_TAXONOMY.md](TAGS_TAXONOMY.md) -> [engine/data/tags_taxonomy.json](../../engine/data/tags_taxonomy.json).
 
-Regole tassative (vedi documento dedicato per dettagli):
-- **Obbligo**: almeno un tag DIMENSIONE + MATERIALE + DOMINIO per oggetto
-- **Vietato** creare nuovi tag senza modificare la tassonomia ufficiale
-- **Vietato** creare tag descrittivi dello stile (`disegnato`, `cartoon`, `ligne_claire`): lo stile è già nel campo `style`
-- **Vietato** usare tag generici (`strumento`, `contenitore`, `equipaggiamento`) — mappare sempre su tag fisici validi
+Strict rules (see the dedicated document for details):
+- **Required**: at least one SIZE + MATERIAL + DOMAIN tag per object
+- **Forbidden** to create new tags without changing the official taxonomy
+- **Forbidden** to create tags describing the style (`disegnato`, `cartoon`, `ligne_claire`): the style is already in the `style` field
+- **Forbidden** to use generic tags (`strumento`, `contenitore`, `equipaggiamento`) — always map to valid physical tags
 
 ---
 
 ## 7. Quality checklist (pre-merge)
 
-- [ ] Tutte le icone esistono in `engine/assets/objects_cartoon/`
-- [ ] Tutti gli ID hanno prefisso `ca_`
-- [ ] Ogni oggetto ha `label_key` tradotta in IT/EN/FR/ES/DE
-- [ ] Tutti i tag esistono in `engine/data/tags_taxonomy.json`
-- [ ] Campo `style: "cartoon"` presente su tutte le entry
-- [ ] Auto-trim applicato (nessuno spazio trasparente residuo)
-- [ ] Nessun pixel verde residuo sui bordi neri (spill suppression hard)
-- [ ] Audit catalogo passa: `python -X utf8 tools/audit_catalog.py`
+- [ ] All icons exist in `engine/assets/objects_cartoon/`
+- [ ] All IDs have the `ca_` prefix
+- [ ] Every object has its `label_key` translated in IT/EN/FR/ES/DE
+- [ ] All tags exist in `engine/data/tags_taxonomy.json`
+- [ ] `style: "cartoon"` present on every entry
+- [ ] Auto-trim applied (no residual transparent space)
+- [ ] No residual green pixels on the black edges (hard spill suppression)
+- [ ] The catalog audit passes: `python -X utf8 tools/audit_catalog.py`

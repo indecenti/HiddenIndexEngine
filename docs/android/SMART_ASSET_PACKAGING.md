@@ -1,162 +1,162 @@
-# 📦 Smart Asset Packaging System
+# Smart Asset Packaging System
 
-## Panoramica
+## Overview
 
-Il sistema di build ora implementa **Smart Asset Packaging**: durante la creazione del package, pacchettizza **SOLO gli asset usati** dal gioco, minimizzando la dimensione del distributibile.
+The build system implements **Smart Asset Packaging**: when creating a package it bundles **ONLY the assets used** by the game, minimizing the size of the distributable.
 
-## Come Funziona
+## How it works
 
-### 1️⃣ Analisi dei Livelli
+### 1. Level analysis
 ```python
-# Il build system legge tutti i scene.json
+# The build system reads every scene.json
 for scene in game/levels/*/scene.json:
-    estrai object_id di ogni oggetto usato
-    → set di "oggetti_usati"
+    extract the object_id of every object in use
+    -> set of "used_objects"
 ```
 
-### 2️⃣ Copia Intelligente degli Asset
+### 2. Smart asset copy
 ```
-Per ogni oggetto in oggetti_usati:
-  Copia {object_id}.png da games/villa_segreta/objects/
-  → Package finale contiene SOLO questi file
+For every object in used_objects:
+  Copy {object_id}.png from games/<game_id>/objects/
+  -> The final package contains ONLY these files
 
-Esempio:
-- Catalog ha 150 oggetti disponibili
-- Scene usa 28 oggetti
-- Package contiene SOLO 28 immagini (non 150!)
-```
-
-### 3️⃣ Catalog Centralizzato
-```
-engine/data/global_objects_catalog.json
-  ↓
-  Copiato nel package come engine/data/global_objects_catalog.json
-  ↓
-  Il gioco legge metadata di TUTTI gli oggetti
-  (ma le icone PNG sono nel gioco, non nell'engine)
+Example:
+- The catalog has 150 objects available
+- The scenes use 28 objects
+- The package contains ONLY 28 images (not 150)
 ```
 
-## Struttura Finale
+### 3. Centralized catalog
+```
+engine/data/global_*_catalog.json
+  |
+  Copied into the package as engine/data/global_*_catalog.json
+  |
+  The game reads the metadata of ALL objects
+  (but the PNG icons are in the game, not in the engine)
+```
 
-### In Fase di Sviluppo (main.py)
+## Final layout
+
+### During development (main.py)
 ```
 HiddenIndexEngine/
 ├── engine/
 │   ├── data/
-│   │   ├── global_objects_catalog.json    ← Catalog centralizzato
-│   │   └── ... (altre risorse engine)
-│   └── ... (resto engine)
+│   │   ├── global_*_catalog.json          <- centralized catalogs
+│   │   └── ... (other engine resources)
+│   └── ... (rest of the engine)
 └── games/
-    └── villa_segreta/
-        ├── objects/                       ← Icone PNG (non copiate nel build!)
+    └── <game_id>/
+        ├── objects/                       <- PNG icons (not all copied into the build)
         │   ├── runed_skull.png
         │   ├── ritual_dagger.png
-        │   └── ... (tutte le icone)
+        │   └── ... (all icons)
         ├── levels/
-        │   └── level1_giardino/
-        │       ├── scene1/scene.json     ← Specifica quali oggetti usa
+        │   └── <level>/
+        │       ├── <scene>/scene.json     <- declares which objects it uses
         │       └── ...
         └── game_config.json
 ```
 
-### Nel Package Finale (build)
+### In the final package (build)
 ```
-build/villa_segreta/1.0/main/
+build/<game_id>/1.0/main/
 ├── main.exe
 ├── engine/
 │   ├── data/
-│   │   └── global_objects_catalog.json   ← Solo il catalog
+│   │   └── global_*_catalog.json          <- catalogs only
 │   └── ...
 └── games/
-    └── villa_segreta/
-        ├── objects/                      ← SOLO gli asset USATI
-        │   ├── runed_skull.png           ✓ Usato
-        │   ├── ritual_dagger.png         ✓ Usato
-        │   └── ... (28 file su 150)      ✓ Solo usati
+    └── <game_id>/
+        ├── objects/                       <- ONLY the USED assets
+        │   ├── runed_skull.png            used
+        │   ├── ritual_dagger.png          used
+        │   └── ... (28 files out of 150)  used only
         ├── levels/
         │   └── ...
         └── game_config.json
 ```
 
-## Vantaggi
+## Benefits
 
-✅ **Pacchetti Piccoli**
-- Riduciamo drasticamente le dimensioni
-- Esempio: 150 icone (15 MB) → 28 icone (3 MB) = -80%
+**Small packages**
+- Sizes drop drastically
+- Example: 150 icons (15 MB) -> 28 icons (3 MB) = -80%
 
-✅ **Funziona Ovunque**
-- ✓ In sviluppo con `main.py` (accede a tutti gli asset)
-- ✓ Nel build EXE (pacchettizza solo quello che serve)
-- ✓ Scalabile a più giochi
+**Works everywhere**
+- In development with `main.py` (accesses all assets)
+- In the EXE build (packages only what is needed)
+- Scales to multiple games
 
-✅ **Manutenzione Facile**
-- Catalog centralizzato (metadata)
-- Asset rimangono isolati nel gioco
-- Aggiungere oggetti è semplice
+**Easy maintenance**
+- Centralized catalog (metadata)
+- Assets stay isolated in the game
+- Adding objects is simple
 
-✅ **Zero Breaking Changes**
-- Continua a funzionare come prima
-- Il build system è più intelligente (trasparente)
+**Zero breaking changes**
+- Keeps working as before
+- The build system is just smarter (transparent)
 
-## Implementazione Tecnica
+## Technical implementation
 
-### Funzioni nel build_system.py
+### Functions in build_system.py
 
-#### `_get_used_objects(game_path) → set[str]`
-Analizza tutti i `scene.json` e ritorna gli object_id usati.
+#### `_get_used_objects(game_path) -> set[str]`
+Analyzes every `scene.json` and returns the object_ids in use.
 
 ```python
 used_objects = _get_used_objects(games_src)
-# Risultato: {'runed_skull', 'ritual_dagger', 'oil_lantern', ...}
+# Result: {'runed_skull', 'ritual_dagger', 'oil_lantern', ...}
 ```
 
-#### `_copy_smart_assets(games_src, games_dst, used_objects) → (count, size_mb)`
-Copia solo gli asset usati.
+#### `_copy_smart_assets(games_src, games_dst, used_objects) -> (count, size_mb)`
+Copies only the used assets.
 
 ```python
 asset_count, asset_size_mb = _copy_smart_assets(
-    games_src, 
-    games_dst, 
+    games_src,
+    games_dst,
     used_objects
 )
-# Risultato: (28, 3.5)  ← 28 file, 3.5 MB
+# Result: (28, 3.5)  <- 28 files, 3.5 MB
 ```
 
-## Logging nel Build
+## Build logging
 
-Quando fai una build, vedi:
+When you run a build you see:
 ```
-[Smart Pack] Oggetti usati nel gioco: 28
-[Smart Pack] Asset copiati: 28 file (3.5 MB)
-[Copy] games/villa_segreta/ → main/ (4.2 MB)
+[Smart Pack] Objects used by the game: 28
+[Smart Pack] Assets copied: 28 files (3.5 MB)
+[Copy] games/<game_id>/ -> main/ (4.2 MB)
 ```
 
-## Scalabilità Futura
+## Future scalability
 
-Se aggiungi un nuovo gioco:
+If you add a new game:
 ```
 games/
-├── villa_segreta/
-│   └── objects/        ← 150 icone (tutte)
-└── nuovo_gioco/
-    └── objects/        ← 45 icone (tutte)
+├── game_a/
+│   └── objects/        <- 150 icons (all)
+└── game_b/
+    └── objects/        <- 45 icons (all)
 
-Build villa_segreta  → Pacchetto con 28 icone
-Build nuovo_gioco    → Pacchetto con 12 icone
-(diversi per ogni gioco!)
+Build game_a  -> package with 28 icons
+Build game_b  -> package with 12 icons
+(different for every game)
 ```
 
-## Note Importanti
+## Important notes
 
-⚠️ **Non modificare il catalog centralizzato durante lo sviluppo**
-- Leggilo quando aggiungi nuovi oggetti
-- Se aggiungi oggetti, aggiornalo prima
+**Do not modify the centralized catalog during development**
+- Read it when you add new objects
+- If you add objects, update it first
 
-⚠️ **Gli asset PNG rimangono nel gioco**
-- Non sono in `engine/data/objects/`
-- Rimangono in `games/{game_id}/objects/`
-- (Solo il catalog è centralizzato)
+**The PNG assets stay in the game**
+- They are not in `engine/data/objects/`
+- They stay in `games/{game_id}/objects/`
+- (Only the catalog is centralized)
 
 ---
 
-**Risultato**: Pacchetti piccoli, funzionamento garantito, scalabilità perfetta. 🚀
+**Result**: small packages, guaranteed operation, clean scalability.

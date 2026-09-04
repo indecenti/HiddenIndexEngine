@@ -1,79 +1,79 @@
-# Workflow Assets - Stile REAL
+# Asset Workflow - REAL style
 
-Documento operativo per generare, processare e integrare oggetti in stile
-**realistico/fotografico** nel motore.
+Operating document to generate, process and integrate objects in the
+**realistic/photographic** style into the engine.
 
-> **Riferimenti rapidi**
-> - Catalogo: [engine/data/global_real_catalog.json](../engine/data/global_real_catalog.json)
-> - Cartella asset: [engine/assets/objects/](../engine/assets/objects/)
-> - Valore `style` nel catalogo: `"real"`
-> - Prefisso ID consigliato: nessuno (es. `coltello_cucina`, `80s_lamp`)
-> - Tool di processing: [tools/process_assets.py](../tools/process_assets.py) `--style real`
-
----
-
-## 1. Specifiche di generazione (AI)
-
-### 1.1 Sfondo e composizione
-- **Sfondo**: **Pure Neon Green** `#00FF00`
-- **Griglia**: 3×3 standard (9 oggetti) o 4×4 (16 oggetti)
-- **Margine**: ≥ 120-150 px di spazio verde tra oggetti e bordi della griglia
-- **Vietato**: griglie grafiche, linee di divisione, cornici, separatori, ombre proiettate (drop shadows) sul verde
-
-### 1.2 Strategia di prompting
-- **Orientamento**: frontale, laterale o isometrico — mai obliquo
-- **Materiali ambigui**: istruzioni esplicite per vetro (es. "vetro opaco" o "riempito di liquido scuro") per evitare che il verde trapeli per rifrazione
-- **Illuminazione**: cinematografica e nitida, **senza ombre proiettate** sullo sfondo verde
-- **Stile fotografico**: dettagli iperrealistici, texture autentiche, niente rendering "cartoonish"
-
-### 1.3 Vincoli universali
-- Niente figure umane (se non esplicitamente richieste dall'asset)
-- Niente testo o watermark sull'immagine
-- Risoluzione consigliata griglia 3×3: 2048×2048; 4×4: 2560×2560
+> **Quick references**
+> - Catalog: [engine/data/global_real_catalog.json](../../engine/data/global_real_catalog.json)
+> - Asset folder: `engine/assets/objects/`
+> - `style` value in the catalog: `"real"`
+> - Recommended ID prefix: none (e.g. `kitchen_knife`, `80s_lamp`)
+> - Processing tool: [tools/process_assets.py](../../tools/process_assets.py) `--style real`
 
 ---
 
-## 2. Pipeline di processing
+## 1. Generation specs (AI)
 
-### 2.1 Algoritmo
-**Chroma Key avanzato con Green Score** + **Spill Suppression** + **Auto-Trim**.
+### 1.1 Background and composition
+- **Background**: **Pure Neon Green** `#00FF00`
+- **Grid**: standard 3x3 (9 objects) or 4x4 (16 objects)
+- **Margin**: >= 120-150 px of green space between the objects and the grid edges
+- **Forbidden**: drawn grids, division lines, frames, separators, drop shadows on the green
+
+### 1.2 Prompting strategy
+- **Orientation**: front, side or isometric — never oblique
+- **Ambiguous materials**: explicit instructions for glass (e.g. "frosted glass" or "filled with a dark liquid") so the green does not leak through by refraction
+- **Lighting**: cinematic and crisp, **without drop shadows** on the green background
+- **Photographic style**: hyper-realistic details, authentic textures, no "cartoonish" rendering
+
+### 1.3 Universal constraints
+- No human figures (unless explicitly required by the asset)
+- No text or watermarks on the image
+- Recommended resolution for a 3x3 grid: 2048x2048; 4x4: 2560x2560
+
+---
+
+## 2. Processing pipeline
+
+### 2.1 Algorithm
+**Advanced chroma key with Green Score** + **Spill Suppression** + **Auto-Trim**.
 
 ```python
-# Green Score: distingue il verde dello sfondo dal verde naturale (foglie, smeraldi)
+# Green Score: distinguishes the background green from natural green (leaves, emeralds)
 green_score = g - (r + b) / 2
-# → alpha mask con interpolazione lineare (bordi morbidi, niente seghettature)
+# -> alpha mask with linear interpolation (soft edges, no jaggies)
 ```
 
 ```python
-# Spill Suppression: neutralizza il riflesso verde su superfici lucide
+# Spill Suppression: neutralizes the green reflection on glossy surfaces
 condition = g > (r + b) / 2
 g[condition] = np.maximum(r[condition], b[condition])
-# → riflessi verdi → grigio/bianco naturale
+# -> green reflections -> natural gray/white
 ```
 
 ### 2.2 Output
-- Formato: **PNG RGBA 32-bit** (alpha morbida per bordi puliti)
-- Auto-trim: ogni oggetto ritagliato ai pixel effettivi via `getbbox()`
-- File salvati in: `engine/assets/objects/`
+- Format: **32-bit RGBA PNG** (soft alpha for clean edges)
+- Auto-trim: every object cropped to its actual pixels via `getbbox()`
+- Files saved in: `engine/assets/objects/`
 
 ---
 
-## 3. Uso del tool
+## 3. Tool usage
 
 ```bash
-python tools/process_assets.py --style real <grid.png> engine/assets/objects/ "nome1,nome2,nome3,nome4,nome5,nome6,nome7,nome8,nome9"
+python tools/process_assets.py --style real <grid.png> engine/assets/objects/ "name1,name2,name3,name4,name5,name6,name7,name8,name9"
 ```
 
-Note:
-- `--style real` è il default (può essere omesso).
-- Il numero di nomi nella lista determina la dimensione della griglia (9 = 3×3, 16 = 4×4) tramite **rilevamento dinamico**.
-- I file vengono salvati come `<nome>.png` nella cartella destinazione.
+Notes:
+- `--style real` is the default (it can be omitted).
+- The number of names in the list determines the grid size (9 = 3x3, 16 = 4x4) through **dynamic detection**.
+- Files are saved as `<name>.png` in the destination folder.
 
 ---
 
-## 4. Integrazione nel catalogo
+## 4. Catalog integration
 
-Aggiungere ogni oggetto a [engine/data/global_real_catalog.json](../engine/data/global_real_catalog.json):
+Add every object to [engine/data/global_real_catalog.json](../../engine/data/global_real_catalog.json):
 
 ```json
 {
@@ -88,58 +88,58 @@ Aggiungere ogni oggetto a [engine/data/global_real_catalog.json](../engine/data/
 }
 ```
 
-**Campi obbligatori**:
-- `id` — identificativo univoco snake_case
-- `label_key` — chiave traduzione (convenzione: `obj_<id>`)
-- `icon` — path relativo a `engine/assets/`
-- `default_detection` — `"circle"` o `"rect"`
-- `default_radius` (se circle) **oppure** `default_width` + `default_height` (se rect)
-- `tags` — lista di tag dalla [tassonomia canonica](TAGS_TAXONOMY.md)
-- `style` — sempre `"real"` per questo catalogo
+**Required fields**:
+- `id` — unique snake_case identifier
+- `label_key` — translation key (convention: `obj_<id>`)
+- `icon` — path relative to `engine/assets/`
+- `default_detection` — `"circle"` or `"rect"`
+- `default_radius` (if circle) **or** `default_width` + `default_height` (if rect)
+- `tags` — list of tags from the [canonical taxonomy](TAGS_TAXONOMY.md)
+- `style` — always `"real"` for this catalog
 
-**Opzionale**:
-- `default_hint_delay` — secondi prima che l'hint diventi cliccabile
+**Optional**:
+- `default_hint_delay` — seconds before the hint becomes clickable
 
 ---
 
-## 5. Localizzazione
+## 5. Localization
 
-Ogni `label_key` **deve** essere presente in tutti i 5 file lingua ufficiali:
+Every `label_key` **must** be present in all 5 official language files:
 
-| File                                     | Lingua    |
+| File                                     | Language  |
 |------------------------------------------|-----------|
-| `engine/assets/strings/it.json`          | Italiano  |
-| `engine/assets/strings/en.json`          | Inglese   |
-| `engine/assets/strings/fr.json`          | Francese  |
-| `engine/assets/strings/es.json`          | Spagnolo  |
-| `engine/assets/strings/de.json`          | Tedesco   |
+| `engine/assets/strings/it.json`          | Italian   |
+| `engine/assets/strings/en.json`          | English   |
+| `engine/assets/strings/fr.json`          | French    |
+| `engine/assets/strings/es.json`          | Spanish   |
+| `engine/assets/strings/de.json`          | German    |
 
-Override per gioco (opzionale): `games/<gioco>/strings/{it,en,fr,es,de}.json`.
+Per-game override (optional): `games/<game>/strings/{it,en,fr,es,de}.json`.
 
-Esempio entry:
+Example entry:
 ```json
-"obj_skull_candle": "Candela a forma di teschio"
+"obj_skull_candle": "Skull-shaped candle"
 ```
 
 ---
 
-## 6. Tag
+## 6. Tags
 
-**Fonte canonica**: [docs/TAGS_TAXONOMY.md](TAGS_TAXONOMY.md) → [engine/data/tags_taxonomy.json](../engine/data/tags_taxonomy.json).
+**Canonical source**: [TAGS_TAXONOMY.md](TAGS_TAXONOMY.md) -> [engine/data/tags_taxonomy.json](../../engine/data/tags_taxonomy.json).
 
-Regole tassative (vedi documento dedicato per dettagli):
-- **Obbligo**: almeno un tag DIMENSIONE + MATERIALE + DOMINIO per oggetto
-- **Vietato** creare nuovi tag senza modificare la tassonomia ufficiale
-- **Vietato** usare tag generici (`strumento`, `contenitore`, `equipaggiamento`) — mappare sempre su tag fisici validi della tassonomia
+Strict rules (see the dedicated document for details):
+- **Required**: at least one SIZE + MATERIAL + DOMAIN tag per object
+- **Forbidden** to create new tags without changing the official taxonomy
+- **Forbidden** to use generic tags (`strumento`, `contenitore`, `equipaggiamento`) — always map to valid physical tags of the taxonomy
 
 ---
 
 ## 7. Quality checklist (pre-merge)
 
-- [ ] Tutte le icone esistono in `engine/assets/objects/`
-- [ ] Ogni oggetto ha `label_key` tradotta in IT/EN/FR/ES/DE
-- [ ] Tutti i tag esistono in `engine/data/tags_taxonomy.json`
-- [ ] Campo `style: "real"` presente su tutte le entry
-- [ ] Auto-trim applicato (nessuno spazio trasparente residuo)
-- [ ] Nessun pixel verde residuo nei bordi (chroma key clean)
-- [ ] Audit catalogo passa: `python -X utf8 tools/audit_catalog.py`
+- [ ] All icons exist in `engine/assets/objects/`
+- [ ] Every object has its `label_key` translated in IT/EN/FR/ES/DE
+- [ ] All tags exist in `engine/data/tags_taxonomy.json`
+- [ ] `style: "real"` present on every entry
+- [ ] Auto-trim applied (no residual transparent space)
+- [ ] No residual green pixels on the edges (clean chroma key)
+- [ ] The catalog audit passes: `python -X utf8 tools/audit_catalog.py`

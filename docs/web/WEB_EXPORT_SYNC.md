@@ -1,207 +1,207 @@
-# Web Export — Contratto di Sincronizzazione Engine ↔ Web
+# Web Export — Engine <-> Web Synchronization Contract
 
-> SCOLPITO NELLA PIETRA. Leggi questo prima di modificare l'engine.
+> SET IN STONE. Read this before changing the engine.
 
-Il runtime web (sorgenti modulari in `editor/web_template/runtime/`: `core.js`,
-`game.js`, `minigames/<id>.js`, `bootstrap.js` — concatenati in `runtime.js` da
-`web_exporter._bundle_runtime`) **non importa** codice Python:
-**replica** la logica dell'engine in JavaScript. Quindi ogni modifica a una formula,
-costante o struttura dati elencata qui sotto **DEVE** essere propagata al web,
-altrimenti il gioco esportato diverge in silenzio (bug invisibili: oggetti fuori
-posto, punteggi sbagliati, click che non centrano).
+The web runtime (modular sources in `editor/web_template/runtime/`: `core.js`,
+`game.js`, `minigames/<id>.js`, `bootstrap.js` — concatenated into `runtime.js` by
+`web_exporter._bundle_runtime`) **does not import** Python code:
+it **replicates** the engine logic in JavaScript. Therefore every change to a formula,
+constant or data structure listed below **MUST** be propagated to the web, otherwise
+the exported game silently diverges (invisible bugs: misplaced objects, wrong scores,
+clicks that miss).
 
-## Regola d'oro
-Se tocchi uno dei file/valori nella colonna "ENGINE", aggiorna il corrispondente
-"WEB" nella stessa PR e ri-esegui la verifica (vedi in fondo). Le **strutture dati**
-fluiscono via `editor/web_exporter.py` (manifest); le **formule** sono duplicate in
+## Golden rule
+If you touch one of the files/values in the "ENGINE" column, update the corresponding
+"WEB" one in the same PR and re-run the verification (see the end). **Data structures**
+flow through `editor/web_exporter.py` (manifest); **formulas** are duplicated in
 `runtime.js`.
 
-## Enforcement automatico (gia' attivo)
-- **Costanti numeriche** (scoring, hint, ref): fonte unica `editor/web_rules.py::engine_rules()`,
-  che LEGGE i valori dall'engine e li inietta in `manifest.rules`. Il runtime usa
-  `this.R` = `{RULES_DEFAULTS, ...manifest.rules}`. Cambiare la costante nell'engine la
-  propaga al web al prossimo export, automaticamente.
-- **Test anti-drift (costanti)**: `pytest tests/test_web_sync.py::test_runtime_defaults_match_engine`
-  verifica che engine e `RULES_DEFAULTS` (fallback in `runtime/core.js`) siano allineati
-  (incluse `miss_penalty_curve` e `miss_combo_window`); fallisce in caso di drift.
-- **Test di parita' COMPORTAMENTALE** (oltre alle costanti): esegue le VERE formule JS via
-  `node` (harness `tests/js/score_parity_harness.js`) e le confronta con l'engine su golden
-  vector — `test_scene_score_parity_python_vs_js` (bonus/stelle/score di fine scena) e
-  `test_miss_penalty_parity_python_vs_js` (curva penalita' miss). Una divergenza di FORMULA,
-  non solo di costante, diventa un fallimento di test.
-- **Smoke scene reali**: `tests/test_scene_smoke.py` carica ogni `scene.json` tramite il vero
-  `SceneLoader` (validazione + join catalogo) e verifica che i goal siano colpibili.
-- Restano **manuali** (non automatizzabili come valori): le **formule** di proiezione,
-  hit-test, effetti, torcia — elencate qui sotto. Toccarle nell'engine richiede di
-  aggiornare a mano i moduli in `editor/web_template/runtime/`.
+## Automatic enforcement (already active)
+- **Numeric constants** (scoring, hints, ref): single source `editor/web_rules.py::engine_rules()`,
+  which READS the values from the engine and injects them into `manifest.rules`. The runtime uses
+  `this.R` = `{RULES_DEFAULTS, ...manifest.rules}`. Changing the constant in the engine propagates
+  it to the web at the next export, automatically.
+- **Anti-drift test (constants)**: `pytest tests/test_web_sync.py::test_runtime_defaults_match_engine`
+  verifies that the engine and `RULES_DEFAULTS` (fallback in `runtime/core.js`) are aligned
+  (including `miss_penalty_curve` and `miss_combo_window`); it fails on drift.
+- **BEHAVIORAL parity test** (beyond constants): runs the REAL JS formulas through
+  `node` (harness `tests/js/score_parity_harness.js`) and compares them with the engine on golden
+  vectors — `test_scene_score_parity_python_vs_js` (end-of-scene bonus/stars/score) and
+  `test_miss_penalty_parity_python_vs_js` (miss penalty curve). A divergence in a FORMULA,
+  not only in a constant, becomes a test failure.
+- **Real scene smoke tests**: `tests/test_scene_smoke.py` loads every `scene.json` through the real
+  `SceneLoader` (validation + catalog join) and verifies that the goals are hittable.
+- What remains **manual** (not automatable as values): the projection, hit-test, effect and
+  flashlight **formulas** — listed below. Touching them in the engine requires updating the
+  modules in `editor/web_template/runtime/` by hand.
 
 ---
 
-## A. Coordinate e rendering (CRITICO — la missione)
+## A. Coordinates and rendering (CRITICAL — the mission)
 
-| ENGINE | WEB | Cosa deve combaciare |
+| ENGINE | WEB | What must match |
 |---|---|---|
-| `engine/scaling_manager.py` `set_background`, `bg_to_screen`, `screen_to_bg`, `REF_W/REF_H=1280/720` | `runtime.js` class `ScalingManager` | Lettera per lettera: letterbox `fit=min(sw/(bw*s),sh/(bh*s))`, `display_scale=fit*s`, centratura. |
-| `engine/core.py` rendering oggetti (centro/size, ordine trasformazioni) | `runtime.js` `objCenterAndSize`, `drawObject` | rect: centro = x+w/2; cerchio: centro = x,y. Ordine: scale → warp → flip → **rotate** → alpha. |
-| Rotazione: Pygame `rotozoom` = CCW per angolo positivo | `runtime.js` `ctx.rotate(-rotation*PI/180)` | Canvas ha Y in giu': si ruota di **-angolo**. NON cambiare il segno. |
-| `engine/click_detector.py` `_hit_circle/_hit_rect/_rotate_point/_is_point_in_poly`, warp, flip | `runtime.js` `hitCircle/hitRect/rotatePoint/pointInPoly/warpPoly` | Stesse formule (ellisse, rotazione punto di -angolo, ray casting). |
-| `engine/effect_renderer.py` warp dei corners | `runtime.js` `warpPoly` + `drawImageQuad` (2 triangoli) | Il poligono di hit e quello di render usano lo stesso `warpPoly`. |
-| **Stretch**: icona scalata a `width`×`height` (hitbox), non all'aspect nativo | `drawObject` (`iconW/iconH = w/h * bg_display_scale * scale`) | esatto |
-| **Opacità**: `surface.set_alpha(obj.alpha)` | `drawObject` `globalAlpha = alpha/255` | esatto |
-| **Grayscale**: `engine/utils.py:apply_grayscale` (luma Rec.601 0.299/0.587/0.114, `out=c*(1-f)+luma*f`, sRGB) | `processedIcon` + `_grayFilterUrl` (feColorMatrix SVG sRGB) | **esatto** (delta 0). Se cambi le coefficienti/formula in `apply_grayscale`, aggiorna `_grayFilterUrl`. |
-| **color_filter (tinta)**: `BLEND_RGBA_MULT` (moltiplicazione) | `processedIcon` (composite `multiply` + `destination-in`) | moltiplicazione per canale |
-| **flip_x/flip_y**: `pygame.transform.flip` | `drawObject` `ctx.scale(±1,±1)` | esatto |
-| Ordine filtri engine: scale→warp→flip→rotate→grayscale→color_filter→alpha | web: grayscale/tint in `processedIcon`, poi flip/rotate/alpha in `drawObject` | equivalente (operazioni per-pixel commutano con le geometriche) |
+| `engine/scaling_manager.py` `set_background`, `bg_to_screen`, `screen_to_bg`, `REF_W/REF_H=1280/720` | `runtime.js` class `ScalingManager` | Letter for letter: letterbox `fit=min(sw/(bw*s),sh/(bh*s))`, `display_scale=fit*s`, centering. |
+| `engine/core.py` object rendering (center/size, transform order) | `runtime.js` `objCenterAndSize`, `drawObject` | rect: center = x+w/2; circle: center = x,y. Order: scale -> warp -> flip -> **rotate** -> alpha. |
+| Rotation: Pygame `rotozoom` = CCW for a positive angle | `runtime.js` `ctx.rotate(-rotation*PI/180)` | Canvas has Y pointing down: rotate by **-angle**. DO NOT change the sign. |
+| `engine/click_detector.py` `_hit_circle/_hit_rect/_rotate_point/_is_point_in_poly`, warp, flip | `runtime.js` `hitCircle/hitRect/rotatePoint/pointInPoly/warpPoly` | Same formulas (ellipse, point rotation by -angle, ray casting). |
+| `engine/effect_renderer.py` corner warp | `runtime.js` `warpPoly` + `drawImageQuad` (2 triangles) | The hit polygon and the render polygon use the same `warpPoly`. |
+| **Stretch**: icon scaled to `width` x `height` (hitbox), not to the native aspect | `drawObject` (`iconW/iconH = w/h * bg_display_scale * scale`) | exact |
+| **Opacity**: `surface.set_alpha(obj.alpha)` | `drawObject` `globalAlpha = alpha/255` | exact |
+| **Grayscale**: `engine/utils.py:apply_grayscale` (Rec.601 luma 0.299/0.587/0.114, `out=c*(1-f)+luma*f`, sRGB) | `processedIcon` + `_grayFilterUrl` (SVG feColorMatrix sRGB) | **exact** (delta 0). If you change the coefficients/formula in `apply_grayscale`, update `_grayFilterUrl`. |
+| **color_filter (tint)**: `BLEND_RGBA_MULT` (multiplication) | `processedIcon` (composite `multiply` + `destination-in`) | per-channel multiplication |
+| **flip_x/flip_y**: `pygame.transform.flip` | `drawObject` `ctx.scale(+-1,+-1)` | exact |
+| Engine filter order: scale->warp->flip->rotate->grayscale->color_filter->alpha | web: grayscale/tint in `processedIcon`, then flip/rotate/alpha in `drawObject` | equivalent (per-pixel operations commute with the geometric ones) |
 
-Spazio coordinate oggetti: **pixel del background originale** (`bg_w`×`bg_h`).
-rect → x/y top-left; circle → x/y centro. Esportati 1:1 nel manifest.
+Object coordinate space: **pixels of the original background** (`bg_w` x `bg_h`).
+rect -> x/y top-left; circle -> x/y center. Exported 1:1 in the manifest.
 
 ---
 
-## B. Scoring e stelle
+## B. Scoring and stars
 
-| ENGINE (`engine/level_manager.py`) | Valore | WEB (`runtime.js`) |
+| ENGINE (`engine/level_manager.py`) | Value | WEB (`runtime.js`) |
 |---|---|---|
 | `POINTS_PER_OBJECT` | 100 | `POINTS_PER_OBJECT` |
 | `BONUS_TIME_MAX` | 500 | `BONUS_TIME_MAX` |
 | `STAR_MULTIPLIER` | `{1:1, 2:1, 3:2}` | `STAR_MULTIPLIER` |
 | `MISS_PENALTY_TIME` | 5.0 s | `miss_time_penalty` |
-| `MISS_PENALTY_CURVE` progressiva sui miss consecutivi (finestra `MISS_COMBO_WINDOW`=1.5s) | `[25,50,100,150,300,500]` | `miss_penalty_curve` + `_missPenalty`/stato consecutivo in `_onPointer`; **lo score puo' andare NEGATIVO** (niente floor), come l'engine |
-| `bonus = int(time_ratio * BONUS_TIME_MAX)` — **troncamento** verso zero | — | `Math.trunc(...)` in `_doFinish` (NON `Math.round`) |
-| Stelle: 3 se all-found e `bonus/BONUS_TIME_MAX >= 0.66`; 2 se all-found; 1 altrimenti | — | `_doFinish` + `bonus_ratio_3star=0.66` |
-| `score = (scene_score + bonus) * STAR_MULTIPLIER[stars]` — aritmetica intera, **nessun arrotondamento** | — | `_doFinish` (nessun `Math.round` esterno) |
-| Sorgente unica testabile: `LevelManager.compute_scene_score` / `LevelManager.miss_penalty` | — | pinnati da `test_scene_score_parity_*` / `test_miss_penalty_parity_*` |
+| `MISS_PENALTY_CURVE` progressive on consecutive misses (window `MISS_COMBO_WINDOW`=1.5 s) | `[25,50,100,150,300,500]` | `miss_penalty_curve` + `_missPenalty`/consecutive state in `_onPointer`; **the score can go NEGATIVE** (no floor), like the engine |
+| `bonus = int(time_ratio * BONUS_TIME_MAX)` — **truncation** towards zero | — | `Math.trunc(...)` in `_doFinish` (NOT `Math.round`) |
+| Stars: 3 if all found and `bonus/BONUS_TIME_MAX >= 0.66`; 2 if all found; 1 otherwise | — | `_doFinish` + `bonus_ratio_3star=0.66` |
+| `score = (scene_score + bonus) * STAR_MULTIPLIER[stars]` — integer arithmetic, **no rounding** | — | `_doFinish` (no external `Math.round`) |
+| Single testable source: `LevelManager.compute_scene_score` / `LevelManager.miss_penalty` | — | pinned by `test_scene_score_parity_*` / `test_miss_penalty_parity_*` |
 
 ---
 
-## C. Hint (`engine/hint_system.py` + `level_manager.RewardTracker`)
+## C. Hints (`engine/hint_system.py` + `level_manager.RewardTracker`)
 
-| ENGINE | Valore | WEB |
+| ENGINE | Value | WEB |
 |---|---|---|
 | `initial_hints` | 2 | `HINT_FREE` |
 | `manual_hint_cooldown_max` | 20.0 s | `HINT_COOLDOWN` |
 | `hint_penalties` | `[0,-50,-75,-100]` | `HINT_PENALTIES=[50,75,100]` |
 | `max_hints_before_disable` | 3 | `HINT_MAX_USES` |
-| Increment hint guadagnati | 0.20 / 0.143 / 0.112 / 0.05 | `_awardHintProgress` |
-| `hint_delay` per oggetto (default) | 30 | `HINT_AUTO_DEFAULT_DELAY` (e campo `hint_delay`) |
+| Earned-hint increments | 0.20 / 0.143 / 0.112 / 0.05 | `_awardHintProgress` |
+| Per-object `hint_delay` (default) | 30 | `HINT_AUTO_DEFAULT_DELAY` (and the `hint_delay` field) |
 
-Nota: l'engine usa `combo_thresholds` (di norma vuoto) per un bonus extra agli
-increment; il web replica il caso senza combo. Se l'engine inizia a usare combo,
-aggiornare `_awardHintProgress`.
+Note: the engine uses `combo_thresholds` (normally empty) for an extra bonus on the
+increments; the web replicates the no-combo case. If the engine starts using combos,
+update `_awardHintProgress`.
 
 ---
 
-## D. HUD nomi oggetti (`engine/hud_manager.py`)
+## D. HUD object names (`engine/hud_manager.py`)
 
 | ENGINE | WEB |
 |---|---|
 | `max_visible_goals` = 7 | `HUD_MAX_VISIBLE` |
-| Palette colori nomi | `HUD_NAME_COLORS` (6 colori) |
-| Layout: blocco sinistro `[0:4]`, destro `[4:7]`, 2 righe ciascuno | `_renderHud` |
-| Found → rimosso dalla lista | `goals.filter(!found)` |
+| Name color palette | `HUD_NAME_COLORS` (6 colors) |
+| Layout: left block `[0:4]`, right block `[4:7]`, 2 rows each | `_renderHud` |
+| Found -> removed from the list | `goals.filter(!found)` |
 
 ---
 
-## E. Effetti ambientali (`engine/effect_renderer.py`)
+## E. Ambient effects (`engine/effect_renderer.py`)
 
-| ENGINE | WEB | Note |
+| ENGINE | WEB | Notes |
 |---|---|---|
-| `update_effect_state`: glint `t+=dt/period`, altri `t+=dt*period` (period default 2.0) | `_updateAndDrawEffects` | |
-| `draw_glint_effect` (pulse, glow additivo, core>0.3) | `drawGlint` | blending additivo = `globalCompositeOperation="lighter"` |
-| `draw_smoke_effect` (12 puff × 5 blob × 3 layer) | `drawSmoke` | port diretto del loop |
-| `draw_flies_effect` (intensity*40 particelle) | `drawFlies` | |
-| Posizione: bg-space → screen via `bg_to_screen` | idem | scala raggio per `bg_display_scale` |
+| `update_effect_state`: glint `t+=dt/period`, others `t+=dt*period` (period default 2.0) | `_updateAndDrawEffects` | |
+| `draw_glint_effect` (pulse, additive glow, core>0.3) | `drawGlint` | additive blending = `globalCompositeOperation="lighter"` |
+| `draw_smoke_effect` (12 puffs x 5 blobs x 3 layers) | `drawSmoke` | direct port of the loop |
+| `draw_flies_effect` (intensity*40 particles) | `drawFlies` | |
+| Position: bg space -> screen via `bg_to_screen` | same | radius scaled by `bg_display_scale` |
 
 ---
 
-## F. Torcia (`engine/core.py` `_draw_flashlight_effect`)
+## F. Flashlight (`engine/core.py` `_draw_flashlight_effect`)
 
 | ENGINE | WEB |
 |---|---|
-| `alpha = clip(dist^1.4 * 255)`, fuori cerchio = nero pieno | `_renderFlashlight` (gradiente destination-out su canvas **offscreen**) |
-| `radius = flashlight_radius * 1.15` | idem (scalato per coerenza visiva su canvas variabile) |
-| Hint in scena torcia = flash 5s che illumina tutto | `hintFlashUntil = now + 5000` |
+| `alpha = clip(dist^1.4 * 255)`, outside the circle = solid black | `_renderFlashlight` (destination-out gradient on an **offscreen** canvas) |
+| `radius = flashlight_radius * 1.15` | same (scaled for visual consistency on a variable canvas) |
+| Hint in a flashlight scene = 5 s flash that lights everything | `hintFlashUntil = now + 5000` |
 
 ---
 
-## G. Caricamento scena e selezione casuale (`engine/scene_loader.py`)
+## G. Scene loading and random selection (`engine/scene_loader.py`)
 
-| ENGINE | WEB | Critico |
+| ENGINE | WEB | Critical |
 |---|---|---|
-| `LAYER_Z` (mappa layer→z) | exporter `LAYER_Z` | usato per `layer_z` |
-| Default `SceneObject` (radius 30, detection "circle", width/height 0, ...) | exporter `_build_object` | **non** applicare default di catalogo a runtime |
-| `random_layer_selection`: sceglie low/mid/high a caso, filtra | `_buildSceneObjects` | a OGNI avvio scena |
-| `auto_random_finds` + `num_random_finds`: ridisegna `is_goal` casuale | `_buildSceneObjects` | shuffle, fixed=`always_show` |
+| `LAYER_Z` (layer -> z map) | exporter `LAYER_Z` | used for `layer_z` |
+| `SceneObject` defaults (radius 30, detection "circle", width/height 0, ...) | exporter `_build_object` | do **not** apply catalog defaults at runtime |
+| `random_layer_selection`: picks low/mid/high at random, filters | `_buildSceneObjects` | on EVERY scene start |
+| `auto_random_finds` + `num_random_finds`: redraws `is_goal` at random | `_buildSceneObjects` | shuffle, fixed=`always_show` |
 
-Questi flag sono nel manifest per scena; la logica casuale gira nel web.
+These flags are in the manifest per scene; the random logic runs on the web.
 
 ---
 
-## H. Salvataggio e lock (`engine/save_manager.py`)
+## H. Save and locks (`engine/save_manager.py`)
 
 | ENGINE | WEB (`runtime.js` `Save`, localStorage) |
 |---|---|
-| Struttura: `scores/stars/unlocked_scenes/unlocked_levels` | identica |
-| Tiene il punteggio/stelle migliori | `Save.record` |
-| Sblocco scena successiva al completamento; ultima scena → sblocca livello | `Save.record` |
-| Primo livello/scena sbloccati di default | `Save.isLevelUnlocked` (idx 0) |
+| Structure: `scores/stars/unlocked_scenes/unlocked_levels` | identical |
+| Keeps the best score/stars | `Save.record` |
+| Unlocks the next scene on completion; last scene -> unlocks the level | `Save.record` |
+| First level/scene unlocked by default | `Save.isLevelUnlocked` (idx 0) |
 
 ---
 
-## I. Minigiochi (`engine/minigames/*`)
+## I. Minigames (`engine/minigames/*`)
 
-Interfaccia engine `BaseMinigame` (`start/handle_event/update/draw/finish`) →
-interfaccia web `start()/pointer()/key()/update(dt)/draw(ctx,W,H)` + `host._minigameDone({success,score})`.
+Engine interface `BaseMinigame` (`start/handle_event/update/draw/finish`) ->
+web interface `start()/pointer()/key()/update(dt)/draw(ctx,W,H)` + `host._minigameDone({success,score})`.
 
-| ENGINE | WEB | Asset |
+| ENGINE | WEB | Assets |
 |---|---|---|
-| `tetran/tetran_game.py` | `runtime.js` `TetranGame` | `assets/minigames/tetran/` (PNG reali) |
-| `arcade_eleven/arcade_eleven_game.py` | `ArcadeEleven` | carte da **tower** (dipendenza) |
-| `asteroids/asteroids_game.py` + `asteroids_config.py` | `AsteroidsGame` | suoni `assets/minigames/asteroids/` |
+| `tetran/tetran_game.py` | `runtime.js` `TetranGame` | `assets/minigames/tetran/` (real PNGs) |
+| `arcade_eleven/arcade_eleven_game.py` | `ArcadeEleven` | cards from **tower** (dependency) |
+| `asteroids/asteroids_game.py` + `asteroids_config.py` | `AsteroidsGame` | sounds `assets/minigames/asteroids/` |
 
-`_on_minigame_complete` (core.py) → `host._minigameDone`: l'oggetto-trigger viene
-SEMPRE segnato `found`, si aggiunge lo score, sfx victory/neutro.
+`_on_minigame_complete` (core.py) -> `host._minigameDone`: the trigger object is
+ALWAYS marked `found`, the score is added, victory/neutral sfx.
 
-**Dipendenze asset tra minigiochi**: `editor/web_exporter.py` `MINIGAME_ASSET_DEPS`
-(es. `arcade_eleven` → `tower`). Se un minigioco inizia a usare asset di un altro,
-aggiungere la voce qui.
+**Asset dependencies between minigames**: `editor/web_exporter.py` `MINIGAME_ASSET_DEPS`
+(e.g. `arcade_eleven` -> `tower`). If a minigame starts using another one's assets,
+add the entry there.
 
-Costanti minigiochi (es. `asteroids_config.py`: velocita', punti, vite) sono
-duplicate nelle rispettive classi JS (`AST`, `TET_*`, `AE_*`). Se cambiano, aggiornare.
-
----
-
-## J. Stringhe / lingue
-
-- 5 lingue: it, en, de, es, fr (`engine/language_manager.py`).
-- Stringhe engine + gioco unite nel manifest (`_collect_strings`). Il gioco vince.
-- Stringhe minigiochi **namespaced** per id (`minigame_strings`) per evitare collisioni.
-- Chrome UI tradotto da `UI_STRINGS` (in `runtime.js`) come fallback.
+Minigame constants (e.g. `asteroids_config.py`: speeds, points, lives) are
+duplicated in the respective JS classes (`AST`, `TET_*`, `AE_*`). If they change, update them.
 
 ---
 
-## Checklist quando modifichi l'engine
+## J. Strings / languages
 
-1. La modifica tocca una riga in questo documento? Se sì, aggiorna il WEB corrispondente.
-2. Hai cambiato una **struttura dati** di scena/oggetto/salvataggio? Aggiorna
-   `editor/web_exporter.py` (manifest) e i lettori in `runtime/game.js` (o `core.js`).
-3. Hai cambiato una **costante/formula**? Aggiorna il valore in `runtime/core.js`
-   (`RULES_DEFAULTS`/formule) o nel modulo `runtime/minigames/<id>.js` interessato.
-4. Hai aggiunto un nuovo tipo di effetto / detection / campo oggetto? Esportalo e
-   gestiscilo nel runtime (o documentane l'esclusione in WEB_EXPORT.md §7).
-5. Ri-esporta e verifica:
+- 5 languages: it, en, de, es, fr (`engine/language_manager.py`).
+- Engine + game strings merged in the manifest (`_collect_strings`). The game wins.
+- Minigame strings **namespaced** by id (`minigame_strings`) to avoid collisions.
+- UI chrome translated by `UI_STRINGS` (in `runtime.js`) as a fallback.
+
+---
+
+## Checklist when you change the engine
+
+1. Does the change touch a line in this document? If so, update the corresponding WEB side.
+2. Did you change a scene/object/save **data structure**? Update
+   `editor/web_exporter.py` (manifest) and the readers in `runtime/game.js` (or `core.js`).
+3. Did you change a **constant/formula**? Update the value in `runtime/core.js`
+   (`RULES_DEFAULTS`/formulas) or in the affected `runtime/minigames/<id>.js` module.
+4. Did you add a new effect type / detection type / object field? Export it and
+   handle it in the runtime (or document its exclusion in WEB_EXPORT.md section 7).
+5. Re-export and verify:
    ```bash
    python -m editor.web_exporter <game>
-   node --check build_web/<game>/runtime.js     # sintassi JS
-   # parita' coordinate (esempio): confronta ScalingManager Python vs JS su una scena
+   node --check build_web/<game>/runtime.js     # JS syntax
+   # coordinate parity (example): compare Python vs JS ScalingManager on a scene
    ```
-6. Aggiorna la tabella in **WEB_EXPORT.md §6/§7** se cambia lo stato delle feature.
+6. Update the table in **WEB_EXPORT.md sections 6/7** if the feature status changes.
 
 ---
 
-## Verifica di parita' coordinate (riferimento)
+## Coordinate parity verification (reference)
 
-Confronto numerico `bg_to_screen` Python vs JS a 1280×720 su una scena: il delta
-deve essere ~0 (solo arrotondamento di stampa). Hit-test ruotato: la griglia di
-campionamento deve essere identica tra `ClickDetector` Python e `hitTest` JS.
-Questi controlli hanno gia' dato delta < 0.005px e 961/961 celle identiche.
+Numeric comparison of `bg_to_screen` Python vs JS at 1280x720 on a scene: the delta
+must be ~0 (print rounding only). Rotated hit test: the sampling grid must be identical
+between Python `ClickDetector` and JS `hitTest`. These checks already gave
+delta < 0.005 px and 961/961 identical cells.

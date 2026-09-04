@@ -1,34 +1,34 @@
-# Guida Generazione Asset: Background Horror
+# Asset Generation Guide: Horror Backgrounds
 
-Questo documento descrive il metodo e i prompt necessari per generare background coerenti con lo stile visuale di **Malonno Survivors**.
+This document describes the method and the prompts needed to generate backgrounds consistent with the visual style of **Malonno Survivors**.
 
-## 1. Il "Dizionario Visivo" del Gioco
-Per mantenere la coerenza tra le scene (es. `Welcome` -> `Brescia_Edolo`), ogni prompt deve contenere questi pilastri:
+## 1. The game's "visual dictionary"
+To keep the scenes consistent (e.g. `Welcome` -> `Brescia_Edolo`), every prompt must contain these pillars:
 
-- **Style (Estetica):** "Hyper-detailed gritty horror illustration", "Over-emphasized decayed textures", "Avoid clean photography".
-- **Lighting (Illuminazione):** "Cinematic high-contrast lighting", "Deeply crushed black shadows", "Dramatic spotlighting".
-- **Color Palette:** "Desaturated teal and indigo atmosphere", "Harsh warm yellow sources".
+- **Style (aesthetics):** "Hyper-detailed gritty horror illustration", "Over-emphasized decayed textures", "Avoid clean photography".
+- **Lighting:** "Cinematic high-contrast lighting", "Deeply crushed black shadows", "Dramatic spotlighting".
+- **Color palette:** "Desaturated teal and indigo atmosphere", "Harsh warm yellow sources".
 - **Textures:** "Hyper-textured surfaces", "Heavy rust", "Deep cracks", "Peeling paint", "Grime and moss".
 
-## 2. Esempio di Prompt Replicabile (Iper-Gritty)
-Ecco il prompt definitivo per ottenere lo stile corretto:
+## 2. Reproducible prompt example (hyper-gritty)
+The definitive prompt to obtain the right style:
 
 ```text
-Hyper-detailed gritty horror illustration of [SOGGETTO]. 
-Nighttime with extreme high-contrast lighting and deeply crushed black shadows. 
-The style is dark and atmospheric, matching an iper-detailed survival horror aesthetic. 
-[DETTAGLI SOGGETTO: es. rusted signs, flickering traffic light]. 
-Jagged, dark silhouettes in the background shrouded in thick, volumetric fog. 
-The overall look is hyper-textured, moody, and stylized horror, avoiding clean photography. 
+Hyper-detailed gritty horror illustration of [SUBJECT].
+Nighttime with extreme high-contrast lighting and deeply crushed black shadows.
+The style is dark and atmospheric, matching a hyper-detailed survival horror aesthetic.
+[SUBJECT DETAILS: e.g. rusted signs, flickering traffic light].
+Jagged, dark silhouettes in the background shrouded in thick, volumetric fog.
+The overall look is hyper-textured, moody, and stylized horror, avoiding clean photography.
 Desaturated teal and warm yellow color palette. 16:9 ratio.
 ```
 
-## 3. Workflow di Integrazione
-1. **Generazione:** Usare il prompt di base modificando solo il *Soggetto* (es. cambiare "crossroad" con "interior of a bar" o "dark forest road").
-2. **Crop/Aspect Ratio:** Assicurarsi che l'immagine sia in **16:9** (1920x1080).
-3. **Targeting:** Salvare il file come `background.png` nella cartella specifica della scena:
-   `games/[GIOCO]/levels/[LIVELLO]/[SCENA]/background.png`
+## 3. Integration workflow
+1. **Generation:** use the base prompt changing only the *subject* (e.g. replace "crossroad" with "interior of a bar" or "dark forest road").
+2. **Crop/aspect ratio:** make sure the image is **16:9** (1920x1080).
+3. **Targeting:** save the file as `background.png` in the scene's folder:
+   `games/[GAME]/levels/[LEVEL]/[SCENE]/background.png`
 
-## 4. Note Tecniche
-- **No People:** Evitare sempre l'inserimento di figure umane per enfatizzare il senso di isolamento.
-- **Reference Locale:** Inserire sempre riferimenti geografici (es. "Italian mountain", "Alpine") per mantenere l'identità del gioco.
+## 4. Technical notes
+- **No people:** always avoid human figures to emphasize the sense of isolation.
+- **Local references:** always include geographic references (e.g. "Italian mountain", "Alpine") to keep the game's identity.

@@ -1,148 +1,148 @@
-# Correzione Pacchetto Gigante (3GB → ~100-150MB)
+# Giant Package Fix (3 GB -> ~100-150 MB)
 
-**Data:** 2026-04-16  
-**Problema:** Pacchetto ZIP di 3GB quando dovrebbe essere <200MB  
-**Causa Root:** PyInstaller includeva ricorsivamente games/ e engine/ come risorse nel main.exe
+**Date:** 2026-04-16  
+**Problem:** 3 GB ZIP package when it should be < 200 MB  
+**Root cause:** PyInstaller recursively included games/ and engine/ as resources in main.exe
 
 ---
 
-## 🔴 Problema Identificato
+## Problem identified
 
-### Diagnosi
+### Diagnosis
 ```bash
-# La cartella build/ occupava 2.8GB
+# The build/ folder took 2.8 GB
 du -sh build/villa_segreta/1.0/
 # 2.8G  build/villa_segreta/1.0/
 
-# Il file main.exe era 2.8GB!!!
+# main.exe was 2.8 GB
 du -sh build/villa_segreta/1.0/main.exe
 # 2.8G  build/villa_segreta/1.0/main.exe
 ```
 
-### Root Cause
-In `editor/build_system.py` linea 308:
+### Root cause
+In `editor/build_system.py` line 308:
 ```python
-"-p", str(temp_dir),  # ❌ SBAGLIATO: aggiunge tutto temp_dir al PYTHONPATH!
+"-p", str(temp_dir),  # WRONG: adds the whole temp_dir to the PYTHONPATH
 ```
 
-Questo causava PyInstaller di **includere ricorsivamente**:
-- `games/villa_segreta/` (~35MB di assets)
-- `engine/` (~566KB)
-- Tutte le sottocartelle
+This made PyInstaller **recursively include**:
+- `games/villa_segreta/` (~35 MB of assets)
+- `engine/` (~566 KB)
+- every subfolder
 
-Risultato: **EXE di 2.8GB!**
+Result: **a 2.8 GB EXE**.
 
 ---
 
-## ✅ Soluzioni Applicate
+## Solutions applied
 
-### 1. **Rimosso PYTHONPATH Ricorsivo**
-**Prima:**
+### 1. Removed the recursive PYTHONPATH
+**Before:**
 ```python
-"-p", str(temp_dir),  # ❌ Include games/, engine/, tutto ricorsivamente
+"-p", str(temp_dir),  # WRONG: includes games/, engine/, everything recursively
 ```
 
-**Dopo:**
+**After:**
 ```python
-"--collect-all=engine",  # ✅ Collecta SOLO module engine
-# NON aggiunge temp_dir intero!
+"--collect-all=engine",  # collects ONLY the engine module
+# does NOT add the whole temp_dir
 ```
 
-### 2. **Aggiunte Esclusioni File Sviluppo**
+### 2. Added development-file exclusions
 ```python
 ignore_patterns_games = shutil.ignore_patterns(
-    "__pycache__",      # Cache Python
-    "*.pyc",            # Bytecode
-    "*.pyo",            # Bytecode
-    "*.autosave",       # ⭐ Editor autosave (CRITICO!)
-    ".git*",            # Git data
-    "*.bak",            # Backup files
-    "*.tmp",            # Temporary files
-    "*.log",            # Log files
+    "__pycache__",      # Python cache
+    "*.pyc",            # bytecode
+    "*.pyo",            # bytecode
+    "*.autosave",       # editor autosave (CRITICAL)
+    ".git*",            # git data
+    "*.bak",            # backup files
+    "*.tmp",            # temporary files
+    "*.log",            # log files
     ".DS_Store",        # macOS metadata
 )
 ```
 
-### 3. **Validazione EXE Size**
+### 3. EXE size validation
 ```python
 if exe_size_mb > 500:
     raise RuntimeError(
-        f"EXE troppo grande ({exe_size_mb:.1f} MB, max 500MB). "
-        f"PyInstaller ha probabilmente incluso assets ricorsivamente."
+        f"EXE too large ({exe_size_mb:.1f} MB, max 500 MB). "
+        f"PyInstaller probably included assets recursively."
     )
 ```
 
-### 4. **Validazione ZIP Size**
+### 4. ZIP size validation
 ```python
 if zip_size_mb > 500:
     raise RuntimeError(
-        f"ZIP troppo grande ({zip_size_mb:.1f} MB). "
-        f"Controlla asset e file di sviluppo inclusi."
+        f"ZIP too large ({zip_size_mb:.1f} MB). "
+        f"Check the assets and development files included."
     )
 ```
 
-### 5. **Filtraggio Durante ZIP**
+### 5. Filtering during ZIP creation
 ```python
 for sub_item in item.rglob("*"):
     if sub_item.is_file():
-        # Valida ogni file prima di aggiungere
+        # Validate every file before adding it
         if sub_item.suffix in [".autosave", ".bak", ".tmp", ".log", ".pyc"]:
-            continue  # Salta file non necessari
+            continue  # skip unnecessary files
         zf.write(sub_item, ...)
 ```
 
-### 6. **Logging Dettagliato**
-Ora il log mostra:
+### 6. Detailed logging
+The log now shows:
 ```
 [Package Contents]
-  - EXE: 145.3 MB (✓ OK)
+  - EXE: 145.3 MB (OK)
   - Config: config.ini
-  - Games/villa_segreta: 34.5 MB (1245 file)
+  - Games/villa_segreta: 34.5 MB (1245 files)
   - Engine (data+strings): 49 KB
   - Background: 256 KB
 
 [ZIP] villa_segreta_v1.0.zip
-  Dimensione: 98.5 MB (compresso da 180.3 MB)
-  Compressione: 45.3%
-  File inclusi: 1251
-[ZIP Validation] ✓ Size OK (98.5 MB < 500 MB limit)
+  Size: 98.5 MB (compressed from 180.3 MB)
+  Compression: 45.3%
+  Files included: 1251
+[ZIP Validation] Size OK (98.5 MB < 500 MB limit)
 ```
 
 ---
 
-## 🧹 Pulizia Vecchi Build
+## Cleaning old builds
 
-### 1. **Eliminare Build Vecchi (2.8GB)**
+### 1. Delete the old builds (2.8 GB)
 ```bash
-# ATTENZIONE: Questo elimina tutti i build precedenti!
+# WARNING: this deletes every previous build
 cd G:/HiddenIndexEngine
 rm -rf build/villa_segreta/1.0/
 rm -rf build/malonno/1.0/
 ```
 
-### 2. **Ricreate il Build Pulito**
+### 2. Recreate a clean build
 ```bash
-# Build nuovo con asset filtering
+# New build with asset filtering
 python test_build_system.py villa_segreta
 
-# Verifica size
+# Check the size
 ls -lh build/villa_segreta/1.0/villa_segreta_v1.0.zip
-# Should be ~100-150MB, NOT 2.8GB
+# Should be ~100-150 MB, NOT 2.8 GB
 ```
 
-### 3. **Verificare ZIP Content**
+### 3. Verify the ZIP content
 ```bash
-# Controlla che il ZIP sia valido e contenga solo file necessari
+# Check that the ZIP is valid and contains only the necessary files
 unzip -l build/villa_segreta/1.0/villa_segreta_v1.0.zip | head -50
 
-# Escludere i file e controlla che ci siano solo:
+# Expected content, only:
 # - main.exe
 # - config.ini
 # - games/villa_segreta/...
 # - engine/data/...
 # - engine/strings/...
 
-# NON devono esserci:
+# Must NOT be present:
 # - *.autosave
 # - __pycache__
 # - .git
@@ -152,27 +152,27 @@ unzip -l build/villa_segreta/1.0/villa_segreta_v1.0.zip | head -50
 
 ---
 
-## 📊 Size Comparison
+## Size comparison
 
-### Prima (❌ Buggy)
+### Before (buggy)
 ```
 build/villa_segreta/1.0/:
-  main.exe: 2.8 GB  ← ❌ GIGANTE
-  ZIP: 2.8 GB       ← ❌ GIGANTE
+  main.exe: 2.8 GB  <- GIANT
+  ZIP: 2.8 GB       <- GIANT
   Total: 2.8 GB
 ```
 
-### Dopo (✅ Corretto)
+### After (fixed)
 ```
 build/villa_segreta/1.0/:
-  main.exe: 145 MB  ← ✅ OK
-  games/: 35 MB     ← ✅ OK
-  engine/: 49 KB    ← ✅ OK
-  ZIP: 98 MB        ← ✅ OK
+  main.exe: 145 MB  <- OK
+  games/: 35 MB     <- OK
+  engine/: 49 KB    <- OK
+  ZIP: 98 MB        <- OK
   Total: ~250 MB
 ```
 
-### Breakown del ZIP
+### ZIP breakdown
 ```
 main.exe:              145 MB
 games/villa_segreta/:  35 MB
@@ -181,119 +181,119 @@ engine/strings/:       5 KB
 config.ini:            1 KB
 background.jpg:        256 KB
 ───────────────────────────
-TOTALE:                180 MB (uncompressed)
+TOTAL:                 180 MB (uncompressed)
                        98 MB (compressed, 45% ratio)
 ```
 
 ---
 
-## 🔍 Come Debuggare Size
+## How to debug the size
 
-### Se ZIP è ancora gigante:
+### If the ZIP is still giant:
 ```bash
-# Estrarre il ZIP e analizzare
+# Extract the ZIP and analyze it
 mkdir debug_zip
 unzip build/villa_segreta/1.0/villa_segreta_v1.0.zip -d debug_zip/
 du -sh debug_zip/*
 
-# Se vedi cartelle large:
+# If you see large folders:
 du -sh debug_zip/games/villa_segreta/*
-# Se c'è autosave o cache, rimuovere e ribuildar
+# If there are autosaves or caches, remove them and rebuild
 ```
 
-### Se EXE è gigante:
+### If the EXE is giant:
 ```bash
-# Controllare con PyInstaller analyzer
-# (richiede pyinstaller-analysis)
+# Check with the PyInstaller analyzer
+# (requires pyinstaller-analysis)
 # pip install pyinstaller-analysis
 # python -m pyinstaller_analysis build/villa_segreta/1.0/build/main/*.spec
 
-# Alternativa: controllare log
+# Alternative: check the log
 cat saves/engine.log | grep -E "PyInstaller|EXE|Size"
-# Cercare "EXE troppo grande" se ci sono problemi
+# Look for "EXE too large" if there are problems
 ```
 
 ---
 
-## ✅ Validazione Finale
+## Final validation
 
 ### Checklist
-- [x] Rimosso `"-p", str(temp_dir)` dalla riga PyInstaller
-- [x] Aggiunto `--collect-all=engine` per engine module
-- [x] Aggiunte esclusioni: `*.autosave`, `.git*`, `*.bak`, `*.tmp`, `*.log`, `*.pyc`
-- [x] Validazione EXE size: max 500MB (fallisce se supera)
-- [x] Validazione ZIP size: max 500MB (fallisce se supera)
-- [x] Filtraggio durante ZIP: niente file di sviluppo
-- [x] Logging dettagliato di content, size, compression ratio
-- [x] Main.exe deve essere ~145MB (dipende da versione Pygame/PyInstaller)
-- [x] ZIP deve essere ~50-150MB per villa_segreta (dipende da assets)
+- [x] Removed `"-p", str(temp_dir)` from the PyInstaller command line
+- [x] Added `--collect-all=engine` for the engine module
+- [x] Added exclusions: `*.autosave`, `.git*`, `*.bak`, `*.tmp`, `*.log`, `*.pyc`
+- [x] EXE size validation: max 500 MB (fails above)
+- [x] ZIP size validation: max 500 MB (fails above)
+- [x] Filtering during ZIP creation: no development files
+- [x] Detailed logging of content, size, compression ratio
+- [x] main.exe must be ~145 MB (depends on the Pygame/PyInstaller version)
+- [x] The ZIP must be ~50-150 MB for villa_segreta (depends on the assets)
 
 ---
 
-## 🚀 Test
+## Test
 
-### Build Nuovo e Verifica
+### New build and verification
 ```bash
-# Pulisci build vecchio (2.8GB)
+# Clean the old build (2.8 GB)
 rm -rf build/villa_segreta/1.0/
 
-# Crea build nuovo
+# Create the new build
 python test_build_system.py villa_segreta
 
-# Verifica dimensioni finali
+# Check the final sizes
 du -sh build/villa_segreta/1.0/main.exe
-# Deve essere ~150MB (NOT 2.8GB)
+# Must be ~150 MB (NOT 2.8 GB)
 
 du -sh build/villa_segreta/1.0/villa_segreta_v1.0.zip
-# Deve essere ~100MB (NOT 2.8GB)
+# Must be ~100 MB (NOT 2.8 GB)
 
-# Verifica ZIP content (deve contenere SOLO)
+# Check the ZIP content (must contain ONLY the expected files)
 unzip -l build/villa_segreta/1.0/villa_segreta_v1.0.zip | grep -E "^Archive|^  Length|files$"
 ```
 
 ---
 
-## 📝 Note Importanti
+## Important notes
 
-1. **EXE Size è Dipendente da PyInstaller**: 
-   - PyInstaller 5.x: ~140MB
-   - PyInstaller 6.x: ~150MB
-   - È normale, non è un bug
+1. **The EXE size depends on PyInstaller**:
+   - PyInstaller 5.x: ~140 MB
+   - PyInstaller 6.x: ~150 MB
+   - This is normal, not a bug
 
-2. **Games Assets Size è Dipendente dal Game**:
-   - villa_segreta: ~35MB (tante immagini)
-   - Potrebbe essere più piccolo per altri giochi
+2. **The game asset size depends on the game**:
+   - villa_segreta: ~35 MB (many images)
+   - It may be smaller for other games
 
-3. **ZIP Size Dipende da Assets**:
-   - Se il gioco ha video HD: molto più grande
-   - Se il gioco ha audio lossless: più grande
-   - Considerare compressione audio/video esterna se necessario
+3. **The ZIP size depends on the assets**:
+   - If the game has HD video: much larger
+   - If the game has lossless audio: larger
+   - Consider external audio/video compression if needed
 
-4. **Cleanup Regex**:
-   - Viene eseguito sia in `shutil.copytree(..., ignore=...)` 
-   - Che durante la creazione del ZIP
-   - Double protection per evitare file non necessari
+4. **Cleanup patterns**:
+   - Applied both in `shutil.copytree(..., ignore=...)`
+   - and during ZIP creation
+   - Double protection against unnecessary files
 
 ---
 
-## 🎯 Expected Sizes (villa_segreta)
+## Expected sizes (villa_segreta)
 
 | Component | Size | Notes |
 |---|---|---|
 | main.exe | 145 MB | Python + Pygame + runtime |
-| games/villa_segreta/ | 35 MB | Audio + images per 4 scene |
+| games/villa_segreta/ | 35 MB | Audio + images for 4 scenes |
 | engine/data | 44 KB | JSON catalogs |
 | engine/strings | 5 KB | Translation JSON |
 | config.ini | 1 KB | Settings |
 | ZIP (compressed) | 98 MB | 45% compression ratio |
 
-Se il tuo ZIP è molto più grande, controlla:
-1. Se hai aggiunto video grandi
-2. Se autosave non vengono esclusi
-3. Se __pycache__ non viene escluso
-4. Se il build/ non viene copiato per errore
+If your ZIP is much larger, check:
+1. Whether you added large videos
+2. Whether autosaves are excluded
+3. Whether __pycache__ is excluded
+4. Whether build/ was copied by mistake
 
 ---
 
-**Status:** ✅ FIXED - Pacchetto ora 100-150MB (era 2.8GB)  
+**Status:** FIXED - the package is now 100-150 MB (was 2.8 GB)  
 **Test:** `python test_build_system.py villa_segreta`

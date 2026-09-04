@@ -11,56 +11,55 @@
 Press **'D'** in the level editor to toggle the coordinate inspector overlay.
 
 The inspector displays:
-- **Screen**: Current mouse position in screen pixels
-- **Ref**: Mouse position in reference space (1280×720) — **this is what matters**
-- **Zoom/Pan**: Current editor zoom level and pan offset
-- **Grid**: Snapped coordinates when grid is enabled
-- **Object Info**: Details about any object under the cursor
+- **Screen**: current mouse position in screen pixels
+- **Ref**: mouse position in background pixel space — **this is what matters**
+- **Zoom/Pan**: current editor zoom level and pan offset
+- **Grid**: snapped coordinates when the grid is enabled
+- **Object Info**: details about any object under the cursor
 
 ### Understanding the Display
 
 ```
-Screen:  (1024,  768) px          ← Varies by window size
-Ref:     (640.0, 360.0)           ← CONSTANT (reference space)
+Screen:  (1024,  768) px          <- varies by window size
+Ref:     (640.0, 360.0)           <- CONSTANT (background space)
 Zoom: 1.50x | Pan: (100, 50)
 ```
 
 When you move the mouse around, notice:
 - **Screen coordinates change** (affected by window position)
-- **Ref coordinates change** (cursor position in reference space)
+- **Ref coordinates change** (cursor position in background space)
 - **Zoom and Pan show the editor's view transform**
 
 ---
 
 ## Testing Coordinate Consistency
 
-### Test 1: Editor → JSON → Game
+### Test 1: Editor -> JSON -> Game
 
-1. **Place an object in the editor at reference coordinates (640, 360)**
-   - Open the level editor: `python -m editor.editor_base --game villa_segreta`
+1. **Place an object in the editor at background coordinates (640, 360)**
+   - Open the level editor: `python run_editor.py --game Malonno_Survivors`
    - Select a shape (circle or rect) from the catalog
-   - Click at the center of the screen (should show `Ref: (640.0, 360.0)`)
+   - Click at the center of the canvas (should show `Ref: (640.0, 360.0)`)
    - Press 'D' to verify the coordinates in the inspector
    - Save the scene (Ctrl+S)
 
 2. **Verify the JSON**
-   - Open the saved JSON file: `games/villa_segreta/levels/level1_giardino/scene1/scene.json`
+   - Open the saved JSON file: `games/Malonno_Survivors/levels/Welcome_To_Malonno/Villa_Rosa/scene.json`
    - Search for the object you just placed
    - Confirm it has `"x": 640.0, "y": 360.0` (or close to it)
 
 3. **Test in game**
-   - Run the game: `python main.py --game villa_segreta`
-   - Load the level and scene
+   - Run the game: `python main.py --game Malonno_Survivors --scene Welcome_To_Malonno/Villa_Rosa`
    - The object should appear at the same position
-   - Click on it — it should be registered as a hit
+   - Click on it — it should register as a hit
 
 ### Test 2: Zoom Independence
 
 1. **Place an object at (640, 360) with zoom = 1.0**
-2. **Zoom in to 2.0 (Scroll wheel up)**
+2. **Zoom in to 2.0 (scroll wheel up)**
 3. **Notice:**
    - Screen coordinates change significantly
-   - Reference coordinates stay the same
+   - Background coordinates stay the same
    - JSON remains unchanged
 
 This verifies that editor zoom is purely visual.
@@ -69,19 +68,19 @@ This verifies that editor zoom is purely visual.
 
 1. **Place a circle at (640, 360) with radius 30**
 2. **Enable the coordinate inspector (press 'D')**
-3. **Move cursor to (640, 360)** — should show "OBJECT UNDER CURSOR"
-4. **Move cursor to (670, 360)** — should still show the object (inside radius)
-5. **Move cursor to (671, 360)** — should NOT show the object (outside radius)
+3. **Move the cursor to (640, 360)** — should show "OBJECT UNDER CURSOR"
+4. **Move the cursor to (670, 360)** — should still show the object (inside the radius)
+5. **Move the cursor to (671, 360)** — should NOT show the object (outside the radius)
 
-This verifies that hit detection uses reference space correctly.
+This verifies that hit detection uses background space correctly.
 
 ### Test 4: Rect Top-Left Convention
 
-1. **Place a rect at (600, 330) with size 80×60**
-2. **Move cursor to (600, 330)** — object detected (top-left)
-3. **Move cursor to (680, 330)** — object detected (top-right = 600+80)
-4. **Move cursor to (600, 390)** — object detected (bottom-left = 330+60)
-5. **Move cursor to (681, 390)** — object NOT detected (outside)
+1. **Place a rect at (600, 330) with size 80x60**
+2. **Move the cursor to (600, 330)** — object detected (top-left)
+3. **Move the cursor to (680, 330)** — object detected (top-right = 600+80)
+4. **Move the cursor to (600, 390)** — object detected (bottom-left = 330+60)
+5. **Move the cursor to (681, 390)** — object NOT detected (outside)
 
 This verifies the top-left corner convention.
 
@@ -89,58 +88,60 @@ This verifies the top-left corner convention.
 
 ## Debugging Coordinate Issues
 
-### Issue: "Object appears in wrong place in game"
+### Issue: "Object appears in the wrong place in the game"
 
 **Diagnosis**:
 1. Place the object in the editor at position X
-2. Note the reference coordinates in the inspector
-3. Save and check the JSON — do coordinates match?
-4. Load in game — are coordinates loaded correctly?
+2. Note the background coordinates in the inspector
+3. Save and check the JSON — do the coordinates match?
+4. Load in the game — are the coordinates loaded correctly?
 
 **Common causes**:
-- Editor saved wrong coordinates (check JSON)
-- Game didn't load correctly (check console errors)
-- Screen resolution mismatch (game scales differently)
+- The editor saved wrong coordinates (check the JSON)
+- The game did not load correctly (check console errors)
+- Screen resolution mismatch (the game scales differently)
 
 ### Issue: "Clicks don't register on objects"
 
 **Diagnosis**:
 1. Place an object and enable the inspector (D)
-2. Move cursor exactly over the object
-3. Check if "OBJECT UNDER CURSOR" appears
-4. If not, coordinates are misaligned
+2. Move the cursor exactly over the object
+3. Check whether "OBJECT UNDER CURSOR" appears
+4. If not, the coordinates are misaligned
 
 **Common causes**:
-- Object hit area is too small (`radius` or `width`/`height`)
-- Coordinates are in wrong space (should always be reference)
-- Object is on a hidden layer
+- The object hit area is too small (`radius` or `width`/`height`)
+- The coordinates are in the wrong space (they must always be background pixels)
+- The object is on a hidden layer
 
 ### Issue: "Zoom makes objects shift visually"
 
-**This should NOT happen.** Objects are at fixed reference coordinates.
+**This should NOT happen.** Objects sit at fixed background coordinates.
 
 **If it does happen:**
-1. Check the `_s2r` and `_r2s` transformations in `editor/mixins/viewport.py`
+1. Check the `_s2r` and `_r2s` transforms in `editor/mixins/viewport.py`
 2. Verify that `origin_x/y` and `zoom` are applied correctly
 3. Compare with `engine/scaling_manager.py` (should be similar but different)
 
 ---
 
-## Reference Coordinate System
+## Coordinate Spaces
 
-### The "Truth" Space: 1280×720
+### The "truth" space for scene data: background pixels
 
-All objects are defined in this space, regardless of screen size or zoom.
+All objects are defined in the native pixel space of the scene background,
+regardless of screen size or zoom. UI, menus and HUD use a separate fixed
+1280x720 reference space. See `../engine/COORDINATE_SYSTEM.md`.
 
 ```
-Origin (0, 0) ─────── X increases →
-     │
-     │
+Origin (0, 0) ------- X increases ->
+     |
+     |
      Y
    increases
-     ↓
+     v
 
-    (1280, 720)
+    (bg_w, bg_h)
 ```
 
 ### Transformation Pipeline
@@ -148,26 +149,26 @@ Origin (0, 0) ─────── X increases →
 **Editor Display**:
 ```
 Mouse clicks (screen)
-        ↓
+        |
     _s2r() transform
-        ↓
-Reference space (the truth)
-        ↓
+        |
+Background space (the truth)
+        |
     _r2s() transform
-        ↓
+        |
 Display on screen
 ```
 
 **Game Display**:
 ```
 Mouse clicks (screen)
-        ↓
-    screen_to_scene() transform
-        ↓
-Reference/scene space (the truth)
-        ↓
-    ref_to_screen() transform + sprites
-        ↓
+        |
+    screen_to_bg_scenic() transform
+        |
+Background space (the truth)
+        |
+    bg_to_screen() transform + sprites
+        |
 Display on screen
 ```
 
@@ -182,37 +183,35 @@ Run the validation tests:
 python -m pytest tests/test_coordinate_system.py -v
 ```
 
-Expected output: **21 passed**
-
 ### Manual JSON Check
 
-Open any scene file (e.g., `games/villa_segreta/levels/level1_giardino/scene1/scene.json`):
+Open any scene file (e.g. `games/Malonno_Survivors/levels/Welcome_To_Malonno/Villa_Rosa/scene.json`):
 
 For **circles**:
 ```json
 {
-  "catalog_id": "chiave",
-  "x": 640.0,           // Center X in reference space
-  "y": 360.0,           // Center Y in reference space
+  "catalog_id": "old_key",
+  "x": 640.0,           // Center X in background pixels
+  "y": 360.0,           // Center Y in background pixels
   "detection_type": "circle",
-  "radius": 30.0        // Radius in reference space
+  "radius": 30.0        // Radius in background pixels
 }
 ```
 
 For **rects**:
 ```json
 {
-  "catalog_id": "libro",
-  "x": 600.0,           // Top-left X in reference space
-  "y": 330.0,           // Top-left Y in reference space
+  "catalog_id": "old_book",
+  "x": 600.0,           // Top-left X in background pixels
+  "y": 330.0,           // Top-left Y in background pixels
   "detection_type": "rect",
-  "width": 80.0,        // Width in reference space
-  "height": 60.0        // Height in reference space
+  "width": 80.0,        // Width in background pixels
+  "height": 60.0        // Height in background pixels
 }
 ```
 
 **Rules**:
-- All numeric coordinates are in reference space (1280×720)
+- All numeric coordinates are in background pixel space
 - Circle `(x, y)` = center point
 - Rect `(x, y)` = top-left corner
 - No screen pixels anywhere
@@ -224,14 +223,14 @@ For **rects**:
 
 ### Coordinate Inspector Overhead
 
-The inspector runs in real-time and has minimal overhead:
-- ~1-2ms per frame on modern hardware
+The inspector runs in real time and has minimal overhead:
+- ~1-2 ms per frame on modern hardware
 - Uses alpha blending for the overlay
 - Disabled by default (toggle with 'D')
 
 ### Disabling for Production
 
-In a shipping game, the inspector would be compiled out. For the editor, it's always available.
+In a shipped game the inspector would be compiled out. In the editor it is always available.
 
 ---
 
@@ -250,9 +249,9 @@ In a shipping game, the inspector would be compiled out. For the editor, it's al
 
 ## Files Referenced
 
-- `COORDINATE_SYSTEM.md` — Complete specification
-- `engine/scaling_manager.py` — Game coordinate transforms
-- `editor/mixins/viewport.py` — Editor coordinate transforms
-- `editor/debug/coordinate_inspector.py` — Inspector implementation
-- `tests/test_coordinate_system.py` — Test suite
-- `games/villa_segreta/levels/level1_giardino/scene1/scene.json` — Example scene
+- `../engine/COORDINATE_SYSTEM.md` — complete specification
+- `engine/scaling_manager.py` — game coordinate transforms
+- `editor/mixins/viewport.py` — editor coordinate transforms
+- `editor/debug/coordinate_inspector.py` — inspector implementation
+- `tests/test_coordinate_system.py` — test suite
+- `games/Malonno_Survivors/levels/Welcome_To_Malonno/Villa_Rosa/scene.json` — example scene

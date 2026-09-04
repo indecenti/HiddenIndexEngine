@@ -1,45 +1,45 @@
 ---
 name: validate-scene
-description: Valida o crea una scene.json di HiddenIndexEngine (coordinate, catalog_id esistenti, icone presenti, oggetti goal, integrita' referenziale). Usala quando l'utente chiede di controllare/validare una scena, capire perche' un oggetto non appare in gioco, o creare/modificare una scena a mano.
+description: Validates or creates a HiddenIndexEngine scene.json (coordinates, existing catalog_ids, present icons, goal objects, referential integrity). Use it when the user asks to check/validate a scene, understand why an object does not appear in the game, or create/edit a scene by hand.
 ---
 
 # validate-scene
 
-Validazione e creazione di scene per HiddenIndexEngine.
+Scene validation and creation for HiddenIndexEngine.
 
-## Validare (modo preferito)
+## Validating (preferred way)
 
-Usa il tool MCP `validate_scene` (server `hie`) con `game`, `level`, `scene`.
-Ritorna: errori di schema, `catalog_id` assenti, icone mancanti, oggetti fuori
-dai bounds del background, conteggio goal. Dopo una modifica, usa `render_scene`
-per confermare visivamente il risultato.
+Use the MCP tool `validate_scene` (server `hie`) with `game`, `level`, `scene`.
+It returns: schema errors, missing `catalog_id`s, missing icons, objects outside
+the background bounds, goal count. After a change, use `render_scene` to confirm
+the result visually.
 
-In alternativa, validazione schema pura:
-`engine/json_validator.py::validate(data, "scene")` contro
+Alternatively, pure schema validation:
+`engine/json_validator.py::validate(data, "scene")` against
 `engine/schemas/scene_schema.json`.
 
-## Struttura di una scene.json
+## Structure of a scene.json
 
-Path: `games/<game>/levels/<level>/<scene>/scene.json`. Vincoli chiave (schema):
+Path: `games/<game>/levels/<level>/<scene>/scene.json`. Key constraints (schema):
 
-- Richiesti a livello scena: `id`, `background`, `objects`.
-- `background`: path relativo ALLA cartella della scena (di solito `background.png` accanto).
-- Coordinate oggetti: spazio **pixel nativo del background**.
-- Ogni oggetto richiede: `catalog_id`, `x`, `y`, `detection_type` (`circle`/`rect`/`mask`).
-  - `rect`: `(x,y)` e' il **top-left**; servono `width` e `height`.
-  - `circle`: `(x,y)` e' il **centro**; serve `radius`.
-- `is_goal` (default true) marca un oggetto come obiettivo da trovare.
+- Required at scene level: `id`, `background`, `objects`.
+- `background`: path relative TO the scene folder (usually `background.png` next to it).
+- Object coordinates: **native pixel space of the background**.
+- Every object requires: `catalog_id`, `x`, `y`, `detection_type` (`circle`/`rect`/`mask`).
+  - `rect`: `(x,y)` is the **top-left**; `width` and `height` are required.
+  - `circle`: `(x,y)` is the **center**; `radius` is required.
+- `is_goal` (default true) marks an object as a target to find.
 
-## Errori frequenti
+## Frequent errors
 
-- **`catalog_id` inesistente**: l'engine SCARTA l'oggetto (sarebbe un goal
-  invisibile = scena non completabile). E' l'errore piu' grave: `validate_scene`
-  lo segnala come error.
-- **Icona mancante**: l'immagine non e' ne' in `games/<game>/<icon>` ne' in
+- **Non-existent `catalog_id`**: the engine DROPS the object (it would be an invisible
+  goal = scene impossible to complete). It is the most serious error: `validate_scene`
+  reports it as an error.
+- **Missing icon**: the image is neither in `games/<game>/<icon>` nor in
   `engine/assets/<icon>`.
-- **Oggetto fuori bounds**: coordinate oltre la dimensione del background.
+- **Object out of bounds**: coordinates beyond the background size.
 
-## Integrita' del catalogo
+## Catalog integrity
 
-Per problemi lato catalogo (id duplicati, schema): `python tools/audit_catalog.py`.
-Per trovare PNG mancanti su tutto il catalogo: tool MCP `check_missing_assets`.
+For catalog-side problems (duplicate ids, schema): `python tools/audit_catalog.py`.
+To find missing PNGs across the whole catalog: MCP tool `check_missing_assets`.

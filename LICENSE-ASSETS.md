@@ -1,62 +1,62 @@
-# Licenza degli asset — HiddenIndexEngine
+# Asset license — HiddenIndexEngine
 
-Il **codice sorgente** di questo repository e' rilasciato sotto **Apache License 2.0**
-(vedi [LICENSE](LICENSE)). Gli **asset** seguono invece la licenza descritta qui.
+The **source code** of this repository is released under the **Apache License 2.0**
+(see [LICENSE](LICENSE)). The **assets** follow the license described here instead.
 
-## Cosa copre questo documento
+## What this document covers
 
-Tutti i contenuti creativi distribuiti nel repository:
+All creative content distributed in the repository:
 
-| Categoria | Percorsi |
-|-----------|----------|
-| Sfondi delle scene | `engine/assets/backgrounds/`, `games/*/levels/**/*.png`, `games/*/levels/**/*.jpg` |
-| Oggetti (icone HOG) | `engine/assets/objects_cartoon/`, `engine/assets/objects_lineart/`, `games/*/objects/` |
-| UI, menu, temi (grafica) | `engine/assets/themes/**/*.png`, `engine/assets/ui/` |
-| Musica | `engine/assets/music/` |
-| Effetti sonori | `engine/assets/sounds/` |
-| Media del README (screenshot, diagramma, logo) | `docs/images/` |
+| Category | Paths |
+|----------|-------|
+| Scene backgrounds | `engine/assets/backgrounds/`, `games/*/levels/**/*.png`, `games/*/levels/**/*.jpg` |
+| Objects (HOG icons) | `engine/assets/objects_cartoon/`, `engine/assets/objects_lineart/`, `games/*/objects/` |
+| UI, menus, themes (graphics) | `engine/assets/themes/**/*.png`, `engine/assets/ui/` |
+| Music | `engine/assets/music/` |
+| Sound effects | `engine/assets/sounds/` |
+| README media (screenshots, diagram, logo) | `docs/images/` |
 
-**Esclusi** (licenza propria, vedi [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)):
-i font in `engine/assets/themes/*/fonts/`.
+**Excluded** (own licenses, see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)):
+the fonts in `engine/assets/themes/*/fonts/` and the platform logos in `docs/images/icons/`.
 
-## Licenza
+## License
 
 Copyright 2026 Indecenti.
 
-Questi asset sono rilasciati sotto
+These assets are released under the
 **[Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)**.
 
-Testo legale completo: <https://creativecommons.org/licenses/by/4.0/legalcode>
+Full legal text: <https://creativecommons.org/licenses/by/4.0/legalcode>
 
-In sintesi, sei libero di:
+In short, you are free to:
 
-- **Condividere** — copiare e ridistribuire il materiale con qualsiasi mezzo e formato.
-- **Adattare** — remixare, trasformare e costruirci sopra, anche per **scopi commerciali**.
+- **Share** — copy and redistribute the material in any medium or format.
+- **Adapt** — remix, transform and build upon it, including for **commercial purposes**.
 
-Alla sola condizione di:
+Under the only condition of:
 
-- **Attribuzione** — citare la fonte, per esempio:
-  `Asset da HiddenIndexEngine (https://github.com/indecenti/HiddenIndexEngine), CC BY 4.0`,
-  indicare se sono state fatte modifiche e non suggerire che l'autore avalli il tuo uso.
+- **Attribution** — credit the source, for example:
+  `Assets from HiddenIndexEngine (https://github.com/indecenti/HiddenIndexEngine), CC BY 4.0`,
+  indicate if changes were made, and do not suggest that the author endorses your use.
 
-## Provenienza
+## Provenance
 
-Le immagini (sfondi e oggetti) sono state generate con strumenti di intelligenza
-artificiale e successivamente processate dall'autore (ritaglio, rimozione sfondo,
-correzione colore, compositing) tramite la pipeline in `tools/` e `editor/`.
+The images (backgrounds and objects) were generated with artificial intelligence tools
+and then processed by the author (cropping, background removal, color correction,
+compositing) through the pipeline in `tools/` and `editor/`.
 
-La musica in `engine/assets/music/` e' composta ed eseguita dall'autore
-(pubblicata come *Indecenti*).
+The music in `engine/assets/music/` is composed and performed by the author
+(published as *Indecenti*).
 
-**Nota giuridica.** In alcune giurisdizioni — in particolare negli Stati Uniti —
-l'output puramente generato da un sistema di IA, senza un contributo creativo umano
-sufficiente, potrebbe non essere tutelabile dal diritto d'autore. La licenza CC BY 4.0
-qui applicata copre quanto e' effettivamente tutelabile; dove non lo fosse, gli asset
-sono di fatto liberamente utilizzabili. In entrambi i casi l'attribuzione e' apprezzata.
+**Legal note.** In some jurisdictions — notably the United States — output generated
+purely by an AI system, without sufficient human creative contribution, may not be
+protected by copyright. The CC BY 4.0 license applied here covers whatever is actually
+protectable; where it is not, the assets are effectively free to use. In both cases
+attribution is appreciated.
 
-## Marchi
+## Trademarks
 
-Il nome **HiddenIndexEngine**, la sigla **HIE** e i loghi del progetto non sono
-coperti ne' dalla licenza del codice ne' da quella degli asset. Puoi dire che il tuo
-gioco e' "costruito con HiddenIndexEngine", ma non usare il nome o il logo in modo
-che lasci intendere un'approvazione ufficiale del progetto.
+The name **HiddenIndexEngine**, the acronym **HIE** and the project logos are covered
+neither by the code license nor by the asset license. You may say that your game is
+"built with HiddenIndexEngine", but do not use the name or the logo in a way that
+suggests official endorsement by the project.

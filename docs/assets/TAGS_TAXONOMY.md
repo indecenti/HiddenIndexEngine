@@ -1,388 +1,393 @@
-# Tassonomia Tag - Riferimento Canonico
+# Tag Taxonomy - Canonical Reference
 
-> **File sorgente (fonte di verità)**: [engine/data/tags_taxonomy.json](../engine/data/tags_taxonomy.json)
-> Questo documento è la guida operativa; il JSON è autoritativo.
+> **Source file (source of truth)**: [engine/data/tags_taxonomy.json](../../engine/data/tags_taxonomy.json)
+> This document is the operating guide; the JSON is authoritative.
 
-Il sistema di tag è il cuore della navigazione intelligente nella tab OBJ dell'editor.
-Ogni oggetto ha **tag multipli** organizzati in namespace semantici (non gerarchici).
+The tag system is the heart of smart navigation in the editor's OBJ tab.
+Every object has **multiple tags** organized in semantic namespaces (not hierarchical).
+
+> **Note on naming**: tag identifiers are Italian words (`piccolo`, `metallo`, `cucina`, ...)
+> for historical reasons: they are data keys used in every catalog and localized in the
+> editor UI through `tag_<id>` strings. Do not translate existing identifiers; new tags
+> follow the same convention for consistency.
 
 ---
 
-## Principio: namespace, non livelli
+## Principle: namespaces, not levels
 
-I tag appartengono a un namespace tipizzato:
+Tags belong to a typed namespace:
 
-| Namespace     | Obbligatorio?    | Descrizione                                              |
+| Namespace     | Required?        | Description                                              |
 |---------------|------------------|----------------------------------------------------------|
-| `DIMENSIONE`  | **Sempre**       | Dimensione fisica dell'oggetto nel gioco                 |
-| `MATERIALE`   | **Sempre**       | Materiale prevalente dell'oggetto                        |
-| `DOMINIO`     | **Sempre**       | Categoria funzionale/tematica                            |
-| `TEMA`        | Se applicabile   | Estetica narrativa predominante                          |
-| `MOOD`        | Se applicabile   | Attributo emotivo o qualitativo                          |
-| `NATURA`      | Solo nat./biol.  | Oggetti del mondo naturale                               |
-| `GEOGRAFIA`   | Se rilevante     | Origine culturale/geografica                             |
-| `COLORE`      | Solo se identif. | Colore dominante, solo se è il tratto identificativo     |
+| `DIMENSIONE`  | **Always**       | Physical size of the object in the game                  |
+| `MATERIALE`   | **Always**       | Prevailing material of the object                        |
+| `DOMINIO`     | **Always**       | Functional/thematic category                             |
+| `TEMA`        | If applicable    | Predominant narrative aesthetic                          |
+| `MOOD`        | If applicable    | Emotional or qualitative attribute                       |
+| `NATURA`      | Natural/bio only | Objects of the natural world                             |
+| `GEOGRAFIA`   | If relevant      | Cultural/geographic origin                               |
+| `COLORE`      | Only if defining | Dominant color, only when it is the identifying trait    |
 
-**Regola d'oro**: ogni oggetto deve avere almeno un tag da DIMENSIONE, uno da MATERIALE
-e uno da DOMINIO (o NATURA se è un essere vivente/pianta).
+**Golden rule**: every object must have at least one tag from DIMENSIONE, one from MATERIALE
+and one from DOMINIO (or NATURA if it is a living being/plant).
 
 ---
 
-## NAMESPACE: DIMENSIONE
+## NAMESPACE: DIMENSIONE (size)
 
-Tag tecnici nascosti dai chip UI ma presenti nel JSON e ricercabili.
+Technical tags hidden from the UI chips but present in the JSON and searchable.
 
-| Tag       | Soglia approssimativa                              |
+| Tag       | Approximate threshold                              |
 |-----------|----------------------------------------------------|
-| `piccolo` | Radius < 25px oppure lato < 40px                   |
-| `medio`   | Radius 25–50px oppure lato 40–90px                 |
-| `grande`  | Radius > 50px oppure lato > 90px                   |
+| `piccolo` | Radius < 25 px or side < 40 px                     |
+| `medio`   | Radius 25–50 px or side 40–90 px                   |
+| `grande`  | Radius > 50 px or side > 90 px                     |
 
 ---
 
-## NAMESPACE: MATERIALE
+## NAMESPACE: MATERIALE (material)
 
-Materiale prevalente. Un oggetto può averne più di uno se composto.
+Prevailing material. An object can have more than one if composite.
 
-| Tag        | Uso tipico                                                   |
+| Tag        | Typical use                                                  |
 |------------|--------------------------------------------------------------|
-| `metallo`  | Ferro, acciaio, alluminio, rame, ottone, oro, argento        |
-| `legno`    | Legno grezzo o lavorato, compensato                          |
-| `carta`    | Carta, cartone, cartoncino, libri, manifesti                 |
-| `plastica` | Polimeri sintetici, resine, PVC                              |
-| `vetro`    | Vetro, cristallo trasparente, specchi                        |
-| `stoffa`   | Tessuto, tela, imbottitura, feltro                           |
-| `ceramica` | Ceramica, terracotta, porcellana, maiolica                   |
-| `gomma`    | Gomma naturale o sintetica, latex, silicone                  |
-| `cuoio`    | Pelle conciata, cuoio lavorato (cinture, selle, borse)       |
-| `pietra`   | Pietra, marmo, minerali, fossili, meteoriti                  |
-| `cristallo`| Cristallo, gemme, quarzi trasparenti                         |
-| `cera`     | Cera d'api, paraffina, candele                               |
-| `osso`     | Ossa, avorio, corno animale, denti                           |
-| `biologico`| Materiale organico non-animale o parti biologiche            |
+| `metallo`  | Iron, steel, aluminum, copper, brass, gold, silver           |
+| `legno`    | Raw or worked wood, plywood                                  |
+| `carta`    | Paper, cardboard, card stock, books, posters                 |
+| `plastica` | Synthetic polymers, resins, PVC                              |
+| `vetro`    | Glass, transparent crystal, mirrors                          |
+| `stoffa`   | Fabric, canvas, padding, felt                                |
+| `ceramica` | Ceramic, terracotta, porcelain, majolica                     |
+| `gomma`    | Natural or synthetic rubber, latex, silicone                 |
+| `cuoio`    | Tanned hide, worked leather (belts, saddles, bags)           |
+| `pietra`   | Stone, marble, minerals, fossils, meteorites                 |
+| `cristallo`| Crystal, gems, transparent quartz                            |
+| `cera`     | Beeswax, paraffin, candles                                   |
+| `osso`     | Bones, ivory, animal horn, teeth                             |
+| `biologico`| Non-animal organic material or biological parts              |
 
-> **Nota**: `pelle` (skin/flesh) rimane distinto da `cuoio` (leather lavorato).
-> Usa `cuoio` per accessori in cuoio, `biologico` + `pelle` per parti corporee horror.
+> **Note**: `pelle` (skin/flesh) stays distinct from `cuoio` (worked leather).
+> Use `cuoio` for leather accessories, `biologico` + `pelle` for horror body parts.
 
 ---
 
-## NAMESPACE: DOMINIO
+## NAMESPACE: DOMINIO (domain)
 
-Categoria funzionale/tematica. Sono i **chip cliccabili nell'editor UI**.
-Ogni oggetto deve averne almeno uno.
+Functional/thematic category. These are the **clickable chips in the editor UI**.
+Every object must have at least one.
 
-### Abbigliamento e accessori
-| Tag             | Oggetti tipici                                              |
+### Clothing and accessories
+| Tag             | Typical objects                                             |
 |-----------------|-------------------------------------------------------------|
-| `abbigliamento` | Vestiti, guanti, maschere protettive, tute                  |
-| `accessorio`    | Occhiali, borse, spille, pendenti, oggetti indossabili      |
-| `calzatura`     | Scarpe, stivali, sandali, pantofole, pattini, infradito     |
-| `cappello`      | Cappelli, berretti, elmetti, copricapi in genere            |
-| `gioiello`      | Anelli, collane, bracciali, amuleti preziosi                |
-| `orologio`      | Orologi da polso, da tavolo, sveglie, orologi a pendolo     |
+| `abbigliamento` | Clothes, gloves, protective masks, suits                    |
+| `accessorio`    | Glasses, bags, brooches, pendants, wearable objects         |
+| `calzatura`     | Shoes, boots, sandals, slippers, skates, flip-flops         |
+| `cappello`      | Hats, caps, helmets, headwear in general                    |
+| `gioiello`      | Rings, necklaces, bracelets, precious amulets               |
+| `orologio`      | Wristwatches, table clocks, alarm clocks, pendulum clocks   |
 
-### Armi e strumenti
-| Tag         | Oggetti tipici                                                |
+### Weapons and tools
+| Tag         | Typical objects                                               |
 |-------------|---------------------------------------------------------------|
-| `arma`      | Spade, pistole, coltelli, asce, mazze, fruste offensive       |
-| `attrezzo`  | Utensili manuali: martelli, pinze, righelli, cacciaviti       |
-| `officina`  | Attrezzatura da officina: trapani, saldatori, morse, calibri  |
-| `chiave`    | Chiavi di ogni tipo (del porta, antiche, magiche)             |
+| `arma`      | Swords, guns, knives, axes, maces, offensive whips            |
+| `attrezzo`  | Hand tools: hammers, pliers, rulers, screwdrivers             |
+| `officina`  | Workshop equipment: drills, welders, vises, calipers          |
+| `chiave`    | Keys of every kind (door, antique, magic)                     |
 
-### Cucina e cibo
-| Tag       | Oggetti tipici                                                  |
+### Kitchen and food
+| Tag       | Typical objects                                                 |
 |-----------|-----------------------------------------------------------------|
-| `cucina`  | Pentole, coltelli da cucina, utensili culinari, elettrodomestici|
-| `cibo`    | Alimenti solidi: frutta, pane, carne, pizza, dolci, salumi      |
-| `bevanda` | Liquidi potabili, bottiglie piene, tazze con contenuto          |
-| `salume`  | Salumi italiani: prosciutto, salame, mortadella, speck          |
-| `dolce`   | Dolciumi: torte, caramelle, gelati, biscotti, cioccolato        |
-| `salato`  | Snack salati: patatine, pretzel, crackers, noccioline           |
+| `cucina`  | Pots, kitchen knives, cooking utensils, appliances              |
+| `cibo`    | Solid food: fruit, bread, meat, pizza, sweets, cured meats      |
+| `bevanda` | Drinkable liquids, full bottles, cups with content              |
+| `salume`  | Italian cured meats: prosciutto, salami, mortadella, speck      |
+| `dolce`   | Sweets: cakes, candy, ice cream, biscuits, chocolate            |
+| `salato`  | Savory snacks: chips, pretzels, crackers, peanuts               |
 
-### Casa e arredamento
-| Tag            | Oggetti tipici                                               |
+### Home and furnishing
+| Tag            | Typical objects                                              |
 |----------------|--------------------------------------------------------------|
-| `arredamento`  | Mobili, specchi, cornici, cuscini, oggetti d'arredo fissi    |
-| `decorazione`  | Oggetti decorativi senza funzione pratica primaria           |
-| `casa`         | Oggetti domestici generici non classificabili altrove        |
-| `luce`         | Lampade, lanterne, candele accese, torce, proiettori         |
-| `pulizia`      | Scope, spugne, detergenti, mop, secchi                       |
-| `bagno`        | Oggetti igienici: rasoio, spazzolino, sapone, asciugamano    |
-| `giardino`     | Attrezzi da giardinaggio, piante in vaso, gnomi, fontane     |
+| `arredamento`  | Furniture, mirrors, frames, cushions, fixed decor            |
+| `decorazione`  | Decorative objects without a primary practical function      |
+| `casa`         | Generic household objects not classifiable elsewhere         |
+| `luce`         | Lamps, lanterns, lit candles, torches, projectors            |
+| `pulizia`      | Brooms, sponges, detergents, mops, buckets                   |
+| `bagno`        | Hygiene objects: razor, toothbrush, soap, towel              |
+| `giardino`     | Gardening tools, potted plants, gnomes, fountains            |
 
-### Tecnologia ed elettronica
-| Tag             | Oggetti tipici                                              |
+### Technology and electronics
+| Tag             | Typical objects                                             |
 |-----------------|-------------------------------------------------------------|
-| `elettronica`   | Dispositivi elettronici: computer, chip, console, sensori   |
-| `tecnologia`    | Oggetti tecnici moderni o meccanici avanzati (più ampio)    |
-| `comunicazione` | Telefoni, radio, walkie-talkie, citofoni                    |
-| `dati`          | Supporti dati: floppy, USB, CD, hard disk, schede memoria   |
-| `audio`         | Cuffie, speaker, microfoni, walkman, cassette audio         |
-| `video`         | VHS, DVD, proiettori, display, webcam                       |
+| `elettronica`   | Electronic devices: computers, chips, consoles, sensors     |
+| `tecnologia`    | Modern technical or advanced mechanical objects (broader)   |
+| `comunicazione` | Phones, radios, walkie-talkies, intercoms                   |
+| `dati`          | Data media: floppy disks, USB sticks, CDs, hard disks, memory cards |
+| `audio`         | Headphones, speakers, microphones, walkmans, audio cassettes|
+| `video`         | VHS, DVD, projectors, displays, webcams                     |
 
-> **Differenza `elettronica` vs `tecnologia`**: `elettronica` = il dispositivo
-> ha circuiti. `tecnologia` = oggetto dell'era tecnologica moderna (include
-> meccanici avanzati, digitali, informatici). Spesso coesistono.
+> **`elettronica` vs `tecnologia`**: `elettronica` = the device has circuits.
+> `tecnologia` = an object of the modern technological era (includes advanced
+> mechanical, digital, computing). They often coexist.
 
-### Giochi e intrattenimento
-| Tag                 | Oggetti tipici                                            |
+### Games and entertainment
+| Tag                 | Typical objects                                           |
 |---------------------|-----------------------------------------------------------|
-| `gioco`             | Giochi da tavolo, carte da gioco, dadi, puzzle, ouija     |
-| `giocattolo`        | Giocattoli: pupazzi, peluche, action figure, modellini    |
-| `videogame`         | Console, controller, cartucce, accessori gaming           |
-| `carte_da_gioco`    | Mazzi di carte: poker, tarocchi, UNO, magic               |
-| `carta_individuale` | Singola carta estratta da un mazzo                        |
-| `slot`              | Slot machine, ruote della roulette, componenti da casinò  |
-| `casinò`            | Oggetti da casinò: fiches, tavoli, segnalatori            |
-| `sport`             | Attrezzatura sportiva: racchette, palloni, pesi, trofei   |
-| `collezione`        | Oggetti da collezione: modellini, edizioni limitate       |
-| `modello`           | Modellini in scala: aerei, navi, auto, treni              |
+| `gioco`             | Board games, playing cards, dice, puzzles, ouija          |
+| `giocattolo`        | Toys: dolls, plush toys, action figures, models           |
+| `videogame`         | Consoles, controllers, cartridges, gaming accessories     |
+| `carte_da_gioco`    | Card decks: poker, tarot, UNO, magic                      |
+| `carta_individuale` | A single card taken from a deck                           |
+| `slot`              | Slot machines, roulette wheels, casino components         |
+| `casinò`            | Casino objects: chips, tables, markers                    |
+| `sport`             | Sports equipment: rackets, balls, weights, trophies       |
+| `collezione`        | Collectibles: models, limited editions                    |
+| `modello`           | Scale models: planes, ships, cars, trains                 |
 
-### Arte, cultura, media
-| Tag       | Oggetti tipici                                                  |
+### Art, culture, media
+| Tag       | Typical objects                                                 |
 |-----------|-----------------------------------------------------------------|
-| `arte`    | Pennelli, palette, tele, sculture, strumenti creativi           |
-| `musica`  | Strumenti musicali, vinili, partiture, cuffie da DJ             |
-| `cinema`  | Pellicole, ciak, proiettori, DVD                                |
-| `fumetti` | Albi a fumetti, manga, gadget supereroi, trading card           |
-| `poster`  | Poster, manifesti, locandine                                    |
-| `foto`    | Fotografie, macchine fotografiche, album, polaroid              |
-| `maschera`| Maschere: veneziane, di carnevale, teatrali, horror             |
+| `arte`    | Brushes, palettes, canvases, sculptures, creative tools         |
+| `musica`  | Musical instruments, vinyl records, sheet music, DJ headphones  |
+| `cinema`  | Film reels, clapperboards, projectors, DVDs                     |
+| `fumetti` | Comic books, manga, superhero gadgets, trading cards            |
+| `poster`  | Posters, bills, playbills                                       |
+| `foto`    | Photographs, cameras, albums, polaroids                         |
+| `maschera`| Masks: Venetian, carnival, theatrical, horror                   |
 
-### Ufficio e studio
-| Tag      | Oggetti tipici                                                    |
+### Office and study
+| Tag      | Typical objects                                                   |
 |----------|-------------------------------------------------------------------|
-| `ufficio`| Cancelleria: penne, graffette, pinzatrici, stampante              |
-| `studio` | Libri, atlanti, globi, dizionari, oggetti da biblioteca           |
+| `ufficio`| Stationery: pens, paper clips, staplers, printer                  |
+| `studio` | Books, atlases, globes, dictionaries, library objects             |
 
-### Medico
-| Tag      | Oggetti tipici                                                    |
+### Medical
+| Tag      | Typical objects                                                   |
 |----------|-------------------------------------------------------------------|
-| `medico` | Strumenti medici, siringhe, garze, kit pronto soccorso, mascherine|
+| `medico` | Medical instruments, syringes, gauze, first-aid kits, face masks  |
 
-### Viaggio e trasporti
-| Tag        | Oggetti tipici                                                |
+### Travel and transport
+| Tag        | Typical objects                                               |
 |------------|---------------------------------------------------------------|
-| `viaggio`  | Valigie, bussole, mappe, zaini, borracce, tende da campo      |
-| `veicolo`  | Veicoli o loro componenti: auto, bici, moto                   |
+| `viaggio`  | Suitcases, compasses, maps, backpacks, canteens, tents        |
+| `veicolo`  | Vehicles or their parts: cars, bikes, motorcycles             |
 
-### Simboli, denaro, segnaletica
-| Tag           | Oggetti tipici                                              |
+### Symbols, money, signage
+| Tag           | Typical objects                                             |
 |---------------|-------------------------------------------------------------|
-| `simbolo`     | Simboli, stemmi, amuleti, icone grafiche (pace, yin-yang)   |
-| `denaro`      | Monete, banconote, portafogli, salvadanai, casse            |
-| `bandiera`    | Bandiere nazionali o simboliche                             |
-| `nazione`     | Oggetti simbolo di una nazione specifica                    |
-| `segnaletica` | Cartelli stradali, segnali di pericolo, indicatori          |
-| `tradizione`  | Oggetti della tradizione locale o folkloristica             |
+| `simbolo`     | Symbols, crests, amulets, graphic icons (peace, yin-yang)   |
+| `denaro`      | Coins, banknotes, wallets, piggy banks, cash boxes          |
+| `bandiera`    | National or symbolic flags                                  |
+| `nazione`     | Objects symbolizing a specific nation                       |
+| `segnaletica` | Road signs, danger signs, indicators                        |
+| `tradizione`  | Objects of local tradition or folklore                      |
 
 ---
 
-## NAMESPACE: TEMA
+## NAMESPACE: TEMA (theme)
 
-Estetica narrativa prevalente. Visibili come chip secondari.
+Prevailing narrative aesthetic. Visible as secondary chips.
 
-| Tag        | Definizione precisa                                                  |
+| Tag        | Precise definition                                                   |
 |------------|----------------------------------------------------------------------|
-| `horror`   | Oggetti inquietanti, legati al terrore o al mistero                  |
-| `vintage`  | Estetica **pre-anni '60**: antico, vittoriano, art déco, coloniale   |
-| `retro`    | Estetica **anni '60–'90**: nostalgia pop, retrocomputing, VHS        |
-| `scifi`    | Fantascienza: futuro, spazio, robot, alieni, distopia                |
-| `noir`     | Estetica noir: ombra, detective, anni '40–'50, fumo                  |
-| `cult`     | Oggetti iconici di cultura pop o cult classics                       |
-| `pop`      | Cultura pop contemporanea: mainstream, colorato                      |
-| `fantasy`  | Oggetti fantastici: magia, draghi, armi medievali, elfi              |
-| `circo`    | Estetica circense: clown, acrobati, magia di scena                   |
-| `oceano`   | Oggetti marini, navali, subacquei, pirati                            |
-| `isometrico`| Oggetti rappresentati in prospettiva isometrica (tag tecnico)       |
+| `horror`   | Disturbing objects, tied to terror or mystery                        |
+| `vintage`  | **Pre-1960s** aesthetic: antique, Victorian, art deco, colonial      |
+| `retro`    | **1960s–1990s** aesthetic: pop nostalgia, retrocomputing, VHS        |
+| `scifi`    | Science fiction: future, space, robots, aliens, dystopia             |
+| `noir`     | Noir aesthetic: shadow, detectives, 1940s–1950s, smoke               |
+| `cult`     | Iconic pop-culture objects or cult classics                          |
+| `pop`      | Contemporary pop culture: mainstream, colorful                       |
+| `fantasy`  | Fantastic objects: magic, dragons, medieval weapons, elves           |
+| `circo`    | Circus aesthetic: clowns, acrobats, stage magic                      |
+| `oceano`   | Marine, naval, underwater, pirate objects                            |
+| `isometrico`| Objects drawn in isometric perspective (technical tag)              |
 
-> **`vintage` vs `retro`**: `vintage` per oggetti genuinamente antichi
-> (pre-1960). `retro` per nostalgia degli anni '60–'90 (floppy, VHS, walkman,
-> controller SNES). Mai usarli entrambi sullo stesso oggetto.
+> **`vintage` vs `retro`**: `vintage` for genuinely old objects
+> (pre-1960). `retro` for 1960s–1990s nostalgia (floppy disks, VHS, walkmans,
+> SNES controllers). Never use both on the same object.
 
-> **Nota**: `mistero` è stato unificato in `horror` (v1.2).
+> **Note**: `mistero` was merged into `horror` (v1.2).
 
 ---
 
 ## NAMESPACE: MOOD
 
-Attributi emotivi o qualitativi.
+Emotional or qualitative attributes.
 
-| Tag             | Uso                                                           |
+| Tag             | Use                                                           |
 |-----------------|---------------------------------------------------------------|
-| `pericolo`      | Oggetto pericoloso o che evoca rischio immediato              |
-| `occulto`       | Esoterico, legato a rituali o simboli segreti                 |
-| `magia`         | Oggetto magico o con proprietà soprannaturali                 |
-| `prezioso`      | Oggetto di valore elevato, raro o pregiato                    |
-| `rotto`         | Oggetto danneggiato, consumato, arrugginito, usurato          |
-| `variante`      | Variante estetica di un oggetto già presente nel catalogo     |
-| `gruppo_oggetti`| Oggetto che rappresenta visivamente un insieme di elementi    |
+| `pericolo`      | Dangerous object or one that evokes immediate risk            |
+| `occulto`       | Esoteric, tied to rituals or secret symbols                   |
+| `magia`         | Magical object or one with supernatural properties            |
+| `prezioso`      | High-value, rare or fine object                               |
+| `rotto`         | Damaged, worn, rusty, used-up object                          |
+| `variante`      | Aesthetic variant of an object already in the catalog         |
+| `gruppo_oggetti`| Object that visually represents a set of items                |
 
-> **Nota**: `macabro` rimosso (v1.2) — era sempre co-presente con `horror`.
+> **Note**: `macabro` removed (v1.2) — it always co-occurred with `horror`.
 
 ---
 
-## NAMESPACE: NATURA
+## NAMESPACE: NATURA (nature)
 
-Per esseri viventi, piante, funghi, oggetti del mondo naturale.
+For living beings, plants, fungi, objects of the natural world.
 
-| Tag        | Uso                                                            |
+| Tag        | Use                                                            |
 |------------|----------------------------------------------------------------|
-| `natura`   | Oggetti naturali in generale: piante, rocce, elementi outdoor  |
-| `biologico`| Materiale organico: parti corporee, tessuti, materia organica  |
-| `insetto`  | Insetti e artropodi                                            |
-| `vola`     | Animali o oggetti capaci di volare                             |
-| `bosco`    | Oggetti del bosco: ghiande, pigne, nidi, funghi boschivi       |
-| `abisso`   | Oggetti delle profondità oceaniche                             |
+| `natura`   | Natural objects in general: plants, rocks, outdoor elements    |
+| `biologico`| Organic material: body parts, tissues, organic matter          |
+| `insetto`  | Insects and arthropods                                         |
+| `vola`     | Animals or objects able to fly                                 |
+| `bosco`    | Forest objects: acorns, pine cones, nests, forest mushrooms    |
+| `abisso`   | Objects of the ocean depths                                    |
 
 ---
 
-## NAMESPACE: GEOGRAFIA
+## NAMESPACE: GEOGRAFIA (geography)
 
-Origine geografica o culturale. Usare solo quando è un tratto identificativo rilevante.
+Geographic or cultural origin. Use only when it is a relevant identifying trait.
 
-| Tag             | Uso                                                |
+| Tag             | Use                                                |
 |-----------------|----------------------------------------------------|
-| `europa`        | Europa (include tutti i paesi europei)             |
+| `europa`        | Europe (includes every European country)           |
 | `nordamerica`   | USA, Canada                                        |
-| `sudamerica`    | America del Sud                                    |
-| `centroamerica` | America Centrale                                   |
-| `caraibi`       | Cultura caraibica                                  |
-| `orientale`     | Asia: Giappone, Cina, India, Medio Oriente         |
-| `nordico`       | Scandinavia, culture nordiche                      |
+| `sudamerica`    | South America                                      |
+| `centroamerica` | Central America                                    |
+| `caraibi`       | Caribbean culture                                  |
+| `orientale`     | Asia: Japan, China, India, Middle East             |
+| `nordico`       | Scandinavia, Nordic cultures                       |
 
-> **Regola**: NON aggiungere paesi specifici (italia, francia, ecc.) come tag.
-> Usa sempre la macro-area (`europa`). Se l'oggetto è chiaramente di un paese
-> specifico, aggiungi `tradizione` + la macro-area.
+> **Rule**: do NOT add specific countries (italia, francia, etc.) as tags.
+> Always use the macro-area (`europa`). If the object clearly belongs to a
+> specific country, add `tradizione` + the macro-area.
 
 ---
 
-## NAMESPACE: COLORE
+## NAMESPACE: COLORE (color)
 
-**Solo quando il colore è il tratto identificativo primario** dell'oggetto
-(es. "dado rosso" distinto da "dado blu"). Non taggare colori per oggetti
-monocromatici standard (una moneta d'oro non ha bisogno di `giallo`).
+**Only when the color is the primary identifying trait** of the object
+(e.g. "red die" as opposed to "blue die"). Do not tag colors for standard
+monochrome objects (a gold coin does not need `giallo`).
 
 | `rosso` | `verde` | `blu` | `giallo` | `nero` | `bianco` | `arancione` | `viola` | `cyan` | `rosa` | `marrone` | `argento` |
 
 ---
 
-## Tag tecnici interni
+## Internal technical tags
 
-Tag a bassa frequenza per disambiguare. Non creare nuovi tag di questo tipo
-senza consultare il team.
+Low-frequency tags used for disambiguation. Do not create new tags of this kind
+without consulting the team.
 
-| Tag                | Oggetti | Significato                                       |
+| Tag                | Objects | Meaning                                           |
 |--------------------|---------|---------------------------------------------------|
-| `carta_individuale`| ~53     | Singola carta da gioco                            |
-| `volante`          | 2       | Drone/oggetto volante                             |
-| `mouse`            | 2       | Mouse da computer                                 |
-| `tablet`           | 2       | Tablet digitale                                   |
-| `tastiera`         | 3       | Tastiera da computer                              |
-| `visore`           | 2       | Visore VR                                         |
-| `geometria`        | 9       | Forme geometriche pure (tetramino, cubi)          |
-| `minerale`         | 2       | Frammenti minerali/rocce                          |
-| `fumo`             | 7       | Accessori per fumatori: pipe, sigari, accendini   |
-| `prigione`         | 1       | Oggetti di contenzione/prigionia                  |
-| `lento`            | 1       | Animali lenti (lumaca)                            |
-| `notturno`         | 1       | Animali notturni (pipistrello)                    |
-| `mimetico`         | 1       | Animali mimetici (camaleonte)                     |
-| `abisso`           | 7       | Oggetti delle profondità marine                   |
+| `carta_individuale`| ~53     | Single playing card                               |
+| `volante`          | 2       | Drone/flying object                               |
+| `mouse`            | 2       | Computer mouse                                    |
+| `tablet`           | 2       | Digital tablet                                    |
+| `tastiera`         | 3       | Computer keyboard                                 |
+| `visore`           | 2       | VR headset                                        |
+| `geometria`        | 9       | Pure geometric shapes (tetrominoes, cubes)        |
+| `minerale`         | 2       | Mineral fragments/rocks                           |
+| `fumo`             | 7       | Smoking accessories: pipes, cigars, lighters      |
+| `prigione`         | 1       | Restraint/imprisonment objects                    |
+| `lento`            | 1       | Slow animals (snail)                              |
+| `notturno`         | 1       | Nocturnal animals (bat)                           |
+| `mimetico`         | 1       | Camouflaging animals (chameleon)                  |
+| `abisso`           | 7       | Objects of the deep sea                           |
 
 ---
 
-## Come aggiungere correttamente i tag a un nuovo oggetto
+## How to tag a new object correctly
 
-**Step 1 — Identifica il DOMINIO**
-Apri [engine/data/tags_taxonomy.json](../engine/data/tags_taxonomy.json) e trova
-il namespace `dominio`. Scegli il tag più specifico che descrive cosa FA o
-COSA È l'oggetto. Esempi: un coltello da cucina → `cucina` + `arma`;
-un globo → `studio` + `arredamento`.
+**Step 1 — Identify the DOMAIN**
+Open [engine/data/tags_taxonomy.json](../../engine/data/tags_taxonomy.json) and find
+the `dominio` namespace. Pick the most specific tag describing what the object DOES or
+WHAT it IS. Examples: a kitchen knife -> `cucina` + `arma`;
+a globe -> `studio` + `arredamento`.
 
-**Step 2 — Identifica DIMENSIONE e MATERIALE**
-- `piccolo` / `medio` / `grande` in base al radius/dimensioni nel JSON
-- Uno o più tag materiale (es. `metallo` + `legno` per un martello)
+**Step 2 — Identify SIZE and MATERIAL**
+- `piccolo` / `medio` / `grande` based on the radius/dimensions in the JSON
+- One or more material tags (e.g. `metallo` + `legno` for a hammer)
 
-**Step 3 — Aggiungi TEMA/MOOD se evidenti**
-Solo se l'oggetto ha un'estetica o mood chiaro:
-- Un teschio di cera → `horror`
-- Un walkman → `retro`
-- Una spada medievale → `fantasy` + `vintage`
+**Step 3 — Add THEME/MOOD if evident**
+Only if the object has a clear aesthetic or mood:
+- A wax skull -> `horror`
+- A walkman -> `retro`
+- A medieval sword -> `fantasy` + `vintage`
 
-**Step 4 — Verifica di non creare tag orfani**
+**Step 4 — Check that you are not creating orphan tags**
 ```bash
 python -X utf8 tools/audit_catalog.py
 ```
 
-**Step 5 — JSON finale**
+**Step 5 — Final JSON**
 ```json
 {
   "id": "my_new_object",
   "label_key": "obj_my_new_object",
-  "tags": ["dominio1", "dominio2", "materiale1", "tema1", "piccolo"]
+  "tags": ["domain1", "domain2", "material1", "theme1", "piccolo"]
 }
 ```
 
 ---
 
-## Come creare un nuovo tag (solo se strettamente necessario)
+## How to create a new tag (only if strictly necessary)
 
-Un nuovo tag è giustificato **solo se**:
-1. Descrive una categoria che non rientra in nessun tag esistente
-2. Verrà usato su **almeno 3 oggetti distinti**
-3. Non è sinonimo o sottoinsieme di un tag già esistente
+A new tag is justified **only if**:
+1. It describes a category that fits no existing tag
+2. It will be used on **at least 3 distinct objects**
+3. It is not a synonym or subset of an existing tag
 
-**Procedura**:
+**Procedure**:
 
-1. **Verifica che non esista già**: consulta le tabelle sopra
-2. **Scegli il namespace corretto**: in quale delle 8 categorie rientra?
-3. **Scegli il nome in italiano**, minuscolo, senza spazi (usa `_` se composto)
-4. **Aggiorna [engine/data/tags_taxonomy.json](../engine/data/tags_taxonomy.json)**: aggiungi il tag al namespace corretto con descrizione
-5. **Aggiorna questo documento**: aggiungi il tag alla tabella del namespace
-6. **Aggiorna `CHIP_TAG_HIDDEN`** in [editor/mixins/render_panels.py](../editor/mixins/render_panels.py) se il tag deve essere nascosto dai chip UI
-7. **Applica retroattivamente** a tutti gli oggetti esistenti che meritano il nuovo tag
+1. **Check that it does not exist already**: consult the tables above
+2. **Pick the right namespace**: which of the 8 categories does it belong to?
+3. **Pick the identifier following the existing convention** (Italian word, lowercase, no spaces, `_` for compounds)
+4. **Update [engine/data/tags_taxonomy.json](../../engine/data/tags_taxonomy.json)**: add the tag to the right namespace with a description
+5. **Update this document**: add the tag to the namespace table
+6. **Update `CHIP_TAG_HIDDEN`** in [editor/mixins/render_panels.py](../../editor/mixins/render_panels.py) if the tag must be hidden from the UI chips
+7. **Apply it retroactively** to every existing object that deserves the new tag
 
-**NON creare tag per**:
-- Singole nazioni europee specifiche (usa `europa` + `tradizione`)
-- Sottospecifiche di materiali già presenti (es. `acciaio` se esiste `metallo`)
-- Oggetti singoli (se solo un oggetto lo userebbe)
-- Qualità sensoriali soggettive (es. `morbido`, `pesante`)
-- Nomi di brand o modelli specifici (es. `nike`, `ferrari`)
+**Do NOT create tags for**:
+- Single specific European nations (use `europa` + `tradizione`)
+- Sub-specifications of existing materials (e.g. `acciaio` when `metallo` exists)
+- Single objects (if only one object would use it)
+- Subjective sensory qualities (e.g. `morbido`, `pesante`)
+- Brand or specific model names (e.g. `nike`, `ferrari`)
 
 ---
 
-## Tool di manutenzione
+## Maintenance tools
 
-Tutti in [tools/](../tools/):
+All in [tools/](../../tools/):
 
 ```bash
-# Audit completo: statistiche, tag orfani, oggetti sotto-taggati
+# Full audit: statistics, orphan tags, under-tagged objects
 python -X utf8 tools/audit_catalog.py
 
-# Migrazione tag (merge/rename)
-python -X utf8 tools/tag_migrate.py --dry-run   # anteprima
-python -X utf8 tools/tag_migrate.py             # applica con backup
+# Tag migration (merge/rename)
+python -X utf8 tools/tag_migrate.py --dry-run   # preview
+python -X utf8 tools/tag_migrate.py             # apply with backup
 
-# Aggiunta tag mancanti a oggetti specifici
+# Add missing tags to specific objects
 python -X utf8 tools/tag_fix_pass2.py --dry-run
 python -X utf8 tools/tag_fix_pass2.py
 ```
 
-Per aggiungere un merge/rename a `tag_migrate.py`, aggiungi una riga a `MERGE_MAP`:
+To add a merge/rename to `tag_migrate.py`, add a line to `MERGE_MAP`:
 ```python
-"vecchio_tag": "nuovo_tag",   # o None per rimuoverlo
+"old_tag": "new_tag",   # or None to remove it
 ```
 
-Per aggiungere tag mancanti a oggetti specifici, modifica `ADD_TAGS` in `tag_fix_pass2.py`:
+To add missing tags to specific objects, edit `ADD_TAGS` in `tag_fix_pass2.py`:
 ```python
-"id_oggetto": ["tag_da_aggiungere_1", "tag_da_aggiungere_2"],
+"object_id": ["tag_to_add_1", "tag_to_add_2"],
 ```
 
 ---
 
-## Esempi
+## Examples
 
-### Oggetto ben taggato
+### Well-tagged object
 
 ```json
 {
@@ -393,13 +398,13 @@ Per aggiungere tag mancanti a oggetti specifici, modifica `ADD_TAGS` in `tag_fix
 ```
 
 Breakdown:
-- `decorazione` → **DOMINIO** (cosa è: un oggetto decorativo)
-- `luce` → **DOMINIO** secondario (funzione: emette luce)
-- `horror` → **TEMA** (estetica e tono emotivo)
-- `osso`, `cera` → **MATERIALE** (di cosa è fatto)
-- `medio` → **DIMENSIONE** (nascosto dai chip UI)
+- `decorazione` -> **DOMINIO** (what it is: a decorative object)
+- `luce` -> secondary **DOMINIO** (function: it emits light)
+- `horror` -> **TEMA** (aesthetic and emotional tone)
+- `osso`, `cera` -> **MATERIALE** (what it is made of)
+- `medio` -> **DIMENSIONE** (hidden from the UI chips)
 
-### Oggetto mal taggato (da evitare)
+### Badly tagged object (to avoid)
 
 ```json
 {
@@ -408,10 +413,10 @@ Breakdown:
 }
 ```
 
-Problemi: `tecnologia` su un pugnale rituale è semanticamente sbagliato;
-`mistero` e `macabro` sono ora unificati in `horror`.
+Problems: `tecnologia` on a ritual dagger is semantically wrong;
+`mistero` and `macabro` are now merged into `horror`.
 
-Corretto:
+Correct:
 
 ```json
 {
@@ -422,16 +427,16 @@ Corretto:
 
 ---
 
-## Statistiche correnti (aggiornate 2026-04-20, v1.3)
+## Current statistics (updated 2026-04-20, v1.3)
 
-| Metrica                    | raw       | v1.1        | v1.2        | v1.3        |
+| Metric                     | raw       | v1.1        | v1.2        | v1.3        |
 |----------------------------|-----------|-------------|-------------|-------------|
-| Oggetti totali             | 1084      | 1084        | 1118        | **1127**    |
-| Tag istanze totali         | 5087      | 5396        | 5484        | **5430**    |
-| Tag unici                  | 372       | 301         | 299         | **205**     |
-| Media tag per oggetto      | 4.69      | 4.98        | 4.91        | **4.82**    |
+| Total objects              | 1084      | 1084        | 1118        | **1127**    |
+| Total tag instances        | 5087      | 5396        | 5484        | **5430**    |
+| Unique tags                | 372       | 301         | 299         | **205**     |
+| Average tags per object    | 4.69      | 4.98        | 4.91        | **4.82**    |
 
-**v1.3 Cleanup**: Rimozione aggressiva di 94 tag ridondanti/nomi (ascia, coltello,
-candela, ventilatore, sinonimi come ciliegie→frutta, bowling→palla,
-nani→gnomo). Mantiene solo tag categorizzanti. Fix: `lipstick` ha ora
-`accessorio`+`cosmetico` (non `abbigliamento`).
+**v1.3 cleanup**: aggressive removal of 94 redundant/name tags (ascia, coltello,
+candela, ventilatore, synonyms such as ciliegie->frutta, bowling->palla,
+nani->gnomo). Only categorizing tags are kept. Fix: `lipstick` now has
+`accessorio`+`cosmetico` (not `abbigliamento`).

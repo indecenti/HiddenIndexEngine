@@ -1,92 +1,92 @@
-# Guida allo Sviluppo di Minigiochi (HiddenIndexEngine)
+# Minigame Development Guide (HiddenIndexEngine)
 
-Questa guida descrive lo standard professionale per creare, integrare e localizzare nuovi minigiochi nell'engine. Seguendo questi passaggi, ogni minigioco erediterà automaticamente le funzionalità di pausa, scaling e la coerenza visiva del sistema principale.
+This guide describes the standard for creating, integrating and localizing new minigames in the engine. By following these steps, every minigame automatically inherits pause handling, scaling and the visual consistency of the main system.
 
-## 1. Struttura del File System
-Ogni minigioco deve risiedere in una sottocartella dedicata dentro `engine/minigames/`.
+## 1. File system layout
+Every minigame lives in a dedicated subfolder inside `engine/minigames/`.
 
 ```text
 engine/minigames/<minigame_id>/
-├── strings/            # File JSON per le 5 lingue (it, en, fr, es, de)
-├── manifest.json       # Configurazione per il caricamento dinamico
-└── <minigame_id>_game.py  # Classe principale del gioco
+├── strings/            # JSON files for the 5 languages (it, en, fr, es, de)
+├── manifest.json       # Configuration for dynamic loading
+└── <minigame_id>_game.py  # Main game class
 ```
 
-## 2. Il Manifest (`manifest.json`)
-Il manifest permette al `MinigameManager` di individuare la classe corretta senza doverla importare manualmente nel codice dell'engine.
+## 2. The manifest (`manifest.json`)
+The manifest lets the `MinigameManager` locate the right class without importing it manually in the engine code.
 ```json
 {
-  "id": "nome_gioco",
-  "name": "Titolo Visualizzato",
+  "id": "game_name",
+  "name": "Displayed Title",
   "main_class": "MyNewGame",
   "version": "1.0.0"
 }
 ```
 
-## 3. Localizzazione (Mandatoria)
-Ogni minigioco **DEVE** supportare le 5 lingue ufficiali per evitare warning o testi vuoti.
-- Percorso: `engine/minigames/<id>/strings/*.json`
-- Caricamento: Deve avvenire nel costruttore `__init__`.
+## 3. Localization (mandatory)
+Every minigame **MUST** support the 5 official languages to avoid warnings or empty text.
+- Path: `engine/minigames/<id>/strings/*.json`
+- Loading: must happen in the `__init__` constructor.
 
 > [!IMPORTANT]
-> Per garantire la corretta visualizzazione nel **Selettore Minigiochi dell'Editor**, ogni file `.json` della lingua deve contenere obbligatoriamente queste due chiavi:
-> - `mg_title`: Il nome del minigioco localizzato (es: "SFIDA PONG").
-> - `mg_description`: Una breve descrizione (max 2 righe) delle meccaniche di gioco.
+> To display correctly in the editor's **Minigame Selector**, every language `.json` file must contain these two keys:
+> - `mg_title`: the localized minigame name (e.g. "PONG CHALLENGE").
+> - `mg_description`: a short description (max 2 lines) of the game mechanics.
 >
-> Queste chiavi vengono utilizzate dall'editor per popolare l'interfaccia di selezione e permettere all'utente di capire cosa sta associando all'oggetto.
+> The editor uses these keys to populate the selection interface and let the user understand what they are attaching to the object.
 
 ```python
 from engine.utils import get_resource_path
 
 def __init__(self, **kwargs):
     super().__init__(**kwargs)
-    # Carica le traduzioni locali (it, en, fr, es, de)
+    # Load the local translations (it, en, fr, es, de)
     strings_path = get_resource_path("engine", "minigames", "my_id", "strings")
     self.load_local_strings(strings_path)
 ```
 
-## 4. Logica di Gioco (Ereditarietà)
-La classe deve ereditare da `BaseMinigame` implementando i metodi standard di Pygame.
+## 4. Game logic (inheritance)
+The class must inherit from `BaseMinigame` and implement the standard Pygame methods.
 
 ```python
 from engine.minigames.minigame_base import BaseMinigame
 
 class MyNewGame(BaseMinigame):
     def start(self) -> None:
-        """Invocato una sola volta all'attivazione del gioco."""
+        """Called once when the game is activated."""
         pass
 
     def handle_event(self, event: pygame.event.Event) -> None:
-        """Gestione input. NOTA: ESC attiva automaticamente la pausa globale tramite il MinigameManager."""
+        """Input handling. NOTE: ESC automatically triggers the global pause through the MinigameManager."""
         pass
 
     def update(self, dt: float) -> None:
-        """Logica dei frame (movimento, collisioni)."""
+        """Per-frame logic (movement, collisions)."""
         pass
 
     def draw(self) -> None:
-        """Rendering grafico dello stato attuale."""
+        """Render the current state."""
         self.screen.fill((20, 20, 20))
 ```
 
-## 5. Gestione Risultati e Punteggio
-Per chiudere il minigioco e tornare alla scena principale, invoca `self.finish(results)`.
-- `success`: Se `True`, viene considerato un obiettivo completato.
-- `score`: Punti bonus sommati al punteggio della run principale.
+## 5. Results and score
+To close the minigame and return to the main scene, call `self.finish(results)`.
+- `success`: if `True`, it counts as a completed objective.
+- `score`: bonus points added to the main run's score.
 
 ```python
 results = {
-    "success": True, 
-    "score": 1000      # Bonus per la vittoria
+    "success": True,
+    "score": 1000      # bonus for winning
 }
 self.finish(results)
 ```
 
-## 6. Sincronizzazione con l'Engine
-Il minigioco deve essere pronto a recepire cambiamenti di stato globali:
-- **Pausa**: Il pulsante in alto a sinistra è gestito dall'engine. Non disegnarlo.
-- **Resize**: Implementa `on_resize(self)` se vuoi ricalcolare il layout quando l'utente cambia risoluzione durante la pausa.
-- **Scaling**: Usa `self.scaling_manager.scale` per mantenere le proporzioni (font, velocità, dimensioni).
+## 6. Synchronization with the engine
+The minigame must be ready to react to global state changes:
+- **Pause**: the top-left button is handled by the engine. Do not draw it.
+- **Resize**: implement `on_resize(self)` if you want to recompute the layout when the user changes resolution while paused.
+- **Scaling**: use `self.scaling_manager.scale` to keep proportions (fonts, speeds, sizes).
 
-## 7. Registrazione
-Nessuna registrazione manuale richiesta. Una volta presente la cartella con il manifest, il minigioco può essere richiamato da qualsiasi oggetto della scena tramite l'editor semplicemente inserendo il suo `id`.
+## 7. Registration
+No manual registration required. Once the folder with the manifest exists, the minigame can be triggered from any scene object through the editor simply by entering its `id`.

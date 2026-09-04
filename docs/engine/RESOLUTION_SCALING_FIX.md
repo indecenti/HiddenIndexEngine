@@ -1,36 +1,36 @@
-# Risoluzione Anomalie Rendering (Display Scaling on Windows)
+# Fixing Rendering Anomalies (Display Scaling on Windows)
 
-## Il Problema ("Bordi neri a destra e in basso")
-Durante il cambio di risoluzione (ad es. da 1280x720 a 1920x1080) in modalità Finestra su sistemi Windows, l'esecuzione di `pygame.display.set_mode` aggiornava le logiche di rendering interne della _Surface_, ma falliva sistematicamente nel far recepire all'OS il ridimensionamento dei margini fisici della finestra.
-Di riflesso, la nuova e più ampia resolution veniva compressa od omessa nella vecchia finestra statica con l'inevitabile e anti-estetica formazione letterbox parziale (i "bordi neri") perché la Canvas tagliava fuori asse il raster.
+## The problem ("black borders on the right and at the bottom")
+When changing resolution (e.g. from 1280x720 to 1920x1080) in windowed mode on Windows, `pygame.display.set_mode` updated the internal rendering logic of the _Surface_ but systematically failed to make the OS pick up the new physical window bounds.
+As a result, the new, larger resolution was compressed or clipped inside the old static window, producing an ugly partial letterbox (the "black borders") because the canvas cut the raster off-axis.
 
-Questo avviene per tre casistiche tecniche concorrenti:
-1. Impiego forzato di `os.environ['SDL_VIDEO_CENTERED'] = '1'`.
-2. Assenza dell'istruzione `pygame.SCALED` o della feature `pygame.RESIZABLE` tra i `flags` di set_mode (entrambe inibite per precise ragioni architetturali del framework `HiddenIndexEngine`).
-3. Intercettazione errata del context DPI (Dots per Inch) da parte del backend hardware su OS Windows.
+Three technical causes contribute to this:
+1. The forced `os.environ['SDL_VIDEO_CENTERED'] = '1'`.
+2. The absence of `pygame.SCALED` or `pygame.RESIZABLE` among the `set_mode` `flags` (both deliberately avoided for architectural reasons of the `HiddenIndexEngine` framework).
+3. Wrong DPI (dots per inch) context detection by the hardware backend on Windows.
 
-## Soluzione Architetturale
-Per ovviare al problema senza intaccare le performance né appoggiarsi a refactoring distruttivi: si dismette bruscamente e si re-inizializza il contesto video immediatamente prima di settare il nuovo display.
-Poiché a partire da Pygame 2 le risorse caricate nella Virtual Memory nativa (come font o pre-calcoli via `.convert_alpha()`) persistono anche staccando l'aggancio alla GPU, questa pratica si rivela rapida, fluida e assolutamente solida contro crash applicativi.
+## Architectural solution
+To solve the problem without hurting performance or resorting to destructive refactoring, the video context is torn down and re-initialized right before setting the new display.
+Since Pygame 2, resources loaded into native memory (fonts, `.convert_alpha()` pre-computations) persist even after detaching from the GPU, so this practice is fast, smooth and robust against application crashes.
 
 ```python
-# Procedura in engine/core.py -> _apply_display_settings(self, w, h, fullscreen)
+# Procedure in engine/core.py -> _apply_display_settings(self, w, h, fullscreen)
 
-# 1. Spegnimento brutale, sgancio viewport dall'OS Windows
+# 1. Hard shutdown, detach the viewport from the OS
 pygame.display.quit()
 
-# 2. Riattivazione driver SDL per il display
+# 2. Re-initialize the SDL display driver
 pygame.display.init()
 
-# 3. Ri-assegnazione dell'hook di centratura (essenziale ri-registrarlo post-init)
+# 3. Re-register the centering hook (it must be set again after init)
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 pygame.display.set_caption("Hidden Engine")
 
-# 4. Atomico set_mode finale
+# 4. Final atomic set_mode
 self.screen = pygame.display.set_mode((w, h), flags, vsync=1)
 ```
 
-## Benefici Tecnici
-* La finestra viene costretta da Windows a un ridisegno topologico garantito (`WM_SIZE` e `WM_NCCALCSIZE` invocate con certezza su win32).
-* Totalmente compatibile e agnostico per eventuali futuri update in `ScalingManager` o conversioni full-screen.
-* Previene ghosting memory leaks che solitamente SDL porta su cambi sfalsati di display.
+## Technical benefits
+* Windows is forced into a guaranteed topological redraw of the window (`WM_SIZE` and `WM_NCCALCSIZE` are reliably invoked on win32).
+* Fully compatible with and agnostic to future updates of `ScalingManager` or full-screen conversions.
+* Prevents the ghosting memory leaks that SDL usually shows on staggered display changes.
