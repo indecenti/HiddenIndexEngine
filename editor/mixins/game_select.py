@@ -342,23 +342,19 @@ class GameSelectMixin:
         sel_scene = self.gs_sel_scene
 
         def _perform_open():
-            # Operazioni di caricamento lente (I/O, surface conversion).
-            # Gira in un thread daemon (_with_loading_async): il main loop
-            # continua a pompare eventi/renderizzare, quindi qui NIENTE
-            # pygame.event.* (coda eventi = solo main thread).
             self._load_game(gname)
             if sel_scene is not None:
                 self._load_scene(scenes[sel_scene])
             elif scenes:
                 self._load_scene(scenes[0])
 
-        def _done(result):
-            # Nel main thread: fn ha gia' impostato lo stato; qui solo errori.
-            if isinstance(result, BaseException):
-                self._status(self._TR("gs_open_error",
-                                      "Open error: {0}").format(result), ERR_C, 5)
-
-        self._with_loading_async(_perform_open, _done)
+        # SINCRONO sotto overlay, come ogni altra navigazione (_request_nav).
+        # La versione in worker thread (_with_loading_async) mutava scene_data,
+        # bg_surf, zoom e cache mentre il main thread renderizzava: lost update
+        # su _canvas_cache_dirty (canvas che mostrava lo sfondo della scena
+        # precedente) e scudo input che restava bloccato. Il caricamento dura
+        # decimi di secondo: l'overlay bloccante e' sufficiente.
+        self._with_loading(_perform_open)
 
     # ─────────────────────────────────────────────────────────────────────────
     # CREAZIONE
