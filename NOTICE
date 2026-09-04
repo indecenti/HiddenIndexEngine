@@ -1,13 +1,24 @@
 HiddenIndexEngine (HIE)
 Copyright 2026 Indecenti
 
-This product includes software developed by the HiddenIndexEngine project.
+Required Notice: Copyright 2026 Indecenti — HiddenIndexEngine
+https://github.com/indecenti/HiddenIndexEngine
 
-The source code of this project is licensed under the Apache License,
-Version 2.0. See the LICENSE file.
+The source code of this project is licensed under the PolyForm Noncommercial
+License 1.0.0: free for noncommercial use, commercial use requires a separate
+license from the author. See the LICENSE file, and LICENSING.md for the plain
+language summary and how to obtain a commercial license.
 
-The game assets bundled in this repository (images, music, sound effects)
-are NOT covered by the Apache License. See LICENSE-ASSETS.md.
+Versions released up to and including commit 354a140 (2026-09-04) were licensed
+under the Apache License 2.0 and remain available under those terms. That text
+is kept in LICENSE-APACHE-2.0.txt.
+
+The game assets bundled in this repository (images, music, sound effects) are
+NOT covered by the code license. They are released under CC BY-NC 4.0.
+See LICENSE-ASSETS.md.
+
+The name HiddenIndexEngine, the acronym HIE and the project logos are
+trademarks of the author and are not licensed by either file.
 
 Third-party components and their licenses are listed in
 THIRD_PARTY_NOTICES.md.

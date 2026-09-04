@@ -11,8 +11,8 @@
 
 <p align="center">
   <a href="https://github.com/indecenti/HiddenIndexEngine/actions/workflows/ci.yml"><img src="https://github.com/indecenti/HiddenIndexEngine/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/code-Apache--2.0-blue.svg" alt="Code license: Apache-2.0"></a>
-  <a href="LICENSE-ASSETS.md"><img src="https://img.shields.io/badge/assets-CC%20BY%204.0-lightgrey.svg" alt="Assets license: CC BY 4.0"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/code-PolyForm%20Noncommercial-blue.svg" alt="Code license: PolyForm Noncommercial 1.0.0"></a>
+  <a href="LICENSE-ASSETS.md"><img src="https://img.shields.io/badge/assets-CC%20BY--NC%204.0-lightgrey.svg" alt="Assets license: CC BY-NC 4.0"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.12-blue.svg" alt="Python 3.12"></a>
   <a href="https://www.pygame.org/"><img src="https://img.shields.io/badge/pygame-2.6-green.svg" alt="pygame 2.6"></a>
 </p>
@@ -231,10 +231,23 @@ issue.
 
 ## License
 
-- **Code** — [Apache 2.0](LICENSE). Fine for closed-source commercial games too.
-- **Assets** (images, music, sounds, README media) — [CC BY 4.0](LICENSE-ASSETS.md).
+**Free for noncommercial use, paid for commercial use.**
+
+- **Code** — [PolyForm Noncommercial 1.0.0](LICENSE). Free to study, modify and ship in
+  noncommercial projects: hobby games given away for free, education, research, charities
+  and public institutions. Selling a game, monetizing it with ads or in-app purchases, or
+  using the engine inside a company requires a **commercial license** from the author.
+- **Assets** (images, music, sounds, README media) — [CC BY-NC 4.0](LICENSE-ASSETS.md):
+  attribution, noncommercial. Commercial terms are agreed together with the code license.
+- **Commercial license** — how to get one, and what counts as commercial, in
+  [LICENSING.md](LICENSING.md). Short version: if the engine earns you money, the author
+  gets a share.
+- **History** — versions up to commit `354a140` (2026-09-04) were Apache 2.0 and stay
+  available under those terms ([LICENSE-APACHE-2.0.txt](LICENSE-APACHE-2.0.txt)).
 - **Third party** — fonts, pygame and other dependencies, Lucide icons in the diagram:
   [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). pygame is LGPL: distributed builds
   must ship its license text.
+- **Name and logo** — "HiddenIndexEngine", "HIE" and the logos are trademarks of the
+  author and are not covered by either license.
 
 Copyright 2026 Indecenti.

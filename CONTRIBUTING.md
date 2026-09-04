@@ -98,11 +98,20 @@ Open an issue with the Bug report template. Always include:
 
 ## Assets
 
-The graphic and audio assets in the repository are CC BY 4.0 (see
-[LICENSE-ASSETS.md](LICENSE-ASSETS.md)). **Do not open PRs that add third-party assets**
-whose license you cannot prove: they will be rejected.
+The graphic and audio assets in the repository are CC BY-NC 4.0 (see
+[LICENSE-ASSETS.md](LICENSE-ASSETS.md)), and assets you contribute are covered by the same
+grant as the code (below). **Do not open PRs that add third-party assets** whose license
+you cannot prove: they will be rejected.
 
 ## License of contributions
 
-By contributing you agree that your code is released under the **Apache License 2.0**,
-the same license as the project (see [LICENSE](LICENSE)).
+You keep the copyright on what you write. By opening a pull request you grant the author
+of the project (Indecenti) a perpetual, worldwide, irrevocable right to use your
+contribution and to license it to others, both under the project license
+(**[PolyForm Noncommercial 1.0.0](LICENSE)**) and under the commercial licenses described
+in [LICENSING.md](LICENSING.md), including under different terms in future releases.
+
+That grant is what makes the model work: the project is free for noncommercial use and
+commercial use is paid, and it can only be sold as a whole if every line in it can be
+licensed commercially. You also confirm that the contribution is your own work, or that you
+have the right to submit it under these terms.
