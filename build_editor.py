@@ -161,7 +161,16 @@ class EditorBuilderApp:
             config_src = self.base_path / "config.ini"
             if config_src.exists():
                 shutil.copy2(config_src, dist_dir / "config.ini")
-                self.log("Copiato config.ini")
+                self.log("config.ini copied")
+
+            # Legal notices: the editor bundle ships pygame (LGPL) and the
+            # engine code, so their terms travel with it like in a game build.
+            try:
+                from editor.build_common import write_license_bundle
+                write_license_bundle(self.base_path, dist_dir)
+                self.log("Legal notices written (licenses/)")
+            except Exception as e:
+                self.log(f"WARNING: legal notices not written ({e})")
 
             self.log("Post-build completato con successo.")
             self.set_status("✓ Compilazione Editor Completata!", "green")
