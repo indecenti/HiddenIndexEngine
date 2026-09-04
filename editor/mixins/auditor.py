@@ -119,7 +119,7 @@ class AuditorMixin:
             elif getattr(self, "game_path", None):
                 game_id = self.game_path.name
         if not game_id:
-            self._status("Seleziona prima un gioco", WARN_C, 2)
+            self._status(self._TR("aud_select_game_first", "Select a game first"), WARN_C, 2)
             return
         self._auditor_game_id = game_id
         self._auditor_issues = []
@@ -742,7 +742,7 @@ class AuditorMixin:
         try:
             issue["repair_fn"]()
             issue["repaired"] = True
-            self._status(f"Riparato: {issue['title']}", OK_C, 3)
+            self._status(self._TR("aud_fixed", "Fixed: {0}").format(issue['title']), OK_C, 3)
             logger.info(f"[AUDITOR] Issue riparata: {issue['title']}")
             # Se il gioco riparato e' quello aperto nell'editor, lo stato in memoria
             # e' ora disallineato dal disco: invalidiamo la cache scene e avvisiamo,
@@ -753,10 +753,10 @@ class AuditorMixin:
                     _SCENE_DATA_CACHE.clear()
                 except Exception:
                     pass
-                self._status("Riparato: ricarica la scena/gioco per applicarlo nell'editor", WARN_C, 5)
+                self._status(self._TR("aud_fixed_reload", "Fixed: reload the scene/game to apply it in the editor"), WARN_C, 5)
         except Exception as e:
             logger.error(f"[AUDITOR] Errore riparazione: {e}")
-            self._status(f"Errore riparazione: {e}", ERR_C, 4)
+            self._status(self._TR("aud_fix_error", "Repair error: {0}").format(e), ERR_C, 4)
 
     # ─────────────────────────────────────────────────────────────────────────
     # EVENTI
@@ -866,7 +866,7 @@ class AuditorMixin:
         )
 
         # Titolo e sottotitolo
-        _draw_text(self.screen, "PROJECT AUDITOR", "lg", ACCENT, dx + 20, dy + 10)
+        _draw_text(self.screen, self._TR("aud_title", "PROJECT AUDITOR"), "lg", ACCENT, dx + 20, dy + 10)
         game_label = f"Progetto: {self._auditor_game_id}" if self._auditor_game_id else ""
         _draw_text(self.screen, game_label, "sm", TXT_DIM, dx + 20, dy + 34)
 
@@ -877,16 +877,16 @@ class AuditorMixin:
         badge_x = dx + _MODAL_W - 330
         badge_y = dy + 16
         if n_err:
-            _draw_text(self.screen, f"● {n_err} ERR", "sm", ERR_C, badge_x, badge_y)
+            _draw_text(self.screen, self._TR("aud_count_err", "● {0} ERR").format(n_err), "sm", ERR_C, badge_x, badge_y)
         if n_warn:
-            _draw_text(self.screen, f"  ▲ {n_warn} WARN", "sm", WARN_C, badge_x + 80, badge_y)
+            _draw_text(self.screen, self._TR("aud_count_warn", "  ▲ {0} WARN").format(n_warn), "sm", WARN_C, badge_x + 80, badge_y)
         if n_ok and not (n_err or n_warn):
-            _draw_text(self.screen, f"✔ OK", "sm", OK_C, badge_x, badge_y)
+            _draw_text(self.screen, self._TR("aud_ok", "✔ OK"), "sm", OK_C, badge_x, badge_y)
 
         # Bottone Re-Scan
         rescan_r = pygame.Rect(dx + _MODAL_W - 210, dy + 12, 100, 32)
         rescan_hov = _in_rect((mx, my), rescan_r)
-        _button(self.screen, rescan_r, "↺ RISCAN", rescan_hov, font="sm")
+        _button(self.screen, rescan_r, self._TR("aud_rescan", "↺ RESCAN"), rescan_hov, font="sm")
         self._auditor_hitboxes["rescan"] = rescan_r
 
         # Bottone chiudi
@@ -940,10 +940,10 @@ class AuditorMixin:
                 # Store key using absolute index
                 btn_key = f"repair_{abs_i}"
                 btn_hov = _in_rect((mx, my), btn_r)
-                _button(self.screen, btn_r, "✔ RIPARA", btn_hov, font="xs")
+                _button(self.screen, btn_r, self._TR("aud_fix_btn", "✔ FIX"), btn_hov, font="xs")
                 self._auditor_hitboxes[btn_key] = btn_r
             elif repaired:
-                _draw_text(self.screen, "Riparato ✔", "xs", OK_C,
+                _draw_text(self.screen, self._TR("aud_fixed_badge", "Fixed ✔"), "xs", OK_C,
                            list_x + list_w - 100, iy + 18)
 
         self.screen.set_clip(None)

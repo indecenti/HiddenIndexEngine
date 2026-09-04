@@ -13,6 +13,7 @@ residuo vedi [ROADMAP.md](ROADMAP.md).
 - [engine/COORDINATE_SYSTEM.md](engine/COORDINATE_SYSTEM.md) — sistema di coordinate (reference space 1280x720, bg-space, trasformazioni).
 - [engine/RESOLUTION_SCALING_FIX.md](engine/RESOLUTION_SCALING_FIX.md) — scaling per risoluzione e note di rendering.
 - [engine/HINT_SYSTEM.md](engine/HINT_SYSTEM.md) — sistema di hint/aiuti per oggetto e per layer.
+- [engine/I18N.md](engine/I18N.md) — localizzazione: EN default e fallback unico, chiavi, placeholder, contratto verificato dai test.
 - [engine/MINIGAMES_DEVELOPMENT.md](engine/MINIGAMES_DEVELOPMENT.md) — come sviluppare e integrare un minigioco (architettura a plugin).
 
 ## Asset

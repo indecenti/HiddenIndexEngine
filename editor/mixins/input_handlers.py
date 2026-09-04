@@ -83,9 +83,9 @@ class InputHandlersMixin:
                     
                     if is_under_limit:
                         # Messaggio di feedback "cura" l'esperienza utente
-                        self._status(f"Limite UI raggiunto: {w}x{h} (HD)", WARN_C, 2)
+                        self._status(self._TR("ih_ui_limit", "UI limit reached: {0}x{1} (HD)").format(w, h), WARN_C, 2)
                     else:
-                        self._status(f"Resized: {w}x{h}", TXT_DIM, 1)
+                        self._status(self._TR("ih_resized", "Resized: {0}x{1}").format(w, h), TXT_DIM, 1)
                 else:
                     # Aggiorna layout interno anche se non c'è stato set_mode (dimensioni valide)
                     self.screen_size = (w, h)
@@ -205,7 +205,7 @@ class InputHandlersMixin:
                 self.obj_snap = not getattr(self, "obj_snap", True)
                 self._save_editor_setting("obj_snap", self.obj_snap)
                 self._status(
-                    f"Snap a oggetti: {'ON' if self.obj_snap else 'OFF'}", ACCENT, 2)
+                    self._TR("ih_snap_objects", "Snap to objects: {0}").format('ON' if self.obj_snap else 'OFF'), ACCENT, 2)
                 return
 
         # ── 3. MODALITÀ EDITING TESTO (Search bars, Numeric props) ────────────────
@@ -271,7 +271,7 @@ class InputHandlersMixin:
                 self.mode = MODE_SCATTER; self._cancel_rect()
                 self.selected_idx = None; self.selected_indices = []
                 self.sel_effect_idx = None; self._editing_prop = None
-                self._status("Piazza Cluster (4 oggetti random)", ACCENT, 2)
+                self._status(self._TR("ih_place_cluster", "Place cluster (4 random objects)"), ACCENT, 2)
                 self._mark_dirty(); return
             if ev.key == pygame.K_3:
                 if self.effects_catalog_sel:
@@ -279,13 +279,13 @@ class InputHandlersMixin:
                     self.selected_idx = None; self.selected_indices = []
                     self.sel_effect_idx = None; self._editing_prop = None
                     self._mark_dirty()
-                    self._status(f"Piazza effetto: {self.effects_catalog_sel}", FX_C, 2)
+                    self._status(self._TR("ih_place_effect", "Place effect: {0}").format(self.effects_catalog_sel), FX_C, 2)
                 else:
                     # Se non c'è selezione, apri la tab effetti per facilitare l'utente
                     from editor.constants import TAB_EFFECTS
                     self.l_tab = TAB_EFFECTS
                     self.panels_visible = True
-                    self._status("Seleziona un effetto dal catalogo", FX_C, 2)
+                    self._status(self._TR("ih_select_effect", "Select an effect from the catalog"), FX_C, 2)
                 return
             if ev.key == pygame.K_ESCAPE:  self._escape();                                return
             if ev.key in (pygame.K_DELETE, pygame.K_BACKSPACE):
@@ -307,7 +307,7 @@ class InputHandlersMixin:
                     self.grid_size = GRID_SIZES[(gi + 1) % len(GRID_SIZES)]
                     self._save_editor_setting("grid_size", self.grid_size)
                     self.show_grid = True
-                    self._status(f"Griglia: {self.grid_size}px", ACCENT, 2)
+                    self._status(self._TR("ih_grid", "Grid: {0}px").format(self.grid_size), ACCENT, 2)
                 else:
                     self.show_grid = not self.show_grid
                 self._mark_dirty()
@@ -353,7 +353,7 @@ class InputHandlersMixin:
                     else:
                         step = 1    # Normale
                     obj["rotation"] = round((obj.get("rotation", 0) + step) % 360, 1)
-                    self._status(f"Rotazione: {obj['rotation']}°", ACCENT, 1)
+                    self._status(self._TR("ih_rotation_deg", "Rotation: {0} deg").format(obj['rotation']), ACCENT, 1)
                     self.scene_dirty = True
                     return
                 if ev.key == pygame.K_q:  # Rotazione inversa
@@ -368,7 +368,7 @@ class InputHandlersMixin:
                     else:
                         step = -1
                     obj["rotation"] = round((obj.get("rotation", 0) + step) % 360, 1)
-                    self._status(f"Rotazione: {obj['rotation']}°", ACCENT, 1)
+                    self._status(self._TR("ih_rotation_deg", "Rotation: {0} deg").format(obj['rotation']), ACCENT, 1)
                     self.scene_dirty = True
                     return
                 if ev.key == pygame.K_h:
@@ -405,7 +405,7 @@ class InputHandlersMixin:
                         self.screen_size = (w, h)
 
                 self._update_layout()
-                self._status(f"Fullscreen: {'ON' if self.fullscreen else 'OFF'}", ACCENT, 2)
+                self._status(self._TR("ih_fullscreen", "Fullscreen: {0}").format('ON' if self.fullscreen else 'OFF'), ACCENT, 2)
                 return
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -421,7 +421,7 @@ class InputHandlersMixin:
         self.catalog_search    = ""
         self.catalog_scroll    = 0
         self.panels_visible    = True
-        self._status("Cerca nel catalogo…", TXT_DIM, 0)
+        self._status(self._TR("ih_search_catalog", "Search the catalog..."), TXT_DIM, 0)
 
 
     def _preset_key(self, ev):
@@ -444,7 +444,7 @@ class InputHandlersMixin:
             self.bubble_presets[name] = preset_data
             self._save_bubble_presets()
             self._preset_selected = name
-            self._status(f"Preset salvato: {name}", OK_C, 2)
+            self._status(self._TR("ih_preset_saved", "Preset saved: {0}").format(name), OK_C, 2)
         self._editing_preset_name = False
 
     def _prop_key(self, ev):
@@ -489,10 +489,10 @@ class InputHandlersMixin:
                             objs[i][key] = val
             self.scene_dirty = True
             self._mark_dirty()
-            self._status(f"Impostato {key}: {val}", OK_C, 1)
+            self._status(self._TR("ih_value_set", "Set {0}: {1}").format(key, val), OK_C, 1)
 
         except ValueError:
-            self._status("Errore: inserire un numero", ERR_C, 2)
+            self._status(self._TR("ih_need_number", "Error: enter a number"), ERR_C, 2)
         self._editing_prop = None
         self._prop_buf = ""
 
@@ -1421,7 +1421,7 @@ class InputHandlersMixin:
         # Avvisa se l'utente ha tirato troppo
         if res_w != clamped_w or res_h != clamped_h:
             self._status(
-                f"Dimensione max raggiunta ({MAX_DIM}px) - evita artefatti",
+                self._TR("ih_max_size", "Max size reached ({0}px) - avoids artifacts").format(MAX_DIM),
                 WARN_C, 2
             )
 
@@ -1467,9 +1467,9 @@ class InputHandlersMixin:
             if not is_disabled:
                 self.l_tab = new_tab
                 self.catalog_searching = False
-                self._status(f"Tab: {self.l_tab.upper()}", ACCENT, 1)
+                self._status(self._TR("ih_tab", "Tab: {0}").format(self.l_tab.upper()), ACCENT, 1)
             else:
-                self._status("Tab disabilitata in modalità Effetti", (255, 100, 100), 2)
+                self._status(self._TR("ih_tab_disabled_fx", "Tab disabled in Effects mode"), (255, 100, 100), 2)
             return True
         if self.l_tab == TAB_CATALOG:
             self._catalog_click(mx, my_raw)
@@ -1560,7 +1560,7 @@ class InputHandlersMixin:
                     self.catalog_tag_search = ""
                     self.catalog_scroll = 0
                     self.catalog_tags_scroll = 0
-                    self._status(f"Filtro: {s_id.upper()}", ACCENT, 1)
+                    self._status(self._TR("ih_filter", "Filter: {0}").format(s_id.upper()), ACCENT, 1)
                     self._play_click(); return
 
         # 3. Chip Tags
@@ -1697,7 +1697,7 @@ class InputHandlersMixin:
                 self.scene_data["auto_random_finds"] = val
                 self.scene_dirty = True
                 self._mark_dirty()
-                self._status(f"Rotazione auto: {'ON' if val else 'OFF'}", OK_C, 2)
+                self._status(self._TR("ih_auto_rotation", "Auto rotation: {0}").format('ON' if val else 'OFF'), OK_C, 2)
                 return
 
             # 3.5 Selezione Layer Casuale Toggle
@@ -1707,7 +1707,7 @@ class InputHandlersMixin:
                 self.scene_data["random_layer_selection"] = val
                 self.scene_dirty = True
                 self._mark_dirty()
-                self._status(f"Random Layer Mode: {'ON' if val else 'OFF'}", ALWAYS_C, 2)
+                self._status(self._TR("ih_random_layer", "Random layer mode: {0}").format('ON' if val else 'OFF'), ALWAYS_C, 2)
                 return
 
             # 4. Num Random Finds (se attivo)
@@ -1748,7 +1748,7 @@ class InputHandlersMixin:
                 self.scene_data["flashlight"] = val
                 self.scene_dirty = True
                 self._mark_dirty()
-                self._status(f"Torcia: {'ON' if val else 'OFF'}", FX_C, 2)
+                self._status(self._TR("ih_torch", "Torch: {0}").format('ON' if val else 'OFF'), FX_C, 2)
                 return
             
             if self.scene_data.get("flashlight", False):
@@ -1780,7 +1780,7 @@ class InputHandlersMixin:
                 self.scene_data["music"] = []
                 self.scene_dirty = True
                 self._mark_dirty()
-                self._status("Musiche della scena rimosse", WARN_C, 3)
+                self._status(self._TR("ih_scene_music_removed", "Scene music tracks removed"), WARN_C, 3)
                 return
             # Rimozione singola traccia (cliccando ×)
             for hb_key, hb_r in list(hboxes.items()):
@@ -1795,7 +1795,7 @@ class InputHandlersMixin:
                         removed = music.pop(track_idx)
                         self.scene_dirty = True
                         self._mark_dirty()
-                        self._status(f"Rimossa: {removed}", WARN_C, 2)
+                        self._status(self._TR("ih_removed_f", "Removed: {0}").format(removed), WARN_C, 2)
                     return
             
             # 10. Svuota Scena (con conferma)
@@ -1858,14 +1858,14 @@ class InputHandlersMixin:
             new_val = not all(o.get("editor_hidden", False) for o in objs_sel)
             for o in objs_sel: o["editor_hidden"] = new_val
             self.scene_dirty = True; self._mark_dirty()
-            self._status(f"Hide editor: {'ON' if new_val else 'OFF'}", WARN_C, 2)
+            self._status(self._TR("ih_hide_editor", "Hide editor: {0}").format('ON' if new_val else 'OFF'), WARN_C, 2)
             return
         if _in_rect((rx, my), hboxes.get("lock_btn", pygame.Rect(0,0,0,0))):
             self._push_undo()
             new_val = not all(o.get("editor_locked", False) for o in objs_sel)
             for o in objs_sel: o["editor_locked"] = new_val
             self.scene_dirty = True; self._mark_dirty()
-            self._status(f"Lock editor: {'ON' if new_val else 'OFF'}", ERR_C, 2)
+            self._status(self._TR("ih_lock_editor", "Lock editor: {0}").format('ON' if new_val else 'OFF'), ERR_C, 2)
             return
 
         # Reset transform / reset tint
@@ -1906,11 +1906,11 @@ class InputHandlersMixin:
             has_warp = any(c[0] != 0 or c[1] != 0 for c in coff)
             if has_warp:
                 obj["corners"] = [[0,0],[0,0],[0,0],[0,0]]
-                self._status("Warp mesh disattivato", FX_C, 2)
+                self._status(self._TR("ih_warp_off", "Warp mesh disabled"), FX_C, 2)
             else:
                 # Inizializzo piccolo offset per rendere visibili le maniglie
                 obj["corners"] = [[-8,-8],[8,-8],[8,8],[-8,8]]
-                self._status("Warp mesh attivato — trascina gli angoli", FX_C, 3)
+                self._status(self._TR("ih_warp_on", "Warp mesh enabled - drag the corners"), FX_C, 3)
             self.scene_dirty = True; self._mark_dirty(); return
 
         # --- LOGICA SLIDERS & BOXES PER OGGETTI (BATCH) ---
@@ -2006,7 +2006,7 @@ class InputHandlersMixin:
                     self.scene_dirty = True
                     self._mark_dirty()
                     self._layer_dropdown_open = False
-                    self._status(f"Layer: {lid.replace('objects_','').upper()}", ACCENT, 2)
+                    self._status(self._TR("ih_layer", "Layer: {0}").format(lid.replace('objects_','').upper()), ACCENT, 2)
                     return
             # Click fuori dalle opzioni e fuori dal bottone → chiudi
             self._layer_dropdown_open = False
@@ -2023,7 +2023,7 @@ class InputHandlersMixin:
                 del obj["minigame_trigger"]
             self.scene_dirty = True
             self._mark_dirty()
-            self._status("Trigger minigioco rimosso.", WARN_C, 2)
+            self._status(self._TR("ih_minigame_trigger_removed", "Minigame trigger removed"), WARN_C, 2)
             return
 
         # --- LOGICA LIVELLI MINIGIOCO (Spot Differences) ---
@@ -2064,9 +2064,9 @@ class InputHandlersMixin:
                 # Forza visibilità layer effetti
                 if not self.layer_vis.get("effects", True):
                     self.layer_vis["effects"] = True
-                    self._status(f"Piazza effetto: {fx_id} (Layer attivato)", FX_C, 2)
+                    self._status(self._TR("ih_place_effect_layer", "Place effect: {0} (layer enabled)").format(fx_id), FX_C, 2)
                 else:
-                    self._status(f"Piazza effetto: {fx_id}", FX_C, 2)
+                    self._status(self._TR("ih_place_effect", "Place effect: {0}").format(fx_id), FX_C, 2)
                 
                 self.selected_idx = None
                 self.selected_indices = []
@@ -2106,7 +2106,7 @@ class InputHandlersMixin:
                             if k in p_data: fx[k] = p_data[k]
                         self.scene_dirty = True
                         self._mark_dirty()
-                        self._status(f"Preset caricato: {p_key}", OK_C, 2)
+                        self._status(self._TR("ih_preset_loaded", "Preset loaded: {0}").format(p_key), OK_C, 2)
                     return
                 if _in_rect((rx, my), hboxes.get("preset_save", pygame.Rect(0,0,0,0))):
                     self._editing_preset_name = True
@@ -2218,7 +2218,7 @@ class InputHandlersMixin:
 
         # Controllo Lock
         if self.layer_locked.get("effects", False):
-            self._status("Layer EFFETTI bloccato!", ERR_C, 2)
+            self._status(self._TR("ih_fx_layer_locked", "EFFECTS layer is locked"), ERR_C, 2)
             return
 
         # Nuovo sistema: tutti gli effetti vanno nel layer "effects"
@@ -2234,7 +2234,7 @@ class InputHandlersMixin:
             # Crea segnaposto vuoto in tutti i file lingua del gioco
             missing = self._ensure_translation_key(t_key)
             if missing:
-                self._status(f"Traduci '{t_key}' in: {', '.join(missing)}", WARN_C, 4)
+                self._status(self._TR("ih_translate_in", "Translate '{0}' into: {1}").format(t_key, ', '.join(missing)), WARN_C, 4)
         else:
             t_key = ""
 
@@ -2264,7 +2264,7 @@ class InputHandlersMixin:
         self.scene_dirty = True
         self._mark_dirty()
         self.mode = MODE_SELECT
-        self._status(f"Effetto aggiunto: {cat['id']}", OK_C, 2)
+        self._status(self._TR("ih_effect_added", "Effect added: {0}").format(cat['id']), OK_C, 2)
 
     def _try_select_effect(self, mx, my) -> bool:
         rx, ry = self._s2r(mx, my)
@@ -2451,7 +2451,7 @@ class InputHandlersMixin:
             if self.state == STATE_GAME_SELECT:
                 self._gs_refresh_cache()
                 
-            self._status(f"Lingua impostata: {new_lang.upper()}", OK_C, 2)
+            self._status(self._TR("ih_language_set", "Language set: {0}").format(new_lang.upper()), OK_C, 2)
         
         # STATISTICHE SCENA
         elif cmd == "file_scene_stats":

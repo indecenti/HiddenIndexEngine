@@ -73,6 +73,10 @@ class FakeEditor(ScatterModalMixin):
     def _status(self, msg, color=None, secs=0):
         pass
 
+    def _TR(self, key, default=None):
+        """Stub i18n: restituisce il default inglese passato dal codice."""
+        return default if default is not None else key
+
     def _push_undo(self, *a, **k):
         pass
 

@@ -51,6 +51,10 @@ class FakeIO(IoOpsMixin):
     def _status(self, msg, color=None, secs=0):
         self.statuses.append(str(msg))
 
+    def _TR(self, key, default=None):
+        """Stub i18n: restituisce il default inglese passato dal codice."""
+        return default if default is not None else key
+
     def _push_undo(self, label="", coalesce_key=None):
         self.undo_labels.append(label)
 

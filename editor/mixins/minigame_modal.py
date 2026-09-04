@@ -35,7 +35,7 @@ class MinigameModalMixin:
                                 data["path"] = p
                                 
                                 # Carica descrizione localizzata
-                                lang = getattr(self, "current_lang", "it")
+                                lang = getattr(self, "current_lang", "en")
                                 strings_file = p / "strings" / f"{lang}.json"
                                 if not strings_file.exists():
                                     strings_file = p / "strings" / "en.json"
@@ -235,4 +235,4 @@ class MinigameModalMixin:
             proc = subprocess.Popen(cmd, cwd=self.base_path)
             self._build_processes.append(proc)
         except Exception as e:
-            self._status(f"Errore avvio test: {e}", ERR_C, 3)
+            self._status(self._TR("mg_test_error", "Test launch error: {0}").format(e), ERR_C, 3)

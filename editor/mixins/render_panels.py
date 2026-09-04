@@ -46,11 +46,14 @@ class RenderPanelsMixin:
         badge_w = 42
         badge_r = pygame.Rect(r.right - badge_w - 8, r.y + 4, badge_w, h - 8)
         if mixed:
-            badge_bg, badge_fg, badge_txt = (60, 60, 65), TXT_DIM, "MIX"
+            badge_bg, badge_fg = (60, 60, 65), TXT_DIM
+            badge_txt = self._TR("badge_mix", "MIX")
         elif value:
-            badge_bg, badge_fg, badge_txt = on_color, (15, 15, 20), "ON"
+            badge_bg, badge_fg = on_color, (15, 15, 20)
+            badge_txt = self._TR("badge_on", "ON")
         else:
-            badge_bg, badge_fg, badge_txt = (55, 55, 60), TXT_DIM, "OFF"
+            badge_bg, badge_fg = (55, 55, 60), TXT_DIM
+            badge_txt = self._TR("badge_off", "OFF")
         _rect(self.screen, badge_bg, badge_r, radius=3)
         bt = _txt(badge_txt, "xs", badge_fg)
         self.screen.blit(bt, (badge_r.centerx - bt.get_width() // 2,
@@ -335,7 +338,9 @@ class RenderPanelsMixin:
         # Hitbox per hover visivo
         h_sel = _in_rect((mx, my_raw), sel_rect)
             
-        _button(self.screen, sel_rect, f"STILE: {current_st.upper()}", hovered=h_sel, active=is_open, font="sm")
+        _button(self.screen, sel_rect,
+                self._TR("cat_style_btn", "STYLE: {v}").format(v=current_st.upper()),
+                hovered=h_sel, active=is_open, font="sm")
         _draw_shape_icon(self.screen, (sel_rect.x + sel_rect.w - 25, sel_rect.y, 25, 28), "down" if not is_open else "up", TXT_HI)
 
         # --- Fine Griglia ---
@@ -660,7 +665,8 @@ class RenderPanelsMixin:
             
             dr = fx_cat.get("default_radius", 50)
             di = fx_cat.get("default_intensity", 1.0)
-            val_info = f"Default: r={dr}  i={di}"
+            val_info = self._TR("fx_default_values",
+                                "Default: r={r}  i={i}").format(r=dr, i=di)
             _draw_text(self.screen, val_info, "sm", TXT_DIM, r.x + 52, iy + 40, self.panel_l_w - 80)
 
             if is_used:
@@ -1048,16 +1054,21 @@ class RenderPanelsMixin:
             tgl_hide = pygame.Rect(rx0+12, y, half_w, 24)
             tgl_lock = pygame.Rect(rx0+12+half_w+6, y, half_w, 24)
             self._render_toggle(tgl_hide.x, tgl_hide.y, tgl_hide.w, tgl_hide.h,
-                                "Hide", hide_on, on_color=WARN_C, hover=_in_rect((mx, my_raw), tgl_hide))
+                                self._TR("prop_hide", "Hide"), hide_on,
+                                on_color=WARN_C, hover=_in_rect((mx, my_raw), tgl_hide))
             self._render_toggle(tgl_lock.x, tgl_lock.y, tgl_lock.w, tgl_lock.h,
-                                "Lock", lock_on, on_color=ERR_C, hover=_in_rect((mx, my_raw), tgl_lock))
+                                self._TR("prop_lock", "Lock"), lock_on,
+                                on_color=ERR_C, hover=_in_rect((mx, my_raw), tgl_lock))
             self._set_hbox_obj("hide_btn", 12, y, half_w, 24)
             self._set_hbox_obj("lock_btn", 12+half_w+6, y, half_w, 24)
             y += 32
 
             # ── MULTI-SELECT TOOLBAR: align / distribute / copy props ────────
             if is_multi:
-                _draw_text(self.screen, "ALLINEA / DISTRIBUISCI", "xs", ACCENT, rx0+12, y); y += 16
+                _draw_text(self.screen,
+                           self._TR("prop_align_distribute", "ALIGN / DISTRIBUTE"),
+                           "xs", ACCENT, rx0+12, y)
+                y += 16
                 # 6 bottoni piccoli per allineamento: L R T B Hc Vc
                 align_ids = [("left","L"), ("h_center","H"), ("right","R"),
                              ("top","T"), ("v_center","V"), ("bottom","B")]
@@ -1077,7 +1088,11 @@ class RenderPanelsMixin:
                     half_w = (self.panel_r_w - 30) // 2
                     db1 = pygame.Rect(rx0+12, y, half_w, 22)
                     db2 = pygame.Rect(rx0+12+half_w+6, y, half_w, 22)
-                    for br, lbl, aid in [(db1, "DISTR H", "distr_h"), (db2, "DISTR V", "distr_v")]:
+                    distr_pairs = [
+                        (db1, self._TR("prop_distr_h", "DISTR H"), "distr_h"),
+                        (db2, self._TR("prop_distr_v", "DISTR V"), "distr_v"),
+                    ]
+                    for br, lbl, aid in distr_pairs:
                         hov = _in_rect((mx, my_raw), br)
                         _rect(self.screen, BTN_HO if hov else BTN, br, radius=3)
                         _rect(self.screen, ACCENT if hov else BORDER, br, 1, radius=3)
@@ -1089,7 +1104,9 @@ class RenderPanelsMixin:
                 hov_cp = _in_rect((mx, my_raw), cp_r)
                 _rect(self.screen, BTN_HO if hov_cp else BTN, cp_r, radius=3)
                 _rect(self.screen, ACCENT if hov_cp else BORDER, cp_r, 1, radius=3)
-                _draw_text(self.screen, "COPIA PROPRIETA' AGLI ALTRI", "xs", TXT_HI if hov_cp else TXT,
+                _draw_text(self.screen,
+                           self._TR("prop_copy_to_others", "COPY PROPERTIES TO OTHERS"),
+                           "xs", TXT_HI if hov_cp else TXT,
                            cp_r.x+8, cp_r.y+6, cp_r.w-12)
                 self._set_hbox_obj("copy_props_btn", 12, y, cp_r.w, 24)
                 y += 30
@@ -1140,7 +1157,9 @@ class RenderPanelsMixin:
             hov_rt = _in_rect((mx, my_raw), rt_r)
             _rect(self.screen, BTN_HO if hov_rt else BTN, rt_r, radius=3)
             _rect(self.screen, WARN_C if hov_rt else BORDER, rt_r, 1, radius=3)
-            _draw_text(self.screen, "RESET TRASFORMAZIONE", "xs", WARN_C if hov_rt else TXT_DIM,
+            _draw_text(self.screen,
+                       self._TR("prop_reset_transform", "RESET TRANSFORM"),
+                       "xs", WARN_C if hov_rt else TXT_DIM,
                        rt_r.x+8, rt_r.y+5, rt_r.w-12)
             self._set_hbox_obj("reset_transform_btn", 12, y, rt_r.w, 22)
             y += 30
@@ -1162,8 +1181,10 @@ class RenderPanelsMixin:
             btn_fh = pygame.Rect(rx0+12, y, (self.panel_r_w-30)//2, 26)
             btn_fv = pygame.Rect(rx0+12+(self.panel_r_w-30)//2+6, y, (self.panel_r_w-30)//2, 26)
             
-            lbl_fh = "FLIP H" if not fh_mixed else "H (MIX)"
-            lbl_fv = "FLIP V" if not fv_mixed else "V (MIX)"
+            lbl_fh = (self._TR("prop_flip_h", "FLIP H") if not fh_mixed
+                      else self._TR("prop_flip_h_mix", "H (MIX)"))
+            lbl_fv = (self._TR("prop_flip_v", "FLIP V") if not fv_mixed
+                      else self._TR("prop_flip_v_mix", "V (MIX)"))
             
             _button(self.screen, btn_fh, lbl_fh, _in_rect((mx, my_raw), btn_fh), active=fh)
             _button(self.screen, btn_fv, lbl_fv, _in_rect((mx, my_raw), btn_fv), active=fv)
@@ -1177,7 +1198,8 @@ class RenderPanelsMixin:
             gs = gs_vals[0]
             
             btn_gs = pygame.Rect(rx0+12, y, self.panel_r_w-24, 26)
-            lbl_gs = self._TR("prop_grayscale") if not gs_mixed else f"{self._TR('prop_grayscale')} (MIX)"
+            lbl_gs = (self._TR("prop_grayscale") if not gs_mixed
+                      else f"{self._TR('prop_grayscale')} ({self._TR('badge_mix', 'MIX')})")
             _button(self.screen, btn_gs, lbl_gs, _in_rect((mx, my_raw), btn_gs), active=gs)
             self._set_hbox_obj("grayscale", 12, y, self.panel_r_w-24, 26)
             y += 30
@@ -1187,7 +1209,8 @@ class RenderPanelsMixin:
                 gsf_vals = [o.get("grayscale_factor", 1.0) for o in objs_sel]
                 gsf_mixed = any(v != gsf_vals[0] for v in gsf_vals)
                 gsf = gsf_vals[0]
-                _draw_text(self.screen, "Intensità BN:", "xs", TXT_DIM, rx0+16, y+2)
+                _draw_text(self.screen, self._TR("prop_bw_intensity", "B/W intensity:"),
+                           "xs", TXT_DIM, rx0+16, y+2)
                 box_gsf_r = pygame.Rect(rx0+12, y+18, 50, 20)
                 is_f_gsf = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, 'grayscale_factor'))
                 gsf_pct = int(round(gsf * 100))
@@ -1208,12 +1231,14 @@ class RenderPanelsMixin:
             pick_r = pygame.Rect(rx0 + self.panel_r_w - 76, y-1, 60, 20)
             if tint_mixed:
                 _rect(self.screen, (60, 60, 65), pick_r, radius=4)
-                _draw_text(self.screen, "MIX", "xs", TXT_DIM, pick_r.x+18, pick_r.y+4)
+                _draw_text(self.screen, self._TR("badge_mix", "MIX"), "xs", TXT_DIM,
+                           pick_r.x+18, pick_r.y+4)
             elif tint != (255, 255, 255):
                 pygame.draw.rect(self.screen, tint, pick_r, border_radius=4)
             else:
                 _rect(self.screen, BTN, pick_r, radius=4)
-                _draw_text(self.screen, "NONE", "xs", TXT_DIM, pick_r.x+14, pick_r.y+4)
+                _draw_text(self.screen, self._TR("badge_none", "NONE"), "xs", TXT_DIM,
+                           pick_r.x+14, pick_r.y+4)
             
             pygame.draw.rect(self.screen, BORDER, pick_r, 1, border_radius=4)
             self._set_hbox_obj("tint_color", self.panel_r_w - 76, y-1, 60, 20)
@@ -1289,7 +1314,8 @@ class RenderPanelsMixin:
                 lz_vals.append(int(lz_raw) if lz_raw is not None else _layer_z_default(o.get("layer", "objects_mid")))
             lz_mixed = any(v != lz_vals[0] for v in lz_vals)
             lz_val = lz_vals[0]
-            _draw_text(self.screen, "Z-order:", "sm", TXT_DIM, rx0+12, y)
+            _draw_text(self.screen, self._TR("prop_z_order", "Z-order:"),
+                       "sm", TXT_DIM, rx0+12, y)
             box_lz_r = pygame.Rect(rx0+80, y-3, 50, 22)
             is_f_lz = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, 'layer_z'))
             _input_box(self.screen, box_lz_r, self._prop_buf if is_f_lz else (str(lz_val) if not lz_mixed else "---"), is_f_lz)
@@ -1302,12 +1328,17 @@ class RenderPanelsMixin:
             # ── HIT-DETECTION editor (type + dimensioni) ───────────────────
             if not is_multi:
                 # Selector type: CIRCLE / RECT
-                _draw_text(self.screen, "Hit-area:", "sm", TXT_DIM, rx0+12, y)
+                _draw_text(self.screen, self._TR("prop_hit_area", "Hit-area:"),
+                           "sm", TXT_DIM, rx0+12, y)
                 cur_dt = obj.get("detection_type", "circle")
                 half = (self.panel_r_w - 24 - 80) // 2
                 btn_c = pygame.Rect(rx0+80, y-3, half, 22)
                 btn_rt = pygame.Rect(rx0+80+half+4, y-3, half, 22)
-                for br, val, lbl in [(btn_c, "circle", "CIRCLE"), (btn_rt, "rect", "RECT")]:
+                hit_pairs = [
+                    (btn_c, "circle", self._TR("prop_hit_circle", "CIRCLE")),
+                    (btn_rt, "rect", self._TR("prop_hit_rect", "RECT")),
+                ]
+                for br, val, lbl in hit_pairs:
                     active = (cur_dt == val)
                     hov = _in_rect((mx, my_raw), br)
                     _rect(self.screen, BTN_AC if active else (BTN_HO if hov else BTN), br, radius=3)
@@ -1320,7 +1351,8 @@ class RenderPanelsMixin:
                 # Dimensioni in base al tipo
                 if cur_dt == "circle":
                     rad_val = obj.get("radius", 30)
-                    _draw_text(self.screen, "Raggio:", "xs", TXT_DIM, rx0+12, y+2)
+                    _draw_text(self.screen, self._TR("prop_radius_short", "Radius:"),
+                               "xs", TXT_DIM, rx0+12, y+2)
                     box_rad_r = pygame.Rect(rx0+62, y, 50, 22)
                     is_f_rad = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, 'radius'))
                     _input_box(self.screen, box_rad_r, self._prop_buf if is_f_rad else f"{int(rad_val)}", is_f_rad)
@@ -1330,7 +1362,11 @@ class RenderPanelsMixin:
                     self._set_hbox_obj("slider_radius", 118, y+1, sl_rad_r.w, 20)
                     y += 28
                 else:  # rect
-                    for k_dim, lbl_dim in [("width","Largh:"), ("height","Alt:")]:
+                    dim_pairs = [
+                        ("width", self._TR("prop_width_short", "Width:")),
+                        ("height", self._TR("prop_height_short", "Height:")),
+                    ]
+                    for k_dim, lbl_dim in dim_pairs:
                         v = obj.get(k_dim, 60)
                         _draw_text(self.screen, lbl_dim, "xs", TXT_DIM, rx0+12, y+2)
                         box_d = pygame.Rect(rx0+62, y, 50, 22)
@@ -1347,7 +1383,8 @@ class RenderPanelsMixin:
                 has_warp = any(c[0] != 0 or c[1] != 0 for c in coff)
                 tgl_warp = pygame.Rect(rx0+12, y, self.panel_r_w-24, 24)
                 self._render_toggle(tgl_warp.x, tgl_warp.y, tgl_warp.w, tgl_warp.h,
-                                    "Warp Mesh (4 angoli)", has_warp,
+                                    self._TR("prop_warp_mesh",
+                                             "Warp Mesh (4 corners)"), has_warp,
                                     on_color=FX_C, hover=_in_rect((mx, my_raw), tgl_warp))
                 self._set_hbox_obj("warp_toggle", 12, y, tgl_warp.w, 24)
                 y += 30
@@ -1399,7 +1436,8 @@ class RenderPanelsMixin:
             _rect(self.screen, (ACCENT if m_trigger else BORDER), btn_m, 2 if hov_m else 1, radius=5)
             
             if m_mixed:
-                m_lbl = f"{self._TR('prop_no_minigame')} (MIX)"
+                m_lbl = (f"{self._TR('prop_no_minigame')} "
+                         f"({self._TR('badge_mix', 'MIX')})")
             else:
                 m_lbl = self._TR("prop_minigame_label").format(m_trigger['minigame_id'].upper()) if m_trigger else self._TR("prop_no_minigame")
             
@@ -1410,7 +1448,9 @@ class RenderPanelsMixin:
             # Selettore Livelli specifico per Spot the Differences
             if m_trigger and m_trigger.get("minigame_id") == "spot_differences" and not m_mixed:
                 y += 2
-                _draw_text(self.screen, "NUMERO LIVELLI (1-15):", "xs", ACCENT, rx0+12, y)
+                _draw_text(self.screen,
+                           self._TR("prop_mg_levels", "NUMBER OF LEVELS (1-15):"),
+                           "xs", ACCENT, rx0+12, y)
                 y += 18
                 max_l = int(m_trigger.get("max_levels", 5))
                 
@@ -1504,7 +1544,11 @@ class RenderPanelsMixin:
         pygame.draw.line(self.screen, BORDER, (rx0+8, y), (rx0+self.panel_r_w-8, y)); y += 16
 
         # Posizione (Coordinate) — editabili
-        for key_pos, lbl_pos in [("x", "Posizione X:"), ("y", "Posizione Y:")]:
+        pos_pairs = [
+            ("x", self._TR("fx_pos_x", "Position X:")),
+            ("y", self._TR("fx_pos_y", "Position Y:")),
+        ]
+        for key_pos, lbl_pos in pos_pairs:
             _draw_text(self.screen, lbl_pos, "sm", TXT_DIM, rx0+12, y)
             val_pos = round(fx.get(key_pos, 0))
             box_pos_r = pygame.Rect(rx0 + self.panel_r_w - 76, y - 2, 60, 22)
@@ -1550,7 +1594,8 @@ class RenderPanelsMixin:
                 self._set_hbox_fx("preset_name_box", 12, y, self.panel_r_w-24, 26)
                 y += 30
             else:
-                curr_p = getattr(self, "_preset_selected", "") or "Scegli Preset..."
+                curr_p = (getattr(self, "_preset_selected", "")
+                          or self._TR("fx_preset_choose", "Choose preset..."))
                 drop_r = pygame.Rect(rx0+12, y, 120, 26)
                 is_drop_open = getattr(self, "_preset_dropdown_open", False)
                 _rect(self.screen, BTN_AC if is_drop_open else BTN, drop_r, radius=4)
@@ -1562,11 +1607,13 @@ class RenderPanelsMixin:
                 
                 # Load/Save
                 btn_app_r = pygame.Rect(rx0+140, y, 48, 26)
-                _button(self.screen, btn_app_r, "LOAD", _in_rect((mx, my_raw), btn_app_r))
+                _button(self.screen, btn_app_r, self._TR("btn_load", "LOAD"),
+                        _in_rect((mx, my_raw), btn_app_r))
                 self._set_hbox_fx("preset_load", 140, y, 48, 26)
                 
                 btn_sc_r = pygame.Rect(rx0+194, y, 48, 26)
-                _button(self.screen, btn_sc_r, "SAVE", _in_rect((mx, my_raw), btn_sc_r))
+                _button(self.screen, btn_sc_r, self._TR("btn_save", "SAVE"),
+                        _in_rect((mx, my_raw), btn_sc_r))
                 self._set_hbox_fx("preset_save", 194, y, 48, 26)
                 
                 if is_drop_open:

@@ -56,7 +56,7 @@ def _enable_dpi_awareness() -> None:
 
 # ── Costanti e UI primitives ─────────────────────────────────────────────────
 from editor.constants import (
-    VERSION, LANGS,
+    VERSION, LANGS, DEFAULT_LANG,
     STATE_GAME_SELECT, STATE_MAIN,
     MIN_EDITOR_WIDTH, MIN_EDITOR_HEIGHT, WIN_W, WIN_H,
     TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_LAYERS, TAB_PROPS,
@@ -69,7 +69,7 @@ from editor.constants import (
 from editor.ui.draw import _init_fonts, _draw_tooltip, _rect, _draw_text, _draw_shape_icon
 from editor.core.io import _discover_games
 from engine.utils import setup_logging
-from engine.language_manager import LanguageManager
+from engine.language_manager import LanguageManager, set_active_manager
 from editor.core.tags import TagManager
 
 # ── Mixin ────────────────────────────────────────────────────────────────────
@@ -190,15 +190,16 @@ class LevelEditor(
         
         self.LANGS = list(LANGS)   # da constants.LANGS — unica fonte di verità
         
-        # Carica lingua dalle impostazioni o usa default 'it'
+        # Carica lingua dalle impostazioni o usa il default EN
         settings = self._load_editor_settings()
-        self.current_lang = settings.get("language", "it")
-        
-        # Fallback a 'it' se la lingua salvata non è tra quelle supportate
+        self.current_lang = settings.get("language", DEFAULT_LANG)
+
+        # Fallback a EN se la lingua salvata non e' tra quelle supportate
         if self.current_lang not in self.LANGS:
-            self.current_lang = "it"
-            
+            self.current_lang = DEFAULT_LANG
+
         self.lang_manager.load_for_game("engine", self.current_lang)
+        set_active_manager(self.lang_manager)
 
         # ── Scene data ───────────────────────────────────────────────────────
         self.scene_path:  Path           = None
@@ -409,6 +410,13 @@ class LevelEditor(
         self._confirm_clear = False
         self._pending_action = None  # Comando o funzione da eseguire dopo la conferma
 
+        # Il caricamento del gioco iniziale (--game) va per ULTIMO: _load_game ->
+        # _load_scene -> _scatter_reset usa stato creato da _scatter_modal_init e
+        # dagli altri init dei mixin qui sopra. Prima stava in fondo a
+        # _init_extra_data e crashava con AttributeError su _scatter_cancel_event.
+        if initial_game:
+            self._load_game(initial_game)
+
     def _TR(self, key: str, *args) -> str:
         """Helper rapido per la localizzazione (engine strings)."""
         return self.lang_manager.get(key, *args)
@@ -437,7 +445,8 @@ class LevelEditor(
         _init_fonts(new_scale)
         self._save_editor_setting("ui_scale", new_scale)
         self._mark_dirty()
-        self._status(f"Scala UI: {int(new_scale * 100)}%", ACCENT, 2)
+        self._status(self._TR("ed_ui_scale", "UI scale: {n}%").format(
+            n=int(new_scale * 100)), ACCENT, 2)
 
     def _get_asset_ratio(self, cat_id: str) -> float:
         """Restituisce l'aspect ratio (w/h) di un asset, usando la cache di sessione."""
@@ -534,9 +543,6 @@ class LevelEditor(
         self._minigame_modal = False
         self._available_minigames = []
 
-        if initial_game:
-            self._load_game(initial_game)
-
     def _play_click(self):
         if self._snd_click:
             self._snd_click.play()
@@ -591,7 +597,7 @@ class LevelEditor(
         except Exception as e:
             import logging
             logging.error(f"Errore durante operazione con caricamento: {e}")
-            self._status(f"Errore: {e}", (200, 50, 50), 5)
+            self._status(self._TR("io_error", "Error: {e}").format(e=e), (200, 50, 50), 5)
         finally:
             self._loading = False
             # Render finale per pulire l'overlay

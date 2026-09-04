@@ -763,7 +763,7 @@ def _write_config_and_spec(
     res_cfg = game_config.get("resolution", {})
     res_w = res_cfg.get("w", 1920)
     res_h = res_cfg.get("h", 1080)
-    language = game_config.get("default_language", "it")
+    language = game_config.get("default_language", "en")
 
     # config.ini
     config_content = (

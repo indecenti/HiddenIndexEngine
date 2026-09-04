@@ -179,13 +179,13 @@ class NewObjModalMixin:
         if getattr(self, "_newobj_busy", False):
             return
         if not oid:
-            self._status("Inserisci un ID oggetto", WARN_C, 3); return
+            self._status(self._TR("nob_need_id", "Enter an object ID"), WARN_C, 3); return
         if any(c["id"] == oid for c in self.catalog):
-            self._status(f"ID '{oid}' già presente nel catalogo", ERR_C, 3); return
+            self._status(self._TR("nob_id_exists", "ID '{0}' already in the catalog").format(oid), ERR_C, 3); return
 
         src = Path(obj["icon_path"]) if obj["icon_path"] else None
         if not (src and src.exists()):
-            self._status("Seleziona un'icona PNG", WARN_C, 3); return
+            self._status(self._TR("nob_select_png", "Select a PNG icon"), WARN_C, 3); return
 
         (self.game_path / "objects").mkdir(exist_ok=True)
         if obj.get("remove_bg") or obj.get("autotrim"):
@@ -221,7 +221,7 @@ class NewObjModalMixin:
         _save_json(cat_path, cat_data)
         self.catalog = _load_catalog(self.game_name)
         self._newobj_modal = False
-        self._status(f"Oggetto '{oid}' aggiunto al catalogo!", OK_C, 4)
+        self._status(self._TR("nob_added", "Object '{0}' added to the catalog").format(oid), OK_C, 4)
         if self._lang_data:
             for lang in self.LANGS:
                 self._lang_data.setdefault(lang, {}).setdefault(f"obj_{oid}", "")
@@ -238,7 +238,7 @@ class NewObjModalMixin:
         """
         obj = self._newobj
         if obj.get("remove_bg") and not rembg_available():
-            self._status("rembg non installato: disattiva 'Rimuovi sfondo (AI)'",
+            self._status(self._TR("nob_rembg_missing", "rembg is not installed: turn off 'Remove background (AI)'"),
                          WARN_C, 4)
             return
         token = self._newobj_proc_token
@@ -246,7 +246,7 @@ class NewObjModalMixin:
         self._newobj_pending = (dest, icon_rel)
         self._newobj_proc_result = None
         self._newobj_proc_error = None
-        self._status("Elaborazione icona in corso...", ACCENT, 2)
+        self._status(self._TR("nob_processing_icon", "Processing the icon..."), ACCENT, 2)
         remove_bg = bool(obj.get("remove_bg"))
         autotrim = bool(obj.get("autotrim"))
 
@@ -278,7 +278,7 @@ class NewObjModalMixin:
             if err[0] == self._newobj_proc_token:
                 self._newobj_busy = False
                 self._newobj_pending = None
-                self._status(f"Errore elaborazione: {err[1]}", ERR_C, 4)
+                self._status(self._TR("err_processing", "Processing error: {0}").format(err[1]), ERR_C, 4)
             return
         res = getattr(self, "_newobj_proc_result", None)
         if res is None:
@@ -327,10 +327,10 @@ class NewObjModalMixin:
         _rect(self.screen, (42, 42, 52), box, radius=8)
         _rect(self.screen, ACCENT, box, 2, radius=8)
 
-        title = _txt("+ Nuovo Oggetto Catalogo", "lg", TXT_HI)
+        title = _txt(self._TR("nob_title", "+ New catalog object"), "lg", TXT_HI)
         self.screen.blit(title, (dx + 12, dy + 10))
         if busy:
-            s = _txt("Elaborazione in corso...", "sm", ACCENT)
+            s = _txt(self._TR("nob_processing", "Processing..."), "sm", ACCENT)
             self.screen.blit(s, (dx + dw - s.get_width() - 44, dy + 14))
 
         mx2, my2 = pygame.mouse.get_pos()
@@ -344,7 +344,7 @@ class NewObjModalMixin:
         self._r_newobj_field(dx, y, dw, "ID oggetto:", "id", self._newobj["id"])
         y += 42
 
-        s = _txt("Icona PNG:", "sm", TXT_DIM)
+        s = _txt(self._TR("nob_png_icon", "PNG icon:"), "sm", TXT_DIM)
         self.screen.blit(s, (dx + 10, y))
         y += 18
         pick_r   = pygame.Rect(dx + 10, y, dw - 50, 28)
@@ -360,13 +360,13 @@ class NewObjModalMixin:
                 self.screen.blit(ic, (dx + dw - 42, y + 0))
         y += 34
 
-        s   = _txt("Tipo:", "sm", TXT_DIM)
+        s   = _txt(self._TR("nob_type", "Type:"), "sm", TXT_DIM)
         self.screen.blit(s, (dx + 10, y))
         det  = self._newobj["detection"]
         cr_r = pygame.Rect(dx + 160, y, 90, 26)
         rc_r = pygame.Rect(dx + 258, y, 90, 26)
-        _button(self.screen, cr_r, "Cerchio",  _in_rect((mx2, my2), cr_r), active=(det == "circle"))
-        _button(self.screen, rc_r, "Rettang.", _in_rect((mx2, my2), rc_r), active=(det == "rect"))
+        _button(self.screen, cr_r, self._TR("nob_circle", "Circle"),  _in_rect((mx2, my2), cr_r), active=(det == "circle"))
+        _button(self.screen, rc_r, self._TR("nob_rect", "Rect."), _in_rect((mx2, my2), rc_r), active=(det == "rect"))
         y += 34
 
         show_c = (det == "circle")
@@ -399,7 +399,7 @@ class NewObjModalMixin:
         add_label = "Elaborazione..." if busy else "+ Aggiungi al catalogo"
         _button(self.screen, add_r, add_label,
                 _in_rect((mx2, my2), add_r), active=can_add)
-        _button(self.screen, ann_r, "Annulla",
+        _button(self.screen, ann_r, self._TR("btn_cancel", "Cancel"),
                 _in_rect((mx2, my2), ann_r), danger=True)
 
     def _r_newobj_field(self, dx, y, dw, label, field_id, value, enabled=True):

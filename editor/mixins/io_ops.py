@@ -90,7 +90,8 @@ class IoOpsMixin:
             return
         thread = getattr(self, "_async_thread", None)
         if thread is not None and thread.is_alive():
-            self._status("Operazione in corso, attendere...", WARN_C, 2)
+            self._status(self._TR("io_busy", "Operation in progress, please wait..."),
+                         WARN_C, 2)
             return
 
         # Coda risultati worker -> main thread (deque.append e' thread-safe)
@@ -147,9 +148,10 @@ class IoOpsMixin:
                 done_cb(outcome)
             except Exception:
                 logging.exception("[ASYNC] Errore nella done_cb")
-                self._status("Errore al termine dell'operazione", ERR_C, 4)
+                self._status(self._TR("io_op_error", "Error at the end of the operation"),
+                             ERR_C, 4)
         elif isinstance(outcome, BaseException):
-            self._status(f"Errore: {outcome}", ERR_C, 5)
+            self._status(self._TR("io_error", "Error: {e}").format(e=outcome), ERR_C, 5)
 
     # ─────────────────────────────────────────────────────────────────────────
     # ASSET MANAGEMENT
@@ -315,7 +317,8 @@ class IoOpsMixin:
             self.tree_expanded[self.levels[0]["id"]] = True
         self.state = STATE_MAIN
         logging.info(f"[EDITOR] Game loaded successfully: {game_name}")
-        self._status(f"Gioco: {game_name}", OK_C, 4)
+        self._status(self._TR("io_game_loaded", "Game: {name}").format(name=game_name),
+                     OK_C, 4)
 
         # Auto-carica l'ultima scena aperta se appartiene a questo gioco
         if self.recent_scenes and self.recent_scenes[0].get("game") == game_name:
@@ -387,7 +390,8 @@ class IoOpsMixin:
         # Auto-detect dello stile dominante (richiesto dall'utente)
         self._auto_detect_style()
 
-        self._status(f"Scena: {scene_path.name}  ({n} oggetti)", OK_C, 3)
+        self._status(self._TR("io_scene_loaded", "Scene: {name}  ({n} objects)").format(
+            name=scene_path.name, n=n), OK_C, 3)
 
         # Crash recovery: autosave piu' recente del salvataggio? Proponi.
         self._check_autosave_recovery()
@@ -460,7 +464,7 @@ class IoOpsMixin:
         self.selected_indices = []
         self.sel_effect_idx = None
         self.scene_dirty = True
-        self._status("Scena svuotata con successo", WARN_C, 3)
+        self._status(self._TR("io_scene_cleared", "Scene cleared"), WARN_C, 3)
 
     # ─────────────────────────────────────────────────────────────────────────
     # SAVE / AUTOSAVE
@@ -473,7 +477,7 @@ class IoOpsMixin:
         dell'editor. Usa main.py --scene (save effimero: non sporca i salvataggi).
         """
         if not (getattr(self, "scene_path", None) and getattr(self, "game_path", None)):
-            self._status("Nessuna scena aperta", WARN_C, 2)
+            self._status(self._TR("io_no_scene_open", "No scene open"), WARN_C, 2)
             return
         if self.scene_dirty:
             self._save()
@@ -488,15 +492,17 @@ class IoOpsMixin:
                 cmd = [sys.executable, "main.py", "--game", self.game_path.name,
                        "--scene", scene_arg, "--lang", self.current_lang]
             subprocess.Popen(cmd, cwd=str(self.base_path))
-            self._status(f"Playtest: {scene_arg}", OK_C, 3)
+            self._status(self._TR("io_playtest", "Playtest: {scene}").format(scene=scene_arg),
+                         OK_C, 3)
             logging.info("Playtest avviato: %s", scene_arg)
         except Exception as e:
             logging.exception(f"Errore avvio playtest: {e}")
-            self._status(f"Errore playtest: {e}", ERR_C, 4)
+            self._status(self._TR("io_playtest_error", "Playtest error: {e}").format(e=e),
+                         ERR_C, 4)
 
     def _save(self):
         if not self.scene_path:
-            self._status("Errore: percorso scena non impostato!", ERR_C, 3)
+            self._status(self._TR("io_no_scene_path", "Error: scene path not set"), ERR_C, 3)
             return
             
         logging.info(f"[EDITOR] Salvataggio scena: {self.scene_path}")
@@ -706,10 +712,11 @@ class IoOpsMixin:
 
             self.scene_dirty = False
             logging.info(f"[EDITOR] ----- SAVE SUCCESS: {save_path} -----")
-            self._status(f"Salvataggio completato: {final_count} oggetti", OK_C, 3)
+            self._status(self._TR("io_saved", "Save complete: {n} objects").format(
+                n=final_count), OK_C, 3)
         else:
             logging.error(f"[EDITOR] !!! SAVE FAILED (Disk error?) !!!")
-            self._status("ERRORE DISCO!", ERR_C, 5)
+            self._status(self._TR("io_disk_error", "DISK ERROR"), ERR_C, 5)
 
     def _audit_translations(self, data: dict):
         """
@@ -888,7 +895,8 @@ class IoOpsMixin:
         if parts:
             summary = " | ".join(parts)
             logging.info(f"[EDITOR] Audit traduzioni ({len(langs)} lingue): {summary}")
-            self._status(f"Audit ✓  {summary}", OK_C, 4)
+            self._status(self._TR("io_audit_ok", "Audit OK  {summary}").format(
+                summary=summary), OK_C, 4)
         else:
             logging.debug("[EDITOR] Audit traduzioni: OK — nessuna modifica necessaria")
 
@@ -980,7 +988,8 @@ class IoOpsMixin:
         self._recovery_modal = False
         self._recovery_data = None
         n = len(self.scene_data.get("objects", []))
-        self._status(f"Autosave ripristinato ({n} oggetti). Salva per consolidare.",
+        self._status(self._TR("io_autosave_restored",
+                              "Autosave restored ({n} objects). Save to keep it.").format(n=n),
                      OK_C, 5)
 
     def _recovery_dismiss(self):
@@ -989,7 +998,8 @@ class IoOpsMixin:
         if not hasattr(self, "_recovery_dismissed"):
             self._recovery_dismissed = set()
         self._recovery_dismissed.add(str(self.scene_path))
-        self._status("Autosave ignorato per questa sessione", TXT_DIM, 3)
+        self._status(self._TR("io_autosave_skipped",
+                              "Autosave ignored for this session"), TXT_DIM, 3)
 
     def _r_recovery_modal(self, w: int, h: int) -> None:
         """Modale di conferma ripristino autosave (stile confirm compatto)."""
@@ -1226,7 +1236,9 @@ class IoOpsMixin:
                 continue
                 
         if not global_cat_path:
-            self._status(f"Asset {cat_id} non trovato in nessun catalogo globale", ERR_C, 4)
+            self._status(self._TR("io_asset_not_found",
+                                  "Asset {id} not found in any global catalog").format(
+                                      id=cat_id), ERR_C, 4)
             return
 
         logging.info(f"[EDITOR] Asset trovato in: {global_cat_path.name}")
@@ -1288,7 +1300,8 @@ class IoOpsMixin:
                 diff = len(objs) - len(new_objs)
                 err_msg = f"Errore critico: rimozione non unitaria ({diff} oggetti invece di 1)"
                 logging.error(f"[EDITOR] {err_msg}")
-                self._status(f"ERRORE CATALOGO: {err_msg}", ERR_C, 5)
+                self._status(self._TR("io_catalog_error", "CATALOG ERROR: {e}").format(
+                    e=err_msg), ERR_C, 5)
                 return
 
             # Manteniamo il catalogo sempre ordinato per ID
@@ -1345,7 +1358,8 @@ class IoOpsMixin:
             # --- 5. AGGIORNAMENTO STATO ---
             # Ricarichiamo il catalogo nell'editor
             self.catalog = _load_catalog(self.game_name)
-            self._status(f"RISORSA ELIMINATA: {cat_id}", OK_C, 4)
+            self._status(self._TR("io_asset_deleted", "ASSET DELETED: {id}").format(
+                id=cat_id), OK_C, 4)
             
             # Svuotiamo la cache per liberare la surface orfana
             self._img_cache.clear()
@@ -1353,7 +1367,7 @@ class IoOpsMixin:
             
         except Exception as e:
             logging.exception(f"[EDITOR] Errore critico durante eliminazione {cat_id}: {e}")
-            self._status("ERRORE CRITICO ELIMINAZIONE", ERR_C, 5)
+            self._status(self._TR("io_delete_error", "CRITICAL DELETE ERROR"), ERR_C, 5)
 
     # ─────────────────────────────────────────────────────────────────────────
     # PRESETS BUBBLE TIPS

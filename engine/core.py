@@ -216,7 +216,8 @@ class EngineCore:
         import json
         from engine.utils import get_resource_path
         from engine.audio_manager import AudioManager
-        from engine.language_manager import LanguageManager
+        from engine.language_manager import (LanguageManager, DEFAULT_LANG,
+                                             set_active_manager)
         from engine.menu_system import MenuSystem
         from engine.effects_engine import EffectsEngine
         from engine.hint_system import HintSystem
@@ -251,9 +252,10 @@ class EngineCore:
         self.audio.set_sfx_volume(self.sfx_volume)
         self.lang = LanguageManager()
         
-        # Priorità lingua: CLI > game_config > default(it)
-        lang_to_load = getattr(cli_args, "lang", None) or self.game_config.get("default_language", "it")
+        # Priorita' lingua: CLI > game_config > default EN
+        lang_to_load = getattr(cli_args, "lang", None) or self.game_config.get("default_language", DEFAULT_LANG)
         self.lang.load_for_game(self.game_id, lang_to_load)
+        set_active_manager(self.lang)
 
         # Audit completezza lingue al boot (solo dev/DEBUG — niente overhead in EXE).
         # Stampa nel log un report compatto delle traduzioni mancanti per ciascuna

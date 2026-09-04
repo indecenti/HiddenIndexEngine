@@ -9,7 +9,11 @@ Importato da tutti i moduli dell'editor.
 # LOCALIZZAZIONE — unica fonte di verità per le lingue supportate
 # ─────────────────────────────────────────────────────────────────────────────
 
-LANGS: tuple[str, ...] = ("it", "en", "es", "fr", "de")
+LANGS: tuple[str, ...] = ("en", "it", "es", "fr", "de")
+
+# Lingua di default dell'editor e fallback unico (vedi
+# engine.language_manager.DEFAULT_LANG / FALLBACK_LANG).
+DEFAULT_LANG: str = "en"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # VERSIONE / DIMENSIONI

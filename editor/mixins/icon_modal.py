@@ -68,7 +68,7 @@ class IconModalMixin:
             logger.info(f"Icona .ico generata con successo per {game_id}")
         except Exception as e:
             logger.error(f"Errore conversione .ico: {e}")
-            self._status(f"Errore .ico: {e}", (200, 50, 50))
+            self._status(self._TR("ico_error", ".ico error: {0}").format(e), (200, 50, 50))
 
         # 3. Generazione asset Android (se necessario)
         # Creiamo una struttura standard per buildozer/p4a se il gioco è categoria android
@@ -86,7 +86,7 @@ class IconModalMixin:
             cfg["icon"] = "assets/icon.png"
             _save_json(cfg_p, cfg)
 
-        self._status("Icona gioco aggiornata e convertita!", OK_C, 3)
+        self._status(self._TR("ico_updated", "Game icon updated and converted"), OK_C, 3)
         self._icon_modal = False
 
     def _r_icon_modal(self, w, h):
@@ -107,8 +107,8 @@ class IconModalMixin:
         _rect(self.screen, ACCENT, box, 2, radius=12)
 
         # Header
-        _draw_text(self.screen, "SELEZIONE ICONA GIOCO", "lg", TXT_HI, mx + 30, my + 25)
-        _draw_text(self.screen, "Le icone verranno convertite automaticamente in .ico e formati mobile", "xs", TXT_DIM, mx + 30, my + 60)
+        _draw_text(self.screen, self._TR("ico_title", "GAME ICON SELECTION"), "lg", TXT_HI, mx + 30, my + 25)
+        _draw_text(self.screen, self._TR("ico_hint", "Icons are converted automatically to .ico and mobile formats"), "xs", TXT_DIM, mx + 30, my + 60)
 
         # Bottone X
         mpos = pygame.mouse.get_pos()
@@ -198,7 +198,7 @@ class IconModalMixin:
 
         # Footer
         btn_close_r = pygame.Rect(mx + mw - 180, my + mh - 55, 150, 34)
-        _button(self.screen, btn_close_r, "ANNULLA", _in_rect(mpos, btn_close_r))
+        _button(self.screen, btn_close_r, self._TR("btn_cancel_caps", "CANCEL"), _in_rect(mpos, btn_close_r))
 
     def _icon_click(self, mx, my, w, h):
         """Gestisce il click nella modale icone. Ritorna True se intercettato."""
@@ -250,9 +250,9 @@ class IconModalMixin:
                                 if str(icon_p) in self._icon_cache: del self._icon_cache[str(icon_p)]
                                 self._icon_list = sorted(list(icon_p.parent.glob("*.png")))
                                 self._icon_del_confirm = None
-                                self._status(f"Icona '{icon_p.name}' eliminata.", (255, 100, 100), 2)
+                                self._status(self._TR("ico_deleted", "Icon '{0}' deleted").format(icon_p.name), (255, 100, 100), 2)
                             except Exception as e:
-                                self._status(f"Errore: {e}", (255, 0, 0), 3)
+                                self._status(self._TR("io_error", "Error: {0}").format(e), (255, 0, 0), 3)
                         else:
                             self._icon_del_confirm = icon_p
                         return True
@@ -292,7 +292,7 @@ class IconModalMixin:
             
         src = Path(filepath)
         if src.suffix.lower() != ".png":
-            self._status("Solo file PNG supportati per le icone!", (200, 50, 50), 3)
+            self._status(self._TR("ico_png_only", "Only PNG files are supported for icons"), (200, 50, 50), 3)
             return
             
         dst_dir = self.base_path / "engine" / "assets" / "game_icons"
@@ -302,9 +302,9 @@ class IconModalMixin:
         try:
             shutil.copy2(src, dst)
             logger.info(f"Nuova icona aggiunta tramite drop: {dst}")
-            self._status(f"Icona '{src.name}' aggiunta al catalogo!", OK_C, 2)
+            self._status(self._TR("ico_added", "Icon '{0}' added to the catalog").format(src.name), OK_C, 2)
             # Refresh lista
             self._icon_list = sorted(list(dst_dir.glob("*.png")))
         except Exception as e:
             logger.error(f"Errore copia icona droppata: {e}")
-            self._status(f"Errore caricamento: {e}", (200, 50, 50), 3)
+            self._status(self._TR("err_loading", "Load error: {0}").format(e), (200, 50, 50), 3)

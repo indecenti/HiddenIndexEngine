@@ -151,7 +151,7 @@ class ImgEditorMixin:
         img_rel = cat_item.get("image", cat_item.get("icon", ""))
         if not img_rel:
             logging.error(f"[IMG_EDITOR] Item {cat_id} has no image/icon")
-            self._status("Nessuna immagine trovata per l'oggetto", ERR_C, 3)
+            self._status(self._TR("img_none_found", "No image found for the object"), ERR_C, 3)
             return
 
         self._img_editor_path = self.game_path / img_rel
@@ -160,7 +160,7 @@ class ImgEditorMixin:
             if master_p.exists():
                 self._img_editor_path = master_p
             else:
-                self._status(f"File non trovato: {img_rel}", ERR_C, 3)
+                self._status(self._TR("err_file_not_found", "File not found: {0}").format(img_rel), ERR_C, 3)
                 return
 
         try:
@@ -200,9 +200,9 @@ class ImgEditorMixin:
             # Forza Auto-Fit al primo frame
             self._img_editor_zoom = 0.0
             self._img_editor_pan = [0, 0]
-            self._status(f"Editor Immagine: {cat_id}", ACCENT, 2)
+            self._status(self._TR("img_editor_open", "Image editor: {0}").format(cat_id), ACCENT, 2)
         except Exception as e:
-            self._status(f"Errore caricamento: {e}", ERR_C, 3)
+            self._status(self._TR("err_loading", "Load error: {0}").format(e), ERR_C, 3)
 
     def _img_editor_compose_final_surf(self) -> pygame.Surface:
         """Superficie finale con il crop corrente applicato (save, copia, applica)."""
@@ -283,10 +283,10 @@ class ImgEditorMixin:
             self._img_editor_copy_confirm = False
             self._img_editor_exit_confirm = False
             self._img_editor_active = False
-            self._status(f"Asset '{self._img_editor_id}' aggiornato globalmente", OK_C, 3)
+            self._status(self._TR("img_asset_updated", "Asset '{0}' updated globally").format(self._img_editor_id), OK_C, 3)
             self.scene_dirty = True
         except Exception as e:
-            self._status(f"Errore salvataggio: {e}", ERR_C, 3)
+            self._status(self._TR("err_saving", "Save error: {0}").format(e), ERR_C, 3)
 
     def _img_editor_save_copy(self):
         """Salva l'immagine come nuovo asset nel catalogo (Copia)."""
@@ -345,10 +345,10 @@ class ImgEditorMixin:
             self._img_editor_copy_confirm = False
             self._img_editor_exit_confirm = False
             self._img_editor_active = False
-            self._status(f"Copia creata: {new_id}", OK_C, 3)
+            self._status(self._TR("img_copy_created", "Copy created: {0}").format(new_id), OK_C, 3)
             self.scene_dirty = True
         except Exception as e:
-            self._status(f"Errore copia: {e}", ERR_C, 3)
+            self._status(self._TR("err_copy", "Copy error: {0}").format(e), ERR_C, 3)
 
     def _img_editor_handle_event(self, ev):
         if not self._img_editor_active: return
@@ -676,9 +676,9 @@ class ImgEditorMixin:
             self._img_editor_dirty = True
             self._img_editor_sync_orig_surf()
             final_w, final_h = self._img_editor_view_surf.get_size()
-            self._status(f"Trim: {final_w}x{final_h}", OK_C, 2)
+            self._status(self._TR("img_trim", "Trim: {0}x{1}").format(final_w, final_h), OK_C, 2)
         except Exception as e:
-            logging.error(f"[IMG_EDITOR] Trim failed: {e}"); self._status("Errore Trim", ERR_C, 2)
+            logging.error(f"[IMG_EDITOR] Trim failed: {e}"); self._status(self._TR("img_trim_error", "Trim error"), ERR_C, 2)
 
     def _img_editor_apply_smart_chroma(self, mode="green"):
         """Chroma Destroyer Pro v2."""
@@ -717,7 +717,7 @@ class ImgEditorMixin:
         surfarray.blit_array(new_surf, arr.astype(np.uint8))
         surfarray.pixels_alpha(new_surf)[:] = alpha.astype(np.uint8)
         self._img_editor_view_surf = new_surf; self._img_editor_dirty = True
-        self._status(f"Rimosso {mode.upper()}", OK_C, 2)
+        self._status(self._TR("img_removed", "Removed {0}").format(mode.upper()), OK_C, 2)
 
     def _img_editor_apply_wand(self, mx, my, ix, iy, scale):
         rx = int((mx - ix) / scale); ry = int((my - iy) / scale)
@@ -752,7 +752,7 @@ class ImgEditorMixin:
                 f_ratio = (d - tol) / max(1, feather)
                 orig_a = surf.get_at((px, py))[3]
                 surf.set_at((px, py), (*surf.get_at((px, py))[:3], int(orig_a * f_ratio)))
-        self._img_editor_dirty = True; self._status("Wand applicata", OK_C, 2)
+        self._img_editor_dirty = True; self._status(self._TR("img_wand_applied", "Wand applied"), OK_C, 2)
 
     def _img_editor_apply_rotation(self, angle):
         self._img_editor_push_undo()
@@ -836,7 +836,7 @@ class ImgEditorMixin:
         self._img_editor_dirty = True
         self._img_editor_sync_orig_surf()
         w, h = self._img_editor_view_surf.get_size()
-        self._status(f"Ritaglio applicato: {w}x{h}", OK_C, 2)
+        self._status(self._TR("img_crop_applied", "Crop applied: {0}x{1}").format(w, h), OK_C, 2)
 
     def _img_editor_cancel_crop(self) -> None:
         """Annulla il ritaglio manuale in corso (maniglie e modalita')."""
@@ -859,8 +859,8 @@ class ImgEditorMixin:
             alpha = surfarray.array_alpha(self._img_editor_view_surf).astype(float)
             alpha_smooth = gaussian_filter(alpha, sigma=0.6)
             surfarray.pixels_alpha(self._img_editor_view_surf)[:] = alpha_smooth.astype(np.uint8)
-            self._img_editor_dirty = True; self._status("Bordi Ammorbiditi", OK_C, 2)
-        except Exception: self._status("Smooth non disponibile", WARN_C, 2)
+            self._img_editor_dirty = True; self._status(self._TR("img_edges_smoothed", "Edges smoothed"), OK_C, 2)
+        except Exception: self._status(self._TR("img_smooth_unavailable", "Smooth not available"), WARN_C, 2)
 
     def _img_editor_col3_rects(self, ex: int, ey: int, sb_x: int) -> dict[str, pygame.Rect]:
         """
@@ -902,12 +902,12 @@ class ImgEditorMixin:
         try:
             import rembg  # Lazy: dipendenza opzionale, non nei requirements
         except ImportError:
-            self._status("rembg non installato", WARN_C, 3)
+            self._status(self._TR("err_rembg_missing", "rembg is not installed"), WARN_C, 3)
             return
         try:
             from PIL import Image  # Lazy: arriva con rembg ma verifichiamo
         except ImportError:
-            self._status("Pillow non installato", WARN_C, 3)
+            self._status(self._TR("err_pillow_missing", "Pillow is not installed"), WARN_C, 3)
             return
 
         raw = pygame.image.tobytes(self._img_editor_view_surf, "RGBA")
@@ -916,7 +916,7 @@ class ImgEditorMixin:
         self._img_editor_busy = True
         self._img_editor_ai_result = None
         self._img_editor_ai_error = None
-        self._status("Rimozione sfondo AI in corso...", ACCENT, 2)
+        self._status(self._TR("img_bg_removing", "AI background removal in progress..."), ACCENT, 2)
 
         def worker() -> None:
             # Nel worker si toccano solo bytes: niente Surface fuori dal main loop
@@ -940,7 +940,7 @@ class ImgEditorMixin:
             self._img_editor_ai_error = None
             if err[0] == self._img_editor_ai_token:
                 self._img_editor_busy = False
-                self._status(f"Errore rembg: {err[1]}", ERR_C, 4)
+                self._status(self._TR("err_rembg", "rembg error: {0}").format(err[1]), ERR_C, 4)
             return
         res = self._img_editor_ai_result
         if res is None:
@@ -954,7 +954,7 @@ class ImgEditorMixin:
         self._img_editor_push_undo()
         self._img_editor_view_surf = new_surf
         self._img_editor_dirty = True
-        self._status("Sfondo rimosso (AI)", OK_C, 2)
+        self._status(self._TR("img_bg_removed", "Background removed (AI)"), OK_C, 2)
 
     def _img_editor_resize_begin(self) -> None:
         """Apre il mini-prompt inline W/H precompilato con le dimensioni attuali."""
@@ -1003,7 +1003,7 @@ class ImgEditorMixin:
         elif self._img_editor_resize_h.isdigit():
             new_w, new_h = aspect_resize_dims(w, h, target_h=int(self._img_editor_resize_h))
         else:
-            self._status("Dimensione non valida", WARN_C, 2)
+            self._status(self._TR("err_invalid_size", "Invalid size"), WARN_C, 2)
             return
         self._img_editor_resize_edit = False
         if (new_w, new_h) == (w, h):
@@ -1015,7 +1015,7 @@ class ImgEditorMixin:
         self._img_editor_crop = {"l": 0, "r": 0, "t": 0, "b": 0}
         self._img_editor_dirty = True
         self._img_editor_sync_orig_surf()
-        self._status(f"Ridimensionato: {new_w}x{new_h}", OK_C, 2)
+        self._status(self._TR("img_resized", "Resized: {0}x{1}").format(new_w, new_h), OK_C, 2)
 
     def _img_editor_filter_from_mouse(self, key: str, mx: int, sl_rect: pygame.Rect) -> None:
         """Aggiorna il filtro colore associato allo slider (key = sl_filt_b/c/s)."""
@@ -1033,14 +1033,14 @@ class ImgEditorMixin:
         """Rende permanenti i filtri colore in anteprima e azzera gli slider."""
         filt = self._img_editor_filters
         if not (filt["b"] or filt["c"] or filt["s"]):
-            self._status("Filtri a zero: nulla da applicare", WARN_C, 2)
+            self._status(self._TR("img_filters_zero", "Filters at zero: nothing to apply"), WARN_C, 2)
             return
         self._img_editor_push_undo()
         apply_color_adjust_surface(
             self._img_editor_view_surf, filt["b"], filt["c"], filt["s"])
         self._img_editor_filters = {"b": 0, "c": 0, "s": 0}
         self._img_editor_dirty = True
-        self._status("Filtri applicati", OK_C, 2)
+        self._status(self._TR("img_filters_applied", "Filters applied"), OK_C, 2)
 
     def _img_editor_apply_outline(self) -> None:
         """Aggiunge un contorno uniforme attorno alla silhouette alpha."""
@@ -1048,7 +1048,7 @@ class ImgEditorMixin:
         alpha = pygame.surfarray.array_alpha(surf)
         ring = outline_ring(alpha, self._img_editor_outline_px)
         if not ring.any():
-            self._status("Nessuna silhouette da contornare", WARN_C, 2)
+            self._status(self._TR("img_no_silhouette", "No silhouette to outline"), WARN_C, 2)
             return
         self._img_editor_push_undo()
         color = OUTLINE_COLORS[self._img_editor_outline_color]
@@ -1059,7 +1059,7 @@ class ImgEditorMixin:
         alpha_px[ring] = 255
         del alpha_px
         self._img_editor_dirty = True
-        self._status(f"Contorno {self._img_editor_outline_px}px applicato", OK_C, 2)
+        self._status(self._TR("img_outline_applied", "{0}px outline applied").format(self._img_editor_outline_px), OK_C, 2)
 
     def _img_editor_drag(self, mx, my):
         ex, ey, ew, eh = self._img_editor_get_modal_rect()
@@ -1206,7 +1206,7 @@ class ImgEditorMixin:
         _rect(self.screen, ACCENT, box, 1, radius=18)
         
         mx, my = pygame.mouse.get_pos()
-        _draw_text(self.screen, f"STUDIO ASSET: {self._img_editor_id}", "lg", TXT_HI, ex + 30, ey + 25)
+        _draw_text(self.screen, self._TR("img_studio_title", "ASSET STUDIO: {0}").format(self._img_editor_id), "lg", TXT_HI, ex + 30, ey + 25)
         
         # Calcolo layout base con supporto Auto-Fit
         ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
@@ -1293,7 +1293,7 @@ class ImgEditorMixin:
         col1_x, col2_x = sb_x + 10, sb_x + 165
         
         # Strumenti (gomma, ripristina dall'originale, bacchetta)
-        _draw_text(self.screen, "PENNELLI", "sm", TXT_DIM, col1_x, ey + 60)
+        _draw_text(self.screen, self._TR("img_brushes", "BRUSHES"), "sm", TXT_DIM, col1_x, ey + 60)
         sy = ey + 85
         tools = [("eraser", "eraser"), ("restore", "brush"), ("wand", "wand")]
         for i, (tid, ico) in enumerate(tools):
@@ -1311,29 +1311,29 @@ class ImgEditorMixin:
         sy_sl = ey + 255
         sl_w = 145
         if self._img_editor_tool in ("eraser", "restore"):
-            _draw_text(self.screen, f"RAGGIO: {self._img_editor_eraser_r}px", "sm", TXT_HI, col1_x, sy_sl - 25)
+            _draw_text(self.screen, self._TR("img_radius", "RADIUS: {0}px").format(self._img_editor_eraser_r), "sm", TXT_HI, col1_x, sy_sl - 25)
             _slider(self.screen, (col1_x, sy_sl, sl_w, 20), (self._img_editor_eraser_r - 1) / 63, 0, 1)
-            _draw_text(self.screen, f"DUREZZA: {int(self._img_editor_eraser_hardness*100)}%", "sm", TXT_DIM, col1_x, sy_sl + 45)
+            _draw_text(self.screen, self._TR("img_hardness", "HARDNESS: {0}%").format(int(self._img_editor_eraser_hardness*100)), "sm", TXT_DIM, col1_x, sy_sl + 45)
             _slider(self.screen, (col1_x, sy_sl + 70, sl_w, 20), self._img_editor_eraser_hardness, 0, 1)
-            _draw_text(self.screen, f"OPACITÀ: {int(self._img_editor_eraser_opacity*100)}%", "sm", TXT_DIM, col1_x, sy_sl + 115)
+            _draw_text(self.screen, self._TR("img_opacity", "OPACITY: {0}%").format(int(self._img_editor_eraser_opacity*100)), "sm", TXT_DIM, col1_x, sy_sl + 115)
             _slider(self.screen, (col1_x, sy_sl + 140, sl_w, 20), self._img_editor_eraser_opacity, 0, 1)
             sy_ch = sy_sl + 195
         else:
-            _draw_text(self.screen, f"TOLLERANZA: {self._img_editor_wand_tol}", "sm", TXT_HI, col1_x, sy_sl - 25)
+            _draw_text(self.screen, self._TR("img_tolerance", "TOLERANCE: {0}").format(self._img_editor_wand_tol), "sm", TXT_HI, col1_x, sy_sl - 25)
             _slider(self.screen, (col1_x, sy_sl, sl_w, 20), self._img_editor_wand_tol / 128, 0, 1)
-            _draw_text(self.screen, f"SFUMATURA: {self._img_editor_wand_feather}", "sm", TXT_HI, col1_x, sy_sl + 45)
+            _draw_text(self.screen, self._TR("img_feather", "FEATHER: {0}").format(self._img_editor_wand_feather), "sm", TXT_HI, col1_x, sy_sl + 45)
             _slider(self.screen, (col1_x, sy_sl + 70, sl_w, 20), self._img_editor_wand_feather / 32, 0, 1)
             sy_ch = sy_sl + 195
             
-        _draw_text(self.screen, "CHROMA REMOVER", "sm", TXT_DIM, col1_x, sy_ch - 25)
+        _draw_text(self.screen, self._TR("img_chroma", "CHROMA REMOVER"), "sm", TXT_DIM, col1_x, sy_ch - 25)
         for i, (m, c) in enumerate([("G", (0, 200, 0)), ("W", (230, 230, 230)), ("B", (40, 40, 40))]):
             tr_c = pygame.Rect(col1_x + i*50, sy_ch, 45, 40)
             _button(self.screen, tr_c, m, _in_rect((mx, my), tr_c))
-        _draw_text(self.screen, f"INTENSITÀ: {self._img_editor_chroma_intensity:.1f}", "sm", TXT_DIM, col1_x, sy_ch + 75)
+        _draw_text(self.screen, self._TR("img_intensity", "INTENSITY: {0}").format(f"{self._img_editor_chroma_intensity:.1f}"), "sm", TXT_DIM, col1_x, sy_ch + 75)
         _slider(self.screen, (col1_x, sy_ch + 100, sl_w, 20), (self._img_editor_chroma_intensity - 0.5) / 3.5, 0, 1)
 
         # Colonna 2 (Zoom & Trans)
-        _draw_text(self.screen, "NAVIGAZIONE", "sm", TXT_DIM, col2_x, ey + 60)
+        _draw_text(self.screen, self._TR("img_navigation", "NAVIGATION"), "sm", TXT_DIM, col2_x, ey + 60)
         sy2 = ey + 85; bw2 = (sl_w // 2) - 3
         r_f, r_1 = pygame.Rect(col2_x, sy2, bw2, 40), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 40)
         _button(self.screen, r_f, "    FIT", _in_rect((mx, my), r_f))
@@ -1341,17 +1341,17 @@ class ImgEditorMixin:
         _button(self.screen, r_1, "    1:1", _in_rect((mx, my), r_1))
         self._r_blit_icon("zoom_100", pygame.Rect(r_1.x+4, r_1.y, 25, 40), active=_in_rect((mx, my), r_1))
         
-        sy2 += 105; _draw_text(self.screen, "ROTAZIONE", "sm", TXT_DIM, col2_x, sy2 - 25)
+        sy2 += 105; _draw_text(self.screen, self._TR("img_rotation", "ROTATION"), "sm", TXT_DIM, col2_x, sy2 - 25)
         r_l, r_r = pygame.Rect(col2_x, sy2, bw2, 42), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 42)
         _button(self.screen, r_l, "", _in_rect((mx, my), r_l)); self._r_blit_icon("undo", r_l, active=_in_rect((mx, my), r_l))
         _button(self.screen, r_r, "", _in_rect((mx, my), r_r)); self._r_blit_icon("rotate_cw", r_r, active=_in_rect((mx, my), r_r))
         
-        sy2 += 85; _draw_text(self.screen, "AUTOMAZIONE", "sm", TXT_DIM, col2_x, sy2 - 25)
+        sy2 += 85; _draw_text(self.screen, self._TR("img_automation", "AUTOMATION"), "sm", TXT_DIM, col2_x, sy2 - 25)
         r_at = pygame.Rect(col2_x, sy2, 145, 40)
         _button(self.screen, r_at, "      AUTO TRIM", _in_rect((mx, my), r_at))
         self._r_blit_icon("crop", pygame.Rect(r_at.x+6, r_at.y, 25, 40), active=_in_rect((mx, my), r_at))
         
-        sy2 += 75; _draw_text(self.screen, "RIFLESSO", "sm", TXT_DIM, col2_x, sy2 - 25)
+        sy2 += 75; _draw_text(self.screen, self._TR("img_mirror", "MIRROR"), "sm", TXT_DIM, col2_x, sy2 - 25)
         r_fh, r_fv = pygame.Rect(col2_x, sy2, bw2, 38), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 38)
         _button(self.screen, r_fh, "   HORZ", _in_rect((mx, my), r_fh))
         self._r_blit_icon("flip_h", pygame.Rect(r_fh.x+3, r_fh.y, 25, 38), active=_in_rect((mx, my), r_fh))
@@ -1362,19 +1362,19 @@ class ImgEditorMixin:
         _button(self.screen, r_sm, "      SMOOTH", _in_rect((mx, my), r_sm))
         self._r_blit_icon("smooth", pygame.Rect(r_sm.x+6, r_sm.y, 25, 38), active=_in_rect((mx, my), r_sm))
         
-        sy2 += 85; _draw_text(self.screen, "HITBOX", "sm", TXT_DIM, col2_x, sy2 - 25)
+        sy2 += 85; _draw_text(self.screen, self._TR("img_hitbox", "HITBOX"), "sm", TXT_DIM, col2_x, sy2 - 25)
         r_re, r_ci = pygame.Rect(col2_x, sy2, bw2, 38), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 38)
         _button(self.screen, r_re, "RECT", _in_rect((mx, my), r_re), active=(self._img_editor_asset_shape=="rect"))
         _button(self.screen, r_ci, "CIRC", _in_rect((mx, my), r_ci), active=(self._img_editor_asset_shape=="circle"))
 
         # Ritaglio manuale (ALLINEATO al click: sy2 += 75)
-        sy2 += 75; _draw_text(self.screen, "RITAGLIO", "sm", TXT_DIM, col2_x, sy2 - 25)
+        sy2 += 75; _draw_text(self.screen, self._TR("img_crop", "CROP"), "sm", TXT_DIM, col2_x, sy2 - 25)
         r_cm = pygame.Rect(col2_x, sy2, bw2, 38)
         r_ca = pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 38)
-        _button(self.screen, r_cm, "RITAGLIA", _in_rect((mx, my), r_cm),
+        _button(self.screen, r_cm, self._TR("img_crop_btn", "CROP"), _in_rect((mx, my), r_cm),
                 active=self._img_editor_crop_mode)
         can_apply = self._img_editor_crop_mode and any(self._img_editor_crop.values())
-        _button(self.screen, r_ca, "APPLICA", _in_rect((mx, my), r_ca) and can_apply)
+        _button(self.screen, r_ca, self._TR("btn_apply_caps", "APPLY"), _in_rect((mx, my), r_ca) and can_apply)
 
         # Colonna 3 (AI / Dimensione / Filtri / Contorno)
         # Geometria condivisa con il click tramite _img_editor_col3_rects
@@ -1382,26 +1382,26 @@ class ImgEditorMixin:
         col3_x = r3["ai"].x
         busy = self._img_editor_busy
 
-        _draw_text(self.screen, "SFONDO AI", "sm", TXT_DIM, col3_x, ey + 60)
+        _draw_text(self.screen, self._TR("img_ai_bg", "AI BACKGROUND"), "sm", TXT_DIM, col3_x, ey + 60)
         ai_label = "ELABORAZIONE..." if busy else "RIMUOVI SFONDO"
         _button(self.screen, r3["ai"], ai_label,
                 _in_rect((mx, my), r3["ai"]) and not busy, active=busy)
 
-        _draw_text(self.screen, "DIMENSIONE", "sm", TXT_DIM, col3_x, r3["dim_w"].y - 25)
+        _draw_text(self.screen, self._TR("img_size", "SIZE"), "sm", TXT_DIM, col3_x, r3["dim_w"].y - 25)
         if self._img_editor_resize_edit:
             _input_box(self.screen, r3["dim_w"], self._img_editor_resize_w,
                        focused=(self._img_editor_resize_focus == "w"), hint="W", font="sm")
             _input_box(self.screen, r3["dim_h"], self._img_editor_resize_h,
                        focused=(self._img_editor_resize_focus == "h"), hint="H", font="sm")
-            _button(self.screen, r3["dim_btn"], "APPLICA", _in_rect((mx, my), r3["dim_btn"]))
+            _button(self.screen, r3["dim_btn"], self._TR("btn_apply_caps", "APPLY"), _in_rect((mx, my), r3["dim_btn"]))
         else:
             vw, vh = self._img_editor_view_surf.get_size()
             _draw_text(self.screen, f"{vw} x {vh} px", "sm", TXT_HI,
                        col3_x, r3["dim_w"].y + 8)
-            _button(self.screen, r3["dim_btn"], "RIDIMENSIONA",
+            _button(self.screen, r3["dim_btn"], self._TR("img_resize_btn", "RESIZE"),
                     _in_rect((mx, my), r3["dim_btn"]))
 
-        _draw_text(self.screen, "FILTRI", "sm", TXT_DIM, col3_x, r3["sl_filt_b"].y - 42)
+        _draw_text(self.screen, self._TR("img_filters", "FILTERS"), "sm", TXT_DIM, col3_x, r3["sl_filt_b"].y - 42)
         f_range = FILTER_MAX - FILTER_MIN
         filt3 = self._img_editor_filters
         for f_name, f_key in (("LUMINOSITÀ", "b"), ("CONTRASTO", "c"), ("SATURAZIONE", "s")):
@@ -1410,20 +1410,20 @@ class ImgEditorMixin:
                        col3_x, f_rect.y - 16)
             _slider(self.screen, f_rect, (filt3[f_key] - FILTER_MIN) / f_range, 0, 1)
         filt3_on = bool(filt3["b"] or filt3["c"] or filt3["s"])
-        _button(self.screen, r3["filt_apply"], "APPLICA FILTRI",
+        _button(self.screen, r3["filt_apply"], self._TR("img_apply_filters", "APPLY FILTERS"),
                 _in_rect((mx, my), r3["filt_apply"]), active=filt3_on)
 
-        _draw_text(self.screen, "CONTORNO", "sm", TXT_DIM, col3_x, r3["sl_outline"].y - 42)
-        _draw_text(self.screen, f"SPESSORE: {self._img_editor_outline_px}px", "xs", TXT_DIM,
+        _draw_text(self.screen, self._TR("img_outline", "OUTLINE"), "sm", TXT_DIM, col3_x, r3["sl_outline"].y - 42)
+        _draw_text(self.screen, self._TR("img_thickness", "THICKNESS: {0}px").format(self._img_editor_outline_px), "xs", TXT_DIM,
                    col3_x, r3["sl_outline"].y - 16)
         o_range = OUTLINE_MAX_PX - OUTLINE_MIN_PX
         _slider(self.screen, r3["sl_outline"],
                 (self._img_editor_outline_px - OUTLINE_MIN_PX) / o_range, 0, 1)
-        _button(self.screen, r3["out_white"], "BIANCO", _in_rect((mx, my), r3["out_white"]),
+        _button(self.screen, r3["out_white"], self._TR("img_white", "WHITE"), _in_rect((mx, my), r3["out_white"]),
                 active=(self._img_editor_outline_color == "white"))
-        _button(self.screen, r3["out_black"], "NERO", _in_rect((mx, my), r3["out_black"]),
+        _button(self.screen, r3["out_black"], self._TR("img_black", "BLACK"), _in_rect((mx, my), r3["out_black"]),
                 active=(self._img_editor_outline_color == "black"))
-        _button(self.screen, r3["out_apply"], "APPLICA CONTORNO",
+        _button(self.screen, r3["out_apply"], self._TR("img_apply_outline", "APPLY OUTLINE"),
                 _in_rect((mx, my), r3["out_apply"]))
 
         # Footer (Compattato e Corretto)

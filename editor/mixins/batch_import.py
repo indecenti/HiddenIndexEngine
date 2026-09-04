@@ -31,6 +31,7 @@ from editor.core.io import _load_json, _save_json, _load_catalog
 from editor.mixins.img_editor_logic import evolved_trim
 from editor.ui.draw import _rect, _draw_text, _in_rect, _text_wh
 from editor.ui.widgets import Button, InputBox, ScrollList, WidgetGroup
+from engine.language_manager import tr
 
 logger = logging.getLogger(__name__)
 
@@ -289,7 +290,7 @@ class BatchImportMixin:
     def _batch_import_open(self) -> None:
         """Apre il dialog multi-file e il modale di import batch."""
         if not getattr(self, "game_path", None):
-            self._status("Apri prima un progetto per l'import batch", WARN_C, 3)
+            self._status(self._TR("bi_open_project_first", "Open a project first to use the batch import"), WARN_C, 3)
             return
         files = _files_dialog("Scegli le immagini da importare",
                               filetypes=[("Immagini PNG", "*.png")],
@@ -431,7 +432,7 @@ class _BatchImportModal:
                     editor._lang_data.setdefault(lang, {}).setdefault(
                         f"obj_{slug}", "")
         editor._status(
-            f"Import batch: {self.imported} oggetti aggiunti al catalogo", OK_C, 4)
+            tr("bi_done", "Batch import: {0} objects added to the catalog").format(self.imported), OK_C, 4)
 
     # ── Layout / input / render ──────────────────────────────────────────────
 
@@ -506,16 +507,16 @@ class _BatchImportModal:
         screen.blit(overlay, (0, 0))
         _rect(screen, PANEL, panel, radius=8)
         _rect(screen, ACCENT, panel, 2, radius=8)
-        _draw_text(screen, f"Import Batch Oggetti ({len(self.rows)} file)",
+        _draw_text(screen, tr("bi_title", "Batch object import ({0} files)").format(len(self.rows)),
                    "md", TXT_HI, panel.x + _PAD, panel.y + _PAD - 4)
 
         draw_checkbox(screen, self._cb_remove_rect, "Rimuovi sfondo (AI)",
                       self.opt_remove_bg, enabled=not self.running)
         draw_checkbox(screen, self._cb_trim_rect, "Auto-ritaglio",
                       self.opt_autotrim, enabled=not self.running)
-        _draw_text(screen, "Stile:", "sm", TXT_DIM, panel.x + _PAD,
+        _draw_text(screen, tr("bi_style", "Style:"), "sm", TXT_DIM, panel.x + _PAD,
                    self.btn_style_cartoon.rect.y + 6)
-        _draw_text(screen, "Tag comuni:", "sm", TXT_DIM, panel.x + _PAD,
+        _draw_text(screen, tr("bi_common_tags", "Common tags:"), "sm", TXT_DIM, panel.x + _PAD,
                    self.tags_input.rect.y + 6)
         self.group.draw(screen)
 

@@ -35,8 +35,8 @@ class RenderTopbarMixin:
         
         # Etichette localizzate per i menu principali
         menu_file = self.lang_manager.get("menu_file", "File")
-        menu_edit = self.lang_manager.get("menu_edit", "Modifica")
-        menu_lang = self.lang_manager.get("menu_language", "Lingua")
+        menu_edit = self.lang_manager.get("menu_edit", "Edit")
+        menu_lang = self.lang_manager.get("menu_language", "Language")
 
         # Etichette visualizzate (gli ID interni restano costanti in inglese)
         menu_display_names = {
@@ -75,47 +75,46 @@ class RenderTopbarMixin:
 
         # Titolo (a destra dell'ultimo menu, qualunque sia la larghezza localizzata)
         title_x = menu_x + TITLE_GAP
-        title_str = "HIDDEN ENGINE"
+        title_str = "HIDDEN ENGINE"  # nome prodotto: non tradotto
         if self.game_path:
             title_str += f"  |  {self.game_path.name.upper()}"
         if self.scene_path:
             title_str += f"  >  {self.scene_path.name}"
         if getattr(self, "scene_dirty", False):
-            title_str += "  [MODIFICATO]*"
+            title_str += "  " + self._TR("tb_title_modified", "[MODIFIED]*")
         
         _draw_text(self.screen, title_str, "sm", (120, 120, 140), title_x, 7, w - title_x - 100)
 
     def _get_menu_items(self, menu_name):
         """Restituisce la lista di (label, cmd) per il menu specificato."""
-        l = self.lang_manager
         if menu_name == "File":
             return [
-                (l.get("menu_new_game", "Nuovo Progetto..."), "file_new_game"),
-                (l.get("menu_open_game", "Apri Progetto..."), "file_open_game"),
+                (self._TR("menu_new_game", "New project..."), "file_new_game"),
+                (self._TR("menu_open_game", "Open project..."), "file_open_game"),
                 None,
-                (l.get("menu_save_scene", "Salva Scena"), "file_save_scene"),
-                (l.get("menu_save_as", "Salva con nome..."), "file_save_as"),
+                (self._TR("menu_save_scene", "Save scene"), "file_save_scene"),
+                (self._TR("menu_save_as", "Save as..."), "file_save_as"),
                 None,
-                (l.get("menu_auditor", "Auditor Progetto..."), "file_auditor"),
-                (l.get("menu_scene_stats", "Statistiche Scena..."), "file_scene_stats"),
-                (l.get("menu_batch_import", "Import Batch Oggetti..."), "file_batch_import"),
+                (self._TR("menu_auditor", "Project auditor..."), "file_auditor"),
+                (self._TR("menu_scene_stats", "Scene statistics..."), "file_scene_stats"),
+                (self._TR("menu_batch_import", "Batch object import..."), "file_batch_import"),
                 None,
-                (l.get("menu_exit_to_gs", "Torna al Selettore"), "file_exit_to_gs"),
-                (l.get("menu_quit", "Esci"), "file_quit"),
+                (self._TR("menu_exit_to_gs", "Back to selector"), "file_exit_to_gs"),
+                (self._TR("menu_quit", "Quit"), "file_quit"),
             ]
         elif menu_name == "Edit":
             return [
-                (l.get("menu_undo", "Annulla") + " (Ctrl+Z)", "edit_undo"),
-                (l.get("menu_redo", "Ripristina") + " (Ctrl+Y)", "edit_redo"),
+                (self._TR("menu_undo", "Undo") + " (Ctrl+Z)", "edit_undo"),
+                (self._TR("menu_redo", "Redo") + " (Ctrl+Y)", "edit_redo"),
                 None,
-                (l.get("menu_cut", "Taglia") + " (Ctrl+X)", "edit_cut"),
-                (l.get("menu_copy", "Copia") + " (Ctrl+C)", "edit_copy"),
-                (l.get("menu_paste", "Incolla") + " (Ctrl+V)", "edit_paste"),
+                (self._TR("menu_cut", "Cut") + " (Ctrl+X)", "edit_cut"),
+                (self._TR("menu_copy", "Copy") + " (Ctrl+C)", "edit_copy"),
+                (self._TR("menu_paste", "Paste") + " (Ctrl+V)", "edit_paste"),
                 None,
-                (l.get("menu_preset_save", "Salva Gruppo..."), "edit_preset_save"),
-                (l.get("menu_preset_insert", "Inserisci Gruppo..."), "edit_preset_insert"),
+                (self._TR("menu_preset_save", "Save group..."), "edit_preset_save"),
+                (self._TR("menu_preset_insert", "Insert group..."), "edit_preset_insert"),
                 None,
-                (l.get("menu_lang_modal", "Editor Traduzioni..."), "edit_lang_modal"),
+                (self._TR("menu_lang_modal", "Translation editor..."), "edit_lang_modal"),
             ]
         elif menu_name == "Lang":
             items = []

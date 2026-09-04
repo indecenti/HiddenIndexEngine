@@ -67,7 +67,7 @@ class HistoryMixin:
 
     def _undo(self):
         if not self.undo_stack:
-            self._status("Undo: Nulla da annullare", TXT_DIM, 1)
+            self._status(self._TR("hist_nothing_undo", "Undo: nothing to undo"), TXT_DIM, 1)
             return
 
         snap, label = self.undo_stack.pop()
@@ -81,7 +81,7 @@ class HistoryMixin:
 
     def _redo(self):
         if not self.redo_stack:
-            self._status("Redo: Nulla da ripristinare", TXT_DIM, 1)
+            self._status(self._TR("hist_nothing_redo", "Redo: nothing to redo"), TXT_DIM, 1)
             return
 
         snap, label = self.redo_stack.pop()

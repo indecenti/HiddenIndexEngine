@@ -151,13 +151,13 @@ class SceneStatsMixin:
         """Apre il modale e calcola/ricalcola le statistiche della scena corrente."""
         scene_data = getattr(self, "scene_data", None)
         if not getattr(self, "scene_path", None) or not isinstance(scene_data, dict):
-            self._stats_status("Apri prima una scena per vedere le statistiche", WARN_C)
+            self._stats_status(self._TR("st_open_scene_first", "Open a scene first to see the statistics"), WARN_C)
             return
         self._stats_modal = True
         self._stats_scroll = 0
         self._stats_hitboxes = {}
         self._stats_data = None  # il render mostra "Calcolo..." finche' non c'e' data
-        self._stats_status("Calcolo statistiche scena...", TXT_DIM)
+        self._stats_status(self._TR("st_computing", "Computing scene statistics..."), TXT_DIM)
 
         with_loading = getattr(self, "_with_loading", None)
         if callable(with_loading):
@@ -173,7 +173,7 @@ class SceneStatsMixin:
         self._stats_data = data
         elapsed = data.get("elapsed_s")
         if elapsed is not None:
-            self._stats_status(f"Statistiche calcolate in {elapsed:.2f}s", OK_C)
+            self._stats_status(self._TR("st_computed_in", "Statistics computed in {0}s").format(f"{elapsed:.2f}"), OK_C)
 
     def _stats_close(self) -> None:
         """Chiude il modale statistiche (i dati restano in cache)."""
@@ -585,7 +585,7 @@ class SceneStatsMixin:
         _rect(self.screen, (38, 40, 55), (dx, dy, _MODAL_W, _HDR_H), radius=12)
         pygame.draw.line(self.screen, BORDER,
                          (dx + 1, dy + _HDR_H), (dx + _MODAL_W - 1, dy + _HDR_H))
-        _draw_text(self.screen, "STATISTICHE SCENA", "lg", ACCENT, dx + 20, dy + 10)
+        _draw_text(self.screen, self._TR("st_title", "SCENE STATISTICS"), "lg", ACCENT, dx + 20, dy + 10)
         data = getattr(self, "_stats_data", None)
         scene_id = (data or {}).get("scene_id", "") or ""
         bg_size = (data or {}).get("bg_size")
@@ -595,7 +595,7 @@ class SceneStatsMixin:
         _draw_text(self.screen, sub, "sm", TXT_DIM, dx + 20, dy + 34, max_w=_MODAL_W - 260)
 
         recalc_r = pygame.Rect(dx + _MODAL_W - 172, dy + 12, 118, 32)
-        _button(self.screen, recalc_r, "Ricalcola", _in_rect((mx, my), recalc_r), font="sm")
+        _button(self.screen, recalc_r, self._TR("st_recompute", "Recompute"), _in_rect((mx, my), recalc_r), font="sm")
         self._stats_hitboxes["recalc"] = recalc_r
         close_r = pygame.Rect(dx + _MODAL_W - 42, dy + 12, 28, 28)
         _button(self.screen, close_r, "X", _in_rect((mx, my), close_r),
@@ -606,14 +606,14 @@ class SceneStatsMixin:
         footer_y = dy + _MODAL_H - _FOOTER_H + 6
         pygame.draw.line(self.screen, BORDER,
                          (dx + 1, footer_y - 8), (dx + _MODAL_W - 1, footer_y - 8))
-        _draw_text(self.screen, "ESC o click fuori per chiudere  |  rotella per scorrere",
+        _draw_text(self.screen, self._TR("st_hint", "ESC or click outside to close  |  wheel to scroll"),
                    "xs", TXT_DIM, dx + 20, footer_y)
 
         body_y = dy + _HDR_H + _PAD
         body_h = _MODAL_H - _HDR_H - _FOOTER_H - 2 * _PAD
 
         if not isinstance(data, dict):
-            _draw_text(self.screen, "Calcolo statistiche in corso...", "md", TXT_DIM,
+            _draw_text(self.screen, self._TR("st_in_progress", "Computing statistics..."), "md", TXT_DIM,
                        dx + _PAD + 4, body_y + 8)
             return
         if data.get("error"):
@@ -735,9 +735,9 @@ class SceneStatsMixin:
         legend_y = grid_y
         empty = coverage.get("empty_cells")
         if empty is not None:
-            _draw_text(self.screen, f"Zone vuote: {empty}/{_GRID_ROWS * _GRID_COLS}",
+            _draw_text(self.screen, self._TR("st_empty_zones", "Empty zones: {0}/{1}").format(empty, _GRID_ROWS * _GRID_COLS),
                        "xs", TXT_DIM, legend_x, legend_y)
-            _draw_text(self.screen, f"Affollate: >= {crowd_thr:.0f} ogg.",
+            _draw_text(self.screen, self._TR("st_crowded", "Crowded: >= {0} obj.").format(f"{crowd_thr:.0f}"),
                        "xs", TXT_DIM, legend_x, legend_y + _LINE_H - 4)
         return cur_y
 
@@ -783,7 +783,7 @@ class SceneStatsMixin:
         avg = diff.get("avg")
         label = diff.get("label", _LBL_NA)
         if avg is not None:
-            used = _draw_text(self.screen, f"Media scena: {avg:.2f}  ", "sm", TXT_HI,
+            used = _draw_text(self.screen, self._TR("st_scene_avg", "Scene average: {0}  ").format(f"{avg:.2f}"), "sm", TXT_HI,
                               x, cur_y)
             _draw_text(self.screen, label, "sm", _label_color(label), x + used, cur_y)
         else:
@@ -802,7 +802,7 @@ class SceneStatsMixin:
         self._stats_scroll = scroll
 
         if not items:
-            _draw_text(self.screen, "Nessun oggetto da valutare", "sm", TXT_DIM,
+            _draw_text(self.screen, self._TR("st_no_objects", "No object to evaluate"), "sm", TXT_DIM,
                        x, list_y)
             return
 

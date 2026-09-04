@@ -89,11 +89,19 @@ questi, DEVI leggere e aggiornare **`docs/web/WEB_EXPORT_SYNC.md`** e propagare 
 runtime web nella stessa change. Le costanti condivise hanno fonte unica in
 `editor/web_rules.py::engine_rules()`. Verifica obbligatoria: `pytest tests/test_web_sync.py`.
 
-## i18n (harvesting)
+## i18n
 
-`LanguageManager` risolve: `games/<id>/strings/` -> `engine/assets/strings/` -> fallback EN ->
-generazione da ID. Al salvataggio scena l'editor fa **harvesting**: copia nel `.json` locale del
-gioco le stringhe necessarie (oggetti, HUD, menu) cosi' il gioco e' distribuibile standalone.
+**EN e' la lingua di default e l'UNICO fallback** (`engine.language_manager.DEFAULT_LANG` /
+`FALLBACK_LANG`, `editor.constants.DEFAULT_LANG`). `LanguageManager` risolve:
+`games/<id>/strings/` -> `engine/assets/strings/` -> fallback EN -> default inline -> chiave.
+
+Niente testo hardcoded nella UI: si usa `self._TR("chiave", "English default")` (o `tr(...)` da
+`engine.language_manager` nei modali standalone) e `str.format` con placeholder nominali. Ogni
+chiave nuova va aggiunta a **tutte e 5** le lingue in `engine/assets/strings/`.
+Verifica obbligatoria: `pytest tests/test_editor_i18n.py`. Dettagli in `docs/engine/I18N.md`.
+
+Al salvataggio scena l'editor fa **harvesting**: copia nel `.json` locale del gioco le stringhe
+necessarie (oggetti, HUD, menu) cosi' il gioco e' distribuibile standalone.
 
 ## Tooling per Claude
 

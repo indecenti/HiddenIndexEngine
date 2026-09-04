@@ -239,7 +239,9 @@ class ObjectOpsMixin:
             else:
                 self.selected_idx = None
             
-            self._status(f"Selezione di gruppo: {len(self.selected_indices)} oggetti", ACCENT, 1)
+            self._status(self._TR("obj_group_selection",
+                                  "Group selection: {n} objects").format(
+                                      n=len(self.selected_indices)), ACCENT, 1)
 
     # ─────────────────────────────────────────────────────────────────────────
     # PIAZZAMENTO / CRUD
@@ -261,15 +263,20 @@ class ObjectOpsMixin:
         if lyr not in ("objects_low", "objects_mid", "objects_high"):
             lyr = "objects_mid"
             self.active_layer = lyr
-            self._status("Layer auto-impostato su: MEDIO", WARN_C, 1)
+            self._status(self._TR("obj_layer_auto_mid",
+                                  "Layer auto-set to: MID"), WARN_C, 1)
         
         # Forza visibilità se nascosto
         if not self.layer_vis.get(lyr, True):
             self.layer_vis[lyr] = True
-            self._status(f"Layer '{lyr}' riattivato per visualizzare nuovo oggetto", ACCENT, 1)
+            self._status(self._TR("obj_layer_reenabled",
+                                  "Layer '{layer}' re-enabled to show the new object").format(
+                                      layer=lyr), ACCENT, 1)
 
         if self.layer_locked.get(lyr, False):
-            self._status(f"Impossibile aggiungere: layer '{lyr}' bloccato!", ERR_C, 2)
+            self._status(self._TR("obj_layer_locked_add",
+                                  "Cannot add: layer '{layer}' is locked").format(
+                                      layer=lyr), ERR_C, 2)
             self._cancel_rect(); return
 
         obj = _default_obj(cat["id"], cx, cy, "circle", radius=r,
@@ -290,9 +297,12 @@ class ObjectOpsMixin:
         label_key = cat.get("label_key", f"obj_{cat['id']}")
         missing = self._ensure_translation_key(label_key)
         if missing:
-            self._status(f"Traduci '{label_key}' ({', '.join(missing)})", WARN_C, 4)
+            self._status(self._TR("obj_translate_missing",
+                                  "Translate '{key}' ({langs})").format(
+                                      key=label_key, langs=", ".join(missing)), WARN_C, 4)
         else:
-            self._status(f"Aggiunto: {cat['id']} (cerchio)", OK_C, 2)
+            self._status(self._TR("obj_added_circle", "Added: {id} (circle)").format(
+                id=cat["id"]), OK_C, 2)
 
     def _confirm_rect(self, mx, my):
         cat = self._sel_catalog()
@@ -308,15 +318,20 @@ class ObjectOpsMixin:
         if lyr not in ("objects_low", "objects_mid", "objects_high"):
             lyr = "objects_mid"
             self.active_layer = lyr
-            self._status("Layer auto-impostato su: MEDIO", WARN_C, 1)
+            self._status(self._TR("obj_layer_auto_mid",
+                                  "Layer auto-set to: MID"), WARN_C, 1)
             
         # Forza visibilità se nascosto
         if not self.layer_vis.get(lyr, True):
             self.layer_vis[lyr] = True
-            self._status(f"Layer '{lyr}' riattivato per visualizzare nuovo oggetto", ACCENT, 1)
+            self._status(self._TR("obj_layer_reenabled",
+                                  "Layer '{layer}' re-enabled to show the new object").format(
+                                      layer=lyr), ACCENT, 1)
             
         if self.layer_locked.get(lyr, False):
-            self._status(f"Impossibile aggiungere: layer '{lyr}' bloccato!", ERR_C, 2)
+            self._status(self._TR("obj_layer_locked_add",
+                                  "Cannot add: layer '{layer}' is locked").format(
+                                      layer=lyr), ERR_C, 2)
             self._cancel_rect(); return
 
         obj = _default_obj(cat["id"], x, y, "rect", width=max(10, w), height=max(10, h),
@@ -338,9 +353,12 @@ class ObjectOpsMixin:
         label_key = cat.get("label_key", f"obj_{cat['id']}")
         missing = self._ensure_translation_key(label_key)
         if missing:
-            self._status(f"Traduci '{label_key}' ({', '.join(missing)})", WARN_C, 4)
+            self._status(self._TR("obj_translate_missing",
+                                  "Translate '{key}' ({langs})").format(
+                                      key=label_key, langs=", ".join(missing)), WARN_C, 4)
         else:
-            self._status(f"Aggiunto: {cat['id']} (rect)", OK_C, 2)
+            self._status(self._TR("obj_added_rect", "Added: {id} (rect)").format(
+                id=cat["id"]), OK_C, 2)
 
     def _scatter_click(self, mx, my_raw):
         """
@@ -352,7 +370,7 @@ class ObjectOpsMixin:
         4. Supporto Shift per densità estrema (Arcade Mode).
         """
         if not self.catalog:
-            self._status("Nessun oggetto nel catalogo", ERR_C, 2)
+            self._status(self._TR("obj_catalog_empty", "No object in the catalog"), ERR_C, 2)
             return
 
         # --- 1. Selezione Pool e Stile ---
@@ -492,7 +510,8 @@ class ObjectOpsMixin:
             if is_shift: msg += " (DENSITÀ MASSIMA)"
             self._status(msg, OK_C, 2)
         else:
-            self._status("Spazio insufficiente per creare il cluster!", WARN_C, 2)
+            self._status(self._TR("obj_cluster_no_space",
+                                  "Not enough room to create the cluster"), WARN_C, 2)
 
 
     def _delete_sel(self):
@@ -518,7 +537,9 @@ class ObjectOpsMixin:
 
         if not to_delete:
             if skipped_locked:
-                self._status(f"Eliminazione negata: {skipped_locked} oggetti in layer bloccati", ERR_C, 3)
+                self._status(self._TR("obj_delete_denied",
+                                      "Delete denied: {n} objects on locked layers").format(
+                                          n=skipped_locked), ERR_C, 3)
             return
 
         self._push_undo("Elimina selezione")
@@ -712,7 +733,9 @@ class ObjectOpsMixin:
         for idx in indices:
             lid = self.scene_data["objects"][idx].get("layer", "objects_mid")
             if self.layer_locked.get(lid, False):
-                self._status(f"Impossibile duplicare: layer '{lid}' bloccato!", ERR_C, 2)
+                self._status(self._TR("obj_layer_locked_dup",
+                                      "Cannot duplicate: layer '{layer}' is locked").format(
+                                          layer=lid), ERR_C, 2)
                 return
         self._push_undo("Duplica")
         new_indices = []
@@ -725,13 +748,15 @@ class ObjectOpsMixin:
         self.selected_idx = new_indices[0] if new_indices else None
         self.scene_dirty = True
         self._mark_dirty()
-        self._status(f"Duplicati {len(indices)} oggetti", OK_C, 2)
+        self._status(self._TR("obj_duplicated", "Duplicated {n} objects").format(
+            n=len(indices)), OK_C, 2)
 
     def _copy_sel(self):
         if not self.selected_indices and self.selected_idx is None: return
         indices = list(set(self.selected_indices + ([self.selected_idx] if self.selected_idx is not None else [])))
         self.clipboard = [copy.deepcopy(self.scene_data["objects"][i]) for i in indices]
-        self._status(f"Copiati {len(self.clipboard)} oggetti", ACCENT, 2)
+        self._status(self._TR("obj_copied", "Copied {n} objects").format(
+            n=len(self.clipboard)), ACCENT, 2)
 
     def _cut_sel(self):
         if not self.selected_indices and self.selected_idx is None: return
@@ -744,7 +769,9 @@ class ObjectOpsMixin:
         for obj in self.clipboard:
             lid = obj.get("layer", "objects_mid")
             if self.layer_locked.get(lid, False):
-                 self._status(f"Incolla negato: layer '{lid}' bloccato!", ERR_C, 2)
+                 self._status(self._TR("obj_layer_locked_paste",
+                                       "Paste denied: layer '{layer}' is locked").format(
+                                           layer=lid), ERR_C, 2)
                  return
         self._push_undo("Incolla")
         new_indices = []
@@ -757,14 +784,16 @@ class ObjectOpsMixin:
         self.selected_idx = new_indices[0] if new_indices else None
         self.scene_dirty = True
         self._mark_dirty()
-        self._status(f"Incollati {len(self.clipboard)} oggetti", OK_C, 2)
+        self._status(self._TR("obj_pasted", "Pasted {n} objects").format(
+            n=len(self.clipboard)), OK_C, 2)
 
     def _select_all(self):
         objs = self.scene_data.get("objects", [])
         if not objs: return
         self.selected_indices = list(range(len(objs)))
         self.selected_idx = self.selected_indices[-1]
-        self._status(f"Selezionati tutti ({len(objs)} oggetti)", ACCENT, 2)
+        self._status(self._TR("obj_select_all", "All selected ({n} objects)").format(
+            n=len(objs)), ACCENT, 2)
 
     def _set_layer(self, lid: str):
         self.active_layer = lid
@@ -772,7 +801,9 @@ class ObjectOpsMixin:
         if lid in ("objects_low", "objects_mid", "objects_high", "overlay"):
             if not self.layer_vis.get(lid, True):
                 self.layer_vis[lid] = True
-                self._status(f"Visibilità '{lid}' riattivata", ACCENT, 1)
+                self._status(self._TR("obj_layer_visible_again",
+                                      "Visibility of '{layer}' restored").format(
+                                          layer=lid), ACCENT, 1)
                 
         # Batch Move
         idxs = self.selected_indices if len(self.selected_indices) > 1 else ([self.selected_idx] if self.selected_idx is not None else [])
@@ -780,7 +811,9 @@ class ObjectOpsMixin:
             # 'overlay' non è cliccabile (_objs_at lo salta): spostarci la selezione
             # la renderebbe non più selezionabile sul canvas. Lo usiamo solo come
             # layer di creazione, senza muovere gli oggetti già selezionati.
-            self._status("Layer 'overlay' non cliccabile: impostato solo come layer di creazione", (230, 170, 60), 3)
+            self._status(self._TR("obj_overlay_not_clickable",
+                                  "Layer 'overlay' is not clickable: set as creation "
+                                  "layer only"), (230, 170, 60), 3)
             return
         if idxs:
             self._push_undo("Cambia layer")
@@ -793,9 +826,12 @@ class ObjectOpsMixin:
             
             self.scene_dirty = True
             self._mark_dirty()
-            self._status(f"Oggetti spostati su: {lid}", OK_C, 2)
+            self._status(self._TR("obj_moved_to_layer", "Objects moved to: {layer}").format(
+                layer=lid), OK_C, 2)
         else:
-            self._status(f"Layer di creazione impostato: {lid}", ACCENT, 1)
+            self._status(self._TR("obj_creation_layer_set",
+                                  "Creation layer set: {layer}").format(layer=lid),
+                         ACCENT, 1)
 
     # ─────────────────────────────────────────────────────────────────────────
     # CONTEXT MENU
@@ -1275,7 +1311,8 @@ class ObjectOpsMixin:
             o["corners"]  = [[0,0], [0,0], [0,0], [0,0]]
         self.scene_dirty = True
         self._mark_dirty()
-        self._status(f"Trasformazione resettata ({len(objs_sel)})", OK_C, 2)
+        self._status(self._TR("obj_transform_reset", "Transform reset ({n})").format(
+            n=len(objs_sel)), OK_C, 2)
 
     def _reset_tint_for_selection(self):
         """Rimuove tint (color_filter → bianco) per la selezione corrente."""
@@ -1286,7 +1323,8 @@ class ObjectOpsMixin:
             o["color_filter"] = [255, 255, 255]
         self.scene_dirty = True
         self._mark_dirty()
-        self._status(f"Tint rimosso ({len(objs_sel)})", OK_C, 2)
+        self._status(self._TR("obj_tint_removed", "Tint removed ({n})").format(
+            n=len(objs_sel)), OK_C, 2)
 
     def _get_obj_bbox(self, obj: dict) -> tuple:
         """Calcola il bounding rect dell'oggetto in coordinate scena (x_min, y_min, x_max, y_max)."""
@@ -1339,7 +1377,8 @@ class ObjectOpsMixin:
                 obj["y"] = oy + (rcy - cy)
         self.scene_dirty = True
         self._mark_dirty()
-        self._status(f"Allineato {mode} ({len(idxs)} oggetti)", OK_C, 2)
+        self._status(self._TR("obj_aligned", "Aligned {mode} ({n} objects)").format(
+            mode=mode, n=len(idxs)), OK_C, 2)
 
     def _distribute_selection(self, axis: str):
         """Distribuzione equidistante su asse 'h' (orizzontale) o 'v' (verticale).
@@ -1374,7 +1413,8 @@ class ObjectOpsMixin:
                 objs[i]["y"] = objs[i].get("y", 0) + delta
         self.scene_dirty = True
         self._mark_dirty()
-        self._status(f"Distribuito {axis} ({n} oggetti)", OK_C, 2)
+        self._status(self._TR("obj_distributed", "Distributed {axis} ({n} objects)").format(
+            axis=axis, n=n), OK_C, 2)
 
     def _copy_props_from_primary(self, *, transform=False, visual=True, gameplay=False):
         """Copia proprietà dall'oggetto primario (selected_idx) agli altri selezionati."""
@@ -1400,7 +1440,8 @@ class ObjectOpsMixin:
                     objs[i][k] = copy.deepcopy(src[k])
         self.scene_dirty = True
         self._mark_dirty()
-        self._status(f"Proprietà copiate a {len(idxs)-1} oggetti", OK_C, 2)
+        self._status(self._TR("obj_props_copied", "Properties copied to {n} objects").format(
+            n=len(idxs) - 1), OK_C, 2)
 
     def _pick_color_for_effect(self, idx, key="color", title="Colore Effetto"):
         if idx is None or idx >= len(self.scene_data.get("effects", [])): return
@@ -1430,7 +1471,7 @@ class ObjectOpsMixin:
             self._ctx_menu = None # Chiude il menu
             self.scene_dirty = True
             self._mark_dirty()
-            self._status("Effetto rimosso", WARN_C, 2)
+            self._status(self._TR("obj_effect_removed", "Effect removed"), WARN_C, 2)
 
     def _sanitize_effects(self):
         """Assicura l'integrità degli effetti: chiavi univoche e layer condiviso."""

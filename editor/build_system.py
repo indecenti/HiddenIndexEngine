@@ -360,7 +360,7 @@ def build_game(
         log_step("Configurazione personalizzata...", 55)
 
         # Leggi valori dal game_config.json del gioco specifico
-        language = game_config.get("default_language", "it")
+        language = game_config.get("default_language", "en")
         res_cfg  = game_config.get("resolution", {})
         res_w    = res_cfg.get("w", 1920)
         res_h    = res_cfg.get("h", 1080)

@@ -990,7 +990,7 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
     manifest = {
         "game_id": game_id,
         "title_key": game_config.get("title_key", game_id),
-        "default_language": game_config.get("default_language", "it"),
+        "default_language": game_config.get("default_language", "en"),
         "ui_theme": game_config.get("ui_theme", "default"),
         "version": version,
         "runtime_version": RUNTIME_VERSION,

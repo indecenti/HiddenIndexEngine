@@ -54,6 +54,10 @@ class RenderCanvasMixin:
         # Se la cache è sporca o non esiste, la rigeneriamo
         if (self._canvas_cache_dirty or self._canvas_cache_surf is None or
             self._canvas_cache_surf.get_size() != cr.size):
+            # Il flag si azzera PRIMA di ricostruire: se durante il rebuild
+            # qualcun altro chiama _mark_dirty (worker thread, callback), la
+            # richiesta non viene persa e la cache si rigenera al frame dopo.
+            self._canvas_cache_dirty = False
             
             if self._canvas_cache_surf is None or self._canvas_cache_surf.get_size() != cr.size:
                 self._canvas_cache_surf = pygame.Surface(cr.size, pygame.SRCALPHA)
@@ -69,8 +73,6 @@ class RenderCanvasMixin:
             
             self._r_background(cr, surf=self._canvas_cache_surf, offset=cr.topleft)
             self._r_overlays_static(surf=self._canvas_cache_surf, offset=cr.topleft)
-            
-            self._canvas_cache_dirty = False
 
         # Blit della cache (Velocissimo: 1 operazione invece di N oggetti)
         self.screen.blit(self._canvas_cache_surf, cr.topleft)
@@ -133,7 +135,9 @@ class RenderCanvasMixin:
         """
         if not self._preview_mode:
             if not self.scene_data or not self.bg_surf:
-                self._status("Apri una scena con background per l'anteprima", WARN_C, 2)
+                self._status(self._TR("canvas_preview_need_bg",
+                                      "Open a scene with a background for the preview"),
+                             WARN_C, 2)
                 return
             self._preview_saved = {
                 "zoom": self.zoom,
@@ -154,7 +158,8 @@ class RenderCanvasMixin:
             self._update_layout()
             self._preview_mode = True
             self._fit_canvas()
-            self._status("Anteprima come in gioco - F5 o Esc per uscire", ACCENT, 3)
+            self._status(self._TR("canvas_preview_on",
+                                  "In-game preview - F5 or Esc to exit"), ACCENT, 3)
         else:
             saved = self._preview_saved or {}
             self.panels_visible = saved.get("panels", True)
@@ -201,7 +206,8 @@ class RenderCanvasMixin:
             _draw_text(self.screen, f"+{len(goals) - max_icons}", "sm", TXT_DIM,
                        x + 4, bar.y + hud_h // 2 - 8)
 
-        label = f"ANTEPRIMA  |  {len(goals)} obiettivi  |  F5 esce"
+        label = self._TR("canvas_preview_hud",
+                         "PREVIEW  |  {n} goals  |  F5 to exit").format(n=len(goals))
         tw, th = _text_wh(label, "sm")
         _draw_text(self.screen, label, "sm", TXT_HI, w - tw - 16,
                    bar.y + (hud_h - th) // 2)
@@ -814,7 +820,9 @@ class RenderCanvasMixin:
         pygame.draw.circle(surf, (*color, 200), (r * 2, r * 2), r, 1)
         self.screen.blit(surf, (mx - r * 2, my_raw - r * 2))
         
-        s = _txt(f"r:{fx_cat.get('default_radius', 55)}  Click={self._TR('fx_hint_click')}", "sm", FX_C)
+        s = _txt(self._TR("canvas_fx_cursor", "r:{r}  Click={hint}").format(
+            r=fx_cat.get("default_radius", 55),
+            hint=self._TR("fx_hint_click")), "sm", FX_C)
         self.screen.blit(s, (mx + r + 6, my_raw - 8))
 
     def _r_snap_guides(self, cr):
@@ -887,7 +895,8 @@ class RenderCanvasMixin:
         pygame.draw.circle(surf, (*ACCENT, 50),  (sr+2, sr+2), sr)
         pygame.draw.circle(surf, (*ACCENT, 200), (sr+2, sr+2), sr, 2)
         self.screen.blit(surf, (int(sx)-sr-2, int(sy)-sr-2))
-        s = _txt(f"r: {round(r)} px", "sm", TXT_HI)
+        s = _txt(self._TR("canvas_radius_px", "r: {n} px").format(n=round(r)),
+                 "sm", TXT_HI)
         self.screen.blit(s, (int(sx)+sr+6, int(sy)-8))
 
     def _r_circle_cursor(self, cr):

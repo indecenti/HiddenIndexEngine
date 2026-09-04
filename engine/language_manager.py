@@ -19,7 +19,45 @@ log = get_logger(__name__)
 # Lingue ufficialmente supportate dal motore. Se non vengono trovati file di
 # stringhe (es. boot anomalo) la audit_completeness usa questa lista come
 # fallback per dire almeno "queste 5 sono attese".
-SUPPORTED_LANGS_DEFAULT: tuple[str, ...] = ("it", "en", "fr", "es", "de")
+SUPPORTED_LANGS_DEFAULT: tuple[str, ...] = ("en", "it", "fr", "es", "de")
+
+# Lingua di default del motore e dell'editor: usata quando nessuna preferenza
+# e' salvata o quando quella salvata non e' piu' supportata.
+DEFAULT_LANG: str = "en"
+
+# Lingua di fallback UNICA e non negoziabile: qualsiasi chiave mancante nella
+# lingua corrente viene risolta in inglese prima di degradare alla chiave grezza.
+FALLBACK_LANG: str = "en"
+
+
+# ---------------------------------------------------------------------------
+# Accesso globale (per widget/modali senza riferimento all'editor o al gioco)
+# ---------------------------------------------------------------------------
+
+_ACTIVE: "LanguageManager | None" = None
+
+
+def set_active_manager(manager: "LanguageManager | None") -> None:
+    """Registra il LanguageManager corrente come sorgente globale per tr()."""
+    global _ACTIVE
+    _ACTIVE = manager
+
+
+def get_active_manager() -> "LanguageManager | None":
+    return _ACTIVE
+
+
+def tr(key: str, default: str | None = None) -> str:
+    """
+    Traduce una chiave usando il LanguageManager attivo.
+
+    Pensata per componenti standalone (modali, widget) che non hanno un
+    riferimento all'editor o al gioco. Senza manager attivo restituisce il
+    default (inglese) o la chiave stessa.
+    """
+    if _ACTIVE is not None:
+        return _ACTIVE.get(key, default)
+    return default if default is not None else key
 
 
 class LanguageManager:
@@ -28,8 +66,8 @@ class LanguageManager:
         self._game_strings: dict[str, str] = {}      # testi del gioco corrente
         self._fallback_strings: dict[str, str] = {}  # lingua di fallback
 
-        self._current_lang: str = "it"
-        self._fallback_lang: str = "en"
+        self._current_lang: str = DEFAULT_LANG
+        self._fallback_lang: str = FALLBACK_LANG
         self._game_id: str = ""
         self._available_langs: list[str] = []
         self._extra_sources: set[str] = set() # Directory aggiuntive da scansionare
@@ -41,8 +79,23 @@ class LanguageManager:
     # Inizializzazione
     # ------------------------------------------------------------------
 
-    def load_for_game(self, game_id: str, language: str, fallback: str = "en") -> None:
-        """Carica tutte le stringhe per il gioco e la lingua specificati."""
+    def load_for_game(self, game_id: str, language: str,
+                      fallback: str = FALLBACK_LANG) -> None:
+        """
+        Carica tutte le stringhe per il gioco e la lingua specificati.
+
+        Il fallback e' sempre FALLBACK_LANG ("en"): il parametro resta per
+        retro-compatibilita' della firma, ma un valore diverso viene ignorato
+        (con warning) perche' l'inglese e' l'unica lingua garantita completa.
+        """
+        if fallback != FALLBACK_LANG:
+            log.warning(
+                "[i18n] Fallback '%s' ignorato: la lingua di fallback e' sempre '%s'",
+                fallback, FALLBACK_LANG,
+            )
+            fallback = FALLBACK_LANG
+        if not language:
+            language = DEFAULT_LANG
         self._game_id = game_id
         self._fallback_lang = fallback
         self._detect_available_langs(game_id)
@@ -51,6 +104,8 @@ class LanguageManager:
         # Carica fallback solo se diverso dalla lingua corrente
         if language != fallback:
             self._load_fallback_strings(game_id, fallback)
+        else:
+            self._fallback_strings = {}
         self._current_lang = language
         # Reset registry chiavi mancanti ad ogni cambio lingua
         self._missing_keys.clear()
@@ -304,7 +359,7 @@ class LanguageManager:
         self._available_langs = sorted(list(langs_found))
         
         if not self._available_langs:
-            self._available_langs = ["it", "en"]
+            self._available_langs = [DEFAULT_LANG, "it"]
             
         log.debug("Lingue disponibili rilevate: %s (game_id: %s)", self._available_langs, game_id)
 

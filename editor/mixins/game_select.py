@@ -110,7 +110,7 @@ class GameSelectMixin:
     def _gs_compile_game(self, idx: int):
         """Avvia la compilazione e il packaging di un gioco."""
         if idx is None or idx >= len(self.gs_games):
-            self._status("Errore: gioco non valido", ERR_C, 2)
+            self._status(self._TR("gs_invalid_game", "Error: invalid game"), ERR_C, 2)
             return
 
         game_id = self.gs_games[idx]
@@ -118,7 +118,7 @@ class GameSelectMixin:
         game_config_path = game_path / "game_config.json"
 
         if not game_config_path.exists():
-            self._status(f"Errore: game_config.json non trovato per '{game_id}'", ERR_C, 3)
+            self._status(self._TR("gs_no_game_config", "Error: game_config.json not found for '{0}'").format(game_id), ERR_C, 3)
             return
 
         # Calcola la prossima versione (auto-increment)
@@ -143,7 +143,7 @@ class GameSelectMixin:
         with open(status_file, "w", encoding="utf-8") as f:
             json.dump(initial_status, f)
 
-        self._status(f"Avvio compilazione: {game_id} v{version}...", WARN_C, 2)
+        self._status(self._TR("gs_build_start", "Starting build: {0} v{1}...").format(game_id, version), WARN_C, 2)
 
         try:
             # Lancia SOLO la finestra progress UI (Tkinter).
@@ -176,11 +176,11 @@ class GameSelectMixin:
             self._build_processes.append(p2)
 
             logger.info(f"Finestra build aperta per {game_id} v{version}")
-            self._status(f"Finestra build aperta: {game_id} v{version}", OK_C, 3)
+            self._status(self._TR("gs_build_window", "Build window opened: {0} v{1}").format(game_id, version), OK_C, 3)
 
         except Exception as e:
             logger.exception(f"Errore lancio subprocess: {e}")
-            self._status(f"Errore: {str(e)}", ERR_C, 4)
+            self._status(self._TR("io_error", "Error: {0}").format(str(e)), ERR_C, 4)
 
     def _gs_compile_apk(self, idx: int):
         """Avvia la compilazione di un APK Android del gioco (parallelo a _gs_compile_game).
@@ -190,7 +190,7 @@ class GameSelectMixin:
         Comunicazione via build_status.json nel build_dir.
         """
         if idx is None or idx >= len(self.gs_games):
-            self._status("Errore: gioco non valido", ERR_C, 2)
+            self._status(self._TR("gs_invalid_game", "Error: invalid game"), ERR_C, 2)
             return
 
         game_id = self.gs_games[idx]
@@ -198,7 +198,7 @@ class GameSelectMixin:
         game_config_path = game_path / "game_config.json"
 
         if not game_config_path.exists():
-            self._status(f"Errore: game_config.json non trovato per '{game_id}'", ERR_C, 3)
+            self._status(self._TR("gs_no_game_config", "Error: game_config.json not found for '{0}'").format(game_id), ERR_C, 3)
             return
 
         version = next_build_version(game_id)
@@ -220,7 +220,7 @@ class GameSelectMixin:
         with open(status_file, "w", encoding="utf-8") as f:
             json.dump(initial_status, f)
 
-        self._status(f"Avvio build APK: {game_id} v{version}...", WARN_C, 2)
+        self._status(self._TR("gs_build_apk_start", "Starting APK build: {0} v{1}...").format(game_id, version), WARN_C, 2)
 
         try:
             if getattr(sys, "frozen", False):
@@ -247,11 +247,11 @@ class GameSelectMixin:
             self._build_processes.append(p2)
 
             logger.info(f"Finestra build APK aperta per {game_id} v{version}")
-            self._status(f"Finestra build APK aperta: {game_id} v{version}", OK_C, 3)
+            self._status(self._TR("gs_build_apk_window", "APK build window opened: {0} v{1}").format(game_id, version), OK_C, 3)
 
         except Exception as e:
             logger.exception(f"Errore lancio subprocess APK: {e}")
-            self._status(f"Errore: {str(e)}", ERR_C, 4)
+            self._status(self._TR("io_error", "Error: {0}").format(str(e)), ERR_C, 4)
 
     def _gs_export_html(self, idx: int):
         """Esporta il gioco selezionato come sito statico HTML/JS tramite web_exporter.
@@ -260,23 +260,23 @@ class GameSelectMixin:
         modale NON bloccante (_WebExportProgressModal) nello stack unificato.
         """
         if idx is None or idx >= len(self.gs_games):
-            self._status("Errore: gioco non valido", ERR_C, 2)
+            self._status(self._TR("gs_invalid_game", "Error: invalid game"), ERR_C, 2)
             return
 
         game_id = self.gs_games[idx]
         game_path = self.base_path / "games" / game_id
         if not (game_path / "game_config.json").exists():
-            self._status(f"Errore: game_config.json non trovato per '{game_id}'", ERR_C, 3)
+            self._status(self._TR("gs_no_game_config", "Error: game_config.json not found for '{0}'").format(game_id), ERR_C, 3)
             return
 
         output_dir = self.base_path / "build_web" / game_id
-        self._status(f"Esportazione HTML: {game_id}...", WARN_C, 2)
+        self._status(self._TR("gs_export_html_start", "HTML export: {0}...").format(game_id), WARN_C, 2)
         self._modal_push(_WebExportProgressModal(self, game_id, output_dir))
 
     def _gs_run_game(self, idx: int):
         """Avvia il gioco in modalità standalone."""
         if idx is None or idx >= len(self.gs_games):
-            self._status("Errore: gioco non valido", ERR_C, 2)
+            self._status(self._TR("gs_invalid_game", "Error: invalid game"), ERR_C, 2)
             return
 
         game_id = self.gs_games[idx]
@@ -292,11 +292,11 @@ class GameSelectMixin:
                 cmd,
                 cwd=str(self.base_path)
             )
-            self._status(f"Avvio standalone: {game_id}", OK_C, 2)
+            self._status(self._TR("gs_standalone_start", "Starting standalone: {0}").format(game_id), OK_C, 2)
             logger.info(f"Gioco standalone avviato: {game_id}")
         except Exception as e:
             logger.exception(f"Errore avvio gioco Standalone: {e}")
-            self._status(f"Errore: {str(e)}", ERR_C, 4)
+            self._status(self._TR("io_error", "Error: {0}").format(str(e)), ERR_C, 4)
 
     # ─────────────────────────────────────────────────────────────────────────
     # SELEZIONE
@@ -316,7 +316,7 @@ class GameSelectMixin:
         self._load_strings() 
         self.gs_cur_levels = _discover_levels(self.game_path)
         self._gs_refresh_cache(1)
-        self._status(f"Gioco: {gname}", OK_C, 2)
+        self._status(self._TR("gs_game_selected", "Game: {0}").format(gname), OK_C, 2)
 
     def _gs_select_level(self, idx: int):
         self.gs_sel_level  = idx
@@ -333,7 +333,7 @@ class GameSelectMixin:
 
     def _gs_open(self):
         if self.gs_sel_game is None:
-            self._status("Seleziona prima un gioco", WARN_C, 3); return
+            self._status(self._TR("gs_select_game_first", "Select a game first"), WARN_C, 3); return
 
         # Cattura la selezione ADESSO: il worker non deve rileggere lo stato
         # della dashboard (che nel frattempo potrebbe cambiare).
@@ -355,7 +355,8 @@ class GameSelectMixin:
         def _done(result):
             # Nel main thread: fn ha gia' impostato lo stato; qui solo errori.
             if isinstance(result, BaseException):
-                self._status(f"Errore apertura: {result}", ERR_C, 5)
+                self._status(self._TR("gs_open_error",
+                                      "Open error: {0}").format(result), ERR_C, 5)
 
         self._with_loading_async(_perform_open, _done)
 
@@ -438,7 +439,7 @@ class GameSelectMixin:
 
     def _gs_get_human_name(self, mode, idx):
         """Recupera il nome tradotto per un elemento della dashboard con caricamento on-the-fly."""
-        lang = getattr(self, "current_lang", "it")
+        lang = getattr(self, "current_lang", "en")
         try:
             if mode == "game":
                 gname = self.gs_games[idx]
@@ -856,10 +857,10 @@ class GameSelectMixin:
 
             self._load_strings()
             self._gs_refresh_cache()
-            self._status(f"'{raw_name}' salvato con successo", OK_C, 2)
+            self._status(self._TR("gs_saved_ok", "'{0}' saved").format(raw_name), OK_C, 2)
         except Exception as e:
             logger.exception("Errore aggiornamento")
-            self._status("Errore salvataggio info", ERR_C, 4)
+            self._status(self._TR("gs_save_info_error", "Error saving info"), ERR_C, 4)
         self._gs_edit_mode = None
 
         self._gs_edit_buf  = ""
@@ -916,7 +917,7 @@ class GameSelectMixin:
         try:
             _shutil.copytree(str(src_dir), str(game_theme_dir))
             logger.info("[THEME] Tema '%s' harvestato in '%s/ui_theme/'", theme_id, game_id)
-            self._status(f"Tema '{theme_id}' applicato al gioco", OK_C, 2)
+            self._status(self._TR("gs_theme_applied", "Theme '{0}' applied to the game").format(theme_id), OK_C, 2)
         except Exception as e:
             logger.error("[THEME] Errore harvesting tema '%s': %s", theme_id, e)
 
@@ -1045,7 +1046,7 @@ class GameSelectMixin:
                     shutil.copy2(vid_path, target_path)
                     final_bg_path = f"assets/{target_name}"
                 except Exception as e:
-                    self._status(f"Errore copia video: {e}", ERR_C)
+                    self._status(self._TR("gs_copy_video_error", "Video copy error: {0}").format(e), ERR_C)
             elif bg_path and Path(bg_path).exists():
                 p = Path(bg_path)
                 target_name = f"menu_bg{p.suffix}"
@@ -1054,7 +1055,7 @@ class GameSelectMixin:
                     shutil.copy2(bg_path, target_path)
                     final_bg_path = f"assets/{target_name}"
                 except Exception as e:
-                    self._status(f"Errore copia asset: {e}", ERR_C)
+                    self._status(self._TR("gs_copy_asset_error", "Asset copy error: {0}").format(e), ERR_C)
             
             # --- GESTIONE PLAYLIST MUSICA ---
             music_list = []
@@ -1129,7 +1130,7 @@ class GameSelectMixin:
             
             # Rileviamo lingue disponibili nell'engine
             engine_strings_dir = get_resource_path("engine", "assets", "strings")
-            langs = [f.stem for f in engine_strings_dir.glob("*.json")] if engine_strings_dir.exists() else ["it", "en"]
+            langs = [f.stem for f in engine_strings_dir.glob("*.json")] if engine_strings_dir.exists() else ["en", "it"]
             
             for lang in langs:
                 # Carica traduzioni globali dall'engine
@@ -1205,7 +1206,7 @@ if __name__ == "__main__":
             gname = self.gs_games[self.gs_sel_game]
             lpath = self.base_path / "games" / gname / "levels" / name
             if lpath.exists():
-                self._status(f"Errore: Livello '{name}' gia' esistente", ERR_C, 4); return
+                self._status(self._TR("gs_level_exists", "Error: level '{0}' already exists").format(name), ERR_C, 4); return
             lpath.mkdir(parents=True, exist_ok=False)
             _save_json(lpath / "level_config.json",
                        {"id": name, "name_key": f"{name}_name",
@@ -1252,7 +1253,7 @@ if __name__ == "__main__":
             lvl   = self.gs_cur_levels[self.gs_sel_level]
             spath = lvl["path"] / name
             if spath.exists():
-                self._status(f"Errore: Scena '{name}' gia' esistente", ERR_C, 4); return
+                self._status(self._TR("gs_scene_exists", "Error: scene '{0}' already exists").format(name), ERR_C, 4); return
             spath.mkdir(parents=True, exist_ok=False)
             
             import shutil
@@ -1267,7 +1268,7 @@ if __name__ == "__main__":
                 try:
                     shutil.copy2(sel_p, spath / bg_name)
                 except Exception as e:
-                    self._status(f"Errore copia asset scena: {e}", ERR_C)
+                    self._status(self._TR("gs_copy_scene_asset_error", "Scene asset copy error: {0}").format(e), ERR_C)
 
             _save_json(spath / "scene.json",
                        {"id": name, "background": bg_name,
@@ -1371,9 +1372,9 @@ if __name__ == "__main__":
                 # Tracciato in .editor_audit.log con tag esplicito sull'oggetto eliminato.
                 from engine.utils import safe_delete
                 if not safe_delete(p, reason=f"user_delete_{self._gs_del_mode}={self._gs_del_name}"):
-                    self._status(f"Errore eliminazione: {self._gs_del_name}", ERR_C, 4)
+                    self._status(self._TR("gs_delete_error", "Delete error: {0}").format(self._gs_del_name), ERR_C, 4)
                     return
-            self._status(f"Eliminato: {self._gs_del_name} (recuperabile dal cestino)", WARN_C, 4)
+            self._status(self._TR("gs_deleted_trash", "Deleted: {0} (recoverable from the trash)").format(self._gs_del_name), WARN_C, 4)
 
             # Rimuovi le chiavi traduzione orfane da tutti i file strings/
             if _del_gname and _del_name_key:
@@ -1462,7 +1463,7 @@ if __name__ == "__main__":
                 self.gs_sel_scene  = None
                 self._gs_refresh_cache(None)
         except Exception as exc:
-            self._status(f"Errore: {exc}", ERR_C, 4)
+            self._status(self._TR("io_error", "Error: {0}").format(exc), ERR_C, 4)
         finally:
             self._gs_del_mode = None
             self._gs_del_path = None
@@ -1565,7 +1566,7 @@ if __name__ == "__main__":
     def _gs_duplicate_scene(self, idx: int):
         """Duplica la scena selezionata (cartella completa + registrazione config)."""
         if self.gs_sel_level is None or idx is None or idx >= len(self.gs_cur_scenes):
-            self._status("Seleziona prima una scena", WARN_C, 2)
+            self._status(self._TR("gs_select_scene_first", "Select a scene first"), WARN_C, 2)
             return
         self._with_loading(self._gs_duplicate_scene_logic, idx)
 
@@ -1579,7 +1580,7 @@ if __name__ == "__main__":
         try:
             shutil.copytree(src, dst)
         except Exception as exc:
-            self._status(f"Errore duplicazione scena: {exc}", ERR_C, 4)
+            self._status(self._TR("gs_dup_scene_error", "Scene duplication error: {0}").format(exc), ERR_C, 4)
             return
         # L'autosave copiato appartiene all'originale: non va ereditato
         autosave = dst / "scene.json.autosave"
@@ -1621,12 +1622,12 @@ if __name__ == "__main__":
             if s_p.name == new_name:
                 self._gs_select_scene(i)
                 break
-        self._status(f"Scena duplicata: {new_name}", OK_C, 3)
+        self._status(self._TR("gs_scene_duplicated", "Scene duplicated: {0}").format(new_name), OK_C, 3)
 
     def _gs_duplicate_level(self, idx: int):
         """Duplica il livello selezionato (tutte le scene incluse + registrazione config)."""
         if self.gs_sel_game is None or idx is None or idx >= len(self.gs_cur_levels):
-            self._status("Seleziona prima un livello", WARN_C, 2)
+            self._status(self._TR("gs_select_level_first", "Select a level first"), WARN_C, 2)
             return
         self._with_loading(self._gs_duplicate_level_logic, idx)
 
@@ -1641,7 +1642,7 @@ if __name__ == "__main__":
         try:
             shutil.copytree(src, dst)
         except Exception as exc:
-            self._status(f"Errore duplicazione livello: {exc}", ERR_C, 4)
+            self._status(self._TR("gs_dup_level_error", "Level duplication error: {0}").format(exc), ERR_C, 4)
             return
         # Aggiorna id e name_key nel level_config.json della copia
         l_cfg = _load_json(dst / "level_config.json")
@@ -1675,7 +1676,7 @@ if __name__ == "__main__":
             if l["id"] == new_name:
                 self._gs_select_level(i)
                 break
-        self._status(f"Livello duplicato: {new_name}", OK_C, 3)
+        self._status(self._TR("gs_level_duplicated", "Level duplicated: {0}").format(new_name), OK_C, 3)
 
     def _gs_mv_dest_indices(self) -> list:
         """Indici dei livelli destinazione validi (tutti tranne quello corrente)."""
@@ -1684,10 +1685,10 @@ if __name__ == "__main__":
     def _gs_move_scene_dialog(self, idx: int):
         """Apre il dialogo di scelta del livello destinazione per la scena selezionata."""
         if self.gs_sel_level is None or idx is None or idx >= len(self.gs_cur_scenes):
-            self._status("Seleziona prima una scena", WARN_C, 2)
+            self._status(self._TR("gs_select_scene_first", "Select a scene first"), WARN_C, 2)
             return
         if len(self.gs_cur_levels) < 2:
-            self._status("Nessun altro livello disponibile come destinazione", WARN_C, 3)
+            self._status(self._TR("gs_no_other_level", "No other level available as destination"), WARN_C, 3)
             return
         self._gs_mv_mode = True
         self._gs_mv_scene_idx = idx
@@ -1717,7 +1718,7 @@ if __name__ == "__main__":
         try:
             shutil.move(str(scn), str(dst))
         except Exception as exc:
-            self._status(f"Errore spostamento scena: {exc}", ERR_C, 4)
+            self._status(self._TR("gs_move_scene_error", "Scene move error: {0}").format(exc), ERR_C, 4)
             return
         if new_name != scn_name:
             sd = _load_json(dst / "scene.json")
@@ -1767,7 +1768,7 @@ if __name__ == "__main__":
         self.gs_cur_levels = _discover_levels(self.game_path)
         self._gs_select_level(old_sel_lvl)
         self.gs_sel_scene = None
-        self._status(f"Scena spostata in '{dest_lvl['id']}': {new_name}", OK_C, 3)
+        self._status(self._TR("gs_scene_moved", "Scene moved to '{0}': {1}").format(dest_lvl['id'], new_name), OK_C, 3)
 
     # ─────────────────────────────────────────────────────────────────────────
     # INPUT
@@ -2079,7 +2080,7 @@ if __name__ == "__main__":
                         if self.gs_sel_game is not None:
                             self._gs_compile_game(self.gs_sel_game)
                         else:
-                            self._status("Seleziona prima un gioco", WARN_C, 2)
+                            self._status(self._TR("gs_select_game_first", "Select a game first"), WARN_C, 2)
                         return
 
                 # Bottone COMPILA APK Android (solo per i==0)
@@ -2089,7 +2090,7 @@ if __name__ == "__main__":
                         if self.gs_sel_game is not None:
                             self._gs_compile_apk(self.gs_sel_game)
                         else:
-                            self._status("Seleziona prima un gioco", WARN_C, 2)
+                            self._status(self._TR("gs_select_game_first", "Select a game first"), WARN_C, 2)
                         return
 
                 # Bottone ESPORTA HTML (solo per i==0)
@@ -2099,14 +2100,14 @@ if __name__ == "__main__":
                         if self.gs_sel_game is not None:
                             self._gs_export_html(self.gs_sel_game)
                         else:
-                            self._status("Seleziona prima un gioco", WARN_C, 2)
+                            self._status(self._TR("gs_select_game_first", "Select a game first"), WARN_C, 2)
                         return
 
                 if i in (1, 2):
                     del_r = (cx2 + col_w - 62, cy2 + 5, 26, 24)
                     if _in_rect((mx, my_raw), del_r):
                         sel = self.gs_sel_level if i == 1 else self.gs_sel_scene
-                        if sel is None: self._status("Seleziona prima un elemento", WARN_C, 2)
+                        if sel is None: self._status(self._TR("gs_select_item_first", "Select an item first"), WARN_C, 2)
                         elif i == 1: self._gs_del_level(sel)
                         else: self._gs_del_scene(sel)
                         return
@@ -2118,7 +2119,7 @@ if __name__ == "__main__":
                     if _in_rect((mx, my_raw), dup_r):
                         sel = self.gs_sel_level if i == 1 else self.gs_sel_scene
                         if sel is None:
-                            self._status("Seleziona prima un elemento", WARN_C, 2)
+                            self._status(self._TR("gs_select_item_first", "Select an item first"), WARN_C, 2)
                         elif i == 1:
                             self._gs_duplicate_level(sel)
                         else:
@@ -2130,7 +2131,7 @@ if __name__ == "__main__":
                     mv_r = (cx2 + col_w - 152, cy2 + 5, 26, 24)
                     if _in_rect((mx, my_raw), mv_r):
                         if self.gs_sel_scene is None:
-                            self._status("Seleziona prima una scena", WARN_C, 2)
+                            self._status(self._TR("gs_select_scene_first", "Select a scene first"), WARN_C, 2)
                         else:
                             self._gs_move_scene_dialog(self.gs_sel_scene)
                         return
@@ -2142,7 +2143,7 @@ if __name__ == "__main__":
                         if self.gs_sel_game is not None:
                             self._gs_del_game(self.gs_sel_game)
                         else:
-                            self._status("Seleziona prima un gioco", WARN_C, 2)
+                            self._status(self._TR("gs_select_game_first", "Select a game first"), WARN_C, 2)
                         return
 
                 # Clic su Modifica (✎) — solo per Scene (i==2)
@@ -2153,7 +2154,7 @@ if __name__ == "__main__":
                     if _in_rect((mx, my_raw), edit_r):
                         sel = self.gs_sel_scene
                         if sel is None:
-                            self._status("Seleziona prima un elemento", WARN_C, 2)
+                            self._status(self._TR("gs_select_item_first", "Select an item first"), WARN_C, 2)
                         else:
                             self._gs_edit_scene(sel)
                         return
@@ -2878,11 +2879,11 @@ if __name__ == "__main__":
 
     def _r_gs_new_dialog(self, w, h):
         labels = {
-            "game": self.lang_manager.get("gs_modal_new_game", "Nuovo gioco"),
-            "level": self.lang_manager.get("gs_modal_new_level", "Nuovo livello"),
-            "scene": self.lang_manager.get("gs_modal_new_scene", "Nuova scena")
+            "game": self._TR("gs_modal_new_game", "New game"),
+            "level": self._TR("gs_modal_new_level", "New level"),
+            "scene": self._TR("gs_modal_new_scene", "New scene"),
         }
-        stitle = labels.get(self._gs_new_mode, "Nuovo")
+        stitle = labels.get(self._gs_new_mode, self._TR("gs_modal_new", "New"))
 
         dim = pygame.Surface((w, h), pygame.SRCALPHA)
         dim.fill((0, 0, 0, 180)); self.screen.blit(dim, (0, 0))
@@ -2901,9 +2902,9 @@ if __name__ == "__main__":
         _button(self.screen, xr, "X", x_hov, danger=True)
 
         # Punto 1 — ID / nome univoco
-        _draw_text(self.screen, self.lang_manager.get("gs_label_title", "Punto 1: Titolo / ID"), "sm", TXT_DIM, dx+20, dy+55)
+        _draw_text(self.screen, self._TR("gs_label_title", "Step 1: Title / ID"), "sm", TXT_DIM, dx+20, dy+55)
         inp_r = pygame.Rect(dx+20, dy+75, dw-40, 34)
-        placeholder = self.lang_manager.get("gs_placeholder_new", "Inserisci ID o nome...")
+        placeholder = self._TR("gs_placeholder_new", "Enter ID or name...")
         if self._gs_new_mode == "level":
             _af      = getattr(self, "_gs_new_active_field", "id")
             _id_foc  = (_af == "id")
@@ -2919,7 +2920,7 @@ if __name__ == "__main__":
 
         # Campi localizzazione — solo modalità livello
         if self._gs_new_mode == "level":
-            _draw_text(self.screen, "Nomi in gioco (localizzazione):", "sm", TXT_DIM, dx+20, dy+122)
+            _draw_text(self.screen, self._TR("gs_ingame_names", "In-game names (localization):"), "sm", TXT_DIM, dx+20, dy+122)
             _lbufs  = getattr(self, "_gs_new_lang_bufs",    {l: "" for l in self.LANGS})
             _lcurs  = getattr(self, "_gs_new_lang_cursors", {l: 0  for l in self.LANGS})
             _af     = getattr(self, "_gs_new_active_field", "id")
@@ -2932,16 +2933,21 @@ if __name__ == "__main__":
                 _lbuf = _lbufs.get(_l, "")
                 _lcur = _lcurs.get(_l, len(_lbuf)) if _is_a else None
                 _input_box(self.screen, _f_r, _lbuf, focused=_is_a,
-                           hint=f"Nome {_l.upper()}...", font="md", cursor_pos=_lcur)
+                           hint=self._TR("gs_placeholder_lang",
+                                         "Name {0}...").format(_l.upper()),
+                           font="md", cursor_pos=_lcur)
 
         mx2, my2 = pygame.mouse.get_pos()
         if self._gs_new_mode == "game":
             # Punto 1.5 - Categoria (Dropdown)
-            _draw_text(self.screen, "Categoria / Piattaforma Target", "sm", TXT_DIM, dx+20, dy+122)
+            _draw_text(self.screen, self._TR("gs_target_platform", "Category / target platform"), "sm", TXT_DIM, dx+20, dy+122)
             cat_r = pygame.Rect(dx+20, dy+142, 270, 32)
             cur_cat = getattr(self, "_gs_new_category", "desktop")
             _is_open = getattr(self, "_gs_new_cat_dropdown", False)
-            _button(self.screen, cat_r, f"MODE: {cur_cat.upper()}  " + ("^" if _is_open else "v"), _in_rect((mx2, my2), cat_r), active=_is_open)
+            cat_lbl = self._TR("gs_mode_label", "MODE: {0}").format(cur_cat.upper())
+            _button(self.screen, cat_r,
+                    cat_lbl + "  " + ("^" if _is_open else "v"),
+                    _in_rect((mx2, my2), cat_r), active=_is_open)
             # Rimosso il disegno delle opzioni da qui per disegnarle sopra a tutto alla fine
 
         if self._gs_new_mode in ("game", "scene"):
@@ -3163,7 +3169,7 @@ if __name__ == "__main__":
             )
             # ── COLONNA 1 (Sinistra): TESTI E TEMA ────────────────────────────
             # Punto 1: Localizzazione
-            _draw_text(self.screen, "1. TITOLO E TRADUZIONI", "sm", TXT_DIM, dx + 20, dy + 68)
+            _draw_text(self.screen, self._TR("gs_step_title_tr", "1. TITLE AND TRANSLATIONS"), "sm", TXT_DIM, dx + 20, dy + 68)
             f_w = off_x2 - 150  # Larghezza dinamica campo testo
             for i, l in enumerate(self.LANGS):
                 fy = dy + 106 + i * _LANG_FIELD_STRIDE
@@ -3191,11 +3197,11 @@ if __name__ == "__main__":
 
             # ── Sez. 1: Titolo e traduzioni ───────────────────
             _SEC1_Y = dy + 68   # Y inizio sezione 1
-            _draw_text(self.screen, "❶  TITOLO DEL GIOCO", "sm", TXT_DIM, c1_x, _SEC1_Y)
+            _draw_text(self.screen, self._TR("gs_step_game_title", "❶  GAME TITLE"), "sm", TXT_DIM, c1_x, _SEC1_Y)
 
             # Hint TAB
             _draw_text(self.screen,
-                       "TAB → campo successivo  •  Ctrl+A / C / V",
+                       self._TR("gs_tab_hint", "TAB -> next field  |  Ctrl+A / C / V"),
                        "xs", (70, 74, 95), c1_x, _SEC1_Y + 18)
 
             for i, l in enumerate(self.LANGS):
@@ -3220,7 +3226,7 @@ if __name__ == "__main__":
 
             # ── Sez. 2: Piattaforma target ────────────────────
             _SEC2_Y = _sep1_y + 16
-            _draw_text(self.screen, "❷  PIATTAFORMA TARGET", "sm", TXT_DIM, c1_x, _SEC2_Y)
+            _draw_text(self.screen, self._TR("gs_step_platform", "❷  TARGET PLATFORM"), "sm", TXT_DIM, c1_x, _SEC2_Y)
             _cur_cat = getattr(self, "_gs_edit_category", "desktop")
             _is_open = getattr(self, "_gs_edit_cat_dropdown", False)
             cat_r = pygame.Rect(c1_x, _SEC2_Y + 22, 260, 34)
@@ -3235,7 +3241,7 @@ if __name__ == "__main__":
                 (c1_x, _sep2_y), (dx + off_x2 - 30, _sep2_y), 1
             )
             _SEC3_Y = _sep2_y + 16
-            _draw_text(self.screen, "❸  TEMA INTERFACCIA MENU", "sm", TXT_DIM, c1_x, _SEC3_Y)
+            _draw_text(self.screen, self._TR("gs_step_theme", "❸  MENU INTERFACE THEME"), "sm", TXT_DIM, c1_x, _SEC3_Y)
 
             _THEME_INFO = [t for t in self.theme_manager.discover_themes()
                            if t.get("category", "desktop") == _cur_cat]
@@ -3301,14 +3307,14 @@ if __name__ == "__main__":
             _rect(self.screen, _pill_col, _pill_r, radius=9)
             _knob_x   = _pill_r.x + 20 if _mag_on else _pill_r.x + 2
             pygame.draw.circle(self.screen, TXT_HI, (_knob_x + 7, _pill_r.y + 9), 7)
-            _draw_text(self.screen, "EFFETTO LENTE D'INGRANDIMENTO",
+            _draw_text(self.screen, self._TR("gs_magnifier_fx", "MAGNIFIER EFFECT"),
                        "xs", TXT_HI if mag_hov else TXT, mag_r.x + 52, mag_r.y + 9)
 
             # Icona progetto
             _SEC5_Y = _SEC4_Y + 44
-            _draw_text(self.screen, "❹  ICONA DEL PROGETTO", "sm", TXT_DIM, c1_x, _SEC5_Y)
+            _draw_text(self.screen, self._TR("gs_step_icon", "❹  PROJECT ICON"), "sm", TXT_DIM, c1_x, _SEC5_Y)
             btn_icon_r = pygame.Rect(c1_x, _SEC5_Y + 22, 190, 36)
-            _button(self.screen, btn_icon_r, "Scegli Icona...", _in_rect((mx2, my2), btn_icon_r))
+            _button(self.screen, btn_icon_r, self._TR("gs_choose_icon", "Choose icon..."), _in_rect((mx2, my2), btn_icon_r))
             g_id = self.gs_games[self.gs_sel_game]
             icon_path = self.base_path / "games" / g_id / "assets" / "icon.png"
             _icon_prev_r = pygame.Rect(c1_x + 200, _SEC5_Y + 14, 48, 48)
@@ -3337,9 +3343,9 @@ if __name__ == "__main__":
 
             # ── Sez. A: Immagine di sfondo ────────────────────
             _A_Y = dy + 68
-            _draw_text(self.screen, "❺  IMMAGINE DI SFONDO", "sm", TXT_DIM, c2_x, _A_Y)
+            _draw_text(self.screen, self._TR("gs_step_bg_image", "❺  BACKGROUND IMAGE"), "sm", TXT_DIM, c2_x, _A_Y)
             btn_i_r = pygame.Rect(c2_x, _A_Y + 22, 155, 34)
-            _button(self.screen, btn_i_r, "Scegli...", _in_rect((mx2, my2), btn_i_r))
+            _button(self.screen, btn_i_r, self._TR("gs_choose", "Choose..."), _in_rect((mx2, my2), btn_i_r))
             ipath   = getattr(self, '_gs_edit_bg_path', "")
             _path_box_r = pygame.Rect(c2_x + 163, _A_Y + 22, path_w, 34)
             _rect(self.screen, (20, 22, 30), _path_box_r, radius=5)
@@ -3364,15 +3370,15 @@ if __name__ == "__main__":
                 self.screen.blit(is_scaled, iprev_r.topleft)
             else:
                 _draw_text(
-                    self.screen, "[ ANTEPRIMA ]", "xs", (55, 60, 82),
+                    self.screen, self._TR("gs_preview_tag", "[ PREVIEW ]"), "xs", (55, 60, 82),
                     iprev_r.x + iprev_w // 2 - 35, iprev_r.y + iprev_h // 2 - 7
                 )
 
             # ── Sez. B: Video di sfondo ───────────────────────
             _B_Y = _A_Y + 66 + iprev_h + 22
-            _draw_text(self.screen, "❻  VIDEO DI SFONDO (LOOP)", "sm", TXT_DIM, c2_x, _B_Y)
+            _draw_text(self.screen, self._TR("gs_step_bg_video", "❻  BACKGROUND VIDEO (LOOP)"), "sm", TXT_DIM, c2_x, _B_Y)
             btn_v_r = pygame.Rect(c2_x, _B_Y + 22, 155, 34)
-            _button(self.screen, btn_v_r, "Scegli...", _in_rect((mx2, my2), btn_v_r))
+            _button(self.screen, btn_v_r, self._TR("gs_choose", "Choose..."), _in_rect((mx2, my2), btn_v_r))
             vpath = getattr(self, '_gs_edit_vid_path', "")
             _vpath_box_r = pygame.Rect(c2_x + 163, _B_Y + 22, path_w, 34)
             _rect(self.screen, (20, 22, 30), _vpath_box_r, radius=5)
@@ -3394,13 +3400,13 @@ if __name__ == "__main__":
                 self.screen.blit(vs_scaled, vprev_r.topleft)
             else:
                 _draw_text(
-                    self.screen, "[ ANTEPRIMA ]", "xs", (55, 60, 82),
+                    self.screen, self._TR("gs_preview_tag", "[ PREVIEW ]"), "xs", (55, 60, 82),
                     vprev_r.x + iprev_w // 2 - 35, vprev_r.y + vprev_h // 2 - 7
                 )
 
             # ── Sez. C: Playlist musicale ─────────────────────
             _C_Y = _B_Y + 66 + vprev_h + 16
-            _draw_text(self.screen, "❼  PLAYLIST MUSICALE", "sm", TXT_DIM, c2_x, _C_Y)
+            _draw_text(self.screen, self._TR("gs_step_playlist", "❼  MUSIC PLAYLIST"), "sm", TXT_DIM, c2_x, _C_Y)
             mu_list = getattr(self, "_gs_edit_music_paths", [])
             _mu_label = (f"{len(mu_list)} bran{'o' if len(mu_list)==1 else 'i'} — Gestisci..."
                          if mu_list else "Nessuna traccia — Aggiungi...")
@@ -3433,7 +3439,7 @@ if __name__ == "__main__":
                 (dx + off_x2 - 14, dy + 62), (dx + off_x2 - 14, dy + dh - 70), 1
             )
             # ── COLONNA 1 (Sinistra): NOME SCENA ────────────────────────────
-            _draw_text(self.screen, "1. NOME SCENA E TRADUZIONI", "sm", TXT_DIM, dx + 20, dy + 68)
+            _draw_text(self.screen, self._TR("gs_step_scene_name", "1. SCENE NAME AND TRANSLATIONS"), "sm", TXT_DIM, dx + 20, dy + 68)
             f_w = off_x2 - 150
             for i, l in enumerate(self.LANGS):
                 fy = dy + 106 + i * _LANG_FIELD_STRIDE
@@ -3461,9 +3467,9 @@ if __name__ == "__main__":
 
             # Punto 2: Immagine di Sfondo
             _y_img = dy + int(dh * 0.12)
-            _draw_text(self.screen, "2. IMMAGINE DI SFONDO", "sm", TXT_DIM, dx + off_x2, _y_img - 28)
+            _draw_text(self.screen, self._TR("gs_step2_bg_image", "2. BACKGROUND IMAGE"), "sm", TXT_DIM, dx + off_x2, _y_img - 28)
             btn_i_r = pygame.Rect(dx + off_x2, _y_img, 160, 34)
-            _button(self.screen, btn_i_r, "Scegli Immagine", _in_rect((mx2, my2), btn_i_r))
+            _button(self.screen, btn_i_r, self._TR("gs_choose_image", "Choose image"), _in_rect((mx2, my2), btn_i_r))
             
             ipath = getattr(self, '_gs_edit_bg_path', "")
             path_w = r_col_w - 180
@@ -3480,9 +3486,9 @@ if __name__ == "__main__":
 
             # Punto 3: Video di Sfondo
             _y_vid = dy + int(dh * 0.45)
-            _draw_text(self.screen, "3. VIDEO DI SFONDO", "sm", TXT_DIM, dx + off_x2, _y_vid - 28)
+            _draw_text(self.screen, self._TR("gs_step3_bg_video", "3. BACKGROUND VIDEO"), "sm", TXT_DIM, dx + off_x2, _y_vid - 28)
             btn_v_r = pygame.Rect(dx + off_x2, _y_vid, 160, 34)
-            _button(self.screen, btn_v_r, "Scegli Video", _in_rect((mx2, my2), btn_v_r))
+            _button(self.screen, btn_v_r, self._TR("gs_choose_video", "Choose video"), _in_rect((mx2, my2), btn_v_r))
             
             vpath = getattr(self, '_gs_edit_vid_path', "")
             _rect(self.screen, (20, 22, 30), (dx + off_x2 + 175, _y_vid, path_w, 34), radius=6)
@@ -3506,7 +3512,7 @@ if __name__ == "__main__":
             )
 
             # ── COLONNA 1 (Sinistra): NOME LIVELLO E TRADUZIONI ────────────
-            _draw_text(self.screen, "1. NOME LIVELLO E TRADUZIONI", "sm", TXT_DIM, dx + 30, dy + 68)
+            _draw_text(self.screen, self._TR("gs_step_level_name", "1. LEVEL NAME AND TRANSLATIONS"), "sm", TXT_DIM, dx + 30, dy + 68)
             f_w = off_x2 - 150
             for i, l in enumerate(self.LANGS):
                 fy = dy + 106 + i * _LANG_FIELD_STRIDE
@@ -3536,7 +3542,7 @@ if __name__ == "__main__":
             )
 
             # ── COLONNA 2 (Destra): INFO LIVELLO ────────────────────────────
-            _draw_text(self.screen, "2. INFO LIVELLO", "sm", TXT_DIM, dx + off_x2, dy + 68)
+            _draw_text(self.screen, self._TR("gs_step_level_info", "2. LEVEL INFO"), "sm", TXT_DIM, dx + off_x2, dy + 68)
 
             # Recupera dati livello selezionato
             try:
@@ -3557,27 +3563,29 @@ if __name__ == "__main__":
             id_card_r = pygame.Rect(_info_x, _info_y, _info_card_w, 52)
             _rect(self.screen, (26, 28, 40), id_card_r, radius=10)
             _rect(self.screen, BORDER, id_card_r, 1, radius=10)
-            _draw_text(self.screen, "ID LIVELLO", "xs", TXT_DIM, _info_x + 14, _info_y + 8)
+            _draw_text(self.screen, self._TR("gs_level_id", "LEVEL ID"), "xs", TXT_DIM, _info_x + 14, _info_y + 8)
             _draw_text(self.screen, str(_lvl_id), "md", TXT_HI, _info_x + 14, _info_y + 24)
 
             # Card N. Scene
             sc_card_r = pygame.Rect(_info_x, _info_y + 64, _info_card_w // 2 - 6, 52)
             _rect(self.screen, (26, 28, 40), sc_card_r, radius=10)
             _rect(self.screen, (*ACCENT[:3], 120), sc_card_r, 1, radius=10)
-            _draw_text(self.screen, "SCENE", "xs", TXT_DIM, sc_card_r.x + 14, sc_card_r.y + 8)
+            _draw_text(self.screen, self._TR("gs_card_scenes", "SCENES"), "xs",
+                       TXT_DIM, sc_card_r.x + 14, sc_card_r.y + 8)
             _draw_text(self.screen, str(len(_lvl_scenes)), "lg", ACCENT, sc_card_r.x + 14, sc_card_r.y + 22)
 
             # Card Name Key
             nk_card_r = pygame.Rect(_info_x + _info_card_w // 2 + 6, _info_y + 64, _info_card_w // 2 - 6, 52)
             _rect(self.screen, (26, 28, 40), nk_card_r, radius=10)
             _rect(self.screen, BORDER, nk_card_r, 1, radius=10)
-            _draw_text(self.screen, "NAME KEY", "xs", TXT_DIM, nk_card_r.x + 14, nk_card_r.y + 8)
+            _draw_text(self.screen, self._TR("gs_card_name_key", "NAME KEY"), "xs",
+                       TXT_DIM, nk_card_r.x + 14, nk_card_r.y + 8)
             _draw_text(self.screen, str(_lvl_nk), "sm", TXT, nk_card_r.x + 14, nk_card_r.y + 24,
                        max_w=nk_card_r.width - 20)
 
             # Lista scene del livello (preview compatta)
             _list_y = _info_y + 132
-            _draw_text(self.screen, "SCENE NEL LIVELLO", "xs", TXT_DIM, _info_x, _list_y - 18)
+            _draw_text(self.screen, self._TR("gs_scenes_in_level", "SCENES IN THE LEVEL"), "xs", TXT_DIM, _info_x, _list_y - 18)
             _list_r = pygame.Rect(_info_x, _list_y, _info_card_w, dh - (_list_y - dy) - 80)
             _rect(self.screen, (22, 24, 34), _list_r, radius=8)
             _rect(self.screen, BORDER, _list_r, 1, radius=8)
@@ -3618,8 +3626,8 @@ if __name__ == "__main__":
                 _cur_cat = getattr(self, "_gs_edit_category", "desktop")
                 opt_d = pygame.Rect(c1_x, _SEC2_Y + 22 + 34, 260, 34)
                 opt_a = pygame.Rect(c1_x, _SEC2_Y + 22 + 68, 260, 34)
-                _button(self.screen, opt_d, "💻 DESKTOP", _in_rect((mx2, my2), opt_d), active=(_cur_cat == "desktop"))
-                _button(self.screen, opt_a, "📱 ANDROID", _in_rect((mx2, my2), opt_a), active=(_cur_cat == "android"))
+                _button(self.screen, opt_d, self._TR("gs_platform_desktop", "DESKTOP"), _in_rect((mx2, my2), opt_d), active=(_cur_cat == "desktop"))
+                _button(self.screen, opt_a, self._TR("gs_platform_android", "ANDROID"), _in_rect((mx2, my2), opt_a), active=(_cur_cat == "android"))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -3720,7 +3728,9 @@ class _WebExportProgressModal:
             os.startfile(str(self.output_dir))
         except OSError as e:
             logger.error(f"Apertura cartella export fallita: {e}")
-            self._editor._status(f"Impossibile aprire la cartella: {e}", ERR_C, 4)
+            self._editor._status(self._editor._TR(
+                "gs_open_folder_error",
+                "Cannot open the folder: {0}").format(e), ERR_C, 4)
 
     def _close(self, editor) -> None:
         editor._modal_pop(self)
@@ -3728,13 +3738,19 @@ class _WebExportProgressModal:
             lvls = self._result.get("levels", 0)
             scenes = self._result.get("scenes", 0)
             editor._status(
-                f"HTML esportato: {self.game_id} "
-                f"({lvls} livelli, {scenes} scene) → build_web/{self.game_id}",
+                editor._TR(
+                    "gs_html_exported",
+                    "HTML exported: {0} ({1} levels, {2} scenes) -> build_web/{3}"
+                ).format(self.game_id, lvls, scenes, self.game_id),
                 OK_C, 5)
         elif self._cancelled:
-            editor._status(f"Export HTML annullato: {self.game_id}", WARN_C, 3)
+            editor._status(editor._TR(
+                "gs_export_cancelled",
+                "HTML export cancelled: {0}").format(self.game_id), WARN_C, 3)
         else:
-            editor._status(f"Esportazione HTML fallita: {self.game_id}", ERR_C, 4)
+            editor._status(editor._TR(
+                "gs_export_failed",
+                "HTML export failed: {0}").format(self.game_id), ERR_C, 4)
 
     # ── Layout / eventi / render (main thread) ───────────────────────────────
 
@@ -3776,7 +3792,9 @@ class _WebExportProgressModal:
         _rect(screen, PANEL, panel, radius=8)
         _rect(screen, BORDER, panel, 1, radius=8)
 
-        _draw_text(screen, f"Export HTML — {self.game_id}", "md", TXT_HI,
+        _draw_text(screen, self._editor._TR(
+                       "gs_export_html_title",
+                       "HTML export - {0}").format(self.game_id), "md", TXT_HI,
                    panel.x + _WX_PAD, panel.y + _WX_PAD)
 
         # Step corrente + percentuale (snapshot dei campi scritti dal thread)

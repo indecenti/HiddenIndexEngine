@@ -108,7 +108,7 @@ class LangModalMixin:
         self._lang_dirty = False
         self._lang_modal = False
 
-        self._status("Traduzioni salvate!", OK_C, 3)
+        self._status(self._TR("lm_saved", "Translations saved"), OK_C, 3)
 
     def _ensure_translation_key(self, key: str, default_value: str = "") -> list:
         """
@@ -201,7 +201,7 @@ class LangModalMixin:
         conferma (prima volta ritorna False senza chiudere), evitando perdita silenziosa."""
         if getattr(self, "_lang_dirty", False) and not getattr(self, "_lang_confirm_close", False):
             self._lang_confirm_close = True
-            self._status("Traduzioni non salvate: premi di nuovo per scartare, oppure SALVA", (230, 170, 60), 4)
+            self._status(self._TR("lm_unsaved", "Unsaved translations: press again to discard, or SAVE"), (230, 170, 60), 4)
             return False
         self._lang_confirm_close = False
         self._lang_modal = False
@@ -436,7 +436,7 @@ class LangModalMixin:
         self.screen.blit(title, (dx + 12, dy + 10))
         
         if is_fx and self._lang_keys:
-            key_info = _txt(f"Chiave: {self._lang_keys[0]}", "sm", TXT_DIM)
+            key_info = _txt(self._TR("lm_key_label", "Key: {0}").format(self._lang_keys[0]), "sm", TXT_DIM)
             self.screen.blit(key_info, (dx + dw - key_info.get_width() - 12, dy + 16))
 
         if self._lang_dirty:
@@ -484,11 +484,11 @@ class LangModalMixin:
             # 1. BARRA DI RICERCA
             search_r = pygame.Rect(cx, dy + 48, dw - 20, 32)
             _input_box(self.screen, search_r, self._lang_search, focused=self._lang_search_active, 
-                      hint="Cerca tra chiavi e traduzioni...", icon="search", font="sm")
+                      hint=self._TR("lm_search", "Search keys and translations..."), icon="search", font="sm")
 
             # 2. HEADERS TABELLA
             _rect(self.screen, (52, 52, 66), (cx, cy - 22, KEY_W, 20))
-            _draw_text(self.screen, "Chiave", "sm", TXT_DIM, cx + 4, cy - 20, KEY_W - 8)
+            _draw_text(self.screen, self._TR("lm_key", "Key"), "sm", TXT_DIM, cx + 4, cy - 20, KEY_W - 8)
             for li, lang in enumerate(self.LANGS):
                 lx = cx + KEY_W + li * lang_w
                 _rect(self.screen, (52, 52, 66), (lx, cy - 22, lang_w - 4, 20))
@@ -526,9 +526,9 @@ class LangModalMixin:
         pygame.draw.line(self.screen, BORDER, (dx, fy), (dx + dw, fy))
         close_r = pygame.Rect(dx + dw - 310, fy + 8, 140, 28)
         save_r  = pygame.Rect(dx + dw - 160, fy + 8, 150, 28)
-        _button(self.screen, close_r, "Annulla (Esc)",    _in_rect((mx2, my2), close_r))
-        _button(self.screen, save_r,  "SALVA PROGETTO",  _in_rect((mx2, my2), save_r), active=self._lang_dirty)
+        _button(self.screen, close_r, self._TR("lm_cancel", "Cancel (Esc)"),    _in_rect((mx2, my2), close_r))
+        _button(self.screen, save_r,  self._TR("lm_save_project", "SAVE PROJECT"),  _in_rect((mx2, my2), save_r), active=self._lang_dirty)
         
         if not is_fx:
             add_r = pygame.Rect(dx + 10, fy + 8, 160, 28)
-            _button(self.screen, add_r, "+ Nuova chiave", _in_rect((mx2, my2), add_r))
+            _button(self.screen, add_r, self._TR("lm_new_key", "+ New key"), _in_rect((mx2, my2), add_r))

@@ -14,6 +14,7 @@ from typing import Callable, Optional
 
 import pygame
 
+from engine.language_manager import tr
 from editor.constants import PANEL, BORDER, TXT_HI, TXT_DIM
 from editor.ui.draw import _txt, _rect, _button, _in_rect
 
@@ -94,7 +95,7 @@ class ColorPickerModal:
 
     def __init__(self, bg_surf: Optional[pygame.Surface],
                  initial_color=(255, 255, 255),
-                 title: str = "Seleziona Colore",
+                 title: str = "",
                  on_done: Optional[Callable[[Optional[tuple]], None]] = None) -> None:
         self.title = title
         self.on_done = on_done
@@ -218,7 +219,8 @@ class ColorPickerModal:
         _rect(screen, PANEL, panel, radius=8)
         _rect(screen, BORDER, panel, 1, radius=8)
 
-        header = _txt(self.title, "md", TXT_HI)
+        header = _txt(self.title or tr("cp_title", "Select color"),
+                      "md", TXT_HI)
         screen.blit(header, (panel.x + PAD, panel.y + PAD))
 
         # Barre (cache: hue statica, sv rigenerata al cambio di hue)
@@ -245,7 +247,7 @@ class ColorPickerModal:
         pygame.draw.circle(screen, (255, 255, 255), (sx, sy), 5, 1)
         pygame.draw.circle(screen, (0, 0, 0), (sx, sy), 6, 1)
 
-        lbl_pal = _txt("Estratti dal Background:", "sm", TXT_DIM)
+        lbl_pal = _txt(tr("cp_from_background", "Sampled from the background:"), "sm", TXT_DIM)
         screen.blit(lbl_pal, (panel.x + PAD, panel.y + 350))
 
         ox, oy = r["palette_origin"]
@@ -261,5 +263,5 @@ class ColorPickerModal:
         val_txt = _txt(f"RGB: {cur[0]}, {cur[1]}, {cur[2]}", "sm", TXT_HI)
         screen.blit(val_txt, (panel.x + 70, panel.y + PICKER_H - 45))
 
-        _button(screen, r["ok"], "Applica", _in_rect((mx, my), r["ok"]), active=True)
-        _button(screen, r["cancel"], "Annulla", _in_rect((mx, my), r["cancel"]))
+        _button(screen, r["ok"], tr("btn_apply", "Apply"), _in_rect((mx, my), r["ok"]), active=True)
+        _button(screen, r["cancel"], tr("btn_cancel", "Cancel"), _in_rect((mx, my), r["cancel"]))

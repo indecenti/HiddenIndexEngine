@@ -27,7 +27,7 @@ class TagModalMixin:
         # Trova l'entry nel catalogo (può essere globale o locale)
         cat_entry = next((c for c in self.catalog if c["id"] == catalog_id), None)
         if not cat_entry:
-            self._status(f"Errore: asset {catalog_id} non trovato", ERR_C, 3)
+            self._status(self._TR("tg_asset_not_found", "Error: asset {0} not found").format(catalog_id), ERR_C, 3)
             return
 
         self._tag_modal_current_tags = set(cat_entry.get("tags", []))
@@ -148,9 +148,9 @@ class TagModalMixin:
         if modified:
             # Refresh catalogo in memoria
             self.catalog = _load_catalog(self.game_name)
-            self._status(f"Tag aggiornati per {cid}", OK_C, 3)
+            self._status(self._TR("tg_updated", "Tags updated for {0}").format(cid), OK_C, 3)
         else:
-            self._status(f"Errore: impossibile salvare i tag per {cid}", ERR_C, 3)
+            self._status(self._TR("tg_save_error", "Error: cannot save the tags for {0}").format(cid), ERR_C, 3)
             
         self._tag_modal_active = False
 
@@ -241,5 +241,5 @@ class TagModalMixin:
         ok_r = pygame.Rect(dx + 20, btn_y, half, 34)
         can_r = pygame.Rect(dx + 30 + half, btn_y, half, 34)
         
-        _button(self.screen, ok_r, "Salva Modifiche", _in_rect((mx, my), ok_r), active=self._tag_modal_dirty)
-        _button(self.screen, can_r, "Annulla", _in_rect((mx, my), can_r), danger=True)
+        _button(self.screen, ok_r, self._TR("tg_save", "Save changes"), _in_rect((mx, my), ok_r), active=self._tag_modal_dirty)
+        _button(self.screen, can_r, self._TR("btn_cancel", "Cancel"), _in_rect((mx, my), can_r), danger=True)

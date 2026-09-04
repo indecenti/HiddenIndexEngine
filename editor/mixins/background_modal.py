@@ -471,7 +471,7 @@ class BackgroundModalMixin:
                     # Rendering dell'interfaccia tag avanzata sopra la cella
                     # 1. Barra di ricerca
                     ir = pygame.Rect(ix + 10, iy + 245, item_w - 20, 30)
-                    _input_box(self.screen, ir, self._bg_tags_buffer, focused=True, hint="Cerca o aggiungi...")
+                    _input_box(self.screen, ir, self._bg_tags_buffer, focused=True, hint=self._TR("modal_search_or_add", "Search or add..."))
                     self._last_tags_x, self._last_tags_y = ix + 10, iy + 245
                     
                     # 2. Chip dei tag esistenti (rimovibili)

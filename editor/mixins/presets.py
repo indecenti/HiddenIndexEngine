@@ -95,11 +95,11 @@ class PresetsMixin:
     def _preset_save_selection(self, name: str) -> None:
         name = name.strip()[:PRESET_NAME_MAX]
         if not name:
-            self._status("Nome preset vuoto", WARN_C, 2)
+            self._status(self._TR("preset_name_empty", "Empty preset name"), WARN_C, 2)
             return
         preset = self._preset_from_selection(name)
         if not preset:
-            self._status("Nessuna selezione da salvare", WARN_C, 2)
+            self._status(self._TR("preset_no_selection", "Nothing selected to save"), WARN_C, 2)
             return
         presets = self._presets_load()
         # Stesso nome = sovrascrittura
@@ -109,7 +109,7 @@ class PresetsMixin:
             self._status(
                 f"Preset '{name}' salvato ({len(preset['objects'])} oggetti)", OK_C, 3)
         else:
-            self._status("Errore salvataggio preset", ERR_C, 3)
+            self._status(self._TR("preset_save_error", "Preset save failed"), ERR_C, 3)
 
     def _preset_insert(self, preset: dict) -> None:
         """Inserisce il gruppo al centro della vista corrente e lo seleziona."""
@@ -144,22 +144,24 @@ class PresetsMixin:
     def _preset_delete(self, name: str) -> None:
         presets = [p for p in self._presets_load() if p.get("name") != name]
         self._presets_write(presets)
-        self._status(f"Preset '{name}' eliminato", WARN_C, 2)
+        self._status(self._TR("preset_deleted", "Preset '{name}' deleted").format(name=name),
+                     WARN_C, 2)
 
     # ── Aperture modali ──────────────────────────────────────────────────────
 
     def _preset_open_save(self) -> None:
         if not self._get_objs_selection():
-            self._status("Seleziona prima gli oggetti da salvare", WARN_C, 2)
+            self._status(self._TR("preset_select_first",
+                                  "Select the objects to save first"), WARN_C, 2)
             return
         self._modal_push(_PresetSaveModal(self))
 
     def _preset_open_insert(self) -> None:
         if not self.scene_data:
-            self._status("Apri prima una scena", WARN_C, 2)
+            self._status(self._TR("preset_open_scene_first", "Open a scene first"), WARN_C, 2)
             return
         if not self._presets_load():
-            self._status("Nessun preset salvato", TXT_DIM, 2)
+            self._status(self._TR("preset_none_saved", "No preset saved"), TXT_DIM, 2)
             return
         self._modal_push(_PresetListModal(self))
 
