@@ -110,6 +110,132 @@
       "hint_delay": 30,
       "width": 240,
       "height": 184
+    },
+    {
+      "catalog_id": "ca_acorn",
+      "x": 3857,
+      "y": 2243,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 15,
+      "radius": 47,
+      "width": 94,
+      "height": 94
+    },
+    {
+      "catalog_id": "ca_amulet_arcane",
+      "x": 3156,
+      "y": 1466,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 98,
+      "height": 127,
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          -7,
+          -8
+        ],
+        [
+          -32,
+          -21
+        ],
+        [
+          -2,
+          -31
+        ]
+      ]
+    },
+    {
+      "catalog_id": "ca_action_figure_silver",
+      "x": 1596,
+      "y": 1860,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 90,
+      "height": 166
+    },
+    {
+      "catalog_id": "ca_alien_blaster_toy",
+      "x": 592,
+      "y": 435,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 207,
+      "height": 170,
+      "corners": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          4,
+          9
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "catalog_id": "ca_backpack_tactical_olive",
+      "x": 3784,
+      "y": 1397,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 175,
+      "height": 256
+    },
+    {
+      "catalog_id": "ca_beehive_honey",
+      "x": 3991.5,
+      "y": 378.5,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "radius": 90.0,
+      "width": 149,
+      "height": 211
+    },
+    {
+      "catalog_id": "ca_cactus_potted_prickly",
+      "x": 371,
+      "y": 1679,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 206,
+      "height": 228
+    },
+    {
+      "catalog_id": "ca_car_key_fob",
+      "x": 2403,
+      "y": 1910,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 25,
+      "width": 90,
+      "height": 121
     }
   ],
   "effects": [

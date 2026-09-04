@@ -23,7 +23,15 @@
   "mg_title": "Mg Title",
   "mission_complete": "Mission Complete",
   "mode_window": "Finestra",
+  "obj_ca_acorn": "Gland",
+  "obj_ca_action_figure_silver": "Action Figure",
+  "obj_ca_alien_blaster_toy": "Ca Alien Blaster Toy",
+  "obj_ca_amulet_arcane": "Amulette Arcanique",
+  "obj_ca_backpack_tactical_olive": "Sac à dos tactique",
+  "obj_ca_beehive_honey": "Ruche d'abeilles",
   "obj_ca_book_stack_adv": "Ca Book Stack Adv",
+  "obj_ca_cactus_potted_prickly": "Ca Cactus Potted Prickly",
+  "obj_ca_car_key_fob": "Clé de voiture",
   "obj_ca_compass_brass": "Ca Compass Brass",
   "obj_ca_map_folded_small": "Ca Map Folded Small",
   "obj_ca_notebook_small": "Ca Notebook Small",
@@ -68,8 +76,5 @@
   "obj_la_xilofono": "Xylophone",
   "obj_la_zaino": "Sac à dos",
   "pause_title": "Pause Title",
-  "scene_nuova_name": "scene_nuova",
-  "obj_ca_magic_lamp_genie": "",
-  "obj_ca_anchor_rusty": "",
-  "obj_ca_xmas_tree_mini": ""
+  "scene_nuova_name": "scene_nuova"
 }

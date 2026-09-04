@@ -16,18 +16,6 @@
       "shape": "rect"
     },
     {
-      "id": "ca_accordion_instrument",
-      "name_key": "ca_accordion_instrument_name",
-      "image": "ca_accordion_instrument.png",
-      "detection_type": "rect",
-      "tags": [
-        "instrument",
-        "music",
-        "red",
-        "weird"
-      ]
-    },
-    {
       "id": "ca_accordion_wood",
       "label_key": "obj_ca_accordion_wood",
       "icon": "objects_cartoon/ca_accordion_wood.png",
@@ -202,19 +190,6 @@
       "style": "cartoon"
     },
     {
-      "id": "ca_ant_farm_glass",
-      "name_key": "ca_ant_farm_glass_name",
-      "image": "ca_ant_farm_glass.png",
-      "detection_type": "rect",
-      "tags": [
-        "glass",
-        "animal",
-        "weird",
-        "nature",
-        "box"
-      ]
-    },
-    {
       "id": "ca_antiseptic_bottle",
       "label_key": "obj_ca_antiseptic_bottle",
       "icon": "objects_cartoon/ca_antiseptic_bottle.png",
@@ -325,19 +300,6 @@
       "default_width": 50,
       "default_height": 50,
       "style": "cartoon"
-    },
-    {
-      "id": "ca_astrolabe_brass",
-      "name_key": "ca_astrolabe_brass_name",
-      "image": "ca_astrolabe_brass.png",
-      "detection_type": "rect",
-      "tags": [
-        "brass",
-        "weird",
-        "ancient",
-        "space",
-        "instrument"
-      ]
     },
     {
       "id": "ca_astrolabe_brass_antique",
@@ -722,18 +684,6 @@
       "shape": "rect"
     },
     {
-      "id": "ca_battering_ram_log",
-      "name_key": "ca_battering_ram_log_name",
-      "image": "ca_battering_ram_log.png",
-      "detection_type": "rect",
-      "tags": [
-        "wood",
-        "weapon",
-        "weird",
-        "medieval"
-      ]
-    },
-    {
       "id": "ca_battery_aa",
       "label_key": "obj_ca_battery_aa",
       "icon": "objects_cartoon/ca_battery_aa.png",
@@ -819,19 +769,6 @@
         "stoffa"
       ],
       "style": "cartoon"
-    },
-    {
-      "id": "ca_bear_trap_metal",
-      "name_key": "ca_bear_trap_metal_name",
-      "image": "ca_bear_trap_metal.png",
-      "detection_type": "rect",
-      "tags": [
-        "metal",
-        "trap",
-        "weird",
-        "weapon",
-        "danger"
-      ]
     },
     {
       "id": "ca_beaver_wood",
@@ -2969,19 +2906,6 @@
       "style": "cartoon"
     },
     {
-      "id": "ca_cryptex_code_cylinder",
-      "name_key": "ca_cryptex_code_cylinder_name",
-      "image": "ca_cryptex_code_cylinder.png",
-      "detection_type": "rect",
-      "tags": [
-        "code",
-        "weird",
-        "puzzle",
-        "mystery",
-        "brass"
-      ]
-    },
-    {
       "id": "ca_crystal_ball",
       "label_key": "obj_ca_crystal_ball",
       "icon": "objects_cartoon/ca_crystal_ball.png",
@@ -3198,19 +3122,6 @@
         "antico"
       ],
       "style": "cartoon"
-    },
-    {
-      "id": "ca_cuckoo_clock_wooden",
-      "name_key": "ca_cuckoo_clock_wooden_name",
-      "image": "ca_cuckoo_clock_wooden.png",
-      "detection_type": "rect",
-      "tags": [
-        "wood",
-        "clock",
-        "time",
-        "bird",
-        "vintage"
-      ]
     },
     {
       "id": "ca_cupcake_blue",
@@ -3581,19 +3492,6 @@
       "style": "cartoon"
     },
     {
-      "id": "ca_diving_helmet_brass",
-      "name_key": "ca_diving_helmet_brass_name",
-      "image": "ca_diving_helmet_brass.png",
-      "detection_type": "rect",
-      "tags": [
-        "brass",
-        "underwater",
-        "weird",
-        "helmet",
-        "vintage"
-      ]
-    },
-    {
       "id": "ca_diving_mask",
       "label_key": "obj_ca_diving_mask",
       "icon": "objects_cartoon/ca_diving_mask.png",
@@ -3625,19 +3523,6 @@
       ],
       "style": "cartoon",
       "shape": "rect"
-    },
-    {
-      "id": "ca_divining_rod_wooden",
-      "name_key": "ca_divining_rod_wooden_name",
-      "image": "ca_divining_rod_wooden.png",
-      "detection_type": "rect",
-      "tags": [
-        "wood",
-        "weird",
-        "magic",
-        "stick",
-        "tool"
-      ]
     },
     {
       "id": "ca_domino_tile",
@@ -3696,18 +3581,6 @@
         "contenitore"
       ],
       "style": "cartoon"
-    },
-    {
-      "id": "ca_dowsing_pendulum_crystal",
-      "name_key": "ca_dowsing_pendulum_crystal_name",
-      "image": "ca_dowsing_pendulum_crystal.png",
-      "detection_type": "rect",
-      "tags": [
-        "magic",
-        "crystal",
-        "weird",
-        "tool"
-      ]
     },
     {
       "id": "ca_dragon_egg_purple",
@@ -6486,19 +6359,6 @@
       "style": "cartoon"
     },
     {
-      "id": "ca_geiger_counter_yellow",
-      "name_key": "ca_geiger_counter_yellow_name",
-      "image": "ca_geiger_counter_yellow.png",
-      "detection_type": "rect",
-      "tags": [
-        "tech",
-        "weird",
-        "yellow",
-        "radiation",
-        "tool"
-      ]
-    },
-    {
       "id": "ca_gem_ruby_red",
       "label_key": "obj_ca_gem_ruby_red",
       "icon": "objects_cartoon/ca_gem_ruby_red.png",
@@ -7497,18 +7357,6 @@
       "style": "cartoon"
     },
     {
-      "id": "ca_hookah_water_pipe",
-      "name_key": "ca_hookah_water_pipe_name",
-      "image": "ca_hookah_water_pipe.png",
-      "detection_type": "rect",
-      "tags": [
-        "glass",
-        "smoke",
-        "weird",
-        "oriental"
-      ]
-    },
-    {
       "id": "ca_horseshoe_lucky",
       "label_key": "obj_ca_horseshoe_lucky",
       "icon": "objects_cartoon/ca_horseshoe_lucky.png",
@@ -7625,19 +7473,6 @@
         "medio"
       ],
       "style": "cartoon"
-    },
-    {
-      "id": "ca_hourglass_sand_timer",
-      "name_key": "ca_hourglass_sand_timer_name",
-      "image": "ca_hourglass_sand_timer.png",
-      "detection_type": "rect",
-      "tags": [
-        "time",
-        "glass",
-        "weird",
-        "magic",
-        "ancient"
-      ]
     },
     {
       "id": "ca_hourglass_wood",
@@ -8655,19 +8490,6 @@
         "pericolo"
       ],
       "style": "cartoon"
-    },
-    {
-      "id": "ca_magic_8_ball_black",
-      "name_key": "ca_magic_8_ball_black_name",
-      "image": "ca_magic_8_ball_black.png",
-      "detection_type": "rect",
-      "tags": [
-        "magic",
-        "black",
-        "game",
-        "weird",
-        "ball"
-      ]
     },
     {
       "id": "ca_magic_broom_straw",
@@ -11263,19 +11085,6 @@
       "style": "cartoon"
     },
     {
-      "id": "ca_rubber_stamp_wooden",
-      "name_key": "ca_rubber_stamp_wooden_name",
-      "image": "ca_rubber_stamp_wooden.png",
-      "detection_type": "rect",
-      "tags": [
-        "wood",
-        "stamp",
-        "tool",
-        "weird",
-        "office"
-      ]
-    },
-    {
       "id": "ca_rubiks_cube",
       "label_key": "obj_ca_rubiks_cube",
       "icon": "objects_cartoon/ca_rubiks_cube.png",
@@ -13382,19 +13191,6 @@
         "metallo"
       ],
       "style": "cartoon"
-    },
-    {
-      "id": "ca_tesla_coil_electric",
-      "name_key": "ca_tesla_coil_electric_name",
-      "image": "ca_tesla_coil_electric.png",
-      "detection_type": "rect",
-      "tags": [
-        "electric",
-        "weird",
-        "science",
-        "tech",
-        "lightning"
-      ]
     },
     {
       "id": "ca_theodolite_metallic",

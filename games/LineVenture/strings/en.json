@@ -24,7 +24,15 @@
   "mg_title": "Mg Title",
   "mission_complete": "Mission Complete",
   "mode_window": "Window",
+  "obj_ca_acorn": "Acorn",
+  "obj_ca_action_figure_silver": "Action Figure",
+  "obj_ca_alien_blaster_toy": "Alien Blaster Toy",
+  "obj_ca_amulet_arcane": "Arcane Amulet",
+  "obj_ca_backpack_tactical_olive": "Tactical Backpack",
+  "obj_ca_beehive_honey": "Beehive",
   "obj_ca_book_stack_adv": "Ca Book Stack Adv",
+  "obj_ca_cactus_potted_prickly": "Potted Cactus",
+  "obj_ca_car_key_fob": "Car Key Fob",
   "obj_ca_compass_brass": "Ca Compass Brass",
   "obj_ca_map_folded_small": "Ca Map Folded Small",
   "obj_ca_notebook_small": "Ca Notebook Small",
@@ -100,8 +108,5 @@
   "tag_TECNOLOGIA": "Technology",
   "tag_VESTIARIO": "Clothing",
   "tag_VETRO": "Glass",
-  "tag_VIAGGIO": "Travel",
-  "obj_ca_magic_lamp_genie": "",
-  "obj_ca_anchor_rusty": "",
-  "obj_ca_xmas_tree_mini": ""
+  "tag_VIAGGIO": "Travel"
 }

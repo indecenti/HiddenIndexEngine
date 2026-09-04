@@ -17,6 +17,22 @@
       ]
     },
     {
+      "id": "actionman_toy",
+      "label_key": "obj_actionman_toy",
+      "icon": "objects/actionman_toy.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 85,
+      "default_hint_delay": 35,
+      "tags": [
+        "collezione",
+        "giocattolo",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
       "id": "aged_cheese",
       "label_key": "obj_aged_cheese",
       "icon": "objects/aged_cheese.png",
@@ -47,6 +63,25 @@
         "plastica",
         "tecnologia"
       ]
+    },
+    {
+      "id": "arcade_centipede_front",
+      "label_key": "obj_arcade_centipede_front",
+      "icon": "objects/arcade_centipede_front.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 180,
+      "default_hint_delay": 45,
+      "tags": [
+        "elettronica",
+        "grande",
+        "plastica",
+        "retro",
+        "variante",
+        "videogame",
+        "vintage"
+      ],
+      "style": "real"
     },
     {
       "id": "arcade_joystick",
@@ -388,6 +423,24 @@
         "piccolo",
         "stoffa",
         "sudamerica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "flag_mexico",
+      "label_key": "obj_flag_mexico",
+      "icon": "objects/flag_mexico.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 75,
+      "default_hint_delay": 35,
+      "tags": [
+        "bandiera",
+        "metallo",
+        "nazione",
+        "nordamerica",
+        "piccolo",
+        "stoffa"
       ],
       "style": "real"
     },
@@ -912,6 +965,24 @@
       ]
     },
     {
+      "id": "motorcycle_helmet_alt",
+      "label_key": "obj_motorcycle_helmet",
+      "icon": "objects/motorcycle_helmet_alt.png",
+      "default_detection": "circle",
+      "default_radius": 45,
+      "default_hint_delay": 35,
+      "tags": [
+        "abbigliamento",
+        "cappello",
+        "casco",
+        "grande",
+        "plastica",
+        "variante",
+        "veicolo"
+      ],
+      "style": "real"
+    },
+    {
       "id": "mummified_hand",
       "label_key": "obj_mummified_hand",
       "icon": "objects/mummified_hand.png",
@@ -1211,6 +1282,21 @@
       ]
     },
     {
+      "id": "puzzle_piece_5",
+      "label_key": "obj_puzzle_piece_5",
+      "icon": "objects/puzzle_piece_5.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 25,
+      "tags": [
+        "gioco",
+        "carta",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
       "id": "rabbit",
       "label_key": "obj_rabbit",
       "icon": "objects/rabbit.png",
@@ -1222,6 +1308,25 @@
         "natura",
         "piccolo"
       ]
+    },
+    {
+      "id": "raiders_lost_ark_poster",
+      "label_key": "obj_raiders_poster",
+      "icon": "objects/indiana_jones_poster.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "azione",
+        "carta",
+        "cinema",
+        "cult",
+        "piccolo",
+        "poster",
+        "vintage"
+      ],
+      "style": "real"
     },
     {
       "id": "ritual_skull",
@@ -1424,6 +1529,21 @@
       ]
     },
     {
+      "id": "snow_globe",
+      "label_key": "obj_snow_globe",
+      "icon": "objects/obj_snow_globe.png",
+      "default_detection": "circle",
+      "default_radius": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "decorazione",
+        "vetro",
+        "piccolo",
+        "tradizione"
+      ],
+      "style": "real"
+    },
+    {
       "id": "spatula",
       "label_key": "obj_spatula",
       "icon": "objects/spatula.png",
@@ -1541,6 +1661,21 @@
         "piccolo",
         "studio"
       ]
+    },
+    {
+      "id": "stump_with_axe",
+      "label_key": "obj_stump_with_axe",
+      "icon": "objects/stump_with_axe.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 90,
+      "tags": [
+        "legno",
+        "metallo",
+        "attrezzo",
+        "grande"
+      ],
+      "style": "real"
     },
     {
       "id": "stylus_pen",
@@ -1886,6 +2021,23 @@
       ]
     },
     {
+      "id": "water_flosser_modern",
+      "label_key": "obj_water_flosser_modern",
+      "icon": "objects/obj_water_flosser_modern.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 95,
+      "default_hint_delay": 35,
+      "tags": [
+        "salute",
+        "bellezza",
+        "plastica",
+        "elettronica",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
       "id": "watering_can",
       "label_key": "obj_watering_can",
       "icon": "objects/watering_can.png",
@@ -1899,6 +2051,21 @@
         "grande",
         "metallo"
       ]
+    },
+    {
+      "id": "whistle",
+      "label_key": "obj_whistle",
+      "icon": "objects/whistle.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 25,
+      "default_hint_delay": 25,
+      "tags": [
+        "sport",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
     },
     {
       "id": "wooden_train",

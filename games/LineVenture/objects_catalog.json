@@ -1,17 +1,89 @@
 {
   "objects": [
     {
-      "id": "ca_anchor_rusty",
-      "label_key": "obj_ca_anchor_rusty",
-      "icon": "objects_cartoon/ca_anchor_rusty.png",
+      "id": "ca_acorn",
+      "label_key": "obj_ca_acorn",
+      "icon": "objects_cartoon/ca_acorn.png",
+      "default_detection": "circle",
+      "default_radius": 10,
+      "default_hint_delay": 15,
+      "tags": [
+        "natura",
+        "bosco"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_action_figure_silver",
+      "label_key": "obj_ca_action_figure_silver",
+      "icon": "objects_cartoon/ca_action_figure_silver.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 55,
+      "tags": [
+        "giocattolo",
+        "plastica",
+        "medio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_alien_blaster_toy",
+      "label_key": "obj_ca_alien_blaster_toy",
+      "icon": "objects_cartoon/ca_alien_blaster_toy.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "giocattolo",
+        "plastica",
+        "tecnologia"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_amulet_arcane",
+      "label_key": "obj_ca_amulet_arcane",
+      "icon": "objects_cartoon/ca_amulet_arcane.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "gioiello",
+        "metallo",
+        "magia",
+        "occulto"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_backpack_tactical_olive",
+      "label_key": "obj_ca_backpack_tactical_olive",
+      "icon": "objects_cartoon/ca_backpack_tactical_olive.png",
       "default_detection": "rect",
       "default_width": 45,
       "default_height": 55,
+      "default_hint_delay": 40,
+      "tags": [
+        "contenitore",
+        "stoffa",
+        "sicurezza",
+        "viaggio"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_beehive_honey",
+      "label_key": "obj_ca_beehive_honey",
+      "icon": "objects_cartoon/ca_beehive_honey.png",
+      "default_detection": "circle",
+      "default_radius": 30,
       "default_hint_delay": 35,
       "tags": [
-        "mare",
-        "metallo",
-        "antico"
+        "natura",
+        "cibo",
+        "pericolo"
       ],
       "style": "cartoon"
     },
@@ -30,6 +102,35 @@
       "style": "cartoon"
     },
     {
+      "id": "ca_cactus_potted_prickly",
+      "label_key": "obj_ca_cactus_potted_prickly",
+      "icon": "objects_cartoon/ca_cactus_potted_prickly.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 50,
+      "tags": [
+        "pianta",
+        "natura",
+        "verde"
+      ],
+      "style": "cartoon"
+    },
+    {
+      "id": "ca_car_key_fob",
+      "label_key": "obj_ca_car_key_fob",
+      "icon": "objects_cartoon/ca_car_key_fob.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 35,
+      "default_hint_delay": 25,
+      "tags": [
+        "tecnologia",
+        "metallo",
+        "viaggio"
+      ],
+      "style": "cartoon"
+    },
+    {
       "id": "ca_compass_brass",
       "label_key": "obj_ca_compass_brass",
       "icon": "objects_cartoon/ca_compass_brass.png",
@@ -40,20 +141,6 @@
         "strumento",
         "metallo",
         "viaggio"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_magic_lamp_genie",
-      "label_key": "obj_ca_magic_lamp_genie",
-      "icon": "objects_cartoon/ca_magic_lamp_genie.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 50,
-      "tags": [
-        "antico",
-        "metallo",
-        "magia"
       ],
       "style": "cartoon"
     },
@@ -152,22 +239,6 @@
       "tags": [
         "cura",
         "plastica"
-      ],
-      "style": "cartoon"
-    },
-    {
-      "id": "ca_xmas_tree_mini",
-      "label_key": "obj_ca_xmas_tree_mini",
-      "icon": "objects_cartoon/ca_xmas_tree_mini.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 70,
-      "default_hint_delay": 20,
-      "tags": [
-        "natale",
-        "inverno",
-        "decorazione",
-        "natura"
       ],
       "style": "cartoon"
     },

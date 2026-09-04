@@ -24,7 +24,15 @@
   "mg_title": "Mg Title",
   "mission_complete": "Mission Complete",
   "mode_window": "Finestra",
+  "obj_ca_acorn": "Ghianda del Bosco",
+  "obj_ca_action_figure_silver": "Action Figure",
+  "obj_ca_alien_blaster_toy": "Pistola Giocattolo Aliena",
+  "obj_ca_amulet_arcane": "Amuleto Arcano",
+  "obj_ca_backpack_tactical_olive": "Zaino tattico",
+  "obj_ca_beehive_honey": "Alveare",
   "obj_ca_book_stack_adv": "Pila di Libri",
+  "obj_ca_cactus_potted_prickly": "Cactus in Vaso",
+  "obj_ca_car_key_fob": "Chiave dell'auto moderna",
   "obj_ca_compass_brass": "Bussola in Ottone",
   "obj_ca_map_folded_small": "Mappa Ripiegata",
   "obj_ca_notebook_small": "Taccuino",
@@ -100,8 +108,5 @@
   "tag_TECNOLOGIA": "Tecnologia",
   "tag_VESTIARIO": "Vestiario",
   "tag_VETRO": "Vetro",
-  "tag_VIAGGIO": "Viaggio",
-  "obj_ca_magic_lamp_genie": "",
-  "obj_ca_anchor_rusty": "",
-  "obj_ca_xmas_tree_mini": ""
+  "tag_VIAGGIO": "Viaggio"
 }
