@@ -540,7 +540,17 @@ def build_game(
 
         # config.ini
         shutil.copy2(temp_dir / "config.ini", pkg_dir / "config.ini")
+
         logger.info(f"[Copy] config.ini → {game_id}/")
+
+        # Legal notices next to the executable: the engine terms, the third
+        # party ones (pygame is LGPL and requires its text to ship) and the
+        # asset terms. Never fatal: a build must not fail over a notice file.
+        try:
+            from editor.build_common import write_license_bundle
+            write_license_bundle(base_path, pkg_dir, game_path=base_path / "games" / game_id)
+        except Exception as e:
+            log_step(f"WARN: notices not written ({e})")
 
         # ── Carica catalogo globale per costruire la mappa id→icona ──────────
         # Verrà usata sia per il catalogo slim che per il logging.

@@ -44,6 +44,26 @@ code license. They are released under **CC BY-NC 4.0** (attribution, noncommerci
 automatically include them: say so when you ask, and they can be covered in the same
 agreement.
 
+## What a build ships
+
+Every build produced by the editor — Windows EXE, web export, Android APK/AAB — carries a
+`licenses/` folder next to the game files:
+
+| File | Content |
+|---|---|
+| `README.txt` | index, and where to get the pygame sources |
+| `ENGINE-LICENSE.txt` | terms covering the engine code in that build |
+| `NOTICE.txt` | copyright notice required with the engine code |
+| `THIRD-PARTY-NOTICES.txt` | bundled third-party components (pygame is LGPL: its text has to travel with the binary) |
+| `ASSETS-LICENSE.txt` | terms of the images, music and sounds taken from the engine library |
+
+If you repackage a build by hand, carry that folder with it.
+
+**Commercial builds.** A game covered by a commercial license must not ship the
+noncommercial text. Put the license you signed in `games/<game_id>/LICENSE-ENGINE.txt`:
+the build system picks it up and writes it as `ENGINE-LICENSE.txt` instead of the
+repository default, for that game only.
+
 ## Name and logo
 
 The name **HiddenIndexEngine**, the acronym **HIE** and the project logos are trademarks of

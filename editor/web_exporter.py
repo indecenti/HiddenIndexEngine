@@ -26,6 +26,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
+from engine.utils import get_logger
+
+logger = get_logger(__name__)
+
 # Versione del runtime web (incrementare a modifiche significative di runtime.js).
 RUNTIME_VERSION = "1.0.0"
 
@@ -1043,6 +1047,14 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
         _render_index_html(default_lang, title, desc, theme_color, favicon_web, og_web),
         encoding="utf-8")
     shutil.copy2(TEMPLATE_DIR / "style.css", output_dir / "style.css")
+
+    # Legal notices: the exported site ships the engine logic (runtime.js) and
+    # the shared assets, so the terms travel with it. Never fatal.
+    try:
+        from editor.build_common import write_license_bundle
+        write_license_bundle(base, output_dir, game_path=game_path)
+    except Exception as e:
+        logger.warning(f"[WEB] Note legali non scritte: {e}")
     # runtime.js: bundle dei soli minigiochi triggerati nelle scene.
     _bundle_runtime(output_dir / "runtime.js", triggered_minigames)
     _write_webmanifest(output_dir, title, theme_color, bg_color, favicon_web or None)

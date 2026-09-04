@@ -3,9 +3,10 @@
 This document lists the third-party components distributed in the repository or
 required at runtime, with their licenses.
 
-HiddenIndexEngine's code is Apache-2.0 ([LICENSE](LICENSE)); the project's assets are
-CC BY 4.0 ([LICENSE-ASSETS.md](LICENSE-ASSETS.md)). Nothing listed below is covered by
-those licenses.
+HiddenIndexEngine's code is under the PolyForm Noncommercial License 1.0.0
+([LICENSE](LICENSE), with commercial terms in [LICENSING.md](LICENSING.md)); the project's
+assets are CC BY-NC 4.0 ([LICENSE-ASSETS.md](LICENSE-ASSETS.md)). Nothing listed below is
+covered by those licenses: each component keeps its own.
 
 ---
 
@@ -86,14 +87,14 @@ EXE, Android APK).
 ### LGPL note on pygame
 
 `pygame` is LGPL-2.1-or-later. HIE uses it as an unmodified dynamic library: the LGPL
-therefore allows distributing an application under a different license (Apache-2.0
-here), provided that:
+therefore allows distributing an application under a different license, provided that:
 
 1. pygame's LGPL license is included in the distribution;
 2. the end user can replace the pygame version in use.
 
-Whoever distributes HIE builds (EXE, APK) must include the LGPL text and the pygame
-attribution notice in their distribution materials.
+The build system takes care of point 1: every build (EXE, web export, APK) ships a
+`licenses/` folder with this document, the engine terms and the asset terms. If you
+repackage a build by hand, carry that folder with it.
 
 ---
 

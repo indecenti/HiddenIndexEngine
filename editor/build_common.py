@@ -79,6 +79,85 @@ POLL_INTERVAL_MS = 500          # intervallo polling del file di stato nella UI
 PROC_TERMINATE_WAIT = 5         # secondi di attesa terminate() prima di kill()
 PROGRESS_MAX = 100              # fondo scala progress bar / percentuale
 
+
+# ---------------------------------------------------------------------------
+# Legal notices shipped with a build
+# ---------------------------------------------------------------------------
+
+# Every distributed build carries third-party code (pygame is LGPL-2.1-or-later)
+# and engine code under the project license, and both require their terms to
+# travel with the binary. The bundle below is written next to the game files.
+LICENSE_DIR_NAME = "licenses"
+
+# repo file -> name inside the build. Everything is written as .txt because the
+# Android packaging drops *.md (source.exclude_patterns in buildozer.spec).
+LICENSE_SOURCES: tuple[tuple[str, str], ...] = (
+    ("LICENSE", "ENGINE-LICENSE.txt"),
+    ("NOTICE", "NOTICE.txt"),
+    ("THIRD_PARTY_NOTICES.md", "THIRD-PARTY-NOTICES.txt"),
+    ("LICENSE-ASSETS.md", "ASSETS-LICENSE.txt"),
+)
+
+# A game shipped under a commercial license carries its own engine terms: drop
+# the signed license in games/<id>/LICENSE-ENGINE.txt and it replaces the
+# repository default in that game's builds.
+GAME_LICENSE_OVERRIDE = "LICENSE-ENGINE.txt"
+
+LICENSE_INDEX_NAME = "README.txt"
+LICENSE_INDEX_TEXT = """Licenses and notices
+====================
+
+This game was built with HiddenIndexEngine.
+https://github.com/indecenti/HiddenIndexEngine
+
+ENGINE-LICENSE.txt        Terms covering the engine code included in this build.
+NOTICE.txt                Copyright notice required with the engine code.
+THIRD-PARTY-NOTICES.txt   Third-party components bundled here and their licenses.
+ASSETS-LICENSE.txt        Terms of the images, music and sounds that come from
+                          the engine's shared library. Assets created by the
+                          author of this game are not covered by it.
+
+pygame is LGPL-2.1-or-later. Its source code is available at
+https://github.com/pygame/pygame, and you may replace the copy bundled with this
+build with your own compatible build of the library.
+"""
+
+
+def build_license_bundle(base_path: Path, game_path: Path | None = None) -> dict[str, str]:
+    """File name -> text of the notices a distributed build must carry.
+
+    A missing source file is skipped rather than failing the build: shipping an
+    incomplete set of notices is bad, shipping nothing because the build broke
+    is worse.
+    """
+    bundle: dict[str, str] = {LICENSE_INDEX_NAME: LICENSE_INDEX_TEXT}
+    for src_name, out_name in LICENSE_SOURCES:
+        src = Path(base_path) / src_name
+        try:
+            bundle[out_name] = src.read_text(encoding="utf-8")
+        except OSError as e:
+            logger.warning("[LICENSES] %s not readable (%s): skipped", src_name, e)
+    if game_path:
+        override = Path(game_path) / GAME_LICENSE_OVERRIDE
+        try:
+            if override.is_file():
+                bundle["ENGINE-LICENSE.txt"] = override.read_text(encoding="utf-8")
+                logger.info("[LICENSES] Engine terms taken from %s", override)
+        except OSError as e:
+            logger.warning("[LICENSES] Override %s not readable (%s)", override, e)
+    return bundle
+
+
+def write_license_bundle(base_path: Path, out_dir: Path,
+                         game_path: Path | None = None) -> Path:
+    """Write the notices into <out_dir>/licenses/ and return that folder."""
+    dest = Path(out_dir) / LICENSE_DIR_NAME
+    dest.mkdir(parents=True, exist_ok=True)
+    for name, text in build_license_bundle(base_path, game_path).items():
+        (dest / name).write_text(text, encoding="utf-8")
+    logger.info("[LICENSES] Notices written to %s", dest)
+    return dest
+
 # Palette Tkinter condivisa dalle finestre di progresso.
 HEADER_BG = "#2c3e50"
 HEADER_FG = "#ecf0f1"

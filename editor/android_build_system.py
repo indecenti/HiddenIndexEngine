@@ -688,6 +688,20 @@ def _prepare_workspace(
     if result.returncode != 0:
         raise RuntimeError(f"Setup workspace fallito:\n{result.stderr}")
 
+    # Legal notices inside the APK: pygame is LGPL-2.1-or-later and the engine
+    # code carries its own terms, so both have to ship with the binary. Written
+    # as .txt because buildozer excludes *.md from the package. Never fatal.
+    try:
+        from editor.build_common import build_license_bundle, LICENSE_DIR_NAME
+        lic_dir = f"{wsl_workspace}/{LICENSE_DIR_NAME}"
+        _wsl_run(f"mkdir -p '{lic_dir}'", timeout=30)
+        bundle = build_license_bundle(base_path, base_path / "games" / game_id)
+        for name, text in bundle.items():
+            _write_bytes(f"{lic_dir}/{name}", text.encode("utf-8"))
+        logger.info(f"[Licenses] {len(bundle)} notice files staged in the workspace")
+    except Exception as e:
+        logger.warning(f"[Licenses] Notices not included in the APK: {e}")
+
     # ── Asset pruning: rimuove la libreria condivisa enorme non usata a runtime ──
     if progress_callback:
         progress_callback(13, "Pruning asset non usati (riduzione APK)...")
