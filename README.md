@@ -26,10 +26,11 @@
   <a href="#license">License</a>
 </p>
 
-![Malonno Survivors, Villa Rosa scene: HUD with hints, object list, timer and score](docs/images/play-villa-rosa.jpg)
+![Malonno Survivors, Formis scene: welcome bubble, object list, hints, timer and score](docs/images/play-formis.jpg)
 
-*Malonno Survivors, Villa Rosa scene, desktop runtime. The same scene, from the same
-`scene.json`, also runs in the web export and in the Android APK.*
+*Malonno Survivors, Formis scene, desktop runtime: welcome bubble, 14 objects to find,
+hints, timer and score. The same scene, from the same `scene.json`, also runs in the web
+export and in the Android APK.*
 
 ## Highlights
 
@@ -48,8 +49,9 @@
 - **Five languages** — it, en, es, fr, de. Strings are harvested automatically when a scene
   is saved.
 
-Status: pre-1.0, under active development. Desktop tested on Windows 10/11; Android
-validated on the emulator.
+Status: pre-1.0, evolving fast. Desktop tested on Windows 10/11; Android validated on the
+emulator. **Every contribution is welcome**: bug reports, scenes, assets, translations,
+minigames, docs, code. See [Contributing](#contributing).
 
 ## Try it
 
@@ -195,9 +197,13 @@ Written in Italian. Full index in [docs/README.md](docs/README.md); useful entry
 
 ## Contributing
 
-Rules and setup in [CONTRIBUTING.md](CONTRIBUTING.md). Issues and pull requests are welcome
-in English or Italian. Security issues: see [SECURITY.md](SECURITY.md), do not open a
-public issue.
+The project is evolving and any contribution is welcome, big or small: a bug report, a
+scene, a batch of objects, a translation, a minigame, a documentation fix, a feature.
+Open an issue to discuss an idea, or a pull request if you already have the code.
+
+Rules and setup in [CONTRIBUTING.md](CONTRIBUTING.md). Issues and pull requests can be in
+English or Italian. Security issues: see [SECURITY.md](SECURITY.md), do not open a public
+issue.
 
 ## License
 
