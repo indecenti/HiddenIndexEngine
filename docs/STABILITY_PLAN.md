@@ -10,14 +10,13 @@ Priority order: **A → B → C → D → E**.
 
 ## A. The game runtime has no test net
 
-Eight engine modules are not referenced by a single test:
+Four engine modules are not referenced by a single test:
 
-`audio_manager`, `effect_renderer`, `effects_engine`, `hud_manager`, `results_screen`,
-`taxonomy`, `transition_manager`, `utils`.
+`audio_manager`, `effect_renderer`, `taxonomy`, `transition_manager`.
 
-The nine minigames now boot, run and draw under test. What is left uncovered is the
-drawing side of the runtime: the HUD, the results screen, the effects and the
-transitions.
+The nine minigames boot, run and draw under test, and so do the HUD and the results
+screen, on desktop and on the touch path. What is left is the sound, the visual effects,
+the scene transitions and the tag taxonomy.
 
 ```bash
 python - <<'PY'
@@ -44,7 +43,15 @@ PY
 - ~~`minigame_manager` + the nine minigames~~ done (`9ca7d17`, 67 tests): manifest, dynamic
   import, boot, five frames of update and draw, input, result reported back. All nine pass
   as they are.
-- `results_screen`, `hud_manager`: build and draw once, headless.
+- ~~`results_screen`, `hud_manager`~~ done (`887e49f`, 30 tests): objectives drawn, the
+  visible window, the score animation, resizes, the Android drawer and mobile layout built
+  the way a device builds them, and the results panel for every star count, for a lost
+  scene and for a negative score.
+- ~~`utils`~~ done (`90d00bf`, 27 tests): safe_write_json keeping the old file when the
+  data cannot be serialized or the replace fails, and safe_delete moving to the trash with
+  its audit line, conflict suffixes and the purge.
+- Left in this section: `audio_manager`, `effect_renderer`, `transition_manager`,
+  `taxonomy`.
 
 ---
 
