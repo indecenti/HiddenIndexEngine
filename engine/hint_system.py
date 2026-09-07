@@ -11,7 +11,6 @@ Sistema hint professionale con:
 
 from typing import TYPE_CHECKING
 from engine.utils import get_logger
-import logging
 
 if TYPE_CHECKING:
     from engine.scene_loader import SceneObject
@@ -27,10 +26,14 @@ class HintSystem:
     Per oggetto (objects_catalog.json):
       default_hint_delay: 30 (secondi, sovrascrivibile in scene.json)
 
-    Penalità:
-      - Primo hint: -50 punti
-      - Secondo: -75
-      - Terzo+: -100 + disabilitazione
+    Penalità (misurate 2026-09-07, il testo precedente non corrispondeva):
+      hint_penalties e' indicizzata con hints_per_obj - 1, cioe' col numero di
+      hint chiesti SU QUEL SINGOLO OGGETTO, e parte da 0. Quindi il primo hint
+      su un oggetto e' gratis, il secondo costa -50, il terzo -75, dal quarto
+      -100. max_hints_before_disable conta invece il totale della scena: con
+      tre hint disponibili e un oggetto diverso ogni volta, in pratica non si
+      paga mai nulla. Fissato com'e' in tests/test_hint_system.py: cambiarlo
+      e' una decisione di bilanciamento, non una correzione.
     """
 
     def __init__(self, scaling_manager, effects_engine) -> None:
