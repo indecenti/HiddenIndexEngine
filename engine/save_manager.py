@@ -120,21 +120,25 @@ class SaveManager:
         return scene_index <= max_idx
 
     def set_scene_score(self, level_id: str, scene_id: str, score: int, stars: int) -> None:
-        """Salva lo score, tenendo sempre solo la performance record come da design casual."""
-        if level_id not in self.data["scores"]:
-            self.data["scores"][level_id] = {}
-            self.data["stars"][level_id] = {}
-            
-        # Punteggio: check su record
-        current_score = self.data["scores"][level_id].get(scene_id, 0)
-        if score > current_score:
-            self.data["scores"][level_id][scene_id] = score
-            
-        # Stelle: check su record
-        current_stars = self.data["stars"][level_id].get(scene_id, 0)
-        if stars > current_stars:
-            self.data["stars"][level_id][scene_id] = stars
-            
+        """Salva lo score, tenendo sempre solo la performance record come da design casual.
+
+        Le due mappe sono aperte in modo indipendente. Prima il ramo delle
+        stelle veniva creato solo quando mancava anche quello dei punteggi:
+        un salvataggio in cui i due erano disallineati (scritto da una versione
+        precedente, o modificato a mano) faceva sollevare KeyError proprio a
+        SCENE_COMPLETE, cioe' nel loop di gioco, perdendo il punteggio della
+        partita appena finita e il checkpoint che sarebbe stato scritto subito
+        dopo.
+        """
+        scores_map = self.data.setdefault("scores", {}).setdefault(level_id, {})
+        stars_map = self.data.setdefault("stars", {}).setdefault(level_id, {})
+
+        # Punteggio e stelle: si tiene il record di ciascuno, separatamente.
+        if score > scores_map.get(scene_id, 0):
+            scores_map[scene_id] = score
+        if stars > stars_map.get(scene_id, 0):
+            stars_map[scene_id] = stars
+
         self.save()
 
     def reset_progress(self) -> None:
