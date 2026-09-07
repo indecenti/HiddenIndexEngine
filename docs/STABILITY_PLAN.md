@@ -33,7 +33,11 @@ PY
   corrupt file quarantined, a save from an older version, scores and stars keeping their
   own record, unlocking forward only, every change flushed. Found and fixed a crash on
   SCENE_COMPLETE when a save had a level in `scores` and not in `stars`.
-- `level_manager`: score, miss penalty curve, stars, unlock and progression.
+- ~~`level_manager`~~ scoring done (`97d54e2`, 34 tests): time bonus, star cut,
+  negative scores, miss penalty curve, reward tracker. Turned up that the timer never
+  fails a scene, that `timer_behavior` is shipped and read by nobody, and that
+  SCENE_FAILED is never emitted; all three are now stated in the module docstring.
+  Still to cover there: `update()`, scene advancing and level progression.
 - `hint_system`: cooldown, penalties, exhaustion.
 - `minigame_manager` + the nine minigames: a headless boot and a few frames each, which is
   enough to catch an import or asset error that today only shows up in a shipped build.
