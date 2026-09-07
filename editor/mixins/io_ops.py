@@ -31,6 +31,35 @@ from editor.core.io import (
 )
 
 
+def _is_scene_dir(path_str: str) -> bool:
+    """True when the path is a scene folder, i.e. it holds a scene.json.
+
+    A recent entry pointing at the scene.json file itself (an older spelling)
+    passed a bare exists() check and showed up in the dashboard as a project
+    literally named "scene.json".
+    """
+    try:
+        return (Path(path_str) / "scene.json").is_file()
+    except OSError:
+        return False
+
+
+def _resolve_recent(path_str) -> str:
+    """Canonical form of a recent-scene path, for comparing two entries.
+
+    Falls back to the string as given when the path cannot be resolved (a
+    removed drive, a malformed entry): the caller only needs two spellings of
+    the same scene to collapse, never a crash.
+    """
+    text = str(path_str or "")
+    if not text:
+        return ""
+    try:
+        return str(Path(text).resolve())
+    except (OSError, ValueError):
+        return text
+
+
 class _AsyncInputShield:
     """Modale "scudo" per lo stack unificato durante _with_loading_async.
 
@@ -1137,15 +1166,21 @@ class IoOpsMixin:
         settings = self._load_editor_settings()
         recent = settings.get("recent_scenes", [])
         
-        # Pulisce i percorsi non più esistenti
+        # Drops what no longer exists, and collapses the entries that point at
+        # the same scene through a different spelling of its path.
         cleaned = []
+        seen: set = set()
         changed = False
         for r in recent:
-            p = Path(r.get("path", ""))
-            if p.exists():
-                cleaned.append(r)
-            else:
+            resolved = _resolve_recent(r.get("path", ""))
+            if not resolved or resolved in seen or not _is_scene_dir(resolved):
                 changed = True
+                continue
+            seen.add(resolved)
+            if r.get("path") != resolved:
+                r = dict(r, path=resolved)
+                changed = True
+            cleaned.append(r)
         
         if changed:
             settings["recent_scenes"] = cleaned
@@ -1155,15 +1190,23 @@ class IoOpsMixin:
         return cleaned
 
     def _save_recent(self, scene_path: Path):
-        """Aggiunge una scena alla lista dei recenti e salva."""
+        """Aggiunge una scena alla lista dei recenti e salva.
+
+        The stored path is resolved first: the same scene opened once from the
+        dashboard (absolute) and once from --game (relative to the repository)
+        used to be written as two different strings, so the de-duplication
+        missed it and the recent list showed the scene twice.
+        """
         recent = self._load_recent_config()
+        resolved = _resolve_recent(scene_path)
         new_entry = {
             "name":  scene_path.name,
-            "path":  str(scene_path),
+            "path":  resolved,
             "game":  self.game_path.name if self.game_path else "Unknown",
             "time":  time.time(),
         }
-        recent = [r for r in recent if r["path"] != str(scene_path)]
+        recent = [r for r in recent
+                  if _resolve_recent(r.get("path", "")) != resolved]
         recent.insert(0, new_entry)
         recent = recent[:8]
         self._save_editor_setting("recent_scenes", recent)

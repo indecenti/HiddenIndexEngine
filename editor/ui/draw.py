@@ -40,6 +40,19 @@ def clear_text_cache() -> None:
     _TEXT_CACHE.clear()
     _SIZE_CACHE.clear()
 
+
+def reset_fonts() -> None:
+    """Forget the fonts and everything rendered with them.
+
+    A pygame.Font built before a pygame.quit() is a dangling SDL_ttf handle:
+    touching it takes the process down instead of raising, and pygame.init()
+    afterwards makes the font system look healthy again while the handles are
+    still dead. Anything that tears pygame down and brings it back up has to
+    call this (the test suite does, per module); the next draw rebuilds them.
+    """
+    _FONTS.clear()
+    clear_text_cache()
+
 # Scala UI corrente (impostata da _init_fonts, letta per icone e metriche)
 _UI_SCALE: float = 1.0
 _FONT_BASE_SIZES: dict = {"xs": 11, "sm": 13, "md": 16, "lg": 20, "xl": 30, "mono": 13}
@@ -104,6 +117,8 @@ def _init_fonts(scale: float = 1.0):
     """Inizializza (o re-inizializza) i font della UI alla scala richiesta."""
     global _UI_SCALE
     _UI_SCALE = max(0.5, min(2.0, float(scale)))
+    if not pygame.font.get_init():
+        pygame.font.init()
     candidates_ui   = ["Segoe UI", "Arial", "DejaVu Sans", None]
     candidates_mono = ["Consolas", "Courier New", "Courier", None]
 
@@ -121,6 +136,21 @@ def _init_fonts(scale: float = 1.0):
 
     # The cached surfaces were rendered with the previous fonts.
     clear_text_cache()
+
+
+def _font(font_key: str):
+    """The font for `font_key`, (re)building the set when it is not usable.
+
+    A drawing primitive must not depend on someone having called _init_fonts()
+    first: a helper that only measures text (a layout computed before the first
+    frame) used to raise KeyError on the "md" fallback. And a font built before
+    a pygame.quit() is a dangling SDL_ttf handle: using it crashes the process
+    instead of raising, so the font system being down counts as "not usable"
+    too. Rebuilding also clears the text caches, whose surfaces died with it.
+    """
+    if not _FONTS or not pygame.font.get_init():
+        _init_fonts(_UI_SCALE)
+    return _FONTS.get(font_key) or _FONTS["md"]
 
 
 def _ui_scale() -> float:
@@ -170,12 +200,13 @@ def _txt(text: str, font_key: str, color: tuple) -> pygame.Surface:
     The returned surface is shared: callers blit it, they must never draw on
     it or change its alpha.
     """
+    font = _font(font_key)          # also revalidates the caches
     key = (str(text), font_key, tuple(color))
     cached = _TEXT_CACHE.get(key)
     if cached is not None:
         _TEXT_CACHE.move_to_end(key)
         return cached
-    surf = _FONTS.get(font_key, _FONTS["md"]).render(key[0], True, color)
+    surf = font.render(key[0], True, color)
     _cache_put(_TEXT_CACHE, key, surf, TEXT_CACHE_MAX)
     return surf
 
@@ -188,13 +219,13 @@ def _draw_text(surf, text, font_key, color, x, y, max_w=None):
         return rendered.get_width()
 
     # The truncated result depends on the width too, so it gets its own key.
+    font = _font(font_key)          # also revalidates the caches
     key = (str(text), font_key, tuple(color), int(max_w))
     rendered = _TEXT_CACHE.get(key)
     if rendered is not None:
         _TEXT_CACHE.move_to_end(key)
     else:
         s = key[0]
-        font = _FONTS.get(font_key, _FONTS["md"])
         rendered = _txt(s, font_key, color)
         if rendered.get_width() > max_w:
             while len(s) > 1 and font.size(s + "...")[0] > max_w:
@@ -207,12 +238,13 @@ def _draw_text(surf, text, font_key, color, x, y, max_w=None):
 
 def _text_wh(text: str, font_key: str) -> tuple:
     """Width and height of a text run, cached alongside the surfaces."""
+    font = _font(font_key)          # also revalidates the caches
     key = (str(text), font_key)
     cached = _SIZE_CACHE.get(key)
     if cached is not None:
         _SIZE_CACHE.move_to_end(key)
         return cached
-    wh = _FONTS.get(font_key, _FONTS["md"]).size(key[0])
+    wh = font.size(key[0])
     _cache_put(_SIZE_CACHE, key, wh, TEXT_CACHE_MAX)
     return wh
 
@@ -220,7 +252,7 @@ def _text_wh(text: str, font_key: str) -> tuple:
 def _wrap_lines(text: str, font_key: str, max_w: int) -> list:
     """Spezza il testo in righe che stanno in max_w pixel (a parole; spezza
     le parole singole troppo lunghe carattere per carattere)."""
-    font = _FONTS.get(font_key, _FONTS["md"])
+    font = _font(font_key)
     lines: list = []
     for raw_line in str(text).split("\n"):
         words = raw_line.split(" ")
@@ -249,7 +281,7 @@ def _draw_text_wrapped(surf, text, font_key, color, x, y, max_w, line_gap=2,
                        max_lines=None) -> int:
     """Disegna testo con word-wrap dentro max_w. Ritorna l'altezza totale usata.
     Se max_lines e' impostato, l'ultima riga visibile viene troncata con ellissi."""
-    font = _FONTS.get(font_key, _FONTS["md"])
+    font = _font(font_key)
     lines = _wrap_lines(text, font_key, max_w)
     if max_lines is not None and len(lines) > max_lines:
         lines = lines[:max_lines]
@@ -327,6 +359,23 @@ def _draw_shape_icon(surf, r, icon_id, color):
         # Flash / Mirino
         top = (cx - sz + 4, cy - sz, sz, 4)
         _rect(surf, color, top, 2, radius=1)
+
+
+# Padding _button lays its content out with: an icon starts at x+12 and the
+# label 8 px after it. _button_w() reproduces that so callers can size a button
+# on its own label instead of guessing a constant width that a translation or a
+# UI scale above 1.0 then overflows.
+BUTTON_PAD_X = 12
+BUTTON_ICON_GAP = 8
+
+
+def _button_w(label: str, font: str = "sm", icon=None, min_w: int = 0) -> int:
+    """Width a _button needs to show `label` (and `icon`) without clipping."""
+    tw, _ = _text_wh(label, font)
+    width = tw + BUTTON_PAD_X * 2
+    if icon:
+        width += _icon_size() + BUTTON_ICON_GAP
+    return max(int(min_w), int(width))
 
 
 def _button(surf, r, label, hovered=False, active=False, danger=False, font="sm", custom_bg=None, icon=None, center_text=False):

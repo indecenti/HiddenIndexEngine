@@ -15,13 +15,15 @@ from editor.constants import (
     TOP_BAR_H, STATUS_H,
     ACCENT, BORDER, BTN, BTN_AC, BTN_HO, PANEL,
     TXT, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C, ALWAYS_C, FX_C,
-    DEFAULT_LAYERS, UI_TIPS, CATALOG_VIEW_CACHE_MAX,
+    DEFAULT_LAYERS, CATALOG_VIEW_CACHE_MAX,
+    CATALOG_ROW_PAD, CATALOG_ROW_LINE_GAP, CATALOG_ROW_GAP,
+    CATALOG_THUMB_BASE, CATALOG_THUMB_GAP,
     layer_color,
 )
 from editor.core.io import _load_scene_data
 from editor.ui.draw import (
     _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _slider, _input_box,
-    _scrollbar, _draw_shape_icon, request_anim_frame,
+    _scrollbar, _draw_shape_icon, request_anim_frame, _ui_scale,
 )
 
 
@@ -204,7 +206,6 @@ class RenderPanelsMixin:
             # Badge numero scene (Badge chirurgico sulla destra)
             n_scenes = len(level.get("scenes", []))
             badge_txt = str(n_scenes)
-            from editor.ui.draw import _text_wh
             tw, th = _text_wh(badge_txt, "xs")
             bx = row.right - tw - 10
             br = pygame.Rect(bx, row.y + 4, tw + 6, 18)
@@ -355,6 +356,19 @@ class RenderPanelsMixin:
         while len(cache) > CATALOG_VIEW_CACHE_MAX:
             cache.popitem(last=False)
         return result
+
+    def _catalog_row_metrics(self):
+        """Height, line heights and thumbnail side of one catalog row.
+
+        Everything follows the current UI scale: a row is exactly as tall as
+        the three lines of text it has to stack, so raising the scale grows
+        the rows instead of making them overlap.
+        """
+        line_h = {"md": _text_wh("Ag", "md")[1], "sm": _text_wh("Ag", "sm")[1]}
+        text_h = line_h["md"] + line_h["sm"] * 2 + CATALOG_ROW_LINE_GAP * 2
+        thumb = int(round(CATALOG_THUMB_BASE * _ui_scale()))
+        item_h = max(text_h + CATALOG_ROW_PAD * 2, thumb + CATALOG_ROW_PAD)
+        return item_h, line_h, thumb
 
     def _r_catalog(self, h):
         self._catalog_item_hitboxes = [] # Reset ogni frame
@@ -525,7 +539,8 @@ class RenderPanelsMixin:
         add_btn_h    = 36
         list_y_start = sep_y + 8
         available_h  = h - STATUS_H - list_y_start - add_btn_h
-        item_h       = 74 
+        item_h, line_h, thumb = self._catalog_row_metrics()
+        row_pitch = item_h + CATALOG_ROW_GAP
 
         clip = pygame.Rect(0, list_y_start, self.panel_l_w, available_h)
         self.screen.set_clip(clip)
@@ -539,10 +554,10 @@ class RenderPanelsMixin:
             cid = o.get("catalog_id", "")
             used_counts[cid] = used_counts.get(cid, 0) + 1
 
-        visible_items = max(1, available_h // (item_h + 2))
+        visible_items = max(1, available_h // row_pitch)
 
         for i, cat in enumerate(filtered):
-            iy = list_y_start + i * (item_h + 4) - self.catalog_scroll * (item_h + 4)
+            iy = list_y_start + i * row_pitch - self.catalog_scroll * row_pitch
             if iy + item_h < list_y_start or iy > h - STATUS_H - add_btn_h:
                 continue
                 
@@ -562,27 +577,34 @@ class RenderPanelsMixin:
             # Thumbnail
             if self.game_path:
                 rat = self._get_asset_ratio(cid)
-                tw, th = (48, int(48 / rat)) if rat > 1.0 else (int(48 * rat), 48)
+                tw, th = ((thumb, int(thumb / rat)) if rat > 1.0
+                          else (int(thumb * rat), thumb))
                 ic = self._load_img(self.game_path / cat.get("icon", ""), (tw, th))
                 if ic:
-                    self.screen.blit(ic, (r.x + 8 + (48-tw)//2, r.y + (item_h-th)//2))
+                    self.screen.blit(ic, (r.x + 8 + (thumb - tw) // 2,
+                                          r.y + (item_h - th) // 2))
 
-            # Info (Allineamento millimetrico)
-            tx = r.x + 64
-            tw_limit = r.w - 72
-            
-            _draw_text(self.screen, cid, "md", (240, 243, 255) if is_sel else TXT_HI, tx, r.y + 10, tw_limit)
-            
+            # Info: tre righe impilate, alte quanto il font corrente
+            tx = r.x + 8 + thumb + CATALOG_THUMB_GAP
+            tw_limit = r.w - (tx - r.x) - 8
+            ty = r.y + CATALOG_ROW_PAD
+
+            _draw_text(self.screen, cid, "md",
+                       (240, 243, 255) if is_sel else TXT_HI, tx, ty, tw_limit)
+            ty += line_h["md"] + CATALOG_ROW_LINE_GAP
+
             lkey = cat.get("label_key", f"obj_{cid}")
             localized_label = self._TR(lkey) if lkey else ""
             if localized_label:
-                _draw_text(self.screen, localized_label, "sm", (140, 145, 170), tx, r.y + 30, tw_limit)
+                _draw_text(self.screen, localized_label, "sm", (140, 145, 170),
+                           tx, ty, tw_limit)
+            ty += line_h["sm"] + CATALOG_ROW_LINE_GAP
 
             tags = cat.get("tags", [])
             if tags:
                 tstr = " ".join(f"#{self._TR(f'tag_{t}', t)}" for t in tags[:3])
                 tcol = ACCENT if active_tags and any(t in active_tags for t in tags) else (90, 95, 125)
-                _draw_text(self.screen, tstr, "sm", tcol, tx, r.y + 48, tw_limit)
+                _draw_text(self.screen, tstr, "sm", tcol, tx, ty, tw_limit)
 
             if count > 0:
                 badge_r = pygame.Rect(r.right - 28, r.y + 8, 22, 16)
@@ -598,7 +620,7 @@ class RenderPanelsMixin:
         
         # Rigeneriamo la lista delle hitbox solo per gli elementi visibili (clippati correttamente)
         for i, cat in enumerate(filtered):
-            iy = list_y_start + i * (item_h + 4) - self.catalog_scroll * (item_h + 4)
+            iy = list_y_start + i * row_pitch - self.catalog_scroll * row_pitch
             if iy + item_h < list_y_start or iy > list_y_start + available_h:
                 continue
             # Rect ASSOLUTO (screen-space)
@@ -993,7 +1015,10 @@ class RenderPanelsMixin:
             flashlight = self.scene_data.get("flashlight", False)
             fl_btn_r = pygame.Rect(rx0+4, y, self.panel_r_w-8, 28)
             # Label semantica costante (no inversione ON/OFF→stringhe diverse)
-            fl_label = self._TR("prop_flashlight_on") if flashlight else self._TR("prop_flashlight_off")
+            # Etichetta fissa: lo stato lo dice gia' il badge ON/OFF del toggle,
+            # scriverlo anche nella label ("FLASHLIGHT OFF" + badge OFF) era una
+            # ripetizione e l'unico toggle del pannello a comportarsi cosi'.
+            fl_label = self._TR("prop_flashlight_toggle", "Flashlight")
             self._render_toggle(fl_btn_r.x, fl_btn_r.y, fl_btn_r.w, fl_btn_r.h,
                                 fl_label, flashlight,
                                 on_color=FX_C, hover=_in_rect((mx, my_raw), fl_btn_r))

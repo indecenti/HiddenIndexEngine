@@ -325,6 +325,8 @@ def test_row_geometry_fits_the_panel():
     """The header must leave room for at least one row on the smallest window."""
     ed = _sample_host()
     top = ed._outline_list_top()
+    row_h = ed._outline_row_h()
     assert top > TOP_BAR_H + 32
+    assert row_h >= OUTLINE_ROW_H
     assert ed._outline_visible_rows(720) >= 1
-    assert (720 - STATUS_H - top) // OUTLINE_ROW_H == ed._outline_visible_rows(720)
+    assert (720 - STATUS_H - top) // row_h == ed._outline_visible_rows(720)

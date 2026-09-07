@@ -996,7 +996,7 @@
       "default_hint_delay": 35,
       "tags": [
         "accessorio",
-        "casin",
+        "casino",
         "gioco",
         "meccanico",
         "piccolo",
@@ -1228,7 +1228,7 @@
         "metallo",
         "vintage",
         "medio",
-        "citt"
+        "citta"
       ],
       "style": "real"
     },
@@ -3493,7 +3493,7 @@
       "default_height": 60,
       "default_hint_delay": 30,
       "tags": [
-        "casin",
+        "casino",
         "gioco",
         "gruppo_oggetti",
         "piccolo",
@@ -9245,7 +9245,7 @@
         "italia",
         "anni_70",
         "metallo",
-        "citt"
+        "citta"
       ],
       "style": "real"
     },
@@ -9316,7 +9316,7 @@
         "italia",
         "anni_60",
         "metallo",
-        "citt"
+        "citta"
       ],
       "style": "real"
     },
@@ -14355,7 +14355,7 @@
       "default_hint_delay": 40,
       "tags": [
         "strada",
-        "citt",
+        "citta",
         "metallo",
         "denaro",
         "grande"
@@ -16932,7 +16932,7 @@
       "default_height": 100,
       "default_hint_delay": 40,
       "tags": [
-        "casin",
+        "casino",
         "gioco",
         "grande",
         "legno",
@@ -18060,7 +18060,7 @@
       "default_height": 85,
       "default_hint_delay": 45,
       "tags": [
-        "casin",
+        "casino",
         "gioco",
         "metallo",
         "piccolo"
@@ -18076,7 +18076,7 @@
       "default_height": 90,
       "default_hint_delay": 40,
       "tags": [
-        "casin",
+        "casino",
         "gioco",
         "grande",
         "metallo",
@@ -18093,7 +18093,7 @@
       "default_height": 90,
       "default_hint_delay": 40,
       "tags": [
-        "casin",
+        "casino",
         "gioco",
         "grande",
         "metallo",
@@ -20026,7 +20026,7 @@
         "plastica",
         "arancione",
         "medio",
-        "citt"
+        "citta"
       ],
       "style": "real"
     },
@@ -20043,7 +20043,7 @@
         "metallo",
         "medio",
         "luce",
-        "citt"
+        "citta"
       ],
       "style": "real"
     },
@@ -20111,7 +20111,7 @@
         "grande",
         "nero",
         "sacco",
-        "citt"
+        "citta"
       ],
       "style": "real"
     },
@@ -20127,7 +20127,7 @@
         "pulizia",
         "metallo",
         "medio",
-        "citt"
+        "citta"
       ],
       "style": "real"
     },

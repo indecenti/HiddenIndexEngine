@@ -34,11 +34,17 @@ from editor.ui.draw import (
     _draw_shape_icon, _text_wh,
 )
 
-# Header geometry (search box + filter row + counter), in pixels.
+# Header geometry (search box + filter row + counter), in pixels at UI scale
+# 1.0. They are the floor, not the value: _outline_header_metrics() grows them
+# with the font so the header does not swallow its own text above scale 1.0.
 _MARGIN = 8
+_HEADER_TOP = 36
 _SEARCH_H = 30
 _FILTER_H = 22
+_COUNTER_H = 22
 _ICON_BTN = 22
+# Padding around the label of a row, added to the line height of the font.
+_ROW_PAD = 9
 
 
 class OutlineMixin:
@@ -76,14 +82,31 @@ class OutlineMixin:
             rows.append((i, obj))
         return rows
 
+    def _outline_row_h(self) -> int:
+        """Height of one row, never shorter than the text it has to show."""
+        return max(OUTLINE_ROW_H, _text_wh("Ag", "sm")[1] + _ROW_PAD)
+
+    def _outline_header_metrics(self) -> tuple:
+        """(search, filters, counter) heights of the header at this UI scale."""
+        line = _text_wh("Ag", "sm")[1]
+        small = _text_wh("Ag", "xs")[1]
+        return (max(_SEARCH_H, line + 13),
+                max(_FILTER_H, small + 9),
+                max(_COUNTER_H, small + 9))
+
     def _outline_visible_rows(self, h: int) -> int:
         """How many rows fit under the header at the current window height."""
         top = self._outline_list_top()
-        return max(1, (h - STATUS_H - top) // OUTLINE_ROW_H)
+        return max(1, (h - STATUS_H - top) // self._outline_row_h())
 
     def _outline_list_top(self) -> int:
-        """Y of the first row (below the tab bar and the header)."""
-        return TOP_BAR_H + 32 + _SEARCH_H + _FILTER_H + 26
+        """Y of the first row (below the tab bar and the header).
+
+        Single source for the list origin: the renderer walks the same
+        metrics, so the header it draws and the top the scroll math assumes
+        cannot drift apart.
+        """
+        return TOP_BAR_H + _HEADER_TOP + sum(self._outline_header_metrics())
 
     def _outline_max_scroll(self, h: int) -> int:
         return max(0, len(self._outline_rows()) - self._outline_visible_rows(h))
@@ -126,20 +149,22 @@ class OutlineMixin:
         self._outline_hitboxes = []      # (rect, row_index, zone) rebuilt per frame
         self._outline_filter_hitboxes = {}
 
+        search_h, filter_h, counter_h = self._outline_header_metrics()
+
         # 1. Search box
-        y = TOP_BAR_H + 36
-        search_r = pygame.Rect(_MARGIN, y, inner_w, _SEARCH_H - 4)
+        y = TOP_BAR_H + _HEADER_TOP
+        search_r = pygame.Rect(_MARGIN, y, inner_w, search_h - 4)
         _input_box(self.screen, search_r, getattr(self, "outline_search", ""),
                    focused=getattr(self, "outline_searching", False),
                    hint=self._TR("outline_search_hint", "Search objects..."),
                    icon="search", font="sm")
         self._outline_search_rect = search_r
-        y += _SEARCH_H
+        y += search_h
 
         # 2. Filters: goal only / active layer only
         f_w = (inner_w - 6) // 2
-        goal_r = pygame.Rect(_MARGIN, y, f_w, _FILTER_H - 4)
-        layer_r = pygame.Rect(_MARGIN + f_w + 6, y, f_w, _FILTER_H - 4)
+        goal_r = pygame.Rect(_MARGIN, y, f_w, filter_h - 4)
+        layer_r = pygame.Rect(_MARGIN + f_w + 6, y, f_w, filter_h - 4)
         self._outline_chip(goal_r, self._TR("outline_filter_goal", "GOAL"),
                            bool(getattr(self, "outline_filter_goal", False)),
                            _in_rect((mx, my), goal_r), OK_C)
@@ -148,7 +173,7 @@ class OutlineMixin:
                            _in_rect((mx, my), layer_r), ACCENT)
         self._outline_filter_hitboxes["goal"] = goal_r
         self._outline_filter_hitboxes["layer"] = layer_r
-        y += _FILTER_H
+        y += filter_h
 
         # 3. Counter
         rows = self._outline_rows()
@@ -157,7 +182,7 @@ class OutlineMixin:
                    self._TR("outline_count", "{shown} of {total} objects").format(
                        shown=len(rows), total=total),
                    "xs", TXT_DIM, _MARGIN, y + 4, inner_w)
-        y += 22
+        y += counter_h
         pygame.draw.line(self.screen, BORDER, (0, y), (w, y))
 
         # 4. Rows
@@ -183,11 +208,12 @@ class OutlineMixin:
             sel_all.add(self.selected_idx)
 
         ry = list_top
+        row_h = self._outline_row_h()
         for n in range(self.outline_scroll, min(len(rows), self.outline_scroll + visible)):
             idx, obj = rows[n]
-            self._r_outline_row(pygame.Rect(0, ry, w, OUTLINE_ROW_H), n, idx, obj,
+            self._r_outline_row(pygame.Rect(0, ry, w, row_h), n, idx, obj,
                                 idx in sel_all, (mx, my))
-            ry += OUTLINE_ROW_H
+            ry += row_h
         self.screen.set_clip(None)
 
         if len(rows) > visible:
@@ -234,19 +260,25 @@ class OutlineMixin:
         eye_r = pygame.Rect(row.right - _ICON_BTN - 4, row.y + (row.h - _ICON_BTN) // 2,
                             _ICON_BTN, _ICON_BTN)
         lock_r = pygame.Rect(eye_r.left - _ICON_BTN - 2, eye_r.y, _ICON_BTN, _ICON_BTN)
+        badges = ((self._TR("outline_badge_minigame", "M"),
+                   bool(obj.get("minigame_trigger")), FX_C),
+                  (self._TR("outline_badge_goal", "G"),
+                   bool(obj.get("is_goal", False)), OK_C))
+        # Each badge keeps its own column whether or not the row shows it:
+        # packing them from the right put the same badge at a different x on
+        # every row, and the list could not be scanned down a column.
+        slot_w = max(_text_wh(label, "xs")[0] for label, _, _ in badges) + 8
         bx = lock_r.left - 4
-        for label, on, col in ((self._TR("outline_badge_minigame", "M"),
-                                bool(obj.get("minigame_trigger")), FX_C),
-                               (self._TR("outline_badge_goal", "G"),
-                                bool(obj.get("is_goal", False)), OK_C)):
+        for label, on, col in badges:
+            br = pygame.Rect(bx - slot_w, row.y + (row.h - 16) // 2, slot_w, 16)
+            bx = br.left - 4
             if not on:
                 continue
             tw, th = _text_wh(label, "xs")
-            br = pygame.Rect(bx - tw - 8, row.y + (row.h - 16) // 2, tw + 8, 16)
             _rect(self.screen, (24, 26, 32), br, radius=4)
             _rect(self.screen, col, br, 1, radius=4)
-            self.screen.blit(_txt(label, "xs", col), (br.x + 4, br.centery - th // 2))
-            bx = br.left - 4
+            self.screen.blit(_txt(label, "xs", col),
+                             (br.centerx - tw // 2, br.centery - th // 2))
 
         name_col = TXT_DIM if hidden else (TXT_HI if selected else TXT)
         _draw_text(self.screen, self._get_friendly_name(obj), "sm", name_col,

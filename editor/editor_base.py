@@ -18,6 +18,7 @@ Struttura moduli:
   editor/mixins/render_canvas.py  — canvas, grid, overlays, toolbar
   editor/mixins/render_panels.py  — pannelli tree/catalog/layers/props
   editor/mixins/render_topbar.py  — top bar, status bar
+  editor/mixins/shortcuts_overlay.py — pannello scorciatoie F1
 
 Uso:
     python -m editor.editor_base
@@ -101,6 +102,7 @@ from editor.mixins.batch_import import BatchImportMixin
 from editor.mixins.outline import OutlineMixin
 from editor.mixins.modal_router import ModalRouterMixin
 from editor.mixins.prop_fields import PropFieldsMixin
+from editor.mixins.shortcuts_overlay import ShortcutsOverlayMixin
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -134,6 +136,7 @@ class LevelEditor(
     PresetsMixin,
     BatchImportMixin,
     OutlineMixin,
+    ShortcutsOverlayMixin,
 ):
     """
     Editor di livelli HiddenEngine.
@@ -345,13 +348,16 @@ class LevelEditor(
         self._preview_mode = False
         self._preview_saved: dict = {}
 
+        # ── Overlay scorciatoie (F1) ─────────────────────────────────────────
+        self._shortcuts_open: bool = False
+
         # ── Stack modale unificato ───────────────────────────────────────────
         # Oggetti con handle_event(editor, ev) -> bool e render(editor).
         # Il top dello stack cattura tutto l'input utente (vedi _handle_events).
         self.modal_stack: list = []
 
         # ── Status bar ───────────────────────────────────────────────────────
-        self.status_msg   = "Seleziona un gioco per iniziare"
+        self.status_msg   = self._TR("ed_status_pick_game", "Pick a project to start")
         self.status_col   = TXT_DIM
         self.status_until = 0.0
 
@@ -746,6 +752,9 @@ class LevelEditor(
 
         # Status Bar (Globale, disegnata sopra tutto)
         self._r_status(w, h)
+
+        # Pannello scorciatoie (sopra la chrome, sotto il loading)
+        self._r_shortcuts_overlay(w, h)
 
         # Overlay di caricamento (MASSIMA priorità, disegnato SOPRA lo status)
         if self._loading:

@@ -7,10 +7,30 @@ Responsabile della persistenza, normalizzazione e harvesting dai cataloghi.
 
 import json
 import logging
+import re
+import unicodedata
 from pathlib import Path
 from typing import Dict, List, Set, Any
 
 logger = logging.getLogger(__name__)
+
+# A tag id becomes a translation key (`tag_<id>`) and a filter chip, so it has
+# to survive that round trip: lowercase ASCII words joined by underscores.
+# Before this, "citta" and "casino" were registered with their accented letters
+# and an older pass stripped those bytes, leaving the ids "citt" and "casin"
+# that no lookup could ever match again.
+_SLUG_STRIP_RE = re.compile(r"[^a-z0-9]+")
+
+
+def slugify_tag(raw: str) -> str:
+    """Canonical id of a tag: lowercase ASCII, underscores, no edge separators.
+
+    Returns an empty string when nothing usable is left, which the callers
+    treat as "not a tag".
+    """
+    text = unicodedata.normalize("NFKD", str(raw or "")).strip().lower()
+    text = text.encode("ascii", "ignore").decode("ascii")
+    return _SLUG_STRIP_RE.sub("_", text).strip("_")
 
 class TagManager:
     def __init__(self, base_path: Path):
@@ -73,7 +93,9 @@ class TagManager:
                     for item in data.values():
                         if isinstance(item, dict):
                             for t in item.get("tags", []):
-                                found_tags.add(t.strip().lower())
+                                slug = slugify_tag(t)
+                                if slug:
+                                    found_tags.add(slug)
             except Exception: pass
 
         # 3. Cataloghi dei Giochi
@@ -107,7 +129,9 @@ class TagManager:
                 objs = data.get("objects", [])
                 for obj in objs:
                     for t in obj.get("tags", []):
-                        tag_set.add(t.strip().lower())
+                        slug = slugify_tag(t)
+                        if slug:
+                            tag_set.add(slug)
         except Exception: pass
 
     def get_all_tag_ids(self) -> List[str]:
@@ -126,8 +150,9 @@ class TagManager:
 
     def ensure_tag(self, tag_id: str) -> str:
         """Assicura che un tag esista nel registro, altrimenti lo crea (normalizzato)."""
-        tag_id = tag_id.strip().lower().replace(" ", "_")
-        if not tag_id: return ""
+        tag_id = slugify_tag(tag_id)
+        if not tag_id:
+            return ""
         if tag_id not in self.tags:
             self.tags[tag_id] = {
                 "it": tag_id.replace("_", " ").capitalize(),

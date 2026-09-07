@@ -17,6 +17,10 @@ rules see `CLAUDE.md` in the root. For the status and the remaining work see
 - [engine/MINIGAMES_DEVELOPMENT.md](engine/MINIGAMES_DEVELOPMENT.md) — how to develop and integrate a minigame (plugin architecture).
 - [engine/MENU_SKINS.md](engine/MENU_SKINS.md) — menu skins (game menu templates): hooks, fail-soft dispatch, theme.json sections, per-frame cost, how to add a skin.
 
+## Editor
+
+- [editor/EDITOR_UI.md](editor/EDITOR_UI.md) — chrome layout rules: measured widths, renderer-published hitboxes, canvas toolbar and HUD, F1 shortcuts panel, catalog rows.
+
 ## Assets
 
 - [assets/ASSETS_WORKFLOW.md](assets/ASSETS_WORKFLOW.md) — general asset production workflow.

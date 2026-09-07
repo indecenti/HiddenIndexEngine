@@ -21,7 +21,7 @@ from editor.constants import (
     TOP_BAR_H, STATE_MAIN,
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC, PANEL,
     TXT, TXT_DIM, TXT_HI, OK_C, WARN_C, ERR_C,
-    VERSION,
+    VERSION, RECENT_CARD_SCRIM,
 )
 from editor.core.io import (
     _discover_games, _discover_levels, _load_json, _save_json, _load_scene_data,
@@ -29,12 +29,20 @@ from editor.core.io import (
 from editor.build_system import next_build_version
 from editor.ui.draw import (
     _txt, _draw_text, _text_wh, _rect, _button, _in_rect, _draw_shape_icon,
-    _scrollbar, _input_box, request_anim_frame,
+    _scrollbar, _input_box, request_anim_frame, _button_w,
 )
 from editor.ui.widgets import Button, WidgetGroup
 from engine.utils import get_base_path, get_logger
 
 logger = get_logger("game_select")
+
+
+# Testo mostrato in una colonna del browser quando non ha nulla da elencare.
+GS_EMPTY_COLUMN = (
+    ("gs_empty_games",  "No project yet - use + to create one"),
+    ("gs_empty_levels", "Select a project to see its levels"),
+    ("gs_empty_scenes", "Select a level to see its scenes"),
+)
 
 
 class GameSelectMixin:
@@ -2065,8 +2073,8 @@ if __name__ == "__main__":
         # 2. Logica Dashboard Standard
         header_h = 80
         header_y = TOP_BAR_H
-        ng_r = (w - 200, header_y + 20, 170, 40)
-        if _in_rect((mx, my_raw), ng_r):
+        ng_r = getattr(self, "_gs_hitboxes", {}).get("new_game")
+        if ng_r and _in_rect((mx, my_raw), ng_r):
             self._gs_new_game(); return
 
         y_rec   = header_y + header_h + 30
@@ -2529,12 +2537,21 @@ if __name__ == "__main__":
         _rect(self.screen, (28, 28, 38), (0, header_y, w, header_h))
         pygame.draw.line(self.screen, (60, 60, 75),
                          (0, header_y + header_h), (w, header_y + header_h))
-        _draw_text(self.screen, "HIDDEN INDEX", "xl", ACCENT, 30, header_y + 18)
+        # Titolo e sottotitolo impilati sull'altezza reale delle righe: con
+        # scala UI alta gli offset fissi facevano finire il sottotitolo dentro
+        # il titolo.
+        title_h = _text_wh("HIDDEN INDEX", "xl")[1]
+        title_y = header_y + (header_h - title_h - _text_wh("Ag", "sm")[1] - 4) // 2
+        _draw_text(self.screen, "HIDDEN INDEX", "xl", ACCENT, 30, title_y)
         version_txt = self.lang_manager.get("gs_txt_editor_version", "Editor Professionale v{0}").format(VERSION)
-        _draw_text(self.screen, version_txt, "sm", TXT_DIM, 33, header_y + 52)
+        _draw_text(self.screen, version_txt, "sm", TXT_DIM, 33, title_y + title_h + 4)
 
         ng_label = self.lang_manager.get("gs_btn_new", "+ NUOVO GIOCO")
-        ng_r = pygame.Rect(w - 200, header_y + 20, 170, 40)
+        ng_w = _button_w(ng_label, "md", min_w=170)
+        ng_r = pygame.Rect(w - ng_w - 30, header_y + 20, ng_w, 40)
+        # Hitbox pubblicata: la larghezza segue l'etichetta tradotta, quindi il
+        # click non puo' essere ricalcolato a parte con una costante.
+        self._gs_hitboxes = {"new_game": ng_r}
         ng_hov = _in_rect((mx, my_raw), ng_r)
         _button(self.screen, ng_r, ng_label, ng_hov, font="md")
         if ng_hov: self.active_tooltip = self.lang_manager.get("gs_tip_new_game", "Crea un nuovo progetto di gioco da zero")
@@ -2553,10 +2570,18 @@ if __name__ == "__main__":
                 _rect(self.screen, (35, 35, 45) if hov else (30, 30, 38), r_rect, radius=8)
                 _rect(self.screen, ACCENT if hov else BORDER, r_rect,
                       1 if not hov else 2, radius=8)
-                _draw_text(self.screen, item["name"], "md", TXT_HI, rx2 + 12, ry2 + 12, rec_w - 24)
-                _draw_text(self.screen, item["game"], "sm", TXT_DIM, rx2 + 12, ry2 + 34)
-                
-                thumb_r = pygame.Rect(rx2 + 10, ry2 + 55, rec_w - 20, 85)
+                # Nome, progetto e anteprima impilati sulle altezze reali:
+                # con scala UI alta le tre righe si sovrapponevano.
+                name_h = _text_wh("Ag", "md")[1]
+                game_h = _text_wh("Ag", "sm")[1]
+                _draw_text(self.screen, item["name"], "md", TXT_HI,
+                           rx2 + 12, ry2 + 10, rec_w - 24)
+                _draw_text(self.screen, item["game"], "sm", TXT_DIM,
+                           rx2 + 12, ry2 + 10 + name_h + 2, rec_w - 24)
+
+                thumb_y = ry2 + 10 + name_h + game_h + 8
+                thumb_r = pygame.Rect(rx2 + 10, thumb_y, rec_w - 20,
+                                      max(20, rec_h - (thumb_y - ry2) - 10))
                 _rect(self.screen, (20, 20, 25), thumb_r, radius=4)
                 
                 # --- CARICAMENTO ANTEPRIMA ---
@@ -2592,17 +2617,25 @@ if __name__ == "__main__":
 
                 if bg_surf:
                     self.screen.blit(bg_surf, thumb_r)
-                    # Overlay scuro per leggere meglio il testo se necessario
-                    if hov:
-                        overlay = pygame.Surface((thumb_r.width, thumb_r.height), pygame.SRCALPHA)
-                        overlay.fill((0, 0, 0, 40))
-                        self.screen.blit(overlay, thumb_r)
                 else:
-                    _draw_text(self.screen, self.lang_manager.get("gs_txt_video_na", "SFONDO VIDEO / N/A"), "sm",
-                               (60, 60, 70), rx2 + 75, ry2 + 90)
+                    na = self.lang_manager.get("gs_txt_video_na", "SFONDO VIDEO / N/A")
+                    na_w, na_h = _text_wh(na, "sm")
+                    _draw_text(self.screen, na, "sm", (60, 60, 70),
+                               thumb_r.centerx - na_w // 2,
+                               thumb_r.centery - na_h // 2)
 
-                _draw_text(self.screen, self.lang_manager.get("gs_btn_open_scene", "APRI SCENA"), "sm",
-                           (200, 200, 220) if hov else (100, 100, 120), rx2 + 100, ry2 + 90)
+                # Call to action solo su hover, centrata su una velatura: prima
+                # era sempre stampata a un offset fisso sopra l'anteprima, dove
+                # finiva sull'immagine (e sul testo di fallback) illeggibile.
+                if hov:
+                    scrim = pygame.Surface(thumb_r.size, pygame.SRCALPHA)
+                    scrim.fill(RECENT_CARD_SCRIM)
+                    self.screen.blit(scrim, thumb_r)
+                    cta = self.lang_manager.get("gs_btn_open_scene", "APRI SCENA")
+                    cta_w, cta_h = _text_wh(cta, "sm")
+                    _draw_text(self.screen, cta, "sm", TXT_HI,
+                               thumb_r.centerx - cta_w // 2,
+                               thumb_r.centery - cta_h // 2)
             else:
                 _rect(self.screen, (22, 22, 28), r_rect, radius=8, border=1)
                 _draw_text(self.screen, self.lang_manager.get("gs_slot_empty", "Slot vuoto"), "sm", (45, 45, 55), rx2 + 105, ry2 + 65)
@@ -2622,12 +2655,9 @@ if __name__ == "__main__":
             cy2 = y_browser + 25
             c_rect = pygame.Rect(cx2, cy2, col_w, col_h)
             
-            # --- INTESTAZIONE COLONNA (Premium Style) ---
-            cw_safe = col_w - 15
-            header_rect = pygame.Rect(cx2, cy2, cw_safe, 30)
-            _rect(self.screen, (28, 30, 42), header_rect, radius=10)
-            _rect(self.screen, (45, 48, 65), header_rect, 1, radius=10)
-            _draw_text(self.screen, title, "sm", ACCENT, cx2 + 12, cy2 + 5)
+            # --- INTESTAZIONE COLONNA ---
+            # Una sola passata: l'intestazione veniva disegnata due volte, con
+            # il titolo a 3 px di scarto, e il testo risultava sdoppiato.
             _rect(self.screen, (25, 25, 32), c_rect, radius=6)
             _rect(self.screen, BORDER, c_rect, 1, radius=6)
             _rect(self.screen, (34, 34, 44), (cx2, cy2, col_w, 35), radius=6, border=0)
@@ -2747,6 +2777,12 @@ if __name__ == "__main__":
         self.screen.set_clip(pygame.Rect(cx, cy, cw - 8, ch))
         # Sottraiamo un piccolo margine a destra per estetica (box non "attaccati")
         cw_safe = cw - 15
+
+        if count == 0:
+            # Colonna vuota: dire perche' invece di lasciare un rettangolo nero.
+            key, default = GS_EMPTY_COLUMN[col_idx]
+            _draw_text(self.screen, self.lang_manager.get(key, default), "sm",
+                       (95, 100, 125), cx + 16, cy + 16, cw_safe - 32)
         for i in range(count):
             iy = cy + i * ITEM_H - scroll * ITEM_H
             if iy + ITEM_H < cy or iy > cy + ch: continue
@@ -2808,15 +2844,20 @@ if __name__ == "__main__":
                 _rect(self.screen, cat_col, _badge_r, 1, radius=4)
                 _draw_text(self.screen, _cat[0].upper(), "xs", cat_col, _badge_r.x+5, _badge_r.y+2)
                 
-                # Nome Gioco — larghezza ridotta per fare spazio a ▶ e ✎
-                _draw_text(self.screen, label, "sm", col, cx + 35, iy + (ITEM_H - 20) // 2, cw_safe - 180)
-                
-                # Badge Tema (Destra, a sinistra dei pulsanti ✎ e ▶)
+                # Badge Tema (a sinistra dei pulsanti ✎ e ▶): posizionato per
+                # primo, cosi' il nome del gioco puo' essere troncato esattamente
+                # dove il badge comincia invece che a una riserva fissa di 180 px
+                # che con scala UI alta il nome superava.
                 t_label = _theme.upper()
                 tw_t, th_t = _text_wh(t_label, "xs")
                 t_r = pygame.Rect(cx + cw_safe - tw_t - 110, iy + (ITEM_H - 18) // 2, tw_t + 10, 18)
                 _rect(self.screen, (60, 65, 80), t_r, radius=4)
                 _draw_text(self.screen, t_label, "xs", (180, 190, 210), t_r.x + 5, t_r.y + 2)
+
+                # Nome Gioco
+                name_x = cx + 35
+                _draw_text(self.screen, label, "sm", col, name_x,
+                           iy + (ITEM_H - 20) // 2, max(20, t_r.left - name_x - 8))
             else:
                 # Padding migliorato e centraggio verticale chirurgico (50px height)
                 v_off = (ITEM_H - 20) // 2

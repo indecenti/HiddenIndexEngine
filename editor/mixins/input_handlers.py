@@ -27,6 +27,10 @@ from editor.mixins.prop_fields import (
 )
 from editor.ui.draw import _in_rect, _clamp
 
+# Stand-in for a button the current frame did not draw: hit tests against it
+# always miss, so a caller can look a hitbox up without branching first.
+EMPTY_RECT = pygame.Rect(0, 0, 0, 0)
+
 
 class InputHandlersMixin:
     """Gestione completa input: keyboard, mouse, scroll."""
@@ -97,6 +101,16 @@ class InputHandlersMixin:
         mods = pygame.key.get_mods()
         # Rilevamento Ctrl esteso per miglior compatibilità Windows/Linux/Mac
         ctrl = bool(mods & pygame.KMOD_CTRL) or bool(mods & pygame.KMOD_META)
+
+        # Pannello scorciatoie: F1 apre e chiude ovunque, Esc chiude soltanto.
+        # Sta prima di tutto il resto perche' e' un overlay di sola lettura:
+        # finche' e' aperto nessun altro tasto deve agire sulla scena.
+        if ev.key == pygame.K_F1:
+            self._shortcuts_toggle(); return
+        if getattr(self, "_shortcuts_open", False):
+            if ev.key == pygame.K_ESCAPE:
+                self._shortcuts_close()
+            return
 
         # I modali sono serviti prima, da ModalRouterMixin._modal_dispatch: qui
         # arriva solo l'input che nessuno di loro ha consumato. Il nome del
@@ -483,21 +497,20 @@ class InputHandlersMixin:
             
         w, h = self.screen.get_size()
 
-        # 1. STATUS BAR (In fondo, ma sopra tutto tranne tooltip)
-        status_btn_r = (10, h - STATUS_H, 150, STATUS_H)
-        if btn == 1 and _in_rect((mx, my_raw), status_btn_r):
-            def back_to_gs():
-                self.state    = STATE_GAME_SELECT
-                self.gs_games = _discover_games(self.base_path)
-            self._request_nav(back_to_gs)
-            return
-
-        if hasattr(self, "scene_path") and self.scene_path:
-            save_btn_r = (170, h - STATUS_H, 120, STATUS_H)
-            if btn == 1 and _in_rect((mx, my_raw), save_btn_r):
+        # 1. STATUS BAR (In fondo, ma sopra tutto tranne tooltip).
+        # Le hitbox arrivano dal rendering (_r_status): sono le stesse aree
+        # disegnate, quindi seguono la larghezza del testo localizzato.
+        status_hits = getattr(self, "_status_hitboxes", {})
+        if btn == 1 and status_hits:
+            if _in_rect((mx, my_raw), status_hits.get("back", EMPTY_RECT)):
+                def back_to_gs():
+                    self.state    = STATE_GAME_SELECT
+                    self.gs_games = _discover_games(self.base_path)
+                self._request_nav(back_to_gs)
+                return
+            if _in_rect((mx, my_raw), status_hits.get("save", EMPTY_RECT)):
                 self._with_loading(self._save); return
-            play_btn_r = (300, h - STATUS_H, 120, STATUS_H)
-            if btn == 1 and _in_rect((mx, my_raw), play_btn_r):
+            if _in_rect((mx, my_raw), status_hits.get("play", EMPTY_RECT)):
                 self._playtest_scene(); return
 
         # 2. DASHBOARD / CANVAS (i modali sono gia' stati serviti dal router)

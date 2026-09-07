@@ -7,11 +7,12 @@ RenderTopbarMixin — top bar con menù a discesa, titolo e status bar.
 import pygame
 
 from editor.constants import (
-    TOP_BAR_H, STATUS_H, MENU_W,
+    TOP_BAR_H, STATUS_H, MENU_W, STATUS_BTN_MIN_W,
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC, STATUS,
     TXT, TXT_DIM, TXT_HI, OK_C, PANEL, BG
 )
-from editor.ui.draw import _txt, _draw_text, _rect, _button, _in_rect, _text_wh
+from editor.ui.draw import (_txt, _draw_text, _rect, _button, _in_rect, _text_wh,
+                            _button_w)
 
 # Geometria menu principale: le hitbox seguono la larghezza del testo localizzato
 MENU_START_X = 10
@@ -168,14 +169,19 @@ class RenderTopbarMixin:
     # ─────────────────────────────────────────────────────────────────────────
 
     def _r_status(self, w, h):
-        from editor.constants import UI_TIPS
         y = h - STATUS_H
         # Background barra con linea di separazione chiara
         _rect(self.screen, STATUS, (0, y, w, STATUS_H))
         pygame.draw.line(self.screen, (60, 60, 75), (0, y), (w, y))
 
         mx2, my2 = pygame.mouse.get_pos()
-        
+
+        # Hitbox pubblicate per InputHandlers: le larghezze seguono il testo
+        # localizzato, quindi il click non puo' piu' essere calcolato a parte
+        # con costanti che il rendering non usa (i bottoni tradotti erano piu'
+        # larghi della loro hitbox e meta' click andavano persi).
+        self._status_hitboxes: dict = {}
+
         # Geometria pulsanti basata sulla nuova altezza
         padding = 6
         btn_h = STATUS_H - (padding * 2)
@@ -185,32 +191,38 @@ class RenderTopbarMixin:
         msg_x = 20
         if getattr(self, "state", "") != "game_select":
             back_label = self._TR("tb_back_selector")
-            back_w = 150
+            back_w = _button_w(back_label, "sm", icon="close", min_w=STATUS_BTN_MIN_W)
             btn_r = pygame.Rect(10, btn_y, back_w, btn_h)
             hov_back = _in_rect((mx2, my2), btn_r)
-            if hov_back: self.active_tooltip = UI_TIPS.get("btn_back")
+            if hov_back: self.active_tooltip = self._TR("tip_btn_back")
             _button(self.screen, btn_r, back_label, hov_back, icon="close")
+            self._status_hitboxes["back"] = btn_r
             msg_x = btn_r.right + 20
 
             # Pulsante SALVA
             if hasattr(self, "scene_path") and self.scene_path:
-                save_w = 120
+                save_label = self._TR("tb_save")
+                save_w = _button_w(save_label, "sm", icon="save",
+                                   min_w=STATUS_BTN_MIN_W)
                 save_r = pygame.Rect(btn_r.right + 10, btn_y, save_w, btn_h)
                 hov_save = _in_rect((mx2, my2), save_r)
-                if hov_save: self.active_tooltip = UI_TIPS.get("btn_save")
+                if hov_save: self.active_tooltip = self._TR("tip_btn_save")
 
                 # Colore dinamico: OK_C se modificato, BTN se salvato
                 scol = OK_C if self.scene_dirty else BTN
-                _button(self.screen, save_r, self._TR("tb_save"), hov_save,
+                _button(self.screen, save_r, save_label, hov_save,
                         active=self.scene_dirty, icon="save", custom_bg=scol)
+                self._status_hitboxes["save"] = save_r
 
                 # Pulsante PLAYTEST (avvia la scena corrente in un processo separato)
-                play_w = 120
+                play_label = self._TR("tb_play_scene")
+                play_w = _button_w(play_label, "sm", icon="play",
+                                   min_w=STATUS_BTN_MIN_W)
                 play_r = pygame.Rect(save_r.right + 10, btn_y, play_w, btn_h)
                 hov_play = _in_rect((mx2, my2), play_r)
-                if hov_play: self.active_tooltip = UI_TIPS.get("btn_play_scene")
-                _button(self.screen, play_r, self._TR("tb_play_scene"), hov_play,
-                        icon="play")
+                if hov_play: self.active_tooltip = self._TR("tip_btn_play_scene")
+                _button(self.screen, play_r, play_label, hov_play, icon="play")
+                self._status_hitboxes["play"] = play_r
                 msg_x = play_r.right + 25
 
         # Messaggio status (Chirurgicamente spostato a destra)
@@ -232,9 +244,11 @@ class RenderTopbarMixin:
         si_w, si_h = _txt(info, "sm", TXT_DIM).get_size()
         _draw_text(self.screen, info, "sm", TXT_DIM, w - si_w - 15, y + (STATUS_H - si_h)//2)
 
-        # Shortcut hint (centrato, solo se c'è spazio sufficiente)
-        hints = self._TR("tb_shortcuts")
+        # Shortcut hint (centrato, solo se c'è spazio sufficiente).
+        # La riga intera resta la fonte delle scorciatoie per il pannello F1;
+        # qui si mostra solo il puntatore, cosi' la barra non e' un muro di testo.
+        hints = self._TR("tb_shortcuts_hint", "F1 = shortcuts")
         hw, hh = _txt(hints, "sm", (75, 75, 95)).get_size()
         hx = (w - hw) // 2
-        if hx > msg_x + 200 and hx + hw < w - si_w - 50:
+        if hx > msg_x + 40 and hx + hw < w - si_w - 20:
             _draw_text(self.screen, hints, "sm", (75, 75, 95), hx, y + (STATUS_H - hh)//2)

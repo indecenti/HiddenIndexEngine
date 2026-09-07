@@ -41,6 +41,18 @@ Legend: [x] done · [~] in progress/partial · [ ] to do.
   of the placed objects (layer, goal, minigame, hidden/locked), search and filters, click
   to select and reveal, double click to frame, ctrl/shift multi-selection feeding the bulk
   edit of the properties panel. Verified by `pytest tests/test_editor_outline.py`.
+- [x] Chrome layout hardening (`docs/editor/EDITOR_UI.md`): button and row widths
+  measured on the rendered label instead of per-widget constants, hitboxes published
+  by the renderer instead of recomputed next to it, canvas toolbar that wraps instead
+  of overflowing over the zoom readout, zoom/coordinates HUD moved to its own pill,
+  F1 shortcuts panel replacing the two unreadable always-on hint lines, catalog rows
+  that follow the UI scale, outline rows and header that follow it too, localized
+  tooltips (the hardcoded Italian `UI_TIPS` table is gone). Verified by
+  `pytest tests/test_editor_ui_layout.py`.
+- [x] Catalog tag localization: `slugify_tag()` as the single normalizer of a tag id
+  (the ids `citt`/`casin`, truncated by an old ASCII-stripping pass, are repaired),
+  and every tag the catalogs use translated in all five languages instead of falling
+  back to the raw Italian id. Verified by `pytest tests/test_catalog_tags.py`.
 - [ ] "Editor Pro" plan (`docs/archive/editor/EDITOR_PRO_PLAN.md`, 2026-07-12): remaining
   items - auto-scatter camouflage (single render-based metric, best-of-M, Lab color, repair
   loop), scatter UX (progress/cancel, seed, interactive ghosts), editor completeness

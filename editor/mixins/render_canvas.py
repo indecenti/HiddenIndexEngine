@@ -13,11 +13,14 @@ from editor.constants import (
     TXT, TXT_DIM, TXT_HI, OK_C, WARN_C, ALWAYS_C, BTN_AC, BTN_HO, STATUS, PANEL,
     HANDLE_R, REF_W, REF_H, TOP_BAR_H,
     CACHE_OBJ_MAX, CACHE_FILTER_MAX,
+    TOOLBAR_BTN_PAD_X, TOOLBAR_BTN_PAD_Y, TOOLBAR_BTN_MIN_W, TOOLBAR_GAP,
+    TOOLBAR_GROUP_GAP, TOOLBAR_MARGIN, TOOLBAR_ROW_GAP,
+    HUD_PAD_X, HUD_PAD_Y, HUD_MARGIN, HUD_LINE_GAP, HUD_BG,
     layer_color,
 )
 from editor.ui.draw import (
     _txt, _draw_text, _draw_text_wrapped, _rect, _button, _in_rect, _text_wh,
-    _draw_shape_icon, request_anim_frame,
+    _draw_shape_icon, request_anim_frame, _icon_size,
 )
 from engine.utils import warp_surface, apply_grayscale
 from engine.effect_renderer import (
@@ -28,6 +31,19 @@ from engine.effect_renderer import (
 
 # Alpha dell'overlay heatmap debug dello scatter (0..255)
 SCATTER_DEBUG_OVERLAY_ALPHA = 110
+
+
+# Toolbar item -> tooltip key. Auto-scatter opens a modal rather than
+# switching mode, so it does not follow the tip_mode_* naming of the others.
+_TOOLBAR_TIP_KEYS = {"__scatter_smart__": "tip_autoscatter"}
+
+
+def _toolbar_tip_key(item: dict) -> str:
+    special = _TOOLBAR_TIP_KEYS.get(item["id"])
+    if special:
+        return special
+    prefix = "mode_" if item["type"] == "mode" else "toggle_"
+    return f"tip_{prefix}{item['id']}"
 
 
 class RenderCanvasMixin:
@@ -943,34 +959,73 @@ class RenderCanvasMixin:
         pygame.draw.rect(surf, (150, 230, 255, 180), (0, 0, sw, sh), 1)
         self.screen.blit(surf, (int(sx1), int(sy1)))
 
+    def _toolbar_btn_h(self) -> int:
+        """Toolbar button height, derived from the font of its label."""
+        _, th = _text_wh("Ag", "sm")
+        return th + TOOLBAR_BTN_PAD_Y * 2
+
     def _get_toolbar_layout(self):
+        """Toolbar items, each as wide as the label it has to show.
+
+        The widths used to be a constant per button. A longer translation or a
+        UI scale above 1.0 clipped the labels and pushed the toggles past the
+        right edge of the canvas, on top of the zoom readout. Now every button
+        is measured on its own rendered text and the row wraps onto a second
+        one when the canvas is too narrow to hold it.
+        """
         cr = self._canvas_rect()
-        x, y = cr.left + 8, cr.top + 8
         tools = [
-            (MODE_SELECT,       self._TR("tb_select_btn"),   115),
-            (MODE_CIRCLE,       self._TR("tb_circle_btn"),   90),
-            (MODE_RECT,         self._TR("tb_rect_btn"),  100),
+            (MODE_SELECT, self._TR("tb_select_btn"), "select_rect"),
+            (MODE_CIRCLE, self._TR("tb_circle_btn"), None),
+            (MODE_RECT,   self._TR("tb_rect_btn"),   None),
         ]
-        # Mostra strumento effetti solo se un effetto è selezionato nel catalogo
+        # Lo strumento effetti compare solo con un effetto selezionato nel catalogo
         if getattr(self, "effects_catalog_sel", None):
-            tools.append((MODE_EFFECT_PLACE, self._TR("tb_effect_btn"), 80))
-            
-        tools.append((MODE_SCATTER, self._TR("tb_cluster_btn"), 80))
-        # Bottone "Auto-Scatter intelligente" (apre modal, non e' una mode)
-        tools.append(("__scatter_smart__", "AUTO-SCATTER", 110))
+            tools.append((MODE_EFFECT_PLACE, self._TR("tb_effect_btn"), None))
+        tools.append((MODE_SCATTER, self._TR("tb_cluster_btn"), None))
+        # "Auto-scatter" apre un modal: e' un comando, non una mode
+        tools.append(("__scatter_smart__", self._TR("tb_autoscatter_btn"), None))
+
         toggles = [
-            ("overlay", self.show_overlay, self._TR("tb_overlay_btn"), 80),
-            ("grid",    self.show_grid,    self._TR("tb_grid_btn"), 80),
-            ("icons",   self.show_icons,   self._TR("tb_icons_btn"),   70),
+            ("overlay", self.show_overlay, self._TR("tb_overlay_btn")),
+            ("grid",    self.show_grid,    self._TR("tb_grid_btn")),
+            ("icons",   self.show_icons,   self._TR("tb_icons_btn")),
         ]
-        items = []
-        for mid, lbl, w in tools:
-            items.append({'r': pygame.Rect(x, y, w, 24), 'id': mid, 'type': 'mode', 'lbl': lbl, 'active': (self.mode == mid)})
-            x += w + 6
-        x += 12
-        for tid, active, lbl, w in toggles:
-            items.append({'r': pygame.Rect(x, y, w, 24), 'id': tid, 'type': 'toggle', 'lbl': lbl, 'active': active})
-            x += w + 6
+
+        btn_h = self._toolbar_btn_h()
+        left  = cr.left + TOOLBAR_MARGIN
+        right = cr.right - TOOLBAR_MARGIN
+        x, y  = left, cr.top + TOOLBAR_MARGIN
+        items: list = []
+
+        def place(entry, width, gap_before):
+            nonlocal x, y
+            if x > left and x + gap_before + width > right:
+                x = left                       # non ci sta: vai a capo
+                y += btn_h + TOOLBAR_ROW_GAP
+            elif x > left:
+                x += gap_before
+            entry["r"] = pygame.Rect(x, y, width, btn_h)
+            items.append(entry)
+            x += width
+
+        def label_w(text, icon):
+            width = _text_wh(text, "sm")[0] + TOOLBAR_BTN_PAD_X * 2
+            if icon:
+                width += _icon_size() + TOOLBAR_BTN_PAD_X
+            return max(TOOLBAR_BTN_MIN_W, int(width))
+
+        for mid, lbl, icon in tools:
+            place({"id": mid, "type": "mode", "lbl": lbl, "icon": icon,
+                   "active": (self.mode == mid)},
+                  label_w(lbl, icon), TOOLBAR_GAP)
+        first_toggle = True
+        for tid, active, lbl in toggles:
+            place({"id": tid, "type": "toggle", "lbl": lbl, "icon": None,
+                   "active": active},
+                  label_w(lbl, None),
+                  TOOLBAR_GROUP_GAP if first_toggle else TOOLBAR_GAP)
+            first_toggle = False
         return items
 
     def _toolbar_click(self, mx, my_raw) -> bool:
@@ -994,42 +1049,64 @@ class RenderCanvasMixin:
 
     def _r_toolbar(self, cr):
         mx, my_raw = pygame.mouse.get_pos()
-        layout = self._get_toolbar_layout()
-        for item in layout:
-            r, active = item['r'], item['active']
+        for item in self._get_toolbar_layout():
+            r, active = item["r"], item["active"]
             hov = _in_rect((mx, my_raw), r)
             if hov:
-                tip_key = f"tip_{'mode_' if item['type'] == 'mode' else 'toggle_'}{item['id']}"
-                self.active_tooltip = self._TR(tip_key)
+                self.active_tooltip = self._TR(_toolbar_tip_key(item))
 
-            bg  = BTN_AC if active else (BTN_HO if hov else STATUS)
-            bc  = ACCENT if active else (TXT_HI if hov else BORDER)
+            bg = BTN_AC if active else (BTN_HO if hov else STATUS)
+            bc = ACCENT if active else (TXT_HI if hov else BORDER)
             _rect(self.screen, bg, r, radius=4)
             _rect(self.screen, bc, r, 1, radius=4)
             tc = TXT_HI if (active or hov) else TXT
-            
-            if item['id'] == MODE_SELECT:
-                # Icona a sinistra + Scritta a destra
-                icon_sz = 18
-                iy = r.y + (r.h - icon_sz) // 2
-                _draw_shape_icon(self.screen, (r.x + 8, iy, icon_sz, icon_sz), "select_rect", tc)
-                tw, th = _text_wh(item['lbl'], "sm")
-                # Offset correttivo per centratura visuale perfetta (-2px per compensare il font)
-                ty = r.y + (r.h - th) // 2 - 2
-                self.screen.blit(_txt(item['lbl'], "sm", tc), (r.x + icon_sz + 14, ty))
-            else:
-                tw, th = _text_wh(item['lbl'], "sm")
-                self.screen.blit(_txt(item['lbl'], "sm", tc), (r.x + (r.w-tw)//2, r.y + (r.h-th)//2))
 
-        zm = _txt(self._TR("canvas_zoom_info").format(self.zoom), "sm", TXT_DIM)
-        self.screen.blit(zm, (cr.right - zm.get_width() - 8, cr.top + 8))
-        hints = self._TR("canvas_hints")
-        hs = _txt(hints, "sm", (60, 65, 75))
-        self.screen.blit(hs, (cr.right - hs.get_width() - 8, cr.top + 24))
-        if _in_rect((mx, my_raw), cr):
-            rx, ry = self._s2r(mx, my_raw)
-            coord  = _txt(f"({int(rx)}, {int(ry)})", "mono", TXT_DIM)
-            self.screen.blit(coord, (cr.right - coord.get_width() - 8, cr.top + 40))
+            tw, th = _text_wh(item["lbl"], "sm")
+            ty = r.y + (r.h - th) // 2
+            if item["icon"]:
+                icon_sz = _icon_size()
+                iy = r.y + (r.h - icon_sz) // 2
+                _draw_shape_icon(self.screen,
+                                 (r.x + TOOLBAR_BTN_PAD_X // 2, iy, icon_sz, icon_sz),
+                                 item["icon"], tc)
+                tx = r.x + TOOLBAR_BTN_PAD_X // 2 + icon_sz + TOOLBAR_BTN_PAD_X // 2
+            else:
+                tx = r.x + (r.w - tw) // 2
+            self.screen.blit(_txt(item["lbl"], "sm", tc), (tx, ty))
+
+        self._r_canvas_hud(cr)
+
+    def _r_canvas_hud(self, cr):
+        """Zoom level and cursor position, bottom right of the canvas.
+
+        Both used to be blitted at the top right, exactly where the toolbar
+        row is drawn: the two overlapped and neither could be read. Down here
+        they sit on their own translucent pill, legible over any background.
+        """
+        mx, my = pygame.mouse.get_pos()
+        lines = [self._TR("canvas_zoom_info").format(int(round(self.zoom * 100)))]
+        fonts = ["sm"]
+        if _in_rect((mx, my), cr):
+            rx, ry = self._s2r(mx, my)
+            lines.append(f"({int(rx)}, {int(ry)})")
+            fonts.append("mono")
+
+        sizes = [_text_wh(t, f) for t, f in zip(lines, fonts)]
+        box_w = max(w for w, _ in sizes) + HUD_PAD_X * 2
+        box_h = sum(h for _, h in sizes) + HUD_LINE_GAP * (len(sizes) - 1)             + HUD_PAD_Y * 2
+        box = pygame.Rect(cr.right - HUD_MARGIN - box_w,
+                          cr.bottom - HUD_MARGIN - box_h, box_w, box_h)
+
+        pill = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
+        pygame.draw.rect(pill, HUD_BG, pill.get_rect(), border_radius=6)
+        self.screen.blit(pill, box.topleft)
+        _rect(self.screen, BORDER, box, 1, radius=6)
+
+        ty = box.y + HUD_PAD_Y
+        for (text, font), (tw, th) in zip(zip(lines, fonts), sizes):
+            self.screen.blit(_txt(text, font, TXT_DIM),
+                             (box.right - HUD_PAD_X - tw, ty))
+            ty += th + HUD_LINE_GAP
 
     def _r_confirm_leave_modal(self, w: int, h: int):
         """Disegna un modale di conferma per modifiche non salvate."""

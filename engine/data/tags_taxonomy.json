@@ -225,7 +225,7 @@
       "it": "Casco",
       "cat": "Generale"
     },
-    "casin": {
+    "casino": {
       "it": "Casinò",
       "cat": "Generale"
     },
@@ -261,7 +261,7 @@
       "it": "Circo",
       "cat": "Generale"
     },
-    "citt": {
+    "citta": {
       "it": "Città",
       "cat": "Generale"
     },
@@ -1155,14 +1155,6 @@
     },
     "zavorra": {
       "it": "Zavorra",
-      "cat": "Generale"
-    },
-    "città": {
-      "it": "Città",
-      "cat": "Generale"
-    },
-    "valle camonica": {
-      "it": "Valle camonica",
       "cat": "Generale"
     },
     "ancient": {
