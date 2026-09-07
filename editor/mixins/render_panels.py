@@ -12,7 +12,7 @@ from functools import lru_cache
 import pygame
 
 from editor.constants import (
-    TOP_BAR_H, STATUS_H, REF_W, REF_H,
+    TOP_BAR_H, STATUS_H,
     ACCENT, BORDER, BTN, BTN_AC, BTN_HO, PANEL,
     TXT, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C, ALWAYS_C, FX_C,
     DEFAULT_LAYERS, UI_TIPS, CATALOG_VIEW_CACHE_MAX,
@@ -842,6 +842,17 @@ class RenderPanelsMixin:
 
     # ── Props ─────────────────────────────────────────────────────────────────
 
+    def _prop_num_hitboxes(self, spec, box, slider, scene: bool = False) -> None:
+        """Register the box and the slider of a number under the names the
+        click looks up. Taking them from the spec is what keeps the two halves
+        of the panel spelling them the same way.
+
+        box and slider are (x relative to the panel, y as drawn, w, h).
+        """
+        register = self._set_hbox_scene if scene else self._set_hbox_obj
+        register(spec.box, *box)
+        register(spec.slider, *slider)
+
     def _set_hbox_scene(self, key, x, y_draw, w_b, h_b):
         y_virt = y_draw + self.prop_scroll - TOP_BAR_H
         self._scene_props_hitboxes[key] = pygame.Rect(x, y_virt, w_b, h_b)
@@ -947,11 +958,11 @@ class RenderPanelsMixin:
                 box_r_nr = (rx0+8, y-1, 65, 20)
                 is_f_nr = (getattr(self, "_editing_prop", None) == ('scene', 0, 'num_random_finds'))
                 _input_box(self.screen, box_r_nr, self._prop_buf if is_f_nr else str(n_random), is_f_nr)
-                self._set_hbox_scene("nr_box", 8, y-1, 65, 20)
-                
+                nr_spec, nr_lo, nr_hi = self._prop_spec("num_random_finds", scene=True)
                 slider_r_nr = (rx0+85, y-1, self.panel_r_w-93, 20)
-                _slider(self.screen, slider_r_nr, n_random, 1, len(self.scene_data.get("objects", [])))
-                self._set_hbox_scene("nr_slider", 85, y-1, self.panel_r_w-93, 20)
+                _slider(self.screen, slider_r_nr, n_random, nr_lo, nr_hi)
+                self._prop_num_hitboxes(nr_spec, (8, y-1, 65, 20),
+                                        (85, y-1, self.panel_r_w-93, 20), scene=True)
                 y += 32
 
             y += 4
@@ -996,11 +1007,11 @@ class RenderPanelsMixin:
                 box_r_fl = pygame.Rect(rx0+8, y-1, 65, 20)
                 is_f_fl = (getattr(self, "_editing_prop", None) == ('scene', 0, 'flashlight_radius'))
                 _input_box(self.screen, box_r_fl, self._prop_buf if is_f_fl else f"{fl_rad:.1f}", is_f_fl)
-                self._set_hbox_scene("fl_rad_box", 8, y-1, 65, 20)
-                
+                fl_spec, fl_lo, fl_hi = self._prop_spec("flashlight_radius", scene=True)
                 slider_r_fl = pygame.Rect(rx0+85, y-1, self.panel_r_w-93, 20)
-                _slider(self.screen, slider_r_fl, fl_rad, 50, 500)
-                self._set_hbox_scene("fl_rad_slider", 85, y-1, self.panel_r_w-93, 20)
+                _slider(self.screen, slider_r_fl, fl_rad, fl_lo, fl_hi)
+                self._prop_num_hitboxes(fl_spec, (8, y-1, 65, 20),
+                                        (85, y-1, self.panel_r_w-93, 20), scene=True)
                 y += 32
 
             y += 6
@@ -1168,8 +1179,10 @@ class RenderPanelsMixin:
             # Posizione e Scala
             _draw_text(self.screen, self._TR("prop_transform_hdr"), "sm", ACCENT, rx0+12, y); y += 26
             
-            def _prop_row_obj(label, key, min_val, max_val, fmt="{:.0f}"):
+            def _prop_row_obj(label, key):
+                """One number: label, box and slider, range and format by spec."""
                 nonlocal y
+                spec, min_val, max_val = self._prop_spec(key)
                 _draw_text(self.screen, label, "sm", TXT_DIM, rx0+12, y)
                 
                 # Valore Misto?
@@ -1182,27 +1195,23 @@ class RenderPanelsMixin:
                 is_f = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, key))
                 box_r = pygame.Rect(rx0 + 12, y + 20, box_w, 22)
                 
-                display_txt = self._prop_buf if is_f else ("---" if is_mixed else fmt.format(val))
+                display_txt = self._prop_buf if is_f else ("---" if is_mixed else spec.fmt.format(val))
                 _input_box(self.screen, box_r, display_txt, is_f)
-                self._set_hbox_obj(f"box_{key}", 12, y + 20, box_w, 22)
                 
                 slider_x = rx0 + 12 + box_w + 10
                 slider_w = self.panel_r_w - (box_w + 24 + 12)
                 slider_rect = (slider_x, y + 21, slider_w, 20)
                 # Slider disabilitato visivamente se mixed? No, permettiamo di trascinare per unificare
                 _slider(self.screen, slider_rect, 0 if is_mixed else val, min_val, max_val)
-                self._set_hbox_obj(f"slider_{key}", 12 + box_w + 10, y + 21, slider_w, 20)
+                self._prop_num_hitboxes(spec, (12, y + 20, box_w, 22),
+                                        (12 + box_w + 10, y + 21, slider_w, 20))
                 y += 46
 
-            # Range slider X/Y: dimensioni reali del BG se disponibili, altrimenti REF
-            bg_sz = self._get_bg_size()
-            x_max = bg_sz[0] if bg_sz else REF_W
-            y_max = bg_sz[1] if bg_sz else REF_H
-            _prop_row_obj(self._TR("prop_pos_x"), "x", 0, x_max)
-            _prop_row_obj(self._TR("prop_pos_y"), "y", 0, y_max)
-            _prop_row_obj(self._TR("prop_scale"), "scale", 0.1, 3.0, "{:.2f}")
-            _prop_row_obj(self._TR("prop_rotation"), "rotation", 0, 360)
-            _prop_row_obj(self._TR("prop_alpha"), "alpha", 0, 255)
+            _prop_row_obj(self._TR("prop_pos_x"), "x")
+            _prop_row_obj(self._TR("prop_pos_y"), "y")
+            _prop_row_obj(self._TR("prop_scale"), "scale")
+            _prop_row_obj(self._TR("prop_rotation"), "rotation")
+            _prop_row_obj(self._TR("prop_alpha"), "alpha")
 
             # Reset transform (azzera rotation/scale/alpha/flip/warp)
             rt_r = pygame.Rect(rx0+12, y, self.panel_r_w-24, 22)
@@ -1267,10 +1276,11 @@ class RenderPanelsMixin:
                 is_f_gsf = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, 'grayscale_factor'))
                 gsf_pct = int(round(gsf * 100))
                 _input_box(self.screen, box_gsf_r, self._prop_buf if is_f_gsf else (f"{gsf_pct}%" if not gsf_mixed else "---"), is_f_gsf)
-                self._set_hbox_obj("gs_box", 12, y+18, 50, 20)
+                gsf_spec, gsf_lo, gsf_hi = self._prop_spec("grayscale_factor")
                 sl_gsf_r = pygame.Rect(rx0+68, y+19, self.panel_r_w-80, 18)
-                _slider(self.screen, sl_gsf_r, 0 if gsf_mixed else gsf, 0.0, 1.0)
-                self._set_hbox_obj("gs_slider", 68, y+19, self.panel_r_w-80, 18)
+                _slider(self.screen, sl_gsf_r, 0 if gsf_mixed else gsf, gsf_lo, gsf_hi)
+                self._prop_num_hitboxes(gsf_spec, (12, y+18, 50, 20),
+                                        (68, y+19, self.panel_r_w-80, 18))
                 y += 44
             else:
                 y += 4
@@ -1371,10 +1381,11 @@ class RenderPanelsMixin:
             box_lz_r = pygame.Rect(rx0+80, y-3, 50, 22)
             is_f_lz = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, 'layer_z'))
             _input_box(self.screen, box_lz_r, self._prop_buf if is_f_lz else (str(lz_val) if not lz_mixed else "---"), is_f_lz)
-            self._set_hbox_obj("box_layer_z", 80, y-3, 50, 22)
+            lz_spec, lz_lo, lz_hi = self._prop_spec("layer_z")
             sl_lz_r = pygame.Rect(rx0+136, y-2, self.panel_r_w - 148, 20)
-            _slider(self.screen, sl_lz_r, lz_val, 0, 100)
-            self._set_hbox_obj("slider_layer_z", 136, y-2, sl_lz_r.w, 20)
+            _slider(self.screen, sl_lz_r, lz_val, lz_lo, lz_hi)
+            self._prop_num_hitboxes(lz_spec, (80, y-3, 50, 22),
+                                    (136, y-2, sl_lz_r.w, 20))
             y += 30
 
             # ── HIT-DETECTION editor (type + dimensioni) ───────────────────
@@ -1408,10 +1419,11 @@ class RenderPanelsMixin:
                     box_rad_r = pygame.Rect(rx0+62, y, 50, 22)
                     is_f_rad = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, 'radius'))
                     _input_box(self.screen, box_rad_r, self._prop_buf if is_f_rad else f"{int(rad_val)}", is_f_rad)
-                    self._set_hbox_obj("box_radius", 62, y, 50, 22)
+                    rad_spec, rad_lo, rad_hi = self._prop_spec("radius")
                     sl_rad_r = pygame.Rect(rx0+118, y+1, self.panel_r_w-130, 20)
-                    _slider(self.screen, sl_rad_r, rad_val, 5, 500)
-                    self._set_hbox_obj("slider_radius", 118, y+1, sl_rad_r.w, 20)
+                    _slider(self.screen, sl_rad_r, rad_val, rad_lo, rad_hi)
+                    self._prop_num_hitboxes(rad_spec, (62, y, 50, 22),
+                                            (118, y+1, sl_rad_r.w, 20))
                     y += 28
                 else:  # rect
                     dim_pairs = [
@@ -1424,10 +1436,11 @@ class RenderPanelsMixin:
                         box_d = pygame.Rect(rx0+62, y, 50, 22)
                         is_f = (getattr(self, "_editing_prop", None) == ('object', self.selected_idx, k_dim))
                         _input_box(self.screen, box_d, self._prop_buf if is_f else f"{int(v)}", is_f)
-                        self._set_hbox_obj(f"box_{k_dim}", 62, y, 50, 22)
+                        dim_spec, dim_lo, dim_hi = self._prop_spec(k_dim)
                         sl_d = pygame.Rect(rx0+118, y+1, self.panel_r_w-130, 20)
-                        _slider(self.screen, sl_d, v, 5, 1000)
-                        self._set_hbox_obj(f"slider_{k_dim}", 118, y+1, sl_d.w, 20)
+                        _slider(self.screen, sl_d, v, dim_lo, dim_hi)
+                        self._prop_num_hitboxes(dim_spec, (62, y, 50, 22),
+                                                (118, y+1, sl_d.w, 20))
                         y += 26
 
                 # Warp mesh toggle
