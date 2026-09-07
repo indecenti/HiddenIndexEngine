@@ -99,6 +99,7 @@ from editor.mixins.scene_stats import SceneStatsMixin
 from editor.mixins.presets import PresetsMixin
 from editor.mixins.batch_import import BatchImportMixin
 from editor.mixins.outline import OutlineMixin
+from editor.mixins.modal_router import ModalRouterMixin
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -106,6 +107,7 @@ from editor.mixins.outline import OutlineMixin
 # ─────────────────────────────────────────────────────────────────────────────
 
 class LevelEditor(
+    ModalRouterMixin,
     ViewportMixin,
     HistoryMixin,
     IoOpsMixin,
@@ -737,47 +739,8 @@ class LevelEditor(
         # per garantire che i menu dropdown siano sopra tutto.
         self._r_top_bar(w)
         
-        # Modali specifici dell'editor
-        if self._lang_modal:
-            self._r_lang_modal(w, h)
-        if self._newobj_modal:
-            self._r_newobj_modal(w, h)
-        if self._ctx_menu:
-            self._r_ctx_menu(w, h)
-        if self._img_editor_active:
-            self._r_img_editor_modal(w, h)
-        if self._tag_modal_active:
-            self._r_tag_modal(w, h)
-        # Modali globali (funzionano sia in dashboard che in editor)
-        if getattr(self, "_music_modal", False):
-            self._r_music_modal(w, h)
-        if getattr(self, "_minigame_modal", False):
-            self._r_minigame_modal(w, h)
-        if getattr(self, "_bg_modal", False):
-            self._r_background_modal(w, h)
-        if getattr(self, "_vid_modal", False):
-            self._r_video_modal(w, h)
-        if getattr(self, "_icon_modal", False):
-            self._r_icon_modal(w, h)
-        # Auditor modale (funziona sia in dashboard che in editor)
-        if getattr(self, "_auditor_active", False):
-            self._r_auditor_modal(w, h)
-        # Scatter modal
-        if getattr(self, "_scatter_modal_open", False):
-            self._r_scatter_modal(w, h)
-        # Statistiche scena
-        if getattr(self, "_stats_modal", False):
-            self._r_stats_modal(w, h)
-        # Ripristino autosave (crash recovery): sopra le modali normali
-        if getattr(self, "_recovery_modal", False):
-            self._r_recovery_modal(w, h)
-        # Conferma uscita/salvataggio: sempre sopra TUTTE le altre modali
-        if self._confirm_leave_modal:
-            self._r_confirm_leave_modal(w, h)
-
-        # Stack modale unificato (nuovi modali non-flag): sopra i modali legacy
-        for modal in self.modal_stack:
-            modal.render(self)
+        # Every modal, bottom to top, in the order of MODAL_LAYERS.
+        self._modal_render(w, h)
 
         # Status Bar (Globale, disegnata sopra tutto)
         self._r_status(w, h)

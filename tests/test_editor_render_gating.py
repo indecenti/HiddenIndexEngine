@@ -170,9 +170,12 @@ class FakeEventHost:
 
     def __init__(self):
         from editor.mixins.input_handlers import InputHandlersMixin
+        from editor.mixins.modal_router import ModalRouterMixin
         self._handle_events = InputHandlersMixin._handle_events.__get__(self)
+        # The real dispatch, with no modal open: it must let the event through.
+        self.MODAL_LAYERS = ModalRouterMixin.MODAL_LAYERS
+        self._modal_dispatch = ModalRouterMixin._modal_dispatch.__get__(self)
         self.modal_stack = []
-        self._img_editor_active = False
         self._needs_redraw = False
 
 
