@@ -111,10 +111,74 @@ def _analyze_game_usage(game_path: Path) -> dict:
     return usage
 
 
+# What the game runtime actually opens from engine/data: the global catalogs,
+# discovered by the same glob catalog_manager uses, and the tag taxonomy.
+# Everything else in there belongs to the editor — the object profile database,
+# the background analysis cache, the catalog backups — and has no business in
+# a build.
+RUNTIME_DATA_FILES = ("tags_taxonomy.json",)
+
+
+def _find_global_catalogs(data_src: Path) -> list[Path]:
+    """The catalog files the runtime will look for, backups excluded.
+
+    Mirrors engine.catalog_manager._load_global_catalog: if the two ever
+    disagree, the build ships a set of catalogs the game does not read.
+    """
+    if not data_src.exists():
+        return []
+    return sorted(
+        f for f in data_src.glob("global_*_catalog.json")
+        if "backup" not in f.name.lower() and not f.name.endswith(".bak")
+    )
+
+
+def _pack_engine_data(data_src: Path, data_dst: Path, used_objects: set) -> dict:
+    """Write into the build only the engine/data the game opens.
+
+    Each global catalog is slimmed to the objects the game actually places and
+    written under its own name, so the runtime finds it exactly where it looks.
+    The editor's own files stay out.
+
+    Returns counts for the build log: catalogs written, entries kept out of the
+    entries there were, and the bytes written.
+    """
+    data_dst.mkdir(parents=True, exist_ok=True)
+    kept = total = 0
+    written_bytes = 0
+    catalogs = _find_global_catalogs(data_src)
+
+    for cat_file in catalogs:
+        # _load_json answers {} for a file it cannot parse, so an unreadable
+        # catalog would otherwise be shipped as an empty one and the missing
+        # objects would look like a game that simply does not use them.
+        raw = _load_json(cat_file)
+        entries = raw.get("objects") if isinstance(raw, dict) else None
+        if not isinstance(entries, list):
+            logger.warning(
+                f"[Build] Catalogo illeggibile o senza 'objects', NON incluso: {cat_file.name}")
+            continue
+        slim = [o for o in entries if o.get("id") in used_objects]
+        total += len(entries)
+        kept += len(slim)
+        dest = data_dst / cat_file.name
+        with open(dest, "w", encoding="utf-8") as f:
+            json.dump({"objects": slim}, f, indent=2, ensure_ascii=False)
+        written_bytes += dest.stat().st_size
+
+    for name in RUNTIME_DATA_FILES:
+        src = data_src / name
+        if src.exists():
+            shutil.copy2(src, data_dst / name)
+            written_bytes += src.stat().st_size
+
+    return {"catalogs": len(catalogs), "kept": kept, "total": total,
+            "bytes": written_bytes}
+
+
 def _copy_smart_assets(
     games_src: Path,
     games_dst: Path,
-    catalog_id_to_icon: dict,
 ) -> tuple[int, int]:
     """
     Copia SOLO gli asset usati dalla cartella di gioco (smart packaging).
@@ -122,8 +186,6 @@ def _copy_smart_assets(
     L'editor ha già pre-copiato i PNG usati in games/{game}/objects/ tramite
     _harvest_asset(). Qui copiamo tutto ciò che è presente in quella cartella:
     se il file è lì è perché è usato — nessuna ridondanza con engine/assets/.
-
-    catalog_id_to_icon: dict[catalog_id -> icon_filename] per logging accurato.
 
     Returns:
         (file_count, total_size_bytes)
@@ -533,11 +595,6 @@ def build_game(
         logger.info(f"[Copy] Asset PyInstaller ({game_id}.exe) copiati in {pkg_dir}")
 
         # ── Asset accanto all'EXE ──────────────────────────────────────────────
-        ignore_dev = shutil.ignore_patterns(
-            "__pycache__", "*.pyc", "*.pyo", "*.autosave",
-            ".git*", "*.bak", "*.tmp", "*.log", ".DS_Store",
-        )
-
         # config.ini
         shutil.copy2(temp_dir / "config.ini", pkg_dir / "config.ini")
 
@@ -552,62 +609,30 @@ def build_game(
         except Exception as e:
             log_step(f"WARN: notices not written ({e})")
 
-        # ── Carica catalogo globale per costruire la mappa id→icona ──────────
-        # Verrà usata sia per il catalogo slim che per il logging.
-        global_cat_file = engine_src / "data" / "global_objects_catalog.json"
-        global_catalog_entries: list[dict] = []
-        catalog_id_to_icon: dict[str, str] = {}
-        if global_cat_file.exists():
-            try:
-                cat_data = _load_json(global_cat_file)
-                global_catalog_entries = cat_data.get("objects", [])
-                for o in global_catalog_entries:
-                    icon_rel = o.get("icon", "")
-                    if icon_rel:
-                        catalog_id_to_icon[o["id"]] = Path(icon_rel).name
-            except Exception as e:
-                logger.warning(f"[Build] Catalogo globale non leggibile: {e}")
-
         # games/<game_id>/ con SMART ASSET PACKAGING
         # L'editor ha già pre-copiato i PNG usati in games/{game}/objects/;
         # copiamo tutto quello che c'è (è già filtrato).
         games_dst = pkg_dir / "games" / game_id
         games_dst.parent.mkdir(parents=True, exist_ok=True)
 
-        asset_count, asset_bytes = _copy_smart_assets(games_src, games_dst, catalog_id_to_icon)
+        asset_count, asset_bytes = _copy_smart_assets(games_src, games_dst)
         logger.info(f"[Smart Pack] Game objects copiati: {asset_count} file ({asset_bytes/1024/1024:.1f} MB)")
 
         games_size = sum(f.stat().st_size for f in games_dst.rglob("*") if f.is_file())
         logger.info(f"[Copy] games/{game_id}/ → root/ ({games_size/1024/1024:.1f} MB)")
 
-        # ── engine/data — catalogo SLIM (solo oggetti usati nel gioco) ──────────
-        # L'editor ha già costruito games/{game}/objects_catalog.json con le sole
-        # entry usate. Qui generiamo un global_objects_catalog.json filtrato che
-        # sostituisce quello completo (200+ voci) con le sole voci necessarie.
-        # Il runtime lo cerca sempre in engine/data/global_objects_catalog.json:
-        # il path rimane identico, ma il file è molto più leggero.
+        # ── engine/data — solo cio' che il runtime apre, in versione slim ──────
+        # Ogni catalogo globale viene filtrato sugli oggetti davvero usati e
+        # riscritto col proprio nome, dove il runtime lo cerca. Il resto di
+        # engine/data e' roba dell'editor (database dei profili oggetto, cache
+        # degli sfondi, backup dei cataloghi) e non entra nel pacchetto.
         data_dst = pkg_dir / "engine" / "data"
-        data_dst.mkdir(parents=True, exist_ok=True)
-
-        slim_entries = [
-            o for o in global_catalog_entries
-            if o.get("id") in used_objects
-        ]
-        slim_catalog = {"objects": slim_entries}
-        slim_cat_path = data_dst / "global_objects_catalog.json"
-        with open(slim_cat_path, "w", encoding="utf-8") as f:
-            json.dump(slim_catalog, f, indent=2, ensure_ascii=False)
+        packed = _pack_engine_data(engine_src / "data", data_dst, used_objects)
         logger.info(
-            f"[Smart Pack] Catalogo slim: {len(slim_entries)}/{len(global_catalog_entries)} "
-            f"voci ({len(slim_entries)} oggetti usati nel gioco)"
+            f"[Smart Pack] engine/data: {packed['catalogs']} cataloghi slim, "
+            f"{packed['kept']}/{packed['total']} voci, "
+            f"{packed['bytes']/1024:.0f} KB"
         )
-
-        # Copia altri file in engine/data (es. effects_catalog.json, schemas)
-        data_src = engine_src / "data"
-        if data_src.exists():
-            for f in data_src.iterdir():
-                if f.name != "global_objects_catalog.json" and f.is_file():
-                    shutil.copy2(f, data_dst / f.name)
 
         # engine/schemas
         schemas_src = engine_src / "schemas"
