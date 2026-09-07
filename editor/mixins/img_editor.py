@@ -336,6 +336,7 @@ class ImgEditorMixin:
             
             if orig_idx != -1: self.catalog.insert(orig_idx + 1, new_item)
             else: self.catalog.append(new_item)
+            self._bump_catalog_rev()
             
             if hasattr(self, "_sync_game_catalog_entry"): self._sync_game_catalog_entry(new_item)
             

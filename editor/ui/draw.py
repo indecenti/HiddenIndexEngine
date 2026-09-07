@@ -6,7 +6,12 @@ Tutte le funzioni sono module-level (non metodi) e possono essere importate
 con `from editor.ui.draw import *` nei mixin e nel modulo principale.
 """
 
+from collections import OrderedDict
+from typing import Any, Tuple
+
 import pygame
+
+from editor.constants import TEXT_CACHE_MAX
 
 # ─────────────────────────────────────────────────────────────────────────────
 # FONT
@@ -14,6 +19,26 @@ import pygame
 
 _FONTS: dict = {}
 _ICON_CACHE: dict = {}
+
+# Rendered text surfaces and text metrics, keyed by content. The editor draws
+# in immediate mode: the same labels are re-rendered on every frame, and
+# font.render() is the single most called primitive of the UI. Both caches are
+# LRU with gradual eviction and are cleared whenever the fonts change.
+_TEXT_CACHE: "OrderedDict[tuple, pygame.Surface]" = OrderedDict()
+_SIZE_CACHE: "OrderedDict[tuple, Tuple[int, int]]" = OrderedDict()
+
+
+def _cache_put(cache: OrderedDict, key: tuple, value: Any, limit: int) -> None:
+    """Store an entry and evict the oldest ones over the cap."""
+    cache[key] = value
+    while len(cache) > limit:
+        cache.popitem(last=False)
+
+
+def clear_text_cache() -> None:
+    """Drop the cached surfaces and metrics (fonts or UI scale changed)."""
+    _TEXT_CACHE.clear()
+    _SIZE_CACHE.clear()
 
 # Scala UI corrente (impostata da _init_fonts, letta per icone e metriche)
 _UI_SCALE: float = 1.0
@@ -94,6 +119,9 @@ def _init_fonts(scale: float = 1.0):
         cands = candidates_mono if key == "mono" else candidates_ui
         _FONTS[key] = best_font(cands, int(round(base_size * _UI_SCALE)))
 
+    # The cached surfaces were rendered with the previous fonts.
+    clear_text_cache()
+
 
 def _ui_scale() -> float:
     return _UI_SCALE
@@ -104,27 +132,89 @@ def _icon_size() -> int:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# RICHIESTA DI ANIMAZIONE
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Set by any primitive that draws a time dependent result (a pulsing focused
+# field, an animated effect overlay). The main loop reads it to decide whether
+# the next frame has to be drawn even with no user input at all: a renderer
+# declares that it needs another frame instead of the loop having to know
+# which of the editor states are animated.
+_ANIM_REQUEST: bool = False
+
+
+def request_anim_frame() -> None:
+    """Declare that what was just drawn changes over time by itself."""
+    global _ANIM_REQUEST
+    _ANIM_REQUEST = True
+
+
+def clear_anim_request() -> None:
+    """Reset the animation request, called at the start of a frame."""
+    global _ANIM_REQUEST
+    _ANIM_REQUEST = False
+
+
+def anim_requested() -> bool:
+    """True when the frame just drawn asked to be drawn again."""
+    return _ANIM_REQUEST
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # TESTO
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _txt(text: str, font_key: str, color: tuple) -> pygame.Surface:
-    return _FONTS.get(font_key, _FONTS["md"]).render(str(text), True, color)
+    """Render a text surface, reusing the cached one when identical.
+
+    The returned surface is shared: callers blit it, they must never draw on
+    it or change its alpha.
+    """
+    key = (str(text), font_key, tuple(color))
+    cached = _TEXT_CACHE.get(key)
+    if cached is not None:
+        _TEXT_CACHE.move_to_end(key)
+        return cached
+    surf = _FONTS.get(font_key, _FONTS["md"]).render(key[0], True, color)
+    _cache_put(_TEXT_CACHE, key, surf, TEXT_CACHE_MAX)
+    return surf
 
 
 def _draw_text(surf, text, font_key, color, x, y, max_w=None):
-    s    = str(text)
-    font = _FONTS.get(font_key, _FONTS["md"])
-    rendered = font.render(s, True, color)
-    if max_w and rendered.get_width() > max_w:
-        while len(s) > 1 and font.size(s + "...")[0] > max_w:
-            s = s[:-1]
-        rendered = font.render(s + "...", True, color)
+    """Blit text at (x, y), truncated with an ellipsis when wider than max_w."""
+    if not max_w:
+        rendered = _txt(text, font_key, color)
+        surf.blit(rendered, (x, y))
+        return rendered.get_width()
+
+    # The truncated result depends on the width too, so it gets its own key.
+    key = (str(text), font_key, tuple(color), int(max_w))
+    rendered = _TEXT_CACHE.get(key)
+    if rendered is not None:
+        _TEXT_CACHE.move_to_end(key)
+    else:
+        s = key[0]
+        font = _FONTS.get(font_key, _FONTS["md"])
+        rendered = _txt(s, font_key, color)
+        if rendered.get_width() > max_w:
+            while len(s) > 1 and font.size(s + "...")[0] > max_w:
+                s = s[:-1]
+            rendered = _txt(s + "...", font_key, color)
+        _cache_put(_TEXT_CACHE, key, rendered, TEXT_CACHE_MAX)
     surf.blit(rendered, (x, y))
     return rendered.get_width()
 
 
 def _text_wh(text: str, font_key: str) -> tuple:
-    return _FONTS.get(font_key, _FONTS["md"]).size(str(text))
+    """Width and height of a text run, cached alongside the surfaces."""
+    key = (str(text), font_key)
+    cached = _SIZE_CACHE.get(key)
+    if cached is not None:
+        _SIZE_CACHE.move_to_end(key)
+        return cached
+    wh = _FONTS.get(font_key, _FONTS["md"]).size(key[0])
+    _cache_put(_SIZE_CACHE, key, wh, TEXT_CACHE_MAX)
+    return wh
 
 
 def _wrap_lines(text: str, font_key: str, max_w: int) -> list:
@@ -374,6 +464,8 @@ def _input_box(surf, r, text, focused=False, hint="", icon=None, font="md", all_
     
     t = time.time()
     if focused:
+        # The glow ring pulses with time: ask the main loop for another frame.
+        request_anim_frame()
         # 2. Glow Ring (Effetto pulsante premium)
         glow_alpha = int(100 + math.sin(t * 12) * 100)
         glow_surf = pygame.Surface((r[2], r[3]), pygame.SRCALPHA)

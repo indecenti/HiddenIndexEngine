@@ -65,8 +65,10 @@ from editor.constants import (
     UI_SCALE_DEFAULT, UI_SCALE_MIN, UI_SCALE_MAX, UI_SCALE_STEP,
     BG, TXT_DIM, TXT_HI, ACCENT, ERR_C,
     AUTOSAVE_SECS, MAIN_LOOP_MAX_CRASHES, CRASH_SAVE_MIN_GAP_S, SND_CLICK,
+    IDLE_HEARTBEAT_S,
 )
-from editor.ui.draw import _init_fonts, _draw_tooltip, _rect, _draw_text, _draw_shape_icon
+from editor.ui.draw import (_init_fonts, _draw_tooltip, _rect, _draw_text,
+                            _draw_shape_icon, anim_requested, clear_anim_request)
 from editor.core.io import _discover_games
 from engine.utils import setup_logging
 from engine.language_manager import LanguageManager, set_active_manager
@@ -160,6 +162,18 @@ class LevelEditor(
             pass
         self.screen_size = self.screen.get_size()
         self.clock = pygame.time.Clock()
+
+        # ── Frame gating ─────────────────────────────────────────────────────
+        # The UI is drawn in immediate mode: without gating the whole editor
+        # repaints 60 times a second even with nobody touching it. A frame is
+        # drawn on input, while something animated is on screen, and on the
+        # idle heartbeat. See _frame_needed().
+        self._needs_redraw: bool = True
+        self._anim_active:  bool = True
+        self._last_frame_t: float = 0.0
+        # Bumped whenever the catalog or the strings it is searched by change,
+        # so the memoized catalog views know they are stale.
+        self._catalog_rev:  int = 0
         ui_scale = float(self._boot_settings.get("ui_scale", UI_SCALE_DEFAULT))
         _init_fonts(max(UI_SCALE_MIN, min(UI_SCALE_MAX, ui_scale)))
 
@@ -432,6 +446,14 @@ class LevelEditor(
         """Helper rapido per la localizzazione (engine strings)."""
         return self.lang_manager.get(key, *args)
 
+    def _bump_catalog_rev(self) -> None:
+        """Invalidate the memoized catalog views.
+
+        Call it after the catalog list changes, and after the strings the
+        catalog is searched by change (object labels, tag labels).
+        """
+        self._catalog_rev = getattr(self, "_catalog_rev", 0) + 1
+
     def _mark_dirty(self):
         """Invalida la cache del canvas per forzare un ridisegno completo."""
         self._canvas_cache_dirty = True
@@ -582,10 +604,13 @@ class LevelEditor(
                     self._handle_events()
                     phase = "update"
                     self._update()
-                    phase = "render"
-                    self._render()
-                    phase = "flip"
-                    pygame.display.flip()
+                    if self._frame_needed():
+                        phase = "render"
+                        self._render()
+                        phase = "flip"
+                        pygame.display.flip()
+                        self._needs_redraw = False
+                        self._last_frame_t = time.time()
                     crashes = 0            # a clean frame closes the burst
                 except Exception:
                     crashes += 1
@@ -601,6 +626,26 @@ class LevelEditor(
             # pygame. This is the ONLY place where pygame.quit() must be called.
             self._cleanup_processes()
             pygame.quit()
+
+    def _frame_needed(self) -> bool:
+        """True when this frame has to be drawn.
+
+        Redrawing an unchanged screen costs a full repaint of canvas, panels
+        and catalog for nothing. A frame is drawn when input arrived, when the
+        previous frame drew something that changes by itself (a focused field,
+        an animated effect preview), while a blocking or background job is
+        running, and in any case every IDLE_HEARTBEAT_S so a change made by a
+        worker thread always reaches the screen.
+        """
+        if self._needs_redraw or self._anim_active or self._loading:
+            return True
+        if self.status_until:            # the message expires on its own
+            return True
+        if getattr(self, "_scatter_busy", False):
+            return True
+        if getattr(self, "_img_editor_busy", False):
+            return True
+        return time.time() - self._last_frame_t >= IDLE_HEARTBEAT_S
 
     def _crash_guard(self, phase: str, crashes: int) -> None:
         """Save the work and warn the user after a crashed frame.
@@ -679,6 +724,7 @@ class LevelEditor(
             self.status_col   = TXT_DIM
 
     def _render(self):
+        clear_anim_request()
         self.screen.fill(BG)
         self.active_tooltip = None
         if self.state == STATE_GAME_SELECT:
@@ -743,6 +789,9 @@ class LevelEditor(
         # Tooltip finale (Sopra ogni cosa, incluso l'overlay se attivo, per feedback mouse)
         if self.active_tooltip:
             _draw_tooltip(self.screen, self.active_tooltip, pygame.mouse.get_pos())
+
+        # A primitive drawing a time dependent result asked for another frame.
+        self._anim_active = anim_requested()
 
     def _r_main(self):
         w, h = self.screen.get_size()

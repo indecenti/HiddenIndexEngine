@@ -220,11 +220,13 @@ class NewObjModalMixin:
         cat_data.setdefault("objects", []).append(entry)
         _save_json(cat_path, cat_data)
         self.catalog = _load_catalog(self.game_name)
+        self._bump_catalog_rev()
         self._newobj_modal = False
         self._status(self._TR("nob_added", "Object '{0}' added to the catalog").format(oid), OK_C, 4)
         if self._lang_data:
             for lang in self.LANGS:
                 self._lang_data.setdefault(lang, {}).setdefault(f"obj_{oid}", "")
+            self._bump_catalog_rev()   # the catalog search reads these labels
 
     # ─────────────────────────────────────────────────────────────────────────
     # ELABORAZIONE ICONA (rembg / auto-ritaglio in thread)

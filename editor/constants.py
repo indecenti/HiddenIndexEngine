@@ -50,6 +50,16 @@ IMG_CACHE_MAX  = 512
 # Backup rotativi di scene.json a ogni salvataggio (in .editor_backups/)
 SCENE_BACKUPS_KEEP = 5
 
+# Rendered text surfaces kept by editor/ui/draw.py (LRU, evicted oldest first).
+# The UI redraws in immediate mode, so the same labels are rendered every frame.
+TEXT_CACHE_MAX = 2048
+# Filtered catalog views kept by the catalog panel (LRU). One entry per
+# combination of style filter, active tags, search query and language.
+CATALOG_VIEW_CACHE_MAX = 12
+# Forced redraw while the editor is idle. Bounds how long a state change made
+# by a worker thread can stay invisible on screen.
+IDLE_HEARTBEAT_S = 0.4
+
 # ─────────────────────────────────────────────────────────────────────────────
 # GRIGLIA / SNAP / NUDGE
 # ─────────────────────────────────────────────────────────────────────────────
