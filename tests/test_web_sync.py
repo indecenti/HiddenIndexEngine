@@ -198,6 +198,24 @@ def _score_golden_cases() -> list[dict]:
                           "found": total - 1, "total": total})
     # edge: timeTotal = 0 (nessun bonus possibile su entrambi i lati)
     cases.append({"score": 100, "timeLeft": 0.0, "timeTotal": 0.0, "found": 3, "total": 3})
+    # edge: tempo sforato. Python clampa il numeratore con max(0, total-elapsed),
+    # JS clampa il rapporto con Math.max(0, ...): il bonus deve essere 0 su
+    # entrambi, mai negativo.
+    for time_left in (-0.1, -250.0, -5000.0):
+        cases.append({"score": 500, "timeLeft": time_left, "timeTotal": 1000.0,
+                      "found": 3, "total": 3})
+    # edge: punteggio gia' negativo per le penalita' dei miss. Nessuno dei due
+    # lati deve riportarlo a zero, e il moltiplicatore stelle si applica lo
+    # stesso (quindi 3 stelle raddoppiano anche un punteggio negativo).
+    for score in (-25, -600, -5000):
+        cases.append({"score": score, "timeLeft": 1000.0, "timeTotal": 1000.0,
+                      "found": 3, "total": 3})
+        cases.append({"score": score, "timeLeft": 100.0, "timeTotal": 1000.0,
+                      "found": 2, "total": 3})
+    # edge: scena senza oggetti da trovare. In Python found == total con 0 == 0,
+    # in JS [].every() e' true: entrambi la trattano come completata.
+    cases.append({"score": 0, "timeLeft": 1000.0, "timeTotal": 1000.0,
+                  "found": 0, "total": 0})
     return cases
 
 

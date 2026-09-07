@@ -1,34 +1,40 @@
 """
 engine/level_manager.py
 
-Gestione dello stato di gioco: livello corrente, scena corrente,
-punteggio, timer, eventi di completamento e preloading predittivo.
+Game state: current level and scene, score, timer, completion events and
+predictive preloading.
 
-Responsabilità:
-  - Tenere il conteggio oggetti trovati / totali
-  - Decrementare il timer e determinare se la scena è completata
-  - Calcolare il punteggio (base + bonus tempo + moltiplicatore stelle)
-  - Emettere eventi: SCENE_COMPLETE, LEVEL_COMPLETE, SCENE_FAILED
-  - Avviare il preload della scena successiva al momento giusto:
-      · quando ≥ 70% degli oggetti sono stati trovati
-      · oppure quando il timer è ≤ 40% del limite (trigger temporale)
+Responsibilities:
+  - counting the objects found against the goal objects of the scene
+  - running the clock and deciding when the scene is complete
+  - computing the score (points, time bonus, star multiplier)
+  - emitting SCENE_COMPLETE and LEVEL_COMPLETE
+  - starting the preload of the next scene at the right moment:
+      when at least 70% of the objects are found, or when the timer is down
+      to 40% of the limit
 
-Logica timer_behavior:
-  "complete"  — alla scadenza la scena avanza comunque (modalità casual)
-  "fail"      — alla scadenza la scena viene fallita e riavviata (modalità hard)
+Score:
+  points      = POINTS_PER_OBJECT * objects found
+  time bonus  = int(time_left / time_total * BONUS_TIME_MAX), only when the
+                scene is completed
+  stars       = 3 when everything is found and the bonus is at least 66% of
+                the maximum, 2 when everything is found, 1 otherwise
+  scene score = (points + time bonus) * star multiplier
 
-Punteggio:
-  punti_base  = POINTS_PER_OBJECT * oggetti_trovati
-  bonus_tempo = int(time_left / time_total * BONUS_TIME_MAX)   [solo se all found]
-  stelle      = 3 se trovati >= richiesti e bonus >= 66%
-                2 se trovati >= richiesti
-                1 altrimenti
-  score_scene = (punti_base + bonus_tempo) * moltiplicatore_stelle
+Not wired, despite appearances (measured 2026-09-07):
+  - The clock counts up and nothing compares it against a limit, so a scene is
+    never lost on time. `timer_behavior` is in the level schema with values
+    "complete" and "fail", the editor writes it and the web exporter ships it
+    in the manifest, but no runtime reads it.
+  - `_emit_scene_failed` and SCENE_FAILED therefore never fire, even though
+    engine/core.py handles that event, and the web runtime has no failure path
+    at all. The `failed` argument of compute_scene_score is only reachable by
+    calling it directly; its behaviour is pinned by tests/test_level_manager.py
+    so that wiring the mode later gives a defined result.
 """
 
 from __future__ import annotations
 
-import os
 import time
 from dataclasses import dataclass, field
 from typing import Optional, TYPE_CHECKING, Tuple
