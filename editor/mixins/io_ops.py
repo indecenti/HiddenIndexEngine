@@ -310,6 +310,7 @@ class IoOpsMixin:
         self.lang_manager.load_for_game(game_name, getattr(self, "current_lang", "it"))
         
         self.catalog          = _load_catalog(game_name)
+        self._bump_catalog_rev()
         self.effects_catalog  = _load_effects_catalog()
         self._load_strings()
         self.levels           = _discover_levels(self.game_path)
@@ -1392,6 +1393,7 @@ class IoOpsMixin:
             # --- 5. AGGIORNAMENTO STATO ---
             # Ricarichiamo il catalogo nell'editor
             self.catalog = _load_catalog(self.game_name)
+            self._bump_catalog_rev()
             self._status(self._TR("io_asset_deleted", "ASSET DELETED: {id}").format(
                 id=cat_id), OK_C, 4)
             

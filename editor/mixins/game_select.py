@@ -28,7 +28,8 @@ from editor.core.io import (
 )
 from editor.build_system import next_build_version
 from editor.ui.draw import (
-    _txt, _draw_text, _text_wh, _rect, _button, _in_rect, _draw_shape_icon, _scrollbar, _input_box
+    _txt, _draw_text, _text_wh, _rect, _button, _in_rect, _draw_shape_icon,
+    _scrollbar, _input_box, request_anim_frame,
 )
 from editor.ui.widgets import Button, WidgetGroup
 from engine.utils import get_base_path, get_logger
@@ -3814,6 +3815,9 @@ class _WebExportProgressModal:
         screen = editor.screen
         w_win, h_win = screen.get_size()
         panel = self._layout(w_win, h_win)
+        if self._thread is not None and self._thread.is_alive():
+            # Progress comes from the export thread, not from input events.
+            request_anim_frame()
 
         overlay = pygame.Surface((w_win, h_win), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, _WX_OVERLAY_ALPHA))

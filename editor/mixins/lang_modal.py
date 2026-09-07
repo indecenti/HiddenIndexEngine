@@ -46,6 +46,9 @@ class LangModalMixin:
             
             self._lang_data[lang] = data
 
+        # The catalog search matches against these labels.
+        self._bump_catalog_rev()
+
     def _lang_open(self, context="global", filter_key=None):
         # Rimossa la restrizione game_path per permettere la consultazione
         # delle stringhe Engine anche dal selettore progetti.
@@ -216,6 +219,7 @@ class LangModalMixin:
         lang = self.LANGS[li]
         self._lang_data.setdefault(lang, {})[key] = self._lang_buf
         self._lang_dirty = True
+        self._bump_catalog_rev()
 
     # ─────────────────────────────────────────────────────────────────────────
     # INPUT
@@ -377,6 +381,7 @@ class LangModalMixin:
                 self._lang_keys.append(new_key)
                 for lang in self.LANGS:
                     self._lang_data.setdefault(lang, {})[new_key] = ""
+                self._bump_catalog_rev()
                 self._lang_update_filter()
                 return
 

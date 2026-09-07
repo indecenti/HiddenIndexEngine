@@ -5,19 +5,35 @@ RenderPanelsMixin — rendering pannello sinistro (tree/catalog),
                     pannello destro (layers/props).
 """
 
+import unicodedata
+from collections import OrderedDict
+from functools import lru_cache
+
 import pygame
 
 from editor.constants import (
     TOP_BAR_H, STATUS_H, REF_W, REF_H,
     ACCENT, BORDER, BTN, BTN_AC, BTN_HO, PANEL,
     TXT, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C, ALWAYS_C, FX_C,
-    DEFAULT_LAYERS, UI_TIPS,
+    DEFAULT_LAYERS, UI_TIPS, CATALOG_VIEW_CACHE_MAX,
     layer_color,
 )
 from editor.core.io import _load_scene_data
 from editor.ui.draw import (
-    _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _slider, _input_box, _scrollbar, _draw_shape_icon,
+    _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _slider, _input_box,
+    _scrollbar, _draw_shape_icon, request_anim_frame,
 )
+
+
+# Styles offered by the catalog filter, with the pool they select.
+CATALOG_STYLES = ("tutti", "real", "line art", "cartoon")
+
+
+@lru_cache(maxsize=8192)
+def _normalize(text: str) -> str:
+    """Lowercase and strip the accents, so "citta" matches "città"."""
+    return "".join(c for c in unicodedata.normalize("NFD", text)
+                   if unicodedata.category(c) != "Mn").lower()
 
 
 class RenderPanelsMixin:
@@ -274,6 +290,72 @@ class RenderPanelsMixin:
                     counts[tag] = counts.get(tag, 0) + 1
         return [t for t, c in sorted(counts.items(), key=lambda x: -x[1]) if c >= min_count]
 
+    def _catalog_view(self, active_style: str, active_tags: set,
+                      query: str, tag_query: str) -> tuple:
+        """Catalog entries and tag chips matching the panel filters, memoized.
+
+        Building this scans the whole merged catalog (thousands of entries) and
+        translates every tag of every entry. Redoing it on each of the sixty
+        frames per second was the most expensive thing the editor did while
+        sitting idle. The result only depends on the filters, on the catalog
+        and on the strings it is searched by, so it is kept until one of them
+        changes (see LevelEditor._bump_catalog_rev).
+
+        Returns (style_counts, tag_items, filtered), where tag_items is the
+        list of (tag_id, translated label) of the chips and filtered the
+        catalog entries of the object list.
+        """
+        cache = getattr(self, "_catalog_view_cache", None)
+        if cache is None:
+            cache = OrderedDict()
+            self._catalog_view_cache = cache
+        key = (getattr(self, "_catalog_rev", 0), active_style,
+               tuple(sorted(active_tags)), query, tag_query, self.current_lang)
+        cached = cache.get(key)
+        if cached is not None:
+            cache.move_to_end(key)
+            return cached
+
+        style_counts = {s: 0 for s in CATALOG_STYLES}
+        style_counts["tutti"] = len(self.catalog)
+        pool = []
+        for entry in self.catalog:
+            style = entry.get("style", "real")
+            if style in style_counts and style != "tutti":
+                style_counts[style] += 1
+            if active_style == "tutti" or style == active_style:
+                pool.append(entry)
+
+        # In "tutti" only the recurring tags are worth a chip; inside a single
+        # style every tag of the pool is relevant.
+        min_count = 2 if active_style == "tutti" else 1
+        tag_items = []
+        for tag in self._get_catalog_tags(pool, min_count=min_count):
+            label = self._TR(f"tag_{tag}", tag.capitalize())
+            if not tag_query or tag_query in label.lower() or tag_query in tag.lower():
+                tag_items.append((tag, label))
+        # Riordina: i tag attivi saltano in cima
+        tag_items.sort(key=lambda x: x[0] not in active_tags)
+
+        q_norm = _normalize(query.lstrip("#"))
+        filtered = [
+            c for c in pool
+            if (not active_tags or all(t in c.get("tags", []) for t in active_tags))
+            and (
+                not query or query in c["id"].lower()
+                or any(q_norm in _normalize(t) for t in c.get("tags", []))
+                or any(q_norm in _normalize(self._TR(f"tag_{t}", t)) for t in c.get("tags", []))
+                or any(query in str(self._lang_data.get(l, {}).get(c["label_key"], "")).lower()
+                       for l in self.LANGS)
+            )
+        ]
+
+        result = (style_counts, tag_items, filtered)
+        cache[key] = result
+        while len(cache) > CATALOG_VIEW_CACHE_MAX:
+            cache.popitem(last=False)
+        return result
+
     def _r_catalog(self, h):
         self._catalog_item_hitboxes = [] # Reset ogni frame
         mx, my_raw = pygame.mouse.get_pos()
@@ -329,14 +411,14 @@ class RenderPanelsMixin:
 
         # 2.5 Filtro Stile (Dropdown Intelligente)
         STYLE_Y = tag_search_r.bottom + 8
-        styles = ["tutti", "real", "line art", "cartoon"]
+        styles = list(CATALOG_STYLES)
         current_st = getattr(self, "catalog_style_filter", "tutti")
-        
-        # Conteggio oggetti per stile
-        st_counts = {"tutti": len(self.catalog), "real": 0, "line art": 0, "cartoon": 0}
-        for c_item in self.catalog:
-            st = c_item.get("style", "real")
-            if st in st_counts: st_counts[st] += 1
+
+        # Style counts, tag chips and filtered entries in one memoized pass.
+        active_style = getattr(self, "catalog_style_filter", "real")
+        query = self.catalog_search.lower().strip()
+        st_counts, tag_items, filtered = self._catalog_view(
+            active_style, active_tags, query, tag_q)
 
         # Rettangolo del selettore
         sel_rect = pygame.Rect(MARGIN, STYLE_Y, INNER_W, 28)
@@ -362,29 +444,6 @@ class RenderPanelsMixin:
         CHIP_H      = 26
         CHIP_COLS   = 2
 
-        active_style = getattr(self, "catalog_style_filter", "real")
-        
-        # FIX: Filtriamo il catalogo per stile PRIMA di estrarre i tag suggeriti.
-        # Se siamo in "tutti", mostriamo i tag più frequenti (min_count=2).
-        # Se siamo in uno stile specifico, mostriamo TUTTI i tag pertinenti (min_count=1).
-        style_filtered_pool = [
-            c for c in self.catalog 
-            if (active_style == "tutti" or c.get("style", "real") == active_style)
-        ]
-        
-        m_count = 2 if active_style == "tutti" else 1
-        top_tags = self._get_catalog_tags(style_filtered_pool, min_count=m_count)
-        
-        # Filtro categorie: cerca sia nel tag ID che nel tag tradotto (label)
-        tag_items = []
-        for t in top_tags:
-            label = self._TR(f"tag_{t}", t.capitalize())
-            if not tag_q or tag_q in label.lower() or tag_q in t.lower():
-                tag_items.append((t, label))
-        
-        # Riordina: i tag attivi saltano in cima
-        tag_items.sort(key=lambda x: x[0] not in active_tags)
-        
         tag_clip = pygame.Rect(MARGIN, CHIPS_TOP, INNER_W, TAG_BOX_H)
         _rect(self.screen, (20, 21, 28), tag_clip, radius=6)
         _rect(self.screen, BORDER, tag_clip, 1, radius=6)
@@ -471,23 +530,6 @@ class RenderPanelsMixin:
         clip = pygame.Rect(0, list_y_start, self.panel_l_w, available_h)
         self.screen.set_clip(clip)
 
-        import unicodedata
-        def normalize(s):
-            return "".join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn').lower()
-
-        q = self.catalog_search.lower().strip()
-        q_norm = normalize(q.lstrip("#"))
-        
-        filtered = [
-            c for c in style_filtered_pool 
-            if (not active_tags or all(t in c.get("tags", []) for t in active_tags))
-            and (
-                not q or q in c["id"].lower() 
-                or any(q_norm in normalize(t) for t in c.get("tags", []))
-                or any(q_norm in normalize(self._TR(f"tag_{t}", t)) for t in c.get("tags", [])) 
-                or any(q in str(self._lang_data.get(l,{}).get(c["label_key"],"")).lower() for l in self.LANGS)
-            )
-        ]
         if not filtered:
             txt = self._TR("cat_no_results") if (self.catalog_search or active_tags) else self._TR("cat_empty")
             _draw_text(self.screen, txt, "sm", (100, 105, 130), MARGIN + 4, list_y_start + 12)
@@ -616,6 +658,8 @@ class RenderPanelsMixin:
             return
 
         import math as _math
+        # The effect thumbnails animate on _fx_editor_time.
+        request_anim_frame()
         t = getattr(self, "_fx_editor_time", 0.0)
 
         for i, fx_cat in enumerate(effects):

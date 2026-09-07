@@ -16,7 +16,8 @@ from editor.constants import (
     layer_color,
 )
 from editor.ui.draw import (
-    _txt, _draw_text, _draw_text_wrapped, _rect, _button, _in_rect, _text_wh, _draw_shape_icon
+    _txt, _draw_text, _draw_text_wrapped, _rect, _button, _in_rect, _text_wh,
+    _draw_shape_icon, request_anim_frame,
 )
 from engine.utils import warp_surface, apply_grayscale
 from engine.effect_renderer import (
@@ -717,7 +718,11 @@ class RenderCanvasMixin:
 
             if not self.layer_vis.get(lid, True):
                 continue
-            
+
+            # This overlay is on screen and animates on its own clock, so the
+            # main loop has to keep drawing (see LevelEditor._frame_needed).
+            request_anim_frame()
+
             ex, ey = fx.get("x", 0), fx.get("y", 0)
             er = fx.get("radius", 50)
             color = tuple(fx.get("color", [255, 215, 60]))

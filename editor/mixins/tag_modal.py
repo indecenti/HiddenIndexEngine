@@ -148,6 +148,7 @@ class TagModalMixin:
         if modified:
             # Refresh catalogo in memoria
             self.catalog = _load_catalog(self.game_name)
+            self._bump_catalog_rev()
             self._status(self._TR("tg_updated", "Tags updated for {0}").format(cid), OK_C, 3)
         else:
             self._status(self._TR("tg_save_error", "Error: cannot save the tags for {0}").format(cid), ERR_C, 3)

@@ -41,6 +41,9 @@ class InputHandlersMixin:
             pygame.MOUSEMOTION, pygame.MOUSEWHEEL,
         )
         for ev in pygame.event.get():
+            # Any event can change what is on screen: let the main loop draw
+            # the next frame instead of gating it away (see _frame_needed).
+            self._needs_redraw = True
             # QUIT ha priorità assoluta — non può essere bloccato da nessun modale
             if ev.type == pygame.QUIT:
                 self._request_nav("file_quit")

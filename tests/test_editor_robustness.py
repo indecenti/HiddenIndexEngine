@@ -232,7 +232,14 @@ class FakeLoopEditor:
         from editor.editor_base import LevelEditor
         self.run = LevelEditor.run.__get__(self)
         self._crash_guard = LevelEditor._crash_guard.__get__(self)
+        self._frame_needed = LevelEditor._frame_needed.__get__(self)
         self.running = True
+        # State read by the real _frame_needed (see LevelEditor.__init__).
+        self._needs_redraw = True
+        self._anim_active = False
+        self._loading = False
+        self.status_until = 0
+        self._last_frame_t = 0.0
         self.clock = type("C", (), {"tick": lambda self, fps: 0})()
         self.frame = 0
         self.fail_frames = fail_frames
@@ -244,6 +251,8 @@ class FakeLoopEditor:
         self.cleaned = False
 
     def _handle_events(self):
+        # The real one marks a redraw for every event it processes.
+        self._needs_redraw = True
         self.frame += 1
         if self.frame > self.total:
             self.running = False

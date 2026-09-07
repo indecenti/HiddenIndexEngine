@@ -29,7 +29,7 @@ from editor.constants import (
 )
 from editor.core.io import _load_json, _save_json, _load_catalog
 from editor.mixins.img_editor_logic import evolved_trim
-from editor.ui.draw import _rect, _draw_text, _in_rect, _text_wh
+from editor.ui.draw import _rect, _draw_text, _in_rect, _text_wh, request_anim_frame
 from editor.ui.widgets import Button, InputBox, ScrollList, WidgetGroup
 from engine.language_manager import tr
 
@@ -425,6 +425,7 @@ class _BatchImportModal:
         # Stesso refresh del modale nuovo oggetto: ricarica il catalogo unito
         game_id = getattr(editor, "game_name", None) or editor.game_path.name
         editor.catalog = _load_catalog(game_id)
+        editor._bump_catalog_rev()
         # Seed in memoria per l'editor traduzioni gia' caricato (come newobj)
         if getattr(editor, "_lang_data", None):
             for slug in self.imported_ids:
@@ -495,6 +496,9 @@ class _BatchImportModal:
         screen = editor.screen
         w_win, h_win = screen.get_size()
         panel = self._layout(w_win, h_win)
+        if self.running:
+            # Progress comes from the worker thread, not from input events.
+            request_anim_frame()
         self.tags_input.enabled = not self.running
         self.btn_start.enabled = not self.running
         self.btn_style_cartoon.enabled = not self.running
