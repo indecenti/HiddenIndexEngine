@@ -2725,7 +2725,6 @@ def place_objects(
         eff_w = ref_w * scale
         eff_h = ref_h * scale
         eff_size = max(eff_w, eff_h)
-        eff_radius = ref_radius * scale
 
         # ── SCORE MATRIX + zona stratificata ──────────────────────────────
         # Base object-invariant da cache (calcolata una volta per id), poi i

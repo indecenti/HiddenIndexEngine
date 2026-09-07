@@ -25,6 +25,23 @@ MUSIC_EXTENSIONS = (".mp3",)
 # Nome del catalogo tag/durate persistente nella cartella music
 MUSIC_CATALOG_FILENAME = "music_catalog.json"
 
+# Row geometry of the playlist. The row is drawn on its own surface and blitted
+# into the list at (_ROW_PAD_X, _ROW_PAD_Y), so anything inside it has to be
+# offset by that to be hit-tested on screen.
+_ROW_H = 125
+_ROW_PAD_X, _ROW_PAD_Y = 12, 8
+_BAR_X, _BAR_Y = 73, 92      # seek bar inside the row surface
+_BAR_W, _BAR_H = 400, 4
+_BAR_HIT_H = 20              # the bar is thin: the hitbox is not
+
+
+def _seek_bar_rect(list_x: int, row_y: int) -> pygame.Rect:
+    """Screen rect of the seek bar of the row drawn at (list_x, row_y)."""
+    return pygame.Rect(list_x + _ROW_PAD_X + _BAR_X,
+                       row_y + _ROW_PAD_Y + _BAR_Y - (_BAR_HIT_H - _BAR_H) // 2,
+                       _BAR_W, _BAR_HIT_H)
+
+
 class MusicModalMixin:
     """Modale avanzata per la gestione della musica con UX testo migliorata."""
 
@@ -262,7 +279,7 @@ class MusicModalMixin:
             return
 
         list_x, list_y, list_w, list_h = dx + 25, dy + 130, dw - 50, dh - 240
-        row_h = 125
+        row_h = _ROW_H
         
         if _in_rect((mx, my), (list_x, list_y, list_w, list_h)):
             # Troviamo l'indice di partenza visibile
@@ -306,8 +323,11 @@ class MusicModalMixin:
                 
                 # Seek Bar
                 if self._music_playing == name:
-                    if _in_rect((mx, my), (list_x + 75, ry + 90, 400, 20)):
-                        self._music_seeking = True; self._music_modal_mmove(mx, my, w, h); return
+                    if _in_rect((mx, my), _seek_bar_rect(list_x, ry)):
+                        self._music_seek_origin = _seek_bar_rect(list_x, ry).x
+                        self._music_seeking = True
+                        self._music_modal_mmove(mx, my, w, h)
+                        return
 
         self._music_confirm_rename(); self._music_confirm_tags()
         self._music_search_active = False; self._music_delete_pending = None
@@ -411,6 +431,7 @@ class MusicModalMixin:
     def _music_modal_mup(self):
         """Fine trascinamento o seek."""
         self._music_seeking = False
+        self._music_seek_origin = None
         self._music_is_dragging = False
 
     def _music_modal_mmove(self, mx, my, w, h):
@@ -419,10 +440,13 @@ class MusicModalMixin:
         if now - getattr(self, "_last_seek_time", 0) < 100: return
         self._last_seek_time = now
         
-        dx, dy = (w - 1100) // 2, (h - 800) // 2
-        bar_x, bar_w = dx + 85, 400
+        # The origin is the one the mouse-down measured on the row that was
+        # actually drawn, not a second guess at where the bar should be.
+        bar_x = getattr(self, "_music_seek_origin", None)
+        if bar_x is None:
+            return
         try:
-            ratio = _clamp(mx - bar_x, 0, bar_w) / bar_w
+            ratio = _clamp(mx - bar_x, 0, _BAR_W) / _BAR_W
             dur = self._music_durations.get(self._music_playing, 1.0)
             self._music_start_time = dur * ratio
             pygame.mixer.music.load(str(self._music_dir / self._music_playing))
@@ -472,7 +496,7 @@ class MusicModalMixin:
         _rect(self.screen, (40, 42, 65), (list_x, list_y, list_w, list_h), 1, radius=16) 
         
         # --- SISTEMA SCROLL FISICO (LERP + MOMENTUM) ---
-        row_h = 125
+        row_h = _ROW_H
         total_items = len(self._music_files)
         total_h = total_items * row_h
         max_scroll_px = max(0, total_h - list_h)
@@ -518,7 +542,9 @@ class MusicModalMixin:
             is_p = (self._music_playing == name)
             is_sel = (name in menu_names)
             is_del = (self._music_delete_pending == name)
-            hov = _in_rect((mx, my), (list_x + 12, ry + 8, list_w - 24, row_h - 16))
+            hov = _in_rect((mx, my), (list_x + _ROW_PAD_X, ry + _ROW_PAD_Y,
+                                      list_w - _ROW_PAD_X * 2,
+                                      row_h - _ROW_PAD_Y * 2))
 
             # Cache key basata sullo stato visuale della riga
             cache_key = (name, is_p, is_sel, is_del, hov, self._music_seeking if is_p else False)
@@ -560,13 +586,15 @@ class MusicModalMixin:
                 _draw_text(row_surf, f"({dur_s})", "sm", (80, 90, 120), tx + tw + 45, 19)
 
                 if is_p:
-                    bar_x, bar_w, bar_y = tx, 400, 92
-                    _rect(row_surf, (60, 65, 90), (bar_x, bar_y, bar_w, 4), radius=2)
+                    bar_x, bar_w, bar_y = _BAR_X, _BAR_W, _BAR_Y
+                    _rect(row_surf, (60, 65, 90), (bar_x, bar_y, bar_w, _BAR_H), radius=2)
                     pos = pygame.mixer.music.get_pos()
                     cur_s = self._music_start_time + (pos/1000.0) if pos>=0 else self._music_start_time
                     ratio = min(1.0, cur_s/dur) if dur > 0 else 0
-                    _rect(row_surf, ACCENT, (bar_x, bar_y, int(bar_w*ratio), 4), radius=2)
-                    pygame.draw.circle(row_surf, TXT_HI, (bar_x + int(bar_w*ratio), bar_y + 2), 6)
+                    _rect(row_surf, ACCENT, (bar_x, bar_y, int(bar_w*ratio), _BAR_H), radius=2)
+                    pygame.draw.circle(row_surf, TXT_HI,
+                                       (bar_x + int(bar_w * ratio),
+                                        bar_y + _BAR_H // 2), 6)
 
                 # Buttons
                 sel_r = (list_w - 24 - 118, 34, 100, 40)

@@ -743,7 +743,6 @@ class RenderCanvasMixin:
             er = fx.get("radius", 50)
             color = tuple(fx.get("color", [255, 215, 60]))
             intensity = fx.get("intensity", 0.85)
-            period = max(0.01, fx.get("pulse_period", 2.0))
             phase = fx.get("phase", 0.0)
 
             # Aggiorna lo stato temporale (LOGICA CENTRALIZZATA)

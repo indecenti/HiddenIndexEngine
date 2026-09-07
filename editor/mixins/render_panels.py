@@ -1618,7 +1618,6 @@ class RenderPanelsMixin:
 
     def _r_effect_props(self, rx0, h, idx, y):
         """Proprietà dell'effetto selezionato nel pannello destro."""
-        list_y_start = TOP_BAR_H + 36
         fx = self.scene_data["effects"][idx]
         fx_cat = next((c for c in getattr(self, "effects_catalog", [])
                        if c["id"] == fx.get("effect_id", "")), None)

@@ -21,15 +21,21 @@ from editor.mixins.batch_import import (
     draw_checkbox, process_image, rembg_available,
 )
 from editor.ui.draw import (
-    _txt, _draw_text, _rect, _button, _in_rect,
+    _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _button_w, _ui_scale,
 )
 
-# Geometria dialogo: altezza estesa per la riga delle opzioni di elaborazione
-_DLG_W, _DLG_H = 500, 410
-# Offset verticali delle righe aggiunte (condivisi tra hit-test e rendering)
-_Y_PROC = 326   # checkbox "Rimuovi sfondo (AI)" / "Auto-ritaglio"
-_Y_BTNS = 364   # riga bottoni conferma/annulla
-_CB_H = 24      # altezza hitbox checkbox
+# Geometry of the dialog at UI scale 1.0. Everything that holds text grows with
+# the font: the rows used to advance by fixed pixel steps while their labels
+# grew, so above scale 1.0 a label ran into the field under it. And the click
+# handler re-derived every row offset with its own literals (54, 114, 148, ...)
+# that the renderer only reproduced by accident.
+_DLG_W = 500
+_LABEL_COL_MIN = 120   # narrowest the label column may get
+_LABEL_PAD = 24        # gap between the longest label and the field column
+_FIELD_PAD = 12        # right margin of a field inside the dialog
+_ROW_GAP = 10       # gap between two rows
+_SECTION_GAP = 16   # gap around a separator
+_CB_H = 24          # checkbox hitbox height
 # Chiavi impostazioni persistite (.editor_settings.json)
 _SETTING_REMOVE_BG = "newobj_remove_bg"
 _SETTING_AUTOTRIM = "newobj_autotrim"
@@ -100,77 +106,76 @@ class NewObjModalMixin:
         self._newobj_buf = ""
 
     def _newobj_click(self, mx, my_raw, w, h):
-        dw, dh = _DLG_W, _DLG_H
-        dx, dy = (w-dw)//2, (h-dh)//2
+        """Click inside the dialog, resolved on the rects the renderer drew.
 
-        half     = (dw-20)//2-5
-        y_btns   = dy + _Y_BTNS
-        close_r  = (dx+dw-36, dy+8, 26, 22)
-        cancel_r = (dx+10+half+10, y_btns, half, 34)
+        The offsets used to be written a second time here, as literals that
+        matched the ones the renderer accumulated only as long as nobody
+        touched either. `w` and `h` are kept for the signature the router
+        calls with.
+        """
+        hits = getattr(self, "_newobj_hitboxes", None)
+        if not hits:
+            return                       # not drawn yet: nothing to hit
+        pos = (mx, my_raw)
+
+        def hit(name) -> bool:
+            r = hits.get(name)
+            return bool(r) and _in_rect(pos, r)
 
         if getattr(self, "_newobj_busy", False):
             # Durante l'elaborazione: solo X/Annulla (scartano il risultato)
-            if _in_rect((mx, my_raw), close_r) or _in_rect((mx, my_raw), cancel_r):
+            if hit("close") or hit("cancel"):
                 self._newobj_cancel_processing()
                 self._newobj_modal = False
             return
 
-        if _in_rect((mx, my_raw), close_r):
-            self._newobj_modal = False; return
-
-        y_id     = dy + 54
-        y_icon   = dy + 114
-        y_det    = dy + 148
-        y_radius = dy + 182
-        y_width  = dy + 218
-        y_height = dy + 254
-        y_hint   = dy + 290
-        y_proc   = dy + _Y_PROC
-
-        if _in_rect((mx, my_raw), (dx+160, y_id, dw-172, 26)):
-            self._newobj_commit_field()
-            self._newobj_field = "id"
-            self._newobj_buf   = self._newobj["id"]; return
-
-        if _in_rect((mx, my_raw), (dx+10, y_icon, dw-50, 28)):
-            self._newobj_commit_field()
-            p = _file_dialog("Scegli icona PNG",
-                             filetypes=[("PNG", "*.png")],
-                             initialdir=self.game_path)
-            if p:
-                self._newobj["icon_path"] = str(p)
+        if hit("close") or hit("cancel"):
+            self._newobj_modal = False
             return
 
-        if _in_rect((mx, my_raw), (dx+160, y_det, 90, 26)):
-            self._newobj["detection"] = "circle"; return
-        if _in_rect((mx, my_raw), (dx+258, y_det, 90, 26)):
-            self._newobj["detection"] = "rect";   return
+        if hit("id"):
+            self._newobj_commit_field()
+            self._newobj_field = "id"
+            self._newobj_buf = self._newobj["id"]
+            return
 
-        num_fields = [("radius", y_radius), ("width", y_width),
-                      ("height", y_height), ("hint",  y_hint)]
-        for fname, fy in num_fields:
-            if _in_rect((mx, my_raw), (dx+160, fy, dw-172, 26)):
+        if hit("icon"):
+            self._newobj_commit_field()
+            picked = _file_dialog(self._TR("nob_pick_icon_title", "Choose a PNG icon"),
+                                  filetypes=[("PNG", "*.png")],
+                                  initialdir=self.game_path)
+            if picked:
+                self._newobj["icon_path"] = str(picked)
+            return
+
+        if hit("type_circle"):
+            self._newobj["detection"] = "circle"
+            return
+        if hit("type_rect"):
+            self._newobj["detection"] = "rect"
+            return
+
+        for field in ("radius", "width", "height", "hint"):
+            if hit(field):
                 self._newobj_commit_field()
-                self._newobj_field = fname
-                self._newobj_buf   = str(self._newobj.get(fname, ""))
+                self._newobj_field = field
+                self._newobj_buf = str(self._newobj.get(field, ""))
                 return
 
         # Toggle elaborazione icona (persistiti in .editor_settings.json)
-        cb_w = (dw - 30) // 2
-        if _in_rect((mx, my_raw), (dx+10, y_proc, cb_w, _CB_H)):
+        if hit("remove_bg"):
             self._newobj["remove_bg"] = not self._newobj.get("remove_bg", False)
             self._save_editor_setting(_SETTING_REMOVE_BG, self._newobj["remove_bg"])
             return
-        if _in_rect((mx, my_raw), (dx+20+cb_w, y_proc, cb_w, _CB_H)):
+        if hit("autotrim"):
             self._newobj["autotrim"] = not self._newobj.get("autotrim", False)
             self._save_editor_setting(_SETTING_AUTOTRIM, self._newobj["autotrim"])
             return
 
-        if _in_rect((mx, my_raw), (dx+10, y_btns, half, 34)):
+        if hit("add"):
             self._newobj_commit_field()
-            self._confirm_newobj(); return
-        if _in_rect((mx, my_raw), cancel_r):
-            self._newobj_modal = False; return
+            self._confirm_newobj()
+            return
 
     def _confirm_newobj(self):
         import shutil
@@ -311,108 +316,175 @@ class NewObjModalMixin:
     # RENDERING
     # ─────────────────────────────────────────────────────────────────────────
 
+    # Labels of the "label: [field]" rows, in the order they are drawn.
+    _NEWOBJ_LABELS = (
+        ("nob_id", "Object ID:"),
+        ("nob_type", "Type:"),
+        ("nob_radius", "Radius (px):"),
+        ("nob_width", "Width (px):"),
+        ("nob_height", "Height (px):"),
+        ("nob_hint", "Hint delay (s):"),
+    )
+
+    def _newobj_row_h(self) -> int:
+        """Height of one labelled row, following the font of its label."""
+        return max(26, _text_wh("Ag", "sm")[1] + 8)
+
+    def _newobj_label_col(self) -> int:
+        """X of the field column: as far right as the longest label needs.
+
+        A fixed column truncated the longest translated label ("Hinweis-
+        Verzoegerung (s):" became "Hinweis-Verzo...") as soon as the UI scale
+        or the language grew it.
+        """
+        widest = max(_text_wh(self._TR(key, default), "sm")[0]
+                     for key, default in self._NEWOBJ_LABELS)
+        return max(_LABEL_COL_MIN, widest + _LABEL_PAD)
+
     def _r_newobj_modal(self, w, h):
         # Applica l'eventuale risultato del worker di elaborazione (main loop)
         self._newobj_poll()
         if not self._newobj_modal:
             return  # il poll puo' aver registrato l'oggetto e chiuso il modale
 
+        mx2, my2 = pygame.mouse.get_pos()
+        busy = getattr(self, "_newobj_busy", False)
+        row_h = self._newobj_row_h()
+        label_h = _text_wh("Ag", "sm")[1]
+        title_h = _text_wh("Ag", "lg")[1]
+        show_c = (self._newobj["detection"] == "circle")
+
+        label_col = self._newobj_label_col()
+        dw = max(int(round(_DLG_W * _ui_scale())),
+                 label_col + _LABEL_COL_MIN + _FIELD_PAD + 20)
+        # The dialog is exactly as tall as the rows it has to stack.
+        dh = (10 + title_h + _SECTION_GAP + _ROW_GAP
+              + row_h + _ROW_GAP
+              + label_h + 2 + row_h + 2 + 2 + _ROW_GAP
+              + row_h + _ROW_GAP
+              + (row_h + _ROW_GAP) * 4
+              + _CB_H + _SECTION_GAP
+              + 8 + row_h + 8 + 10)
+        dx, dy = (w - dw) // 2, max(10, (h - dh) // 2)
+
         dim = pygame.Surface((w, h), pygame.SRCALPHA)
         dim.fill((0, 0, 0, 160))
         self.screen.blit(dim, (0, 0))
-
-        dw, dh = _DLG_W, _DLG_H
-        dx, dy = (w-dw)//2, (h-dh)//2
-        busy = getattr(self, "_newobj_busy", False)
 
         box = pygame.Rect(dx, dy, dw, dh)
         _rect(self.screen, (42, 42, 52), box, radius=8)
         _rect(self.screen, ACCENT, box, 2, radius=8)
 
-        title = _txt(self._TR("nob_title", "+ New catalog object"), "lg", TXT_HI)
-        self.screen.blit(title, (dx + 12, dy + 10))
+        # Hitboxes published for _newobj_click: one geometry, not two.
+        hits: dict = {}
+        self._newobj_hitboxes = hits
+
+        self.screen.blit(_txt(self._TR("nob_title", "+ New catalog object"),
+                              "lg", TXT_HI), (dx + 12, dy + 10))
+        close_r = pygame.Rect(dx + dw - 36, dy + 8, 26, 22)
+        _button(self.screen, close_r, "X", _in_rect((mx2, my2), close_r))
+        hits["close"] = close_r
         if busy:
-            s = _txt(self._TR("nob_processing", "Processing..."), "sm", ACCENT)
-            self.screen.blit(s, (dx + dw - s.get_width() - 44, dy + 14))
+            note = _txt(self._TR("nob_processing", "Processing..."), "sm", ACCENT)
+            self.screen.blit(note, (close_r.left - note.get_width() - 8, dy + 14))
 
-        mx2, my2 = pygame.mouse.get_pos()
-        xr = pygame.Rect(dx + dw - 36, dy + 8, 26, 22)
-        _button(self.screen, xr, "X", _in_rect((mx2, my2), xr))
-
-        y = dy + 44
+        y = dy + 10 + title_h + _SECTION_GAP
         pygame.draw.line(self.screen, BORDER, (dx, y), (dx + dw, y))
-        y += 10
+        y += _ROW_GAP
 
-        self._r_newobj_field(dx, y, dw, "ID oggetto:", "id", self._newobj["id"])
-        y += 42
+        hits["id"] = self._r_newobj_field(
+            dx, y, dw, self._TR("nob_id", "Object ID:"), "id", self._newobj["id"])
+        y += row_h + _ROW_GAP
 
-        s = _txt(self._TR("nob_png_icon", "PNG icon:"), "sm", TXT_DIM)
-        self.screen.blit(s, (dx + 10, y))
-        y += 18
-        pick_r   = pygame.Rect(dx + 10, y, dw - 50, 28)
+        self.screen.blit(_txt(self._TR("nob_png_icon", "PNG icon:"), "sm", TXT_DIM),
+                         (dx + 10, y))
+        y += label_h + 2
+        pick_r = pygame.Rect(dx + 10, y, dw - 20, row_h + 2)
         icon_txt = (Path(self._newobj["icon_path"]).name
-                    if self._newobj["icon_path"] else "— clicca per scegliere —")
-        icon_c   = TXT if self._newobj["icon_path"] else TXT_DIM
-        _rect(self.screen, BTN_HO if _in_rect((mx2, my2), pick_r) else BTN, pick_r, radius=4)
+                    if self._newobj["icon_path"]
+                    else self._TR("nob_pick_icon", "- click to choose -"))
+        icon_c = TXT if self._newobj["icon_path"] else TXT_DIM
+        _rect(self.screen, BTN_HO if _in_rect((mx2, my2), pick_r) else BTN,
+              pick_r, radius=4)
         _rect(self.screen, BORDER, pick_r, 1, radius=4)
-        _draw_text(self.screen, icon_txt, "sm", icon_c, dx + 18, y + 6, dw - 70)
+        thumb = row_h
+        _draw_text(self.screen, icon_txt, "sm", icon_c, pick_r.x + 8,
+                   pick_r.y + (pick_r.h - label_h) // 2, pick_r.w - thumb - 24)
         if self._newobj["icon_path"]:
-            ic = self._load_img(Path(self._newobj["icon_path"]), (28, 28))
+            ic = self._load_img(Path(self._newobj["icon_path"]), (thumb, thumb))
             if ic:
-                self.screen.blit(ic, (dx + dw - 42, y + 0))
-        y += 34
+                self.screen.blit(ic, (pick_r.right - thumb - 6, pick_r.y + 1))
+        hits["icon"] = pick_r
+        y += pick_r.h + 2 + _ROW_GAP
 
-        s   = _txt(self._TR("nob_type", "Type:"), "sm", TXT_DIM)
-        self.screen.blit(s, (dx + 10, y))
-        det  = self._newobj["detection"]
-        cr_r = pygame.Rect(dx + 160, y, 90, 26)
-        rc_r = pygame.Rect(dx + 258, y, 90, 26)
-        _button(self.screen, cr_r, self._TR("nob_circle", "Circle"),  _in_rect((mx2, my2), cr_r), active=(det == "circle"))
-        _button(self.screen, rc_r, self._TR("nob_rect", "Rect."), _in_rect((mx2, my2), rc_r), active=(det == "rect"))
-        y += 34
+        self.screen.blit(_txt(self._TR("nob_type", "Type:"), "sm", TXT_DIM),
+                         (dx + 10, y + (row_h - label_h) // 2))
+        circle_label = self._TR("nob_circle", "Circle")
+        rect_label = self._TR("nob_rect", "Rect.")
+        cr_r = pygame.Rect(dx + label_col, y,
+                           _button_w(circle_label, "sm", min_w=90), row_h)
+        rc_r = pygame.Rect(cr_r.right + 8, y,
+                           _button_w(rect_label, "sm", min_w=90), row_h)
+        _button(self.screen, cr_r, circle_label, _in_rect((mx2, my2), cr_r),
+                active=show_c)
+        _button(self.screen, rc_r, rect_label, _in_rect((mx2, my2), rc_r),
+                active=not show_c)
+        hits["type_circle"], hits["type_rect"] = cr_r, rc_r
+        y += row_h + _ROW_GAP
 
-        show_c = (det == "circle")
-        self._r_newobj_field(dx, y, dw, "Raggio (px):",    "radius",
-                             str(self._newobj["radius"]),  enabled=show_c);     y += 36
-        self._r_newobj_field(dx, y, dw, "Larghezza (px):", "width",
-                             str(self._newobj["width"]),   enabled=not show_c); y += 36
-        self._r_newobj_field(dx, y, dw, "Altezza (px):",   "height",
-                             str(self._newobj["height"]),  enabled=not show_c); y += 36
-        self._r_newobj_field(dx, y, dw, "Hint delay (s):", "hint",
-                             str(self._newobj["hint"]));                         y += 36
+        for field, key, default, enabled in (
+                ("radius", "nob_radius", "Radius (px):", show_c),
+                ("width", "nob_width", "Width (px):", not show_c),
+                ("height", "nob_height", "Height (px):", not show_c),
+                ("hint", "nob_hint", "Hint delay (s):", True)):
+            hits[field] = self._r_newobj_field(
+                dx, y, dw, self._TR(key, default), field,
+                str(self._newobj[field]), enabled=enabled)
+            y += row_h + _ROW_GAP
 
         # Opzioni di elaborazione icona (persistite tra sessioni)
         cb_w = (dw - 30) // 2
-        draw_checkbox(self.screen, pygame.Rect(dx + 10, y, cb_w, _CB_H),
-                      "Rimuovi sfondo (AI)", self._newobj.get("remove_bg", False),
-                      enabled=not busy)
-        draw_checkbox(self.screen, pygame.Rect(dx + 20 + cb_w, y, cb_w, _CB_H),
-                      "Auto-ritaglio", self._newobj.get("autotrim", False),
-                      enabled=not busy)
-        y += 30
+        rm_r = pygame.Rect(dx + 10, y, cb_w, _CB_H)
+        at_r = pygame.Rect(dx + 20 + cb_w, y, cb_w, _CB_H)
+        draw_checkbox(self.screen, rm_r,
+                      self._TR("nob_remove_bg", "Remove background (AI)"),
+                      self._newobj.get("remove_bg", False), enabled=not busy)
+        draw_checkbox(self.screen, at_r,
+                      self._TR("nob_autotrim", "Auto-crop"),
+                      self._newobj.get("autotrim", False), enabled=not busy)
+        hits["remove_bg"], hits["autotrim"] = rm_r, at_r
+        y += _CB_H + _SECTION_GAP
 
         pygame.draw.line(self.screen, BORDER, (dx, y), (dx + dw, y))
         y += 8
-        half   = (dw - 20) // 2 - 5
-        add_r  = pygame.Rect(dx + 10,             y, half, 34)
-        ann_r  = pygame.Rect(dx + 10 + half + 10, y, half, 34)
+        half = (dw - 30) // 2
+        add_r = pygame.Rect(dx + 10, y, half, row_h + 8)
+        ann_r = pygame.Rect(add_r.right + 10, y, half, row_h + 8)
         can_add = bool(self._newobj["id"].strip() and self._newobj["icon_path"]
                        and not busy)
-        add_label = "Elaborazione..." if busy else "+ Aggiungi al catalogo"
-        _button(self.screen, add_r, add_label,
-                _in_rect((mx2, my2), add_r), active=can_add)
+        add_label = (self._TR("nob_processing", "Processing...") if busy
+                     else self._TR("nob_add_to_catalog", "+ Add to catalog"))
+        _button(self.screen, add_r, add_label, _in_rect((mx2, my2), add_r),
+                active=can_add)
         _button(self.screen, ann_r, self._TR("btn_cancel", "Cancel"),
                 _in_rect((mx2, my2), ann_r), danger=True)
+        hits["add"], hits["cancel"] = add_r, ann_r
 
     def _r_newobj_field(self, dx, y, dw, label, field_id, value, enabled=True):
+        """Draw one "label: [field]" row. Returns the rect of the field."""
+        row_h = self._newobj_row_h()
+        label_h = _text_wh("Ag", "sm")[1]
+        label_col = self._newobj_label_col()
         lc = TXT if enabled else TXT_DIM
-        s  = _txt(label, "sm", lc)
-        self.screen.blit(s, (dx + 10, y))
+        _draw_text(self.screen, label, "sm", lc, dx + 10,
+                   y + (row_h - label_h) // 2, label_col - 20)
         is_active = (self._newobj_field == field_id and enabled)
         bg = (50, 50, 65) if is_active else (BTN if enabled else (35, 35, 42))
-        r  = pygame.Rect(dx + 160, y, dw - 172, 26)
+        r = pygame.Rect(dx + label_col, y, dw - label_col - _FIELD_PAD, row_h)
         _rect(self.screen, bg, r, radius=3)
         _rect(self.screen, ACCENT if is_active else BORDER, r, 1, radius=3)
         display = (self._newobj_buf + "|") if is_active else value
         _draw_text(self.screen, display, "mono",
-                   TXT_HI if enabled else TXT_DIM, dx + 164, y + 4, dw - 182)
+                   TXT_HI if enabled else TXT_DIM, r.x + 6,
+                   r.y + (row_h - _text_wh("Ag", "mono")[1]) // 2, r.w - 12)
+        return r

@@ -364,7 +364,6 @@ def build_game(
             raise FileNotFoundError(f"game_config.json non trovato per '{game_id}'")
 
         game_config = _load_json(game_config_path)
-        game_title = game_config.get("title_key", game_id)
 
         log_step(f"Gioco valido: {game_id} v{version}", 10)
 

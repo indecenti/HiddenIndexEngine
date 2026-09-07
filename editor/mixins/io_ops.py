@@ -411,7 +411,7 @@ class IoOpsMixin:
             if bg_name:
                 logging.warning(f"[EDITOR] Background file MISSING: {bg_name}")
             else:
-                logging.info(f"[EDITOR] No background set for this scene.")
+                logging.info("[EDITOR] No background set for this scene.")
             self.bg_surf = None
 
         self._fit_canvas()
@@ -736,7 +736,7 @@ class IoOpsMixin:
         if gs_found:
             logging.info(f"[EDITOR-IO] CRITICAL: Writing to JSON with Grayscale objects: {gs_found}")
         else:
-            logging.warning(f"[EDITOR-IO] WARNING: No Grayscale objects found in data about to be saved!")
+            logging.warning("[EDITOR-IO] WARNING: No Grayscale objects found in data about to be saved!")
 
         final_count = len(data.get("objects", []))
         if _save_json(save_path, data):
@@ -746,7 +746,7 @@ class IoOpsMixin:
             self._status(self._TR("io_saved", "Save complete: {n} objects").format(
                 n=final_count), OK_C, 3)
         else:
-            logging.error(f"[EDITOR] !!! SAVE FAILED (Disk error?) !!!")
+            logging.error("[EDITOR] !!! SAVE FAILED (Disk error?) !!!")
             self._status(self._TR("io_disk_error", "DISK ERROR"), ERR_C, 5)
 
     def _audit_translations(self, data: dict):

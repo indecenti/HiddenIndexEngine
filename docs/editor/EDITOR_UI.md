@@ -111,6 +111,32 @@ Badges (goal, minigame) each keep their own column whether or not a row shows
 them: packed from the right, the same badge landed at a different x on every
 row and the list could not be scanned down a column.
 
+## Modal dialogs
+
+Every dialog follows the two rules above, and each one computes its layout in a
+single place that the renderer, the click handler and the wheel handler all
+read:
+
+| Dialog | Single source |
+|--------|---------------|
+| New catalog object | `_r_newobj_modal()` publishes `self._newobj_hitboxes`; the label column comes from `_newobj_label_col()` and the row height from `_newobj_row_h()` |
+| Tag picker | `_r_tag_modal()` publishes `self._tag_modal_hitboxes` |
+| Translation editor | `_r_lang_modal()` publishes `self._lang_footer_hitboxes` |
+| Icon picker | `_icon_grid_metrics()` returns every rect, plus `visible_rows` and `max_scroll` |
+| Project auditor | `_auditor_layout()` returns every rect, plus `item_h`, `visible_rows` and `max_scroll` |
+| Music playlist | `_seek_bar_rect()` for the seek bar of a row |
+
+What that replaced, in each of them, was the same defect: the renderer walked
+the layout while the handler restated it as literals, and the two had already
+drifted - the tag picker hit-tested its close button 4 px above where it was
+drawn, the icon picker clamped its scroll with a hand-picked "3 rows are
+probably visible", and the playlist put the seek hitbox 10 px left and above
+the bar the user could see.
+
+Dialog sizes follow the UI scale and are clamped to the window: the auditor also
+stays between the top bar and the status bar, so its footer cannot end up
+underneath the latter.
+
 ## Localization
 
 No literal user-visible text in the editor code. Tooltips are `tip_*` keys read
@@ -118,6 +144,10 @@ through `self._TR(...)`, like every other string (see
 [../engine/I18N.md](../engine/I18N.md)). Every new key goes into all five files
 under `engine/assets/strings/`, and `pytest tests/test_editor_i18n.py` enforces
 it.
+
+The project auditor reports through the same mechanism: every issue it raises
+is a `aud_i_*` key with an English default, so the report follows the editor
+language instead of always coming out in Italian.
 
 ### Catalog tags
 
@@ -133,6 +163,16 @@ stripped those bytes: "citta" and "casino" were left in the registry as `citt`
 and `casin`, ids no `tag_<id>` lookup could ever match. `slugify_tag()` in
 `editor/core/tags.py` is now the single normalizer (NFKD, ASCII, non
 alphanumerics to underscores) and both harvest and `ensure_tag()` go through it.
+
+### Characters the font can draw
+
+A UI string may only use characters the font stack (Segoe UI, Arial,
+DejaVu Sans) actually has. `aud_fix_btn` shipped as "checkmark FIX" and
+`aud_rescan` with a circular arrow, and neither glyph exists in any of those
+fonts, so the auditor drew an empty box in all five languages. Icons come from
+`_draw_shape_icon`, never from a text glyph.
+`pytest tests/test_string_glyphs.py` renders every character of every strings
+file and fails on anything that comes out as the "missing glyph" box.
 
 ## Font lifetime
 

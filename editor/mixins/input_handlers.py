@@ -1220,7 +1220,6 @@ class InputHandlersMixin:
         
         # Modifiers
         mods  = pygame.key.get_mods()
-        ctrl  = bool(mods & pygame.KMOD_CTRL)
         shift = bool(mods & pygame.KMOD_SHIFT)
 
         # ── Setup Bounding Box Virtuale ──────────────────

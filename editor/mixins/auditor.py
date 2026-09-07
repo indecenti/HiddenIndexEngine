@@ -28,12 +28,11 @@ from typing import TYPE_CHECKING
 import pygame
 
 from editor.constants import (
-    ACCENT, BORDER, BTN, BTN_HO, BTN_AC,
-    TXT, TXT_DIM, TXT_HI,
-    OK_C, ERR_C, WARN_C,
-    PANEL, BG,
+    ACCENT, BORDER, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C,
+    TOP_BAR_H, STATUS_H,
 )
 from editor.ui.draw import (
+    _button_w, _ui_scale,
     _draw_text, _rect, _button, _in_rect, _scrollbar, _text_wh,
 )
 
@@ -43,10 +42,15 @@ if TYPE_CHECKING:
 logger = logging.getLogger("auditor")
 
 # ─── Costanti layout modale ───────────────────────────────────────────────────
+# Modal geometry at UI scale 1.0. The row height and the number of rows are
+# derived from the fonts in _auditor_layout(): fixed at 52 px and 7 rows, a
+# larger UI scale left a wide empty band under a list that had stopped early,
+# and the scroll clamp counted rows that were no longer the visible ones.
 _MODAL_W: int = 860
 _MODAL_H: int = 620
-_ITEM_H: int = 52          # altezza riga issue
-_VISIBLE_ROWS: int = 7     # quante righe stanno nella list area
+_ITEM_PAD: int = 14        # padding around the two lines of an issue row
+_HEADER_H: int = 56
+_FOOTER_H: int = 34
 
 # Tipi di severità
 _SEV_ERR  = "error"
@@ -171,7 +175,7 @@ class AuditorMixin:
         if not game_path.exists():
             issues.append(self._issue(
                 _SEV_ERR,
-                f"Cartella gioco non trovata",
+                self._TR("aud_i_no_game_dir", "Game folder not found"),
                 str(game_path),
             ))
             return
@@ -187,13 +191,19 @@ class AuditorMixin:
                 scan_fn()
             except Exception as e:
                 logger.error(f"[AUDITOR] Errore scansione {label}: {e}")
-                issues.append(self._issue(_SEV_ERR, f"Audit interrotto in '{label}'", str(e)))
+                issues.append(self._issue(
+                    _SEV_ERR,
+                    self._TR("aud_i_scan_aborted",
+                             "Audit stopped in '{step}'").format(step=label),
+                    str(e)))
 
         if not issues:
             issues.append(self._issue(
                 _SEV_OK,
-                "Nessun problema trovato",
-                f"Il progetto '{self._auditor_game_id}' è integro.",
+                self._TR("aud_i_all_good", "No problem found"),
+                self._TR("aud_i_all_good_d",
+                         "The project '{game}' is sound.").format(
+                             game=self._auditor_game_id),
             ))
 
     # ── Helpers scansione ─────────────────────────────────────────────────────
@@ -218,7 +228,7 @@ class AuditorMixin:
         if not cfg_p.exists():
             issues.append(self._issue(
                 _SEV_ERR,
-                "game_config.json mancante",
+                self._TR("aud_i_cfg_missing", "game_config.json is missing"),
                 str(cfg_p),
             ))
             return
@@ -227,7 +237,10 @@ class AuditorMixin:
             with open(cfg_p, "r", encoding="utf-8") as f:
                 cfg = json.load(f)
         except Exception as e:
-            issues.append(self._issue(_SEV_ERR, "game_config.json: errore parsing JSON", str(e)))
+            issues.append(self._issue(
+                _SEV_ERR,
+                self._TR("aud_i_cfg_broken", "game_config.json: JSON parse error"),
+                str(e)))
             return
 
         # Background menu
@@ -242,8 +255,9 @@ class AuditorMixin:
 
                 issues.append(self._issue(
                     _SEV_ERR,
-                    "Background menu mancante",
-                    f"Referenza: {bg}  →  File non trovato",
+                    self._TR("aud_i_menu_bg", "Menu background is missing"),
+                    self._TR("aud_i_ref_not_found",
+                             "Reference: {ref}  |  file not found").format(ref=bg),
                     repair_fn=_fix_bg,
                 ))
 
@@ -266,8 +280,11 @@ class AuditorMixin:
 
                 issues.append(self._issue(
                     _SEV_WARN,
-                    f"Musica menu mancante: {Path(m).name}",
-                    f"Referenza: {m}  →  File non trovato",
+                    self._TR("aud_i_menu_music",
+                             "Menu music is missing: {name}").format(
+                                 name=Path(m).name),
+                    self._TR("aud_i_ref_not_found",
+                             "Reference: {ref}  |  file not found").format(ref=m),
                     repair_fn=_fix_music,
                 ))
 
@@ -280,7 +297,11 @@ class AuditorMixin:
             with open(cat_p, "r", encoding="utf-8") as f:
                 cat = json.load(f)
         except Exception as e:
-            issues.append(self._issue(_SEV_ERR, "objects_catalog.json: errore JSON", str(e)))
+            issues.append(self._issue(
+                _SEV_ERR,
+                self._TR("aud_i_catalog_broken",
+                         "objects_catalog.json: JSON error"),
+                str(e)))
             return
 
         for obj in cat.get("objects", []):
@@ -303,15 +324,21 @@ class AuditorMixin:
 
                 issues.append(self._issue(
                     _SEV_WARN,
-                    f"PNG locale mancante (trovato in engine): {Path(img_rel).name}",
-                    f"ID: {obj_id}  |  {img_rel}",
+                    self._TR("aud_i_png_local",
+                             "Local PNG missing (found in the engine): {name}").format(
+                                 name=Path(img_rel).name),
+                    self._TR("aud_i_id_path", "ID: {oid}  |  {path}").format(
+                        oid=obj_id, path=img_rel),
                     repair_fn=_fix_copy,
                 ))
             else:
                 issues.append(self._issue(
                     _SEV_ERR,
-                    f"PNG completamente mancante: {Path(img_rel).name}",
-                    f"ID: {obj_id}  |  {img_rel}",
+                    self._TR("aud_i_png_gone",
+                             "PNG missing everywhere: {name}").format(
+                                 name=Path(img_rel).name),
+                    self._TR("aud_i_id_path", "ID: {oid}  |  {path}").format(
+                        oid=obj_id, path=img_rel),
                 ))
 
     def _scan_levels(self, game_path: Path, issues: list) -> None:
@@ -334,7 +361,9 @@ class AuditorMixin:
         if not scn_json.exists():
             issues.append(self._issue(
                 _SEV_WARN,
-                f"scene.json mancante in: {scn_dir.name}",
+                self._TR("aud_i_scene_missing",
+                         "scene.json missing in: {folder}").format(
+                             folder=scn_dir.name),
                 str(scn_dir),
             ))
             return
@@ -345,7 +374,9 @@ class AuditorMixin:
         except Exception as e:
             issues.append(self._issue(
                 _SEV_ERR,
-                f"scene.json corrotto: {scn_dir.name}",
+                self._TR("aud_i_scene_broken",
+                         "scene.json is corrupt: {folder}").format(
+                             folder=scn_dir.name),
                 str(e),
             ))
             return
@@ -365,8 +396,11 @@ class AuditorMixin:
 
                 issues.append(self._issue(
                     _SEV_ERR,
-                    f"Background scena mancante: {scene_label}",
-                    f"File atteso: {bg}",
+                    self._TR("aud_i_scene_bg",
+                             "Scene background is missing: {scene}").format(
+                                 scene=scene_label),
+                    self._TR("aud_i_expected_file",
+                             "Expected file: {path}").format(path=bg),
                     repair_fn=_fix_bg_scene,
                 ))
 
@@ -389,8 +423,11 @@ class AuditorMixin:
             if not img_local.exists() and not img_engine.exists():
                 issues.append(self._issue(
                     _SEV_WARN,
-                    f"Asset scena PNG mancante: {cat_id}",
-                    f"Scena: {scene_label}  |  {img_rel}",
+                    self._TR("aud_i_scene_png",
+                             "Scene PNG asset is missing: {cid}").format(cid=cat_id),
+                    self._TR("aud_i_scene_path",
+                             "Scene: {scene}  |  {path}").format(
+                                 scene=scene_label, path=img_rel),
                 ))
 
         # Check aggiuntivi (tutti non distruttivi, nessun repair automatico)
@@ -419,9 +456,12 @@ class AuditorMixin:
                 idx_txt = ", ".join(f"#{n}" for n in idxs)
                 issues.append(self._issue(
                     _SEV_ERR,
-                    f"catalog_id inesistente: {cid}",
-                    f"Scena: {scene_label}  |  oggetti {idx_txt}  |  "
-                    "assente dal catalogo unito (l'engine lo scarta)",
+                    self._TR("aud_i_cid_unknown",
+                             "catalog_id does not exist: {cid}").format(cid=cid),
+                    self._TR("aud_i_cid_unknown_d",
+                             "Scene: {scene}  |  objects {idx}  |  not in the "
+                             "merged catalog (the engine drops it)").format(
+                                 scene=scene_label, idx=idx_txt),
                 ))
 
         counts: dict[str, int] = {}
@@ -433,9 +473,12 @@ class AuditorMixin:
             if n > 1:
                 issues.append(self._issue(
                     _SEV_WARN,
-                    f"catalog_id duplicato nella scena: {cid}",
-                    f"Scena: {scene_label}  |  {n} occorrenze "
-                    "(legittimo in alcuni casi, ma da verificare)",
+                    self._TR("aud_i_cid_dup",
+                             "catalog_id repeated in the scene: {cid}").format(cid=cid),
+                    self._TR("aud_i_cid_dup_d",
+                             "Scene: {scene}  |  {n} occurrences (legitimate "
+                             "sometimes, worth a look)").format(
+                                 scene=scene_label, n=n),
                 ))
 
     def _scan_scene_bounds(
@@ -464,17 +507,28 @@ class AuditorMixin:
             if inter <= 0:
                 issues.append(self._issue(
                     _SEV_ERR,
-                    f"Oggetto completamente fuori dal background: {cid}",
-                    f"Scena: {scene_label}  |  oggetto #{i}  |  bbox "
-                    f"({left:.0f},{top:.0f} {w:.0f}x{h:.0f}) vs {bg_w}x{bg_h}",
+                    self._TR("aud_i_obj_outside",
+                             "Object entirely outside the background: {cid}").format(
+                                 cid=cid),
+                    self._TR("aud_i_obj_outside_d",
+                             "Scene: {scene}  |  object #{i}  |  bbox {bbox} "
+                             "vs {bg}").format(
+                                 scene=scene_label, i=i,
+                                 bbox=f"({left:.0f},{top:.0f} {w:.0f}x{h:.0f})",
+                                 bg=f"{bg_w}x{bg_h}"),
                 ))
             elif (area - inter) / area > _OOB_PARTIAL_FRAC:
                 pct = int(round((area - inter) / area * 100))
                 issues.append(self._issue(
                     _SEV_WARN,
-                    f"Oggetto parzialmente fuori dal background: {cid}",
-                    f"Scena: {scene_label}  |  oggetto #{i}  |  {pct}% dell'area "
-                    f"fuori dai bounds {bg_w}x{bg_h}",
+                    self._TR("aud_i_obj_partial",
+                             "Object partly outside the background: {cid}").format(
+                                 cid=cid),
+                    self._TR("aud_i_obj_partial_d",
+                             "Scene: {scene}  |  object #{i}  |  {pct}% of its "
+                             "area outside the {bg} bounds").format(
+                                 scene=scene_label, i=i, pct=pct,
+                                 bg=f"{bg_w}x{bg_h}"),
                 ))
 
     @staticmethod
@@ -530,13 +584,20 @@ class AuditorMixin:
         goals = sum(1 for o in objects if _as_bool(o.get("is_goal", True)))
         if goals == 0:
             detail = (
-                "Nessun oggetto nella scena" if not objects
-                else f"{len(objects)} oggetti, nessuno con is_goal attivo"
+                self._TR("aud_i_no_objects", "No object in the scene")
+                if not objects
+                else self._TR("aud_i_no_goal_objects",
+                              "{n} objects, none with is_goal on").format(
+                                  n=len(objects))
             )
             issues.append(self._issue(
                 _SEV_ERR,
-                f"Scena non risolvibile (nessun goal): {scene_label}",
-                f"{detail}  |  la scena non puo' essere completata",
+                self._TR("aud_i_unsolvable",
+                         "Scene cannot be solved (no goal): {scene}").format(
+                             scene=scene_label),
+                self._TR("aud_i_unsolvable_d",
+                         "{detail}  |  the scene can never be completed").format(
+                             detail=detail),
             ))
 
     def _scan_scene_minigames(
@@ -556,8 +617,12 @@ class AuditorMixin:
             if not manifest.exists():
                 issues.append(self._issue(
                     _SEV_ERR,
-                    f"Minigioco inesistente: {mid}",
-                    f"Scena: {scene_label}  |  oggetto #{i}  |  manca {manifest}",
+                    self._TR("aud_i_minigame",
+                             "Minigame does not exist: {mid}").format(mid=mid),
+                    self._TR("aud_i_minigame_d",
+                             "Scene: {scene}  |  object #{i}  |  {path} is "
+                             "missing").format(scene=scene_label, i=i,
+                                               path=manifest),
                 ))
 
     def _scan_scene_i18n(
@@ -602,8 +667,12 @@ class AuditorMixin:
                 extra = "" if len(missing) <= _I18N_SAMPLE_MAX else ", ..."
                 issues.append(self._issue(
                     _SEV_WARN,
-                    f"Traduzioni mancanti [{lang}]: {len(missing)} chiavi",
-                    f"Scena: {scene_label}  |  {sample}{extra}",
+                    self._TR("aud_i_i18n",
+                             "Missing translations [{lang}]: {n} keys").format(
+                                 lang=lang, n=len(missing)),
+                    self._TR("aud_i_scene_keys",
+                             "Scene: {scene}  |  {keys}").format(
+                                 scene=scene_label, keys=f"{sample}{extra}"),
                 ))
 
     def _auditor_strings(self, path: Path) -> dict:
@@ -653,18 +722,25 @@ class AuditorMixin:
             if lvl_id not in disk_levels:
                 issues.append(self._issue(
                     _SEV_ERR,
-                    f"Livello in config senza cartella: {lvl_id}",
-                    f"game_config.json['levels'] referenzia '{lvl_id}' "
-                    f"ma manca {levels_dir / lvl_id}",
+                    self._TR("aud_i_level_nodir",
+                             "Level in the config with no folder: {lvl}").format(
+                                 lvl=lvl_id),
+                    self._TR("aud_i_level_nodir_d",
+                             "game_config.json['levels'] refers to '{lvl}' but "
+                             "{path} is missing").format(
+                                 lvl=lvl_id, path=levels_dir / lvl_id),
                 ))
 
         # Livelli su disco assenti dal config -> WARN (l'engine li accoda comunque)
         for lvl_id in sorted(disk_levels - set(cfg_levels)):
             issues.append(self._issue(
                 _SEV_WARN,
-                f"Livello orfano (non in game_config): {lvl_id}",
-                "Cartella presente su disco ma assente da "
-                "game_config.json['levels']: ordine non garantito",
+                self._TR("aud_i_level_orphan",
+                         "Orphan level (not in game_config): {lvl}").format(
+                             lvl=lvl_id),
+                self._TR("aud_i_level_orphan_d",
+                         "The folder is on disk but not in "
+                         "game_config.json['levels']: its order is not guaranteed"),
             ))
 
         # Coerenza scene per livello: level_config.json vs cartelle scena
@@ -679,9 +755,12 @@ class AuditorMixin:
                 if lvl_id in cfg_levels:
                     issues.append(self._issue(
                         _SEV_ERR,
-                        f"level_config.json mancante: {lvl_id}",
-                        "Senza level_config.json il livello non e' "
-                        "avviabile dall'engine",
+                        self._TR("aud_i_levelcfg_missing",
+                                 "level_config.json is missing: {lvl}").format(
+                                     lvl=lvl_id),
+                        self._TR("aud_i_levelcfg_missing_d",
+                                 "Without level_config.json the engine cannot "
+                                 "start the level"),
                     ))
                 continue
             try:
@@ -690,7 +769,9 @@ class AuditorMixin:
             except Exception as e:
                 issues.append(self._issue(
                     _SEV_ERR,
-                    f"level_config.json corrotto: {lvl_id}",
+                    self._TR("aud_i_levelcfg_broken",
+                             "level_config.json is corrupt: {lvl}").format(
+                                 lvl=lvl_id),
                     str(e),
                 ))
                 continue
@@ -702,16 +783,24 @@ class AuditorMixin:
                 if scn_id not in disk_scenes:
                     issues.append(self._issue(
                         _SEV_ERR,
-                        f"Scena in config senza cartella: {lvl_id}/{scn_id}",
-                        f"level_config.json referenzia '{scn_id}' ma manca "
-                        f"{lvl_dir / scn_id} (o il suo scene.json)",
+                        self._TR("aud_i_scene_nodir",
+                                 "Scene in the config with no folder: {path}").format(
+                                     path=f"{lvl_id}/{scn_id}"),
+                        self._TR("aud_i_scene_nodir_d",
+                                 "level_config.json refers to '{scene}' but "
+                                 "{path} (or its scene.json) is missing").format(
+                                     scene=scn_id, path=lvl_dir / scn_id),
                     ))
             for scn_id in sorted(disk_scenes - set(cfg_scenes)):
                 issues.append(self._issue(
                     _SEV_WARN,
-                    f"Scena orfana (non in level_config): {lvl_id}/{scn_id}",
-                    "Cartella con scene.json presente su disco ma non "
-                    "referenziata da level_config.json: non verra' mai giocata",
+                    self._TR("aud_i_scene_orphan",
+                             "Orphan scene (not in level_config): {path}").format(
+                                 path=f"{lvl_id}/{scn_id}"),
+                    self._TR("aud_i_scene_orphan_d",
+                             "A folder with a scene.json is on disk but no "
+                             "level_config.json refers to it: it will never be "
+                             "played"),
                 ))
 
     def _auditor_resolve_img(self, cat_id: str) -> str | None:
@@ -775,7 +864,7 @@ class AuditorMixin:
                 self._auditor_active = False
                 return True
             if ev.key == pygame.K_DOWN:
-                max_scroll = max(0, len(self._auditor_issues) - _VISIBLE_ROWS)
+                max_scroll = self._auditor_layout(*self.screen.get_size())["max_scroll"]
                 self._auditor_scroll = min(self._auditor_scroll + 1, max_scroll)
                 return True
             if ev.key == pygame.K_UP:
@@ -787,7 +876,7 @@ class AuditorMixin:
             return self._auditor_click(mx, my)
 
         elif ev.type == pygame.MOUSEWHEEL:
-            max_scroll = max(0, len(self._auditor_issues) - _VISIBLE_ROWS)
+            max_scroll = self._auditor_layout(*self.screen.get_size())["max_scroll"]
             self._auditor_scroll = max(
                 0, min(max_scroll, self._auditor_scroll - ev.y)
             )
@@ -798,10 +887,10 @@ class AuditorMixin:
     def _auditor_click(self, mx: int, my: int) -> bool:
         """Gestisce click sul modale auditor. Restituisce True se consumato."""
         w, h = self.screen.get_size()
-        dx = (w - _MODAL_W) // 2
-        dy = (h - _MODAL_H) // 2
+        box = self._auditor_layout(w, h)["box"]
+        dx, dy = box.x, box.y
 
-        modal_rect = pygame.Rect(dx, dy, _MODAL_W, _MODAL_H)
+        modal_rect = pygame.Rect(dx, dy, box.w, box.h)
         if not _in_rect((mx, my), modal_rect):
             # Click fuori modale: chiudi
             self._auditor_active = False
@@ -833,11 +922,56 @@ class AuditorMixin:
     # RENDERING
     # ─────────────────────────────────────────────────────────────────────────
 
+    def _auditor_layout(self, w: int, h: int) -> dict:
+        """Rects and row metrics of the auditor modal, derived once.
+
+        Keys: box, header_h, item_h, list, visible_rows, max_scroll,
+        footer_y, rescan, close, badge_x.
+        """
+        title_h = _text_wh("Ag", "sm")[1]
+        detail_h = _text_wh("Ag", "xs")[1]
+        item_h = title_h + detail_h + _ITEM_PAD
+        # The header stacks the modal title and the project name, the footer one
+        # line of hint: both follow the font instead of a fixed 56/34 px, where
+        # a larger UI scale made the title and the subtitle overlap and pushed
+        # the footer under the status bar.
+        header_h = max(_HEADER_H, _text_wh("Ag", "lg")[1] + title_h + 18)
+        footer_h = max(_FOOTER_H, detail_h + 18)
+        # Never taller than the room between the top bar and the status bar.
+        avail_h = h - TOP_BAR_H - STATUS_H - 20
+        mw = min(int(round(_MODAL_W * _ui_scale())), w - 40)
+        mh = min(int(round(_MODAL_H * _ui_scale())), max(200, avail_h))
+        dx = (w - mw) // 2
+        dy = TOP_BAR_H + 10 + max(0, (avail_h - mh) // 2)
+        list_y = dy + header_h + 12
+        list_h = max(item_h, mh - header_h - 12 - footer_h - 12)
+        visible = max(1, list_h // item_h)
+        rescan_label = self._TR("aud_rescan", "RESCAN")
+        rescan_w = _button_w(rescan_label, "sm", min_w=100)
+        close_r = pygame.Rect(dx + mw - 42, dy + 12, 28, 28)
+        rescan_r = pygame.Rect(close_r.left - rescan_w - 12, dy + 12, rescan_w, 32)
+        return {
+            "box": pygame.Rect(dx, dy, mw, mh),
+            "header_h": header_h,
+            "item_h": item_h,
+            "title_h": title_h,
+            "list": pygame.Rect(dx + 14, list_y, mw - 28, visible * item_h),
+            "visible_rows": visible,
+            "max_scroll": max(0, len(self._auditor_issues) - visible),
+            "footer_y": dy + mh - footer_h + 8,
+            "rescan": rescan_r,
+            "rescan_label": rescan_label,
+            "close": close_r,
+            "badge_x": dx + 20,
+        }
+
     def _r_auditor_modal(self, w: int, h: int) -> None:
         """Disegna il modale auditor. Da chiamare solo se _auditor_active."""
         mx, my = pygame.mouse.get_pos()
-        dx = (w - _MODAL_W) // 2
-        dy = (h - _MODAL_H) // 2
+        geo = self._auditor_layout(w, h)
+        box = geo["box"]
+        dx, dy, mw, mh = box.x, box.y, box.w, box.h
+        self._auditor_scroll = max(0, min(self._auditor_scroll, geo["max_scroll"]))
 
         self._auditor_hitboxes = {}
 
@@ -847,85 +981,97 @@ class AuditorMixin:
         self.screen.blit(overlay, (0, 0))
 
         # ── Corpo modale ─────────────────────────────────────────────────────
-        modal_rect = pygame.Rect(dx, dy, _MODAL_W, _MODAL_H)
+        modal_rect = box
         # Ombra
-        _rect(self.screen, (10, 10, 15), (dx + 5, dy + 5, _MODAL_W, _MODAL_H), radius=12)
+        _rect(self.screen, (10, 10, 15), (dx + 5, dy + 5, mw, mh), radius=12)
         # Background
         _rect(self.screen, (32, 33, 42), modal_rect, radius=12)
         # Bordo accentato
         _rect(self.screen, ACCENT, modal_rect, 2, radius=12)
 
         # ── Header ───────────────────────────────────────────────────────────
-        hdr_h = 56
-        hdr_rect = pygame.Rect(dx, dy, _MODAL_W, hdr_h)
+        hdr_h = geo["header_h"]
+        hdr_rect = pygame.Rect(dx, dy, mw, hdr_h)
         _rect(self.screen, (38, 40, 55), hdr_rect, radius=12)
         # Linea separatrice header
         pygame.draw.line(
             self.screen, BORDER,
-            (dx + 1, dy + hdr_h), (dx + _MODAL_W - 1, dy + hdr_h)
+            (dx + 1, dy + hdr_h), (dx + mw - 1, dy + hdr_h)
         )
 
         # Titolo e sottotitolo
-        _draw_text(self.screen, self._TR("aud_title", "PROJECT AUDITOR"), "lg", ACCENT, dx + 20, dy + 10)
-        game_label = f"Progetto: {self._auditor_game_id}" if self._auditor_game_id else ""
-        _draw_text(self.screen, game_label, "sm", TXT_DIM, dx + 20, dy + 34)
+        title_h = _text_wh("Ag", "lg")[1]
+        _draw_text(self.screen, self._TR("aud_title", "PROJECT AUDITOR"), "lg",
+                   ACCENT, dx + 20, dy + 8)
+        game_label = (self._TR("aud_project", "Project: {game}").format(
+            game=self._auditor_game_id) if self._auditor_game_id else "")
+        _draw_text(self.screen, game_label, "sm", TXT_DIM, dx + 20,
+                   dy + 8 + title_h + 2, mw - 40)
 
         # Contatore issue
         n_err  = sum(1 for i in self._auditor_issues if i["severity"] == _SEV_ERR)
         n_warn = sum(1 for i in self._auditor_issues if i["severity"] == _SEV_WARN)
         n_ok   = sum(1 for i in self._auditor_issues if i["severity"] == _SEV_OK)
-        badge_x = dx + _MODAL_W - 330
-        badge_y = dy + 16
-        if n_err:
-            _draw_text(self.screen, self._TR("aud_count_err", "● {0} ERR").format(n_err), "sm", ERR_C, badge_x, badge_y)
-        if n_warn:
-            _draw_text(self.screen, self._TR("aud_count_warn", "  ▲ {0} WARN").format(n_warn), "sm", WARN_C, badge_x + 80, badge_y)
-        if n_ok and not (n_err or n_warn):
-            _draw_text(self.screen, self._TR("aud_ok", "✔ OK"), "sm", OK_C, badge_x, badge_y)
-
         # Bottone Re-Scan
-        rescan_r = pygame.Rect(dx + _MODAL_W - 210, dy + 12, 100, 32)
+        rescan_r = geo["rescan"]
         rescan_hov = _in_rect((mx, my), rescan_r)
-        _button(self.screen, rescan_r, self._TR("aud_rescan", "↺ RESCAN"), rescan_hov, font="sm")
+        _button(self.screen, rescan_r, geo["rescan_label"], rescan_hov, font="sm")
         self._auditor_hitboxes["rescan"] = rescan_r
 
+        # Contatori, allineati a destra del bottone Re-Scan: a offset fissi si
+        # sovrapponevano al bottone appena una traduzione li allungava.
+        badges = []
+        if n_err:
+            badges.append((self._TR("aud_count_err", "{0} ERR").format(n_err), ERR_C))
+        if n_warn:
+            badges.append((self._TR("aud_count_warn", "{0} WARN").format(n_warn), WARN_C))
+        if n_ok and not (n_err or n_warn):
+            badges.append((self._TR("aud_ok", "OK"), OK_C))
+        badge_right = rescan_r.left - 16
+        for text, colour in reversed(badges):
+            bw, bh = _text_wh(text, "sm")
+            _draw_text(self.screen, text, "sm", colour,
+                       badge_right - bw, dy + 16)
+            badge_right -= bw + 14
+
         # Bottone chiudi
-        close_r = pygame.Rect(dx + _MODAL_W - 42, dy + 12, 28, 28)
+        close_r = geo["close"]
         close_hov = _in_rect((mx, my), close_r)
         _button(self.screen, close_r, "×", close_hov, danger=True, font="sm")
         self._auditor_hitboxes["close"] = close_r
 
         # ── Area lista issue ─────────────────────────────────────────────────
-        list_y = dy + hdr_h + 12
-        list_h = _VISIBLE_ROWS * _ITEM_H
-        list_x = dx + 14
-        list_w = _MODAL_W - 28
+        list_rect = geo["list"]
+        list_x, list_y = list_rect.x, list_rect.y
+        list_w, list_h = list_rect.w, list_rect.h
+        item_h = geo["item_h"]
+        visible_rows = geo["visible_rows"]
 
         # Clipping area lista
-        self.screen.set_clip(pygame.Rect(list_x, list_y, list_w, list_h))
+        self.screen.set_clip(list_rect)
 
         issues = self._auditor_issues
-        for rel_i in range(_VISIBLE_ROWS):
+        for rel_i in range(visible_rows):
             abs_i = rel_i + self._auditor_scroll
             if abs_i >= len(issues):
                 break
 
             issue = issues[abs_i]
-            iy = list_y + rel_i * _ITEM_H
+            iy = list_y + rel_i * item_h
             sev = issue["severity"]
             sev_col = _SEV_COLORS.get(sev, TXT_DIM)
             repaired = issue.get("repaired", False)
 
             # Sfondo riga (alternato per leggibilità)
             row_bg = (36, 37, 48) if rel_i % 2 == 0 else (32, 33, 42)
-            _rect(self.screen, row_bg, (list_x, iy, list_w, _ITEM_H - 2), radius=6)
+            _rect(self.screen, row_bg, (list_x, iy, list_w, item_h - 2), radius=6)
 
             if repaired:
-                _rect(self.screen, (20, 55, 30), (list_x, iy, list_w, _ITEM_H - 2), radius=6)
+                _rect(self.screen, (20, 55, 30), (list_x, iy, list_w, item_h - 2), radius=6)
 
             # Striscia colorata sinistra (indicatore severità)
             stripe_col = (75, 195, 95) if repaired else sev_col
-            _rect(self.screen, stripe_col, (list_x, iy + 4, 3, _ITEM_H - 10))
+            _rect(self.screen, stripe_col, (list_x, iy + 4, 3, item_h - 10))
 
             # Testo issue
             title_col = (160, 220, 160) if repaired else TXT_HI
@@ -940,42 +1086,43 @@ class AuditorMixin:
                 # Store key using absolute index
                 btn_key = f"repair_{abs_i}"
                 btn_hov = _in_rect((mx, my), btn_r)
-                _button(self.screen, btn_r, self._TR("aud_fix_btn", "✔ FIX"), btn_hov, font="xs")
+                _button(self.screen, btn_r, self._TR("aud_fix_btn", "FIX"), btn_hov, font="xs")
                 self._auditor_hitboxes[btn_key] = btn_r
             elif repaired:
-                _draw_text(self.screen, self._TR("aud_fixed_badge", "Fixed ✔"), "xs", OK_C,
+                _draw_text(self.screen, self._TR("aud_fixed_badge", "Fixed"), "xs", OK_C,
                            list_x + list_w - 100, iy + 18)
 
         self.screen.set_clip(None)
 
         # ── Scrollbar ─────────────────────────────────────────────────────────
-        if len(issues) > _VISIBLE_ROWS:
+        if len(issues) > visible_rows:
             _scrollbar(
                 self.screen,
-                dx + _MODAL_W - 10,
+                dx + mw - 10,
                 list_y,
                 6,
                 list_h,
                 self._auditor_scroll,
                 len(issues),
-                _VISIBLE_ROWS,
+                visible_rows,
             )
 
         # ── Footer ────────────────────────────────────────────────────────────
-        footer_y = dy + hdr_h + list_h + 24
+        footer_y = geo["footer_y"]
         pygame.draw.line(
             self.screen, BORDER,
             (dx + 1, footer_y - 8),
-            (dx + _MODAL_W - 1, footer_y - 8),
+            (dx + mw - 1, footer_y - 8),
         )
-        hint = "ESC / click fuori per chiudere  •  ↑↓ o scroll per navigare"
+        hint = self._TR("aud_footer_hint",
+                 "ESC or a click outside closes  |  arrows or scroll to move")
         _draw_text(self.screen, hint, "xs", TXT_DIM, dx + 20, footer_y)
 
         # Info totale
-        tot_txt = f"{len(issues)} issue trovate"
+        tot_txt = self._TR("aud_total", "{n} issues found").format(n=len(issues))
         tw, _ = _text_wh(tot_txt, "xs")
         _draw_text(self.screen, tot_txt, "xs", TXT_DIM,
-                   dx + _MODAL_W - tw - 20, footer_y)
+                   dx + mw - tw - 20, footer_y)
 
 
 # ─── Utility ──────────────────────────────────────────────────────────────────

@@ -863,7 +863,7 @@ class GameSelectMixin:
             self._load_strings()
             self._gs_refresh_cache()
             self._status(self._TR("gs_saved_ok", "'{0}' saved").format(raw_name), OK_C, 2)
-        except Exception as e:
+        except Exception:
             logger.exception("Errore aggiornamento")
             self._status(self._TR("gs_save_info_error", "Error saving info"), ERR_C, 4)
         self._gs_edit_mode = None
@@ -1197,7 +1197,7 @@ class GameSelectMixin:
             logger.info(f"[PROJECT] Creati file i18n per {len(langs)} lingue con seed di sistema.")
             
             # --- CREAZIONE ENTRY POINT DINAMICO (main.py specifico per gioco) ---
-            main_py_content = f"""import sys
+            main_py_content = """import sys
 import importlib.util
 from pathlib import Path
 
@@ -1234,7 +1234,7 @@ if __name__ == "__main__":
             
             # Batch per comodità su Windows
             with open(gpath / "run.bat", "w", encoding="utf-8") as f:
-                f.write(f"@echo off\ncd /d \"%~dp0\"\npython main.py\npause")
+                f.write("@echo off\ncd /d \"%~dp0\"\npython main.py\npause")
 
             self.gs_games = _discover_games(self.base_path)
             idx = next((i for i, g in enumerate(self.gs_games) if g == name), 0)
@@ -1547,8 +1547,6 @@ if __name__ == "__main__":
             data_map = {s["id"]: s for s in scenes_cfg}
             
             # Swappa i nomi nell'ordine visuale
-            name1 = current_names[idx]
-            name2 = current_names[idx + delta]
             current_names[idx], current_names[idx+delta] = current_names[idx+delta], current_names[idx]
             
             # Rigenera scenes_cfg

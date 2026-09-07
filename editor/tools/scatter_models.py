@@ -225,8 +225,8 @@ class DepthAnythingSmall(ScatterModelBase):
         with _silence_ort_stderr():
             try:
                 self.session = ort.InferenceSession(str(model_path), opts, providers=providers)
-            except Exception as e_first:
-                log.info(f"[SCATTER_MODELS] Tier1 ALL opt failed (FP16 fusion bug), uso BASIC")
+            except Exception:
+                log.info("[SCATTER_MODELS] Tier1 ALL opt failed (FP16 fusion bug), uso BASIC")
                 opts2 = ort.SessionOptions()
                 opts2.log_severity_level = 3
                 opts2.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
@@ -334,8 +334,8 @@ class Metric3DLarge(ScatterModelBase):
         with _silence_ort_stderr():
             try:
                 self.session = ort.InferenceSession(str(model_path), opts, providers=providers)
-            except Exception as e_first:
-                log.info(f"[SCATTER_MODELS] Tier2 ALL opt failed (FP16 fusion bug), uso BASIC")
+            except Exception:
+                log.info("[SCATTER_MODELS] Tier2 ALL opt failed (FP16 fusion bug), uso BASIC")
                 opts2 = ort.SessionOptions()
                 opts2.log_severity_level = 3
                 opts2.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
@@ -790,7 +790,7 @@ class UltraEnsemble(ScatterModelBase):
         self.metric3d = Metric3DLarge(model_path_for(2, base_path), providers=providers)
         self.segformer = SegFormerADE(segformer_path(base_path), providers=providers)
         self.clip = ClipVisual(clip_path(base_path), providers=providers)
-        log.info(f"[SCATTER_MODELS] UltraEnsemble pronto (3 modelli caricati)")
+        log.info("[SCATTER_MODELS] UltraEnsemble pronto (3 modelli caricati)")
 
     def is_loaded(self) -> bool:
         return all(m is not None and m.is_loaded()

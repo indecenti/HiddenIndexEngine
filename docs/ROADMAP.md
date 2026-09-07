@@ -53,6 +53,13 @@ Legend: [x] done · [~] in progress/partial · [ ] to do.
   (the ids `citt`/`casin`, truncated by an old ASCII-stripping pass, are repaired),
   and every tag the catalogs use translated in all five languages instead of falling
   back to the raw Italian id. Verified by `pytest tests/test_catalog_tags.py`.
+- [x] Modal dialogs: each one computes its layout once and publishes the rects it
+  drew (new object, tag picker, translation editor, icon picker, project auditor,
+  playlist seek bar), sizes follow the UI scale and are clamped to the window, and
+  the whole project auditor report is localized instead of hardcoded Italian.
+  Verified by `pytest tests/test_editor_modal_geometry.py` and
+  `pytest tests/test_string_glyphs.py` (no UI string may use a character the font
+  cannot draw).
 - [ ] "Editor Pro" plan (`docs/archive/editor/EDITOR_PRO_PLAN.md`, 2026-07-12): remaining
   items - auto-scatter camouflage (single render-based metric, best-of-M, Lab color, repair
   loop), scatter UX (progress/cancel, seed, interactive ghosts), editor completeness

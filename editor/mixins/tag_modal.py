@@ -8,14 +8,14 @@ import pygame
 import logging
 
 from editor.constants import (
-    ACCENT, BORDER, BTN, BTN_HO, BTN_AC,
-    TXT, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C,
+    ACCENT, BORDER, BTN, TXT_DIM, TXT_HI, OK_C, ERR_C,
 )
 from editor.core.io import (
     _load_json, _save_json, _load_catalog,
 )
 from editor.ui.draw import (
-    _txt, _draw_text, _rect, _button, _in_rect, _scrollbar, _draw_tag_chip, _clamp
+    _draw_text, _rect, _button, _in_rect, _scrollbar, _draw_tag_chip,
+    _clamp, _text_wh, _ui_scale,
 )
 
 
@@ -81,39 +81,37 @@ class TagModalMixin:
                 self._tag_modal_search = ""
 
     def _tag_modal_click(self, mx, my_raw, w, h):
-        dw, dh = 600, 500
-        dx, dy = (w - dw) // 2, (h - dh) // 2
-        
-        # Click fuori o su X
-        if not _in_rect((mx, my_raw), (dx, dy, dw, dh)) or _in_rect((mx, my_raw), (dx + dw - 36, dy + 8, 26, 22)):
+        """Click inside the dialog, resolved on the rects the renderer drew.
+
+        The geometry used to be written twice, and the two copies already
+        disagreed: the close button was hit-tested 4 px above where it was
+        drawn. `w` and `h` are kept for the signature the router calls with.
+        """
+        hits = getattr(self, "_tag_modal_hitboxes", None)
+        if not hits:
+            return
+        pos = (mx, my_raw)
+
+        if not _in_rect(pos, hits["box"]) or _in_rect(pos, hits["close"]):
             self._tag_modal_active = False
             return
 
-        # Search bar
-        search_r = pygame.Rect(dx + 20, dy + 60, dw - 40, 32)
-        if _in_rect((mx, my_raw), search_r):
-            self._tag_modal_searching = True
+        self._tag_modal_searching = _in_rect(pos, hits["search"])
+        if self._tag_modal_searching:
             return
-        else:
-            self._tag_modal_searching = False
 
-        # Chips
-        if hasattr(self, "_tag_modal_chip_rects"):
-            for tag_id, r in self._tag_modal_chip_rects:
-                if _in_rect((mx, my_raw), r):
-                    if tag_id in self._tag_modal_current_tags:
-                        self._tag_modal_current_tags.remove(tag_id)
-                    else:
-                        self._tag_modal_current_tags.add(tag_id)
-                    self._tag_modal_dirty = True
-                    return
+        for tag_id, r in getattr(self, "_tag_modal_chip_rects", []):
+            if _in_rect(pos, r):
+                if tag_id in self._tag_modal_current_tags:
+                    self._tag_modal_current_tags.remove(tag_id)
+                else:
+                    self._tag_modal_current_tags.add(tag_id)
+                self._tag_modal_dirty = True
+                return
 
-        # Bottoni fondo
-        half = (dw - 40) // 2 - 5
-        btn_y = dy + dh - 50
-        if _in_rect((mx, my_raw), (dx + 20, btn_y, half, 34)):
+        if _in_rect(pos, hits["save"]):
             self._tag_modal_commit()
-        elif _in_rect((mx, my_raw), (dx + 30 + half, btn_y, half, 34)):
+        elif _in_rect(pos, hits["cancel"]):
             self._tag_modal_active = False
 
     def _tag_modal_commit(self):
@@ -169,34 +167,48 @@ class TagModalMixin:
         dim.fill((0, 0, 0, 180))
         self.screen.blit(dim, (0, 0))
 
-        dw, dh = 600, 500
+        # The dialog and its rows follow the UI scale: at 600x500 fixed, a
+        # larger font left the chips and the search box cramped.
+        scale = _ui_scale()
+        dw, dh = int(round(600 * scale)), int(round(500 * scale))
+        dw, dh = min(dw, w - 40), min(dh, h - 40)
         dx, dy = (w - dw) // 2, (h - dh) // 2
         mx, my = pygame.mouse.get_pos()
+        line_h = _text_wh("Ag", "md")[1]
+        search_h = line_h + 12
 
         # Box principale
         box = pygame.Rect(dx, dy, dw, dh)
+        hits: dict = {"box": box}
+        self._tag_modal_hitboxes = hits
         _rect(self.screen, (35, 35, 45), box, radius=12)
         _rect(self.screen, ACCENT, box, 2, radius=12)
 
         # Header
-        title_str = f"Modifica Tag: {self._tag_modal_target_id}"
+        title_str = self._TR("tg_title", "Edit tags: {0}").format(
+            self._tag_modal_target_id)
         _draw_text(self.screen, title_str, "lg", TXT_HI, dx + 20, dy + 15)
         
         xr = pygame.Rect(dx + dw - 36, dy + 12, 26, 22)
         _button(self.screen, xr, "X", _in_rect((mx, my), xr), danger=True)
+        hits["close"] = xr
 
         # Search Bar
-        search_r = pygame.Rect(dx + 20, dy + 60, dw - 40, 32)
+        search_r = pygame.Rect(dx + 20, dy + 60, dw - 40, search_h)
+        hits["search"] = search_r
         is_searching = self._tag_modal_searching
         _rect(self.screen, (45, 48, 60) if is_searching else BTN, search_r, radius=6)
         _rect(self.screen, ACCENT if is_searching else BORDER, search_r, 1 if not is_searching else 2, radius=6)
         
-        search_txt = self._tag_modal_search if self._tag_modal_search else "Cerca tra i tag esistenti..."
+        search_txt = (self._tag_modal_search or
+                      self._TR("tg_search_hint", "Search the existing tags..."))
         search_col = TXT_HI if (self._tag_modal_search or is_searching) else TXT_DIM
-        _draw_text(self.screen, search_txt, "md", search_col, search_r.x + 12, search_r.centery - 10)
+        _draw_text(self.screen, search_txt, "md", search_col, search_r.x + 12,
+                   search_r.centery - line_h // 2, search_r.w - 24)
         
         # Griglia di tag (Chips)
-        clip_r = pygame.Rect(dx + 20, dy + 105, dw - 40, dh - 170)
+        clip_r = pygame.Rect(dx + 20, search_r.bottom + 13, dw - 40,
+                             dh - (search_r.bottom - dy) - 78)
         _rect(self.screen, (25, 26, 35), clip_r, radius=8)
         _rect(self.screen, BORDER, clip_r, 1, radius=8)
         
@@ -204,7 +216,7 @@ class TagModalMixin:
         
         # Mostriamo i tag suggeriti (quelli che matchano la ricerca)
         CHIP_W = (clip_r.w - 30) // 3
-        CHIP_H = 32
+        CHIP_H = max(32, line_h + 12)
         GAP = 8
         
         self._tag_modal_chip_rects = []
@@ -222,7 +234,9 @@ class TagModalMixin:
             hov = _in_rect((mx, my), r) and clip_r.collidepoint(mx, my)
             
             # Rendering chip tramite la nuova funzione centralizzata
-            label = self.tag_manager.get_label(tag)
+            # Same lookup as the catalog panel: the taxonomy only carries the
+            # Italian label, the translations live in the strings files.
+            label = self._TR(f"tag_{tag}", tag.replace("_", " ").capitalize())
             _draw_tag_chip(self.screen, r, label, active=is_active, hovered=hov)
             
             self._tag_modal_chip_rects.append((tag, r))
@@ -241,11 +255,13 @@ class TagModalMixin:
             self._tag_modal_max_scroll = 0
 
         # Footer
-        btn_y = dy + dh - 50
-        half = (dw - 40) // 2 - 5
-        
-        ok_r = pygame.Rect(dx + 20, btn_y, half, 34)
-        can_r = pygame.Rect(dx + 30 + half, btn_y, half, 34)
+        btn_h = max(34, line_h + 14)
+        btn_y = dy + dh - btn_h - 16
+        half = (dw - 50) // 2
+
+        ok_r = pygame.Rect(dx + 20, btn_y, half, btn_h)
+        can_r = pygame.Rect(ok_r.right + 10, btn_y, half, btn_h)
+        hits["save"], hits["cancel"] = ok_r, can_r
         
         _button(self.screen, ok_r, self._TR("tg_save", "Save changes"), _in_rect((mx, my), ok_r), active=self._tag_modal_dirty)
         _button(self.screen, can_r, self._TR("btn_cancel", "Cancel"), _in_rect((mx, my), can_r), danger=True)

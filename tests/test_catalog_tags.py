@@ -71,6 +71,15 @@ def test_every_used_tag_is_translated(lang):
 
 
 @pytest.mark.parametrize("lang", LANGS)
+def test_every_taxonomy_tag_is_translated(lang):
+    """The tag picker offers the whole registry, not only what is in use."""
+    taxonomy = json.loads(TAXONOMY.read_text(encoding="utf-8"))["tags"]
+    strings = _strings(lang)
+    missing = sorted(t for t in taxonomy if f"tag_{t}" not in strings)
+    assert not missing, f"{lang}: taxonomy tags without a key: {missing}"
+
+
+@pytest.mark.parametrize("lang", LANGS)
 def test_no_tag_label_is_empty(lang):
     strings = _strings(lang)
     blank = sorted(t for t in _used_tags() if not str(strings[f"tag_{t}"]).strip())

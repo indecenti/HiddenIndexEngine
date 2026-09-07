@@ -521,7 +521,7 @@ class ScatterModalMixin:
                                                       quick_benchmark=False)
                 self._scatter_model_tier_active = self._scatter_model.tier
                 log.info(f"[SCATTER] Modello attivo: tier={self._scatter_model.tier} ({self._scatter_model.name})")
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 # Modello richiesto manca: notifica + fallback
                 self._scatter_status_msg = self._TR(
                     "sc_st_model_missing",
@@ -1389,7 +1389,6 @@ class ScatterModalMixin:
         self._scatter_hitboxes["tier_btn"] = tier_r
 
         # Badge stato (a destra del dropdown tier)
-        active_tier = self._scatter_model_tier_active
         badge_x = tier_r.right + 8
         badge_w = CTRL_W - tier_dd_w - 8
         badge_r = pygame.Rect(badge_x, y, badge_w, 30)

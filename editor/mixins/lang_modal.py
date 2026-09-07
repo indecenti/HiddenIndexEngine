@@ -11,7 +11,8 @@ from editor.constants import (
 )
 from editor.core.io import _load_json, _save_json
 from editor.ui.draw import (
-    _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _input_box, _clamp
+    _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _input_box, _clamp,
+    _button_w,
 )
 
 # Geometry of the key list, mirrored from _r_lang_modal: scrolling has to know
@@ -266,7 +267,6 @@ class LangModalMixin:
 
         ki, li = self._lang_sel
         key_name = self._lang_filtered_keys[ki] if ki < len(self._lang_filtered_keys) else ""
-        lang_code = self.LANGS[li]
 
         if ev.key == pygame.K_ESCAPE:
             if self._lang_context == "global":
@@ -371,8 +371,9 @@ class LangModalMixin:
         dx = (w - dw) // 2
         dy = (h - dh) // 2
 
-        save_r  = (dx + dw - 160, dy + dh - 40, 150, 30)
-        close_r = (dx + dw - 310, dy + dh - 40, 140, 30)
+        footer = getattr(self, "_lang_footer_hitboxes", {})
+        save_r = footer.get("save", pygame.Rect(0, 0, 0, 0))
+        close_r = footer.get("cancel", pygame.Rect(0, 0, 0, 0))
 
         if _in_rect((mx, my_raw), save_r):
             if self._lang_sel: self._lang_commit()
@@ -393,7 +394,7 @@ class LangModalMixin:
             else:
                 self._lang_search_active = False
 
-            add_r = (dx + 10, dy + dh - 40, 160, 30)
+            add_r = footer.get("add", pygame.Rect(0, 0, 0, 0))
             if _in_rect((mx, my_raw), add_r):
                 new_key = f"new_key_{len(self._lang_keys)}"
                 self._lang_keys.append(new_key)
@@ -454,7 +455,8 @@ class LangModalMixin:
         _rect(self.screen, (42, 42, 52), box, radius=8)
         _rect(self.screen, ACCENT, box, 2, radius=8)
 
-        txt_hdr = "TRADUZIONI FUMETTO" if is_fx else "EDITOR TRADUZIONI"
+        txt_hdr = (self._TR("lm_title_fx", "BUBBLE TRANSLATIONS") if is_fx
+                   else self._TR("lm_title", "TRANSLATION EDITOR"))
         title = _txt(txt_hdr, "lg", TXT_HI)
         self.screen.blit(title, (dx + 12, dy + 10))
         
@@ -544,14 +546,29 @@ class LangModalMixin:
                               focused=is_c, font="sm", all_selected=all_s)
             self.screen.set_clip(None)
 
-        # Footer
-        fy = dy + dh - 44
+        # Footer. The widths follow the translated labels: fixed at 140/150 px
+        # the two buttons overlapped and the right one was cut by the edge of
+        # the dialog as soon as a language spelled them out.
+        btn_h = max(28, _text_wh("Ag", "sm")[1] + 10)
+        fy = dy + dh - btn_h - 16
         pygame.draw.line(self.screen, BORDER, (dx, fy), (dx + dw, fy))
-        close_r = pygame.Rect(dx + dw - 310, fy + 8, 140, 28)
-        save_r  = pygame.Rect(dx + dw - 160, fy + 8, 150, 28)
-        _button(self.screen, close_r, self._TR("lm_cancel", "Cancel (Esc)"),    _in_rect((mx2, my2), close_r))
-        _button(self.screen, save_r,  self._TR("lm_save_project", "SAVE PROJECT"),  _in_rect((mx2, my2), save_r), active=self._lang_dirty)
-        
+        cancel_label = self._TR("lm_cancel", "Cancel (Esc)")
+        save_label = self._TR("lm_save_project", "SAVE PROJECT")
+        save_w = _button_w(save_label, "sm", min_w=150)
+        cancel_w = _button_w(cancel_label, "sm", min_w=140)
+        save_r = pygame.Rect(dx + dw - save_w - 10, fy + 8, save_w, btn_h)
+        close_r = pygame.Rect(save_r.left - cancel_w - 10, fy + 8, cancel_w, btn_h)
+        _button(self.screen, close_r, cancel_label, _in_rect((mx2, my2), close_r))
+        _button(self.screen, save_r, save_label, _in_rect((mx2, my2), save_r),
+                active=self._lang_dirty)
+
+        # Hitboxes published for _lang_click: one geometry, not two (the two
+        # copies already disagreed by 4 px on y and 2 px on the height).
+        hits = {"cancel": close_r, "save": save_r}
         if not is_fx:
-            add_r = pygame.Rect(dx + 10, fy + 8, 160, 28)
-            _button(self.screen, add_r, self._TR("lm_new_key", "+ New key"), _in_rect((mx2, my2), add_r))
+            add_label = self._TR("lm_new_key", "+ New key")
+            add_r = pygame.Rect(dx + 10, fy + 8,
+                                _button_w(add_label, "sm", min_w=160), btn_h)
+            _button(self.screen, add_r, add_label, _in_rect((mx2, my2), add_r))
+            hits["add"] = add_r
+        self._lang_footer_hitboxes = hits

@@ -210,7 +210,7 @@ class MinigameModalMixin:
         """Gestisce lo scroll della modale."""
         curr_len = len(self._available_minigames)
         row_h = 70
-        mw, mh = 800, 600
+        mh = 600
         list_h = mh - 130
         visible_rows = list_h // row_h
         max_scr = max(0, curr_len - visible_rows)
