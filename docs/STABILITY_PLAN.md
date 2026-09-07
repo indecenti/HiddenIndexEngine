@@ -10,14 +10,14 @@ Priority order: **A → B → C → D → E**.
 
 ## A. The game runtime has no test net
 
-Ten engine modules are not referenced by a single test:
+Eight engine modules are not referenced by a single test:
 
-`audio_manager`, `effect_renderer`, `effects_engine`, `hint_system`, `hud_manager`,
-`minigame_manager`, `results_screen`, `taxonomy`, `transition_manager`, `utils`.
+`audio_manager`, `effect_renderer`, `effects_engine`, `hud_manager`, `results_screen`,
+`taxonomy`, `transition_manager`, `utils`.
 
-Eight of the nine minigames are equally untouched (only `sudoku` appears in the suite),
-while the editor's auto-scatter alone has 12 test files. The safety net is stretched over
-the tool, not over what the player runs — and `save_manager` holds the player's progress.
+The nine minigames now boot, run and draw under test. What is left uncovered is the
+drawing side of the runtime: the HUD, the results screen, the effects and the
+transitions.
 
 ```bash
 python - <<'PY'
@@ -38,9 +38,12 @@ PY
   fails a scene, that `timer_behavior` is shipped and read by nobody, and that
   SCENE_FAILED is never emitted; all three are now stated in the module docstring.
   Still to cover there: `update()`, scene advancing and level progression.
-- `hint_system`: cooldown, penalties, exhaustion.
-- `minigame_manager` + the nine minigames: a headless boot and a few frames each, which is
-  enough to catch an import or asset error that today only shows up in a shipped build.
+- ~~`hint_system`~~ done (`5f11b71`, 27 tests): automatic glow, one object at a time, the
+  fifteen second window, the manual hint with its cooldown, its per-object cost and its
+  limit. The class docstring promised a cost the code does not charge; corrected.
+- ~~`minigame_manager` + the nine minigames~~ done (`9ca7d17`, 67 tests): manifest, dynamic
+  import, boot, five frames of update and draw, input, result reported back. All nine pass
+  as they are.
 - `results_screen`, `hud_manager`: build and draw once, headless.
 
 ---
