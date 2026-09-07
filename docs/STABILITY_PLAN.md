@@ -10,11 +10,10 @@ Priority order: **A → B → C → D → E**.
 
 ## A. The game runtime has no test net
 
-Eleven engine modules are not referenced by a single test:
+Ten engine modules are not referenced by a single test:
 
 `audio_manager`, `effect_renderer`, `effects_engine`, `hint_system`, `hud_manager`,
-`minigame_manager`, `results_screen`, `save_manager`, `taxonomy`, `transition_manager`,
-`utils`.
+`minigame_manager`, `results_screen`, `taxonomy`, `transition_manager`, `utils`.
 
 Eight of the nine minigames are equally untouched (only `sudoku` appears in the suite),
 while the editor's auto-scatter alone has 12 test files. The safety net is stretched over
@@ -30,9 +29,10 @@ PY
 
 **To do**
 
-- `save_manager`: save/load round trip, corrupt file, missing file, version migration,
-  concurrent write. A save bug costs the player their progress and is invisible until it
-  happens.
+- ~~`save_manager`~~ done (`fb108bd`, 18 tests): round trip across a restart, missing file,
+  corrupt file quarantined, a save from an older version, scores and stars keeping their
+  own record, unlocking forward only, every change flushed. Found and fixed a crash on
+  SCENE_COMPLETE when a save had a level in `scores` and not in `stars`.
 - `level_manager`: score, miss penalty curve, stars, unlock and progression.
 - `hint_system`: cooldown, penalties, exhaustion.
 - `minigame_manager` + the nine minigames: a headless boot and a few frames each, which is
@@ -43,8 +43,8 @@ PY
 
 ## B. Lint is not enforced anywhere
 
-`ruff check --select F` (real errors only, no style) reports **196** findings, 163 of them
-auto-fixable:
+`ruff check --select F` (real errors only, no style) reports **228** findings (measured
+2026-09-07, up from 196 on 2026-09-04), 194 of them auto-fixable:
 
 | Code | Count | What it means |
 |---|---|---|
