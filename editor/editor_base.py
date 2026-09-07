@@ -100,6 +100,7 @@ from editor.mixins.presets import PresetsMixin
 from editor.mixins.batch_import import BatchImportMixin
 from editor.mixins.outline import OutlineMixin
 from editor.mixins.modal_router import ModalRouterMixin
+from editor.mixins.prop_fields import PropFieldsMixin
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -108,6 +109,7 @@ from editor.mixins.modal_router import ModalRouterMixin
 
 class LevelEditor(
     ModalRouterMixin,
+    PropFieldsMixin,
     ViewportMixin,
     HistoryMixin,
     IoOpsMixin,

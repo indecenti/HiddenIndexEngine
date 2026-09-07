@@ -14,15 +14,17 @@ import logging
 from editor.constants import (
     TOP_BAR_H, STATUS_H,
     MIN_EDITOR_WIDTH, MIN_EDITOR_HEIGHT, WIN_W, WIN_H,
-    REF_W, REF_H,
     MODE_SELECT, MODE_CIRCLE, MODE_RECT, MODE_EFFECT_PLACE, MODE_SCATTER,
     STATE_GAME_SELECT, STATE_MAIN,
     TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_OUTLINE, TAB_LAYERS, TAB_PROPS,
-    ACCENT, OK_C, ERR_C, WARN_C, TXT_DIM, FX_C, ALWAYS_C,
+    ACCENT, OK_C, ERR_C, WARN_C, TXT_DIM, FX_C,
     GRID_SIZES, NUDGE_STEP, NUDGE_STEP_FAST, NUDGE_UNDO_GAP_S, OBJ_SNAP_PX,
     UI_SCALE_STEP,
 )
 from editor.core.io import _discover_games, _default_effect
+from editor.mixins.prop_fields import (
+    OBJECT_NUM_FIELDS, OBJECT_TOGGLES, SCENE_NUM_FIELDS, SCENE_TOGGLES,
+)
 from editor.ui.draw import _in_rect, _clamp
 
 
@@ -1550,44 +1552,15 @@ class InputHandlersMixin:
             if _in_rect((mx, my), hboxes.get("bg_btn", pygame.Rect(0,0,0,0))):
                 self._load_background(); return
 
-            # 3. Rotazione Automatica Toggle
-            if _in_rect((mx, my), hboxes.get("auto_btn", pygame.Rect(0,0,0,0))):
-                self._push_undo()
-                val = not self.scene_data.get("auto_random_finds", False)
-                self.scene_data["auto_random_finds"] = val
-                self.scene_dirty = True
-                self._mark_dirty()
-                self._status(self._TR("ih_auto_rotation", "Auto rotation: {0}").format('ON' if val else 'OFF'), OK_C, 2)
+            # 3. Interruttori e numeri della scena: due tabelle, due cicli.
+            # Un controllo che il pannello non ha disegnato non ha hitbox, quindi
+            # qui non serve una seconda copia delle condizioni di visibilita'.
+            if self._prop_toggle_click(SCENE_TOGGLES, hboxes, mx, my,
+                                       [self.scene_data]):
                 return
-
-            # 3.5 Selezione Layer Casuale Toggle
-            if _in_rect((mx, my), hboxes.get("rand_l_btn", pygame.Rect(0,0,0,0))):
-                self._push_undo()
-                val = not self.scene_data.get("random_layer_selection", False)
-                self.scene_data["random_layer_selection"] = val
-                self.scene_dirty = True
-                self._mark_dirty()
-                self._status(self._TR("ih_random_layer", "Random layer mode: {0}").format('ON' if val else 'OFF'), ALWAYS_C, 2)
+            if self._prop_num_click(SCENE_NUM_FIELDS, hboxes, mx, my,
+                                    [self.scene_data], 'scene', 0):
                 return
-
-            # 4. Num Random Finds (se attivo)
-            if self.scene_data.get("auto_random_finds", False):
-                if _in_rect((mx, my), hboxes.get("nr_box", pygame.Rect(0,0,0,0))):
-                    self._editing_prop = ('scene', 0, 'num_random_finds')
-                    self._prop_buf = str(self.scene_data.get("num_random_finds", 1))
-                    return
-                nr_sl = hboxes.get("nr_slider")
-                if nr_sl and _in_rect((mx, my), nr_sl):
-                    self._push_undo()
-                    rel_x = mx - nr_sl.x
-                    ratio = _clamp(rel_x / nr_sl.w, 0.0, 1.0)
-                    max_obj = len(self.scene_data.get("objects", []))
-                    val = max(1, int(ratio * max_obj))
-                    self.scene_data["num_random_finds"] = val
-                    self.scene_dirty = True
-                    self._mark_dirty()
-                    self._dragging_slider = ('scene', 0, 'num_random_finds', 1, max_obj, nr_sl.x, nr_sl.w)
-                    return
 
             # 5. Modifica Traduzioni
             if _in_rect((mx, my), hboxes.get("lang_btn", pygame.Rect(0,0,0,0))):
@@ -1600,33 +1573,6 @@ class InputHandlersMixin:
                 self.show_icons = not self.show_icons
                 self._mark_dirty()
                 return
-
-            # 7. Torcia Toggle
-            if _in_rect((mx, my), hboxes.get("fl_btn", pygame.Rect(0,0,0,0))):
-                self._push_undo()
-                val = not self.scene_data.get("flashlight", False)
-                self.scene_data["flashlight"] = val
-                self.scene_dirty = True
-                self._mark_dirty()
-                self._status(self._TR("ih_torch", "Torch: {0}").format('ON' if val else 'OFF'), FX_C, 2)
-                return
-            
-            if self.scene_data.get("flashlight", False):
-                if _in_rect((mx, my), hboxes.get("fl_rad_box", pygame.Rect(0,0,0,0))):
-                    self._editing_prop = ('scene', 0, 'flashlight_radius')
-                    self._prop_buf = f"{self.scene_data.get('flashlight_radius', 150.0):.1f}"
-                    return
-                fl_sl = hboxes.get("fl_rad_slider")
-                if fl_sl and _in_rect((mx, my), fl_sl):
-                    self._push_undo()
-                    rel_x = mx - fl_sl.x
-                    ratio = _clamp(rel_x / fl_sl.w, 0.0, 1.0)
-                    val = 50.0 + ratio * 450.0
-                    self.scene_data["flashlight_radius"] = round(val, 1)
-                    self.scene_dirty = True
-                    self._mark_dirty()
-                    self._dragging_slider = ('scene', 0, 'flashlight_radius', 50, 500, fl_sl.x, fl_sl.w)
-                    return
 
             # 8. Salva Scena
             if _in_rect((mx, my), hboxes.get("save_btn", pygame.Rect(0,0,0,0))):
@@ -1689,43 +1635,8 @@ class InputHandlersMixin:
             self.active_layer = "scene_global"
             return
 
-        # Obiettivo Fisso (Toggle)
-        always_r = hboxes.get("always_btn")
-        if always_r and _in_rect((rx, my), always_r):
-            self._push_undo()
-            new_val = not obj.get("always_show", False)
-            for o in objs_sel:
-                o["always_show"] = new_val
-            self.scene_dirty = True
-            self._mark_dirty()
-            return
-
-
-        # Goal Toggle
-        goal_r = hboxes.get("goal_btn")
-        if goal_r and _in_rect((rx, my), goal_r):
-            self._push_undo()
-            new_val = not obj.get("is_goal", True)
-            for o in objs_sel:
-                o["is_goal"] = new_val
-            self.scene_dirty = True
-            self._mark_dirty()
-            return
-
-        # Hide / Lock toggle (editor-only)
-        if _in_rect((rx, my), hboxes.get("hide_btn", pygame.Rect(0,0,0,0))):
-            self._push_undo()
-            new_val = not all(o.get("editor_hidden", False) for o in objs_sel)
-            for o in objs_sel: o["editor_hidden"] = new_val
-            self.scene_dirty = True; self._mark_dirty()
-            self._status(self._TR("ih_hide_editor", "Hide editor: {0}").format('ON' if new_val else 'OFF'), WARN_C, 2)
-            return
-        if _in_rect((rx, my), hboxes.get("lock_btn", pygame.Rect(0,0,0,0))):
-            self._push_undo()
-            new_val = not all(o.get("editor_locked", False) for o in objs_sel)
-            for o in objs_sel: o["editor_locked"] = new_val
-            self.scene_dirty = True; self._mark_dirty()
-            self._status(self._TR("ih_lock_editor", "Lock editor: {0}").format('ON' if new_val else 'OFF'), ERR_C, 2)
+        # Interruttori dell'oggetto: goal, fisso, nascondi, blocca, flip, BN.
+        if self._prop_toggle_click(OBJECT_TOGGLES, hboxes, rx, my, objs_sel):
             return
 
         # Reset transform / reset tint
@@ -1773,81 +1684,12 @@ class InputHandlersMixin:
                 self._status(self._TR("ih_warp_on", "Warp mesh enabled - drag the corners"), FX_C, 3)
             self.scene_dirty = True; self._mark_dirty(); return
 
-        # --- LOGICA SLIDERS & BOXES PER OGGETTI (BATCH) ---
-        # Range slider X/Y: dimensioni reali del BG se disponibili (allineato al render)
-        bg_surf = getattr(self, "bg_surf", None)
-        if bg_surf is not None:
-            try:
-                _x_max, _y_max = bg_surf.get_size()
-            except Exception:
-                _x_max, _y_max = REF_W, REF_H
-        else:
-            _x_max, _y_max = REF_W, REF_H
+        # Numeri dell'oggetto: posizione, scala, rotazione, alpha, profondita',
+        # dimensioni della forma di hit, intensita' del bianco e nero.
+        if self._prop_num_click(OBJECT_NUM_FIELDS, hboxes, rx, my, objs_sel,
+                                'object', self.selected_idx):
+            return
 
-        keys = ["x", "y", "scale", "rotation", "alpha",
-                "layer_z", "radius", "width", "height", "grayscale_factor"]
-        fmts = {"scale": "{:.2f}", "x": "{:.0f}", "y": "{:.0f}",
-                "rotation": "{:.0f}", "alpha": "{:.0f}",
-                "layer_z": "{:.0f}", "radius": "{:.0f}",
-                "width": "{:.0f}", "height": "{:.0f}",
-                "grayscale_factor": "{:.2f}"}
-        mins = {"x": 0, "y": 0, "scale": 0.1, "rotation": 0, "alpha": 0,
-                "layer_z": 0, "radius": 5, "width": 5, "height": 5, "grayscale_factor": 0.0}
-        maxs = {"x": _x_max, "y": _y_max, "scale": 3.0, "rotation": 360, "alpha": 255,
-                "layer_z": 100, "radius": 500, "width": 1000, "height": 1000, "grayscale_factor": 1.0}
-        int_keys = {"x", "y", "rotation", "alpha", "layer_z", "radius", "width", "height"}
-
-        for k in keys:
-            br = hboxes.get(f"box_{k}")
-            if br and _in_rect((rx, my), br):
-                self._editing_prop = ('object', self.selected_idx, k)
-                if k == "grayscale_factor":
-                    self._prop_buf = str(int(round(obj.get(k, 1.0) * 100)))
-                elif k == "layer_z":
-                    from editor.constants import layer_z as _lzd
-                    lz = obj.get("layer_z")
-                    self._prop_buf = str(int(lz) if lz is not None else _lzd(obj.get("layer", "objects_mid")))
-                else:
-                    val = obj.get(k, 0)
-                    self._prop_buf = fmts[k].format(val)
-                return
-
-            sr = hboxes.get(f"slider_{k}")
-            if sr and _in_rect((rx, my), sr):
-                self._push_undo()
-                mn, mx_v = mins[k], maxs[k]
-                ratio = _clamp((rx - sr.x) / sr.w, 0.0, 1.0)
-                val = mn + ratio * (mx_v - mn)
-                if k in int_keys: val = int(val)
-                else: val = round(val, 2)
-
-                for o in objs_sel:
-                    o[k] = val
-
-                self.scene_dirty = True
-                self._mark_dirty()
-                self._dragging_slider = ('object', self.selected_idx, k, mn, mx_v, sr.x, sr.w)
-                return
-
-        # Opzioni Visive (Flip / Grayscale)
-        if _in_rect((rx, my), hboxes.get("flip_h", pygame.Rect(0,0,0,0))):
-            self._push_undo()
-            nv = not obj.get("flip_x", False)
-            for o in objs_sel: o["flip_x"] = nv
-            self.scene_dirty = True; self._mark_dirty(); return
-        
-        if _in_rect((rx, my), hboxes.get("flip_v", pygame.Rect(0,0,0,0))):
-            self._push_undo()
-            nv = not obj.get("flip_y", False)
-            for o in objs_sel: o["flip_y"] = nv
-            self.scene_dirty = True; self._mark_dirty(); return
-
-        if _in_rect((rx, my), hboxes.get("grayscale", pygame.Rect(0,0,0,0))):
-            self._push_undo()
-            nv = not obj.get("grayscale", False)
-            for o in objs_sel: o["grayscale"] = nv
-            self.scene_dirty = True; self._mark_dirty(); return
-        
         if _in_rect((rx, my), hboxes.get("tint_color", pygame.Rect(0,0,0,0))):
             self._pick_color_for_selection(objs_sel); return
 
