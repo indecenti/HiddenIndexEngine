@@ -33,7 +33,9 @@ def _make_bg(sha: str) -> BGAnalysis:
 
 
 def test_schema_ver_v3():
-    assert bg_cache.SCHEMA_VER == "v3.1"
+    # v3.2: saliency spectral residual (le entry v3.1 con saliency center-prior
+    # vanno ricalcolate, non riusate)
+    assert bg_cache.SCHEMA_VER == "v3.2"
 
 
 def test_roundtrip_v3(tmp_path):

@@ -60,6 +60,11 @@ EDGE_DENSITY_ABS_REF = 0.20
 # (la saliency resta relativa alla scena — l'attenzione E' una competizione
 # intra-scena — ma senza dipendere da un singolo outlier).
 SALIENCY_NORM_PERCENTILE = 0.95
+# Spectral residual saliency (Hou & Zhang 2007): larghezza dell'immagine
+# ridotta su cui lavora la FFT (64px = valore canonico del paper) e numero di
+# passate di box blur 3x3 per lo smoothing finale della mappa.
+SR_SMALL_W = 64
+SR_BLUR_PASSES = 2
 # Gate colore DURO: similarita' colore minima per cella, per difficolta'.
 # Sotto soglia la cella e' vetata per quell'oggetto: nessun altro termine
 # (edge, profile, clip...) puo' compensare un pessimo match cromatico.
@@ -297,6 +302,77 @@ def _uniformity_reweight(cs: np.ndarray, color_uniformity: np.ndarray) -> np.nda
     return cs * (1.0 + 0.6 * color_uniformity * cs)
 
 
+def _box_blur3(arr: np.ndarray) -> np.ndarray:
+    """Media locale 3x3 con padding replicato ai bordi. Input/output float32 2D."""
+    p = np.pad(arr, 1, mode="edge")
+    acc = (
+        p[:-2, :-2] + p[:-2, 1:-1] + p[:-2, 2:]
+        + p[1:-1, :-2] + p[1:-1, 1:-1] + p[1:-1, 2:]
+        + p[2:, :-2] + p[2:, 1:-1] + p[2:, 2:]
+    )
+    return (acc / 9.0).astype(np.float32)
+
+
+def _resize_bilinear(arr: np.ndarray, out_h: int, out_w: int) -> np.ndarray:
+    """Resize bilineare 2D in numpy puro (fallback quando cv2 manca)."""
+    h, w = arr.shape
+    y = np.linspace(0.0, h - 1.0, out_h, dtype=np.float32)
+    x = np.linspace(0.0, w - 1.0, out_w, dtype=np.float32)
+    y0 = np.floor(y).astype(np.intp)
+    x0 = np.floor(x).astype(np.intp)
+    y1 = np.minimum(y0 + 1, h - 1)
+    x1 = np.minimum(x0 + 1, w - 1)
+    wy = (y - y0)[:, None]
+    wx = (x - x0)[None, :]
+    top = arr[y0][:, x0] * (1.0 - wx) + arr[y0][:, x1] * wx
+    bot = arr[y1][:, x0] * (1.0 - wx) + arr[y1][:, x1] * wx
+    return (top * (1.0 - wy) + bot * wy).astype(np.float32)
+
+
+def _spectral_residual_saliency(gray: np.ndarray) -> np.ndarray:
+    """Saliency map via spectral residual (Hou & Zhang, CVPR 2007) in numpy puro.
+
+    Stesso algoritmo di cv2.saliency.StaticSaliencySpectralResidual, senza
+    dipendere dal modulo contrib (il pin opencv-python NON lo include): la
+    "sorpresa" visiva sta nella parte del log-spettro che devia dalla media
+    locale; ricostruendo l'immagine con solo quel residuo (e la fase originale)
+    emergono i punti focali reali — volti, luci, insegne — che il center-prior
+    puro non vede. Il veto SALIENCY_VETO_TOP_FRAC diventa cosi' contenuto-aware.
+
+    Args:
+      gray: array 2D (H, W) luminanza, uint8 o float.
+
+    Returns:
+      array (H, W) float32 in [0, 1], 1 = zona che attira l'occhio.
+    """
+    h, w = gray.shape
+    small_h = max(8, int(round(h * SR_SMALL_W / max(w, 1))))
+    g = gray.astype(np.float32)
+    if _HAS_CV2:
+        small = cv2.resize(g, (SR_SMALL_W, small_h), interpolation=cv2.INTER_AREA)
+    else:
+        small = _resize_bilinear(g, small_h, SR_SMALL_W)
+
+    spec = np.fft.fft2(small)
+    log_amp = np.log1p(np.abs(spec)).astype(np.float32)
+    phase = np.angle(spec)
+    residual = log_amp - _box_blur3(log_amp)
+    sal = np.abs(np.fft.ifft2(np.exp(residual + 1j * phase))) ** 2
+    sal = sal.astype(np.float32)
+    for _ in range(SR_BLUR_PASSES):
+        sal = _box_blur3(sal)
+
+    lo, hi = float(sal.min()), float(sal.max())
+    if hi - lo > 1e-12:
+        sal = (sal - lo) / (hi - lo)
+    else:
+        sal = np.zeros_like(sal)
+
+    if _HAS_CV2:
+        return cv2.resize(sal, (w, h), interpolation=cv2.INTER_LINEAR)
+    return _resize_bilinear(sal, h, w)
+
+
 def _center_prior_saliency(h: int, w: int) -> np.ndarray:
     """Saliency di fallback (quando cv2.saliency e' assente): center-prior puro.
 
@@ -415,9 +491,14 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
     # promossa a 1.0, falsando i confronti fra scene e i gate a soglia assoluta).
     edge_density = np.clip(edge_density / EDGE_DENSITY_ABS_REF, 0.0, 1.0).astype(np.float32)
 
-    # Saliency
+    # Saliency. Catena: cv2 contrib FineGrained (se davvero presente) ->
+    # spectral residual numpy -> center-prior. Il pin opencv-python NON include
+    # il modulo contrib cv2.saliency, quindi il ramo tipico e' lo spectral
+    # residual: contenuto-aware, a differenza del center-prior che vede solo
+    # la posizione.
     sal = None
-    if _HAS_CV2 and hasattr(cv2, "saliency"):
+    if (_HAS_CV2 and hasattr(cv2, "saliency")
+            and hasattr(cv2.saliency, "StaticSaliencyFineGrained_create")):
         try:
             saliency_obj = cv2.saliency.StaticSaliencyFineGrained_create()
             ok, sal = saliency_obj.computeSaliency(rgb)
@@ -426,11 +507,18 @@ def analyze_background(bg_surface, cell_px: int = CELL_PX, ia_model=None,
             else:
                 sal = None
         except Exception as e:
-            log.warning(f"[SCATTER] saliency cv2 fallita ({e}), uso fallback classico")
+            log.warning(f"[SCATTER] saliency cv2 fallita ({e}), uso spectral residual")
             sal = None
     if sal is None:
-        # Fallback (cv2.saliency assente): center-prior puro, senza la componente
-        # edge che prima si annullava con w_edge (vedi _center_prior_saliency).
+        try:
+            sal = _spectral_residual_saliency(gray)
+            log.info("[SCATTER] saliency: spectral residual (numpy)")
+        except Exception as e:
+            log.warning(f"[SCATTER] spectral residual fallito ({e}), uso center-prior")
+            sal = None
+    if sal is None:
+        # Ultimo fallback: center-prior puro, senza la componente edge che
+        # prima si annullava con w_edge (vedi _center_prior_saliency).
         sal = _center_prior_saliency(h, w)
     saliency = _aggregate_to_grid(sal, cell_h, cell_w, cell_px, "mean")
     # Normalizzazione robusta (v3): riferimento = p95 invece del max, cosi' un

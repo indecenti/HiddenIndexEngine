@@ -54,7 +54,9 @@ DB_REL_PATH = "engine/data/bg_cache.db"
 # v3: edge_density/saliency con normalizzazione assoluta/p95 (semantica cambiata:
 # le entry v2 vanno ricalcolate, non riusate) + colonne face_mask e depth_grid.
 # v3.1: face_mask include l'estensione corpo sotto i volti (geometria cambiata).
-SCHEMA_VER = "v3.1"
+# v3.2: saliency via spectral residual numpy (prima: center-prior, perche' il
+# pin opencv-python non include cv2.saliency contrib -> mappa solo posizionale).
+SCHEMA_VER = "v3.2"
 
 try:
     import cv2
