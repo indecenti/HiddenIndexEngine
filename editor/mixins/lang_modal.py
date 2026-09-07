@@ -11,8 +11,15 @@ from editor.constants import (
 )
 from editor.core.io import _load_json, _save_json
 from editor.ui.draw import (
-    _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _input_box
+    _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _input_box, _clamp
 )
+
+# Geometry of the key list, mirrored from _r_lang_modal: scrolling has to know
+# how many rows fit to clamp itself.
+LANG_DIALOG_H_RATIO = 0.88
+LANG_HEADER_H = 118
+LANG_FOOTER_H = 48
+LANG_ROW_H = 28
 
 
 class LangModalMixin:
@@ -21,6 +28,17 @@ class LangModalMixin:
     def __init__(self):
         self._lang_context = "global"
         self._engine_strings = {}  # Cache delle stringhe originali dell'engine (sola lettura)
+
+    def _lang_modal_wheel(self, dy: int) -> None:
+        """Scroll the key list. The effect context has no list to scroll."""
+        if getattr(self, "_lang_context", "global") == "fx":
+            return
+        h = self.screen.get_size()[1]
+        visible_h = int(h * LANG_DIALOG_H_RATIO) - LANG_HEADER_H - LANG_FOOTER_H
+        visible_rows = max(1, visible_h // LANG_ROW_H)
+        keys = getattr(self, "_lang_filtered_keys", self._lang_keys)
+        max_scroll = max(0, len(keys) - visible_rows)
+        self._lang_scroll = _clamp(self._lang_scroll - dy, 0, max_scroll)
 
     # ─────────────────────────────────────────────────────────────────────────
     # APERTURA / SALVATAGGIO

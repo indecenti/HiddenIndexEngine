@@ -15,12 +15,17 @@ from editor.core.io import (
     _load_json, _save_json, _load_catalog,
 )
 from editor.ui.draw import (
-    _txt, _draw_text, _rect, _button, _in_rect, _scrollbar, _draw_tag_chip
+    _txt, _draw_text, _rect, _button, _in_rect, _scrollbar, _draw_tag_chip, _clamp
 )
 
 
 class TagModalMixin:
     """Dialogo per aggiungere/rimuovere tag esistenti da un oggetto del catalogo."""
+
+    def _tag_modal_wheel(self, dy: int) -> None:
+        """Scroll the chips of the available tags (bounds set by the render)."""
+        max_scroll = getattr(self, "_tag_modal_max_scroll", 0)
+        self._tag_modal_scroll = _clamp(self._tag_modal_scroll - dy, 0, max_scroll)
 
     def _tag_modal_open(self, catalog_id: str):
         self._tag_modal_target_id = catalog_id

@@ -18,7 +18,7 @@ from editor.constants import (
     MODE_SELECT, MODE_CIRCLE, MODE_RECT, MODE_EFFECT_PLACE, MODE_SCATTER,
     STATE_GAME_SELECT, STATE_MAIN,
     TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_OUTLINE, TAB_LAYERS, TAB_PROPS,
-    ACCENT, OK_C, ERR_C, WARN_C, TXT, TXT_DIM, FX_C, ALWAYS_C,
+    ACCENT, OK_C, ERR_C, WARN_C, TXT_DIM, FX_C, ALWAYS_C,
     GRID_SIZES, NUDGE_STEP, NUDGE_STEP_FAST, NUDGE_UNDO_GAP_S, OBJ_SNAP_PX,
     UI_SCALE_STEP,
 )
@@ -34,12 +34,6 @@ class InputHandlersMixin:
     # ─────────────────────────────────────────────────────────────────────────
 
     def _handle_events(self):
-        # Eventi di input utente catturati dal top dello stack modale unificato
-        _MODAL_INPUT_EVENTS = (
-            pygame.KEYDOWN, pygame.KEYUP, pygame.TEXTINPUT,
-            pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP,
-            pygame.MOUSEMOTION, pygame.MOUSEWHEEL,
-        )
         for ev in pygame.event.get():
             # Any event can change what is on screen: let the main loop draw
             # the next frame instead of gating it away (see _frame_needed).
@@ -48,16 +42,11 @@ class InputHandlersMixin:
             if ev.type == pygame.QUIT:
                 self._request_nav("file_quit")
                 continue
-            # Stack modale unificato: il top e' app-modal e consuma l'input utente
-            if self.modal_stack and ev.type in _MODAL_INPUT_EVENTS:
-                self.modal_stack[-1].handle_event(self, ev)
+            # Every modal, stack based or flag based, is served here in the one
+            # order of ModalRouterMixin.MODAL_LAYERS.
+            if self._modal_dispatch(ev):
                 continue
-            if self._img_editor_active:
-                self._img_editor_handle_event(ev); continue
-            # Auditor modale ha priorità dopo img_editor e prima degli altri
-            if getattr(self, "_auditor_active", False):
-                self._auditor_handle_event(ev); continue
-            elif ev.type == pygame.KEYDOWN:
+            if ev.type == pygame.KEYDOWN:
                 self._on_key(ev)
             elif ev.type == pygame.MOUSEBUTTONDOWN:
                 self._on_mdown(ev)
@@ -97,15 +86,6 @@ class InputHandlersMixin:
                 self._on_mmove(ev)
             elif ev.type == pygame.MOUSEWHEEL:
                 self._on_wheel(ev)
-            elif ev.type == pygame.DROPFILE:
-                if getattr(self, "_bg_modal", False):
-                    self._bg_handle_drop(ev.file)
-                elif getattr(self, "_vid_modal", False):
-                    self._vid_handle_drop(ev.file)
-                elif getattr(self, "_music_modal", False):
-                    self._music_handle_drop(ev.file)
-                elif getattr(self, "_icon_modal", False):
-                    self._icon_handle_drop(ev.file)
 
     # ─────────────────────────────────────────────────────────────────────────
     # KEYBOARD
@@ -116,52 +96,13 @@ class InputHandlersMixin:
         # Rilevamento Ctrl esteso per miglior compatibilità Windows/Linux/Mac
         ctrl = bool(mods & pygame.KMOD_CTRL) or bool(mods & pygame.KMOD_META)
 
-        # ── 1. MODALI (Priorità assoluta: catturano tutto l'input) ────────────────
-        if self._newobj_modal:
-            self._newobj_key(ev); return
-        if self._tag_modal_active:
-            self._tag_modal_key(ev); return
-        if self._lang_modal:
-            self._lang_key(ev); return
-        if getattr(self, "_music_modal", False):
-            self._music_modal_key(ev); return
-        if getattr(self, "_bg_modal", False):
-            self._bg_modal_key(ev); return
-        if getattr(self, "_vid_modal", False):
-            self._vid_modal_key(ev); return
+        # I modali sono serviti prima, da ModalRouterMixin._modal_dispatch: qui
+        # arriva solo l'input che nessuno di loro ha consumato. Il nome del
+        # preset e' un campo inline del pannello effetti, non un modale.
         if getattr(self, "_editing_preset_name", False):
             self._preset_key(ev); return
-        if self._img_editor_active:
-            return
-        # Modali senza editing di testo: assorbono comunque l'input affinche' le
-        # scorciatoie globali (mode 1/2/3/4, Canc, Esc, Ctrl+...) non raggiungano
-        # la scena sottostante mentre il modale e' aperto.
-        if getattr(self, "_minigame_modal", False):
-            if ev.key == pygame.K_ESCAPE:
-                self._minigame_modal = False
-            return
-        if getattr(self, "_recovery_modal", False):
-            # Crash recovery: INVIO ripristina, ESC ignora per la sessione
-            if ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                self._recovery_accept()
-            elif ev.key == pygame.K_ESCAPE:
-                self._recovery_dismiss()
-            return
-        if getattr(self, "_stats_modal", False):
-            self._stats_modal_key(ev)
-            return
-        if getattr(self, "_scatter_modal_open", False):
-            # ESC con priorita' brush -> seed -> annulla run -> chiudi, piu'
-            # editing del campo seed: tutto in _scatter_modal_key (U1/U2).
-            self._scatter_modal_key(ev)
-            return
-        if getattr(self, "_confirm_leave_modal", False):
-            if ev.key == pygame.K_ESCAPE:
-                self._confirm_leave_modal = False
-                self._pending_action = None
-            return
 
-        # ── 2. SHORTCUT GLOBALI (Ctrl+S, Ctrl+Z, ...) ─────────────────────────────
+        # ── SHORTCUT GLOBALI (Ctrl+S, Ctrl+Z, ...) ─────────────────────────────
         # Funzionano anche se siamo in modalità ricerca o editing proprietà,
         # a meno che non siamo in un modale (gestito sopra).
         if ctrl:
@@ -557,54 +498,8 @@ class InputHandlersMixin:
             if btn == 1 and _in_rect((mx, my_raw), play_btn_r):
                 self._playtest_scene(); return
 
-        # 2. CONTEXT MENU & MODALS (Massima priorità al centro/area di lavoro)
+        # 2. DASHBOARD / CANVAS (i modali sono gia' stati serviti dal router)
         if btn == 1:
-            # IL CONTEXT MENU è disegnato sopra i modali, quindi controlliamo prima lui
-            if self._ctx_menu:
-                items = self._get_ctx_items()
-                m_w, m_h, mx_m, my_m = self._get_ctx_menu_info(items)
-                menu_rect = pygame.Rect(mx_m, my_m, m_w, m_h)
-                
-                if _in_rect((mx, my_raw), menu_rect):
-                    keep_open = self._ctx_menu_click(mx, my_raw)
-                    if not keep_open:
-                        self._ctx_menu = None
-                    return # Intercettato dal menu contestuale
-                else:
-                    # Click fuori: chiudi e lascia passare (pass-through)
-                    self._ctx_menu = None
-
-            # Conferma uscita/salvataggio: priorità massima — sopra ogni altra modale
-            if self._confirm_leave_modal:
-                self._confirm_leave_click(mx, my_raw); return
-            # Ripristino autosave (crash recovery)
-            if getattr(self, "_recovery_modal", False):
-                self._recovery_modal_click(mx, my_raw); return
-            # Scatter modal
-            if getattr(self, "_scatter_modal_open", False):
-                if self._scatter_modal_click(mx, my_raw, w, h):
-                    return
-            if self._newobj_modal:
-                self._newobj_click(mx, my_raw, w, h); return
-            if self._tag_modal_active:
-                self._tag_modal_click(mx, my_raw, w, h); return
-            if self._lang_modal:
-                self._lang_click(mx, my_raw, w, h); return
-            if getattr(self, "_music_modal", False):
-                self._music_modal_click(mx, my_raw, w, h); return
-            if getattr(self, "_bg_modal", False):
-                self._bg_modal_click(mx, my_raw, w, h); return
-            if getattr(self, "_vid_modal", False):
-                self._vid_modal_click(mx, my_raw, w, h); return
-            if self._minigame_modal:
-                self._minigame_click(mx, my_raw); return
-            if getattr(self, "_stats_modal", False):
-                self._stats_modal_click(mx, my_raw, w, h); return
-            if getattr(self, "_icon_modal", False):
-                if self._icon_click(mx, my_raw, w, h): return
-            if self._img_editor_active:
-                return 
-
             # Dashboard Modals (Nuovo, Modifica, Elimina) in primo piano
             if self.state == STATE_GAME_SELECT and (
                 getattr(self, '_gs_del_mode', None) or 
@@ -696,13 +591,11 @@ class InputHandlersMixin:
             return
             
         mx, my_raw = ev.pos
-        w, h = self.screen.get_size()
+        w = self.screen.get_size()[0]
         btn = ev.button
         self._dragging_slider = None # Reset dragging slider
         self._dragging_catalog_scroll = False
         self._dragging_ctx_slider = None # Reset dragging context menu slider
-        if getattr(self, "_music_modal", False):
-            self._music_modal_mup()
         if btn in (2, 3):
             self._panning = False
             if btn == 3 and not self._pan_moved:
@@ -731,13 +624,10 @@ class InputHandlersMixin:
 
     def _on_mmove(self, ev):
         mx, my_raw = ev.pos
-        w, h = self.screen.get_size()
+        w = self.screen.get_size()[0]
         
         if self.state == STATE_GAME_SELECT:
             self._gs_mmove(mx, my_raw); return
-
-        if getattr(self, "_music_modal", False):
-            self._music_modal_mmove(mx, my_raw, w, h); return
 
         # Brush zone vietate dello scatter: drag-paint col tasto sinistro.
         # Return solo mentre si dipinge: pan (tasto centrale/destro) resta attivo.
@@ -794,17 +684,11 @@ class InputHandlersMixin:
                 self._dragging_catalog_scroll = False
 
         # --- FEEDBACK CURSORE (Solo se NON stiamo già operando) ---
-        # Disabilita se una modale è aperta (copre il canvas/pannelli)
-        is_modal = (
-            getattr(self, "_icon_modal", False) or 
-            getattr(self, "_gs_edit_mode", None) is not None or
-            getattr(self, "_newobj_modal", False) or
-            getattr(self, "_tag_modal_active", False) or
-            getattr(self, "_lang_modal", False) or
-            getattr(self, "_music_modal", False) or
-            getattr(self, "_bg_modal", False) or
-            getattr(self, "_vid_modal", False)
-        )
+        # Nessun cursore di canvas o pannello sotto un modale che li copre.
+        # La lista scritta a mano ne dimenticava meta': ora la risposta e'
+        # quella del router, piu' i dialog della dashboard che modali non sono.
+        is_modal = (self._modal_any_open()
+                    or getattr(self, "_gs_edit_mode", None) is not None)
         
         if not is_modal and not self._panning and not self._handle_id and not self._drag_active:
             # 1. Bordi pannelli
@@ -903,50 +787,11 @@ class InputHandlersMixin:
 
     def _on_wheel(self, ev):
         mx, my_raw = pygame.mouse.get_pos()
-        w, h = self.screen.get_size()
+        w = self.screen.get_size()[0]
         mods = pygame.key.get_mods()
 
-        if self._lang_modal:
-            is_fx = (getattr(self, "_lang_context", "global") == "fx")
-            if is_fx: return
-            
-            # Calcolo dinamico righe visibili in base al nuovo layout (HEADER_H=118, Footer=48)
-            dh = int(h * 0.88)
-            visible_h = dh - 118 - 48
-            visible_rows = max(1, visible_h // 28)
-            
-            keys_to_scroll = getattr(self, "_lang_filtered_keys", self._lang_keys)
-            max_scroll = max(0, len(keys_to_scroll) - visible_rows)
-            self._lang_scroll = _clamp(self._lang_scroll - ev.y, 0, max_scroll)
-            return
-
-        if self._tag_modal_active:
-            self._tag_modal_scroll = _clamp(self._tag_modal_scroll - ev.y, 0, getattr(self, "_tag_modal_max_scroll", 0))
-            return
-
-        if getattr(self, "_music_modal", False):
-            self._music_wheel(ev.y)
-            return
-
-        if getattr(self, "_bg_modal", False):
-            self._bg_modal_wheel(ev.y)
-            return
-        if getattr(self, "_vid_modal", False):
-            self._vid_modal_wheel(ev.y)
-            return
-
-        if getattr(self, "_minigame_modal", False):
-            self._minigame_wheel(ev.y)
-            return
-
-        if getattr(self, "_stats_modal", False):
-            self._stats_modal_wheel(ev)
-            return
-
-        if getattr(self, "_scatter_modal_open", False):
-            if self._scatter_modal_wheel(mx, my_raw, ev.y):
-                return
-
+        # I modali hanno gia' avuto la rotella dal router: qui arriva solo
+        # quello che nessuno di loro ha consumato.
         if self.state == STATE_GAME_SELECT:
             self._gs_wheel(ev); return
 
