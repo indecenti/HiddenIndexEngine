@@ -19,9 +19,9 @@ CATALOG_PATH = Path(__file__).parent.parent / "engine" / "data" / "global_object
 # ─────────────────────────────────────────────────────────────────────────────
 ADD_TAGS: dict[str, list[str]] = {
 
-    # ── DIMENSIONE MANCANTE ──────────────────────────────────────────────────
-    "precision_caliper":    ["piccolo"],
-    "desiderius_cross":     ["medio"],
+    # NOTA: "precision_caliper" e "desiderius_cross" stavano anche qui, con i
+    # soli tag di dimensione. Erano duplicati delle voci piu' complete piu'
+    # sotto e Python li scartava in silenzio: rimossi, il risultato non cambia.
 
     # ── UFFICIO/ARTE: strumenti da scrivania ─────────────────────────────────
     "worn_pencil":          ["arte", "ufficio"],

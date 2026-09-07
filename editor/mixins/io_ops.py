@@ -1122,7 +1122,7 @@ class IoOpsMixin:
                 pass
         return {}
 
-    def _save_editor_setting(self, key: str, value: any):
+    def _save_editor_setting(self, key: str, value: Any):
         """Salva una singola impostazione nel file .editor_settings.json."""
         from editor.core.io import _save_json
         settings = self._load_editor_settings()

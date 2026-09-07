@@ -9,7 +9,7 @@ import json
 import logging
 import hashlib
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -134,10 +134,10 @@ def _load_scene_data(scene_path: Path) -> dict:
     return d
 
 
-_THUMB_CACHE: dict[str, any] = {}
+_THUMB_CACHE: dict[str, Any] = {}
 _CACHE_DIR = Path(".editor_cache")
 
-def _get_scene_thumbnail(scene_path: Path, size: tuple[int, int]) -> Optional[any]:
+def _get_scene_thumbnail(scene_path: Path, size: tuple[int, int]) -> Optional[Any]:
     """
     Recupera una Surface di anteprima per la scena con persistenza su disco.
     """

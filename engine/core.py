@@ -12,6 +12,7 @@ import math
 import logging
 import os
 from pathlib import Path
+from typing import Optional
 
 from engine.utils import get_logger, warp_surface, apply_grayscale, is_android_runtime, get_resource_path
 from engine import haptics
