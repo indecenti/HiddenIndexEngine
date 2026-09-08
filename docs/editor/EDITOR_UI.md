@@ -1,8 +1,12 @@
 # Editor UI — chrome layout rules
 
 How the editor chrome (top bar, canvas toolbar, status bar, side panels) is laid
-out, and the two rules that keep it from breaking. Verified by
-`pytest tests/test_editor_ui_layout.py` and `pytest tests/test_catalog_tags.py`.
+out, and the three rules that keep it from breaking. Verified by
+`tests/test_editor_ui_layout.py`, `tests/test_editor_status_bar.py`,
+`tests/test_editor_layers_panel.py`, `tests/test_editor_browser_header.py`,
+`tests/test_editor_asset_studio.py`, `tests/test_editor_modal_geometry.py`,
+`tests/test_catalog_tags.py`, `tests/test_string_encoding.py`,
+`tests/test_string_glyphs.py` and `tests/test_source_hygiene.py`.
 
 The editor draws in immediate mode: every frame recomputes the whole layout. That
 is cheap and simple, but it makes two classes of mistake easy, and both of them
@@ -42,6 +46,10 @@ renderer stores the rects on the editor and the input handler reads them back:
 | Surface | Published as |
 |---------|--------------|
 | Status bar buttons | `self._status_hitboxes` (`back` / `save` / `play`) |
+| Status bar text | `self._status_spans` (`msg` / `info` / `hint`), the three runs that share the line |
+| Layers panel | `self._layers_hitboxes` (`rows` / `eye` / `lock`), placed by `_layers_columns()` |
+| Browser column headers | `_gs_header_rects(column, ...)`, declared once in `_GS_HEADER_BUTTONS` |
+| Asset studio sidebar | `_img_editor_metrics()` and the three `_img_editor_colN_rects()` built from it |
 | Canvas toolbar | `self._get_toolbar_layout()` (shared by draw and hit test) |
 | Catalog rows | `self._catalog_item_hitboxes` |
 | Outline rows | `self._outline_hitboxes` |
@@ -53,6 +61,33 @@ renderer stores the rects on the editor and the input handler reads them back:
 
 `editor.mixins.input_handlers.EMPTY_RECT` stands in for a button the current
 frame did not draw, so a lookup never has to branch first.
+
+## Rule 3 — a pixel constant is a pixel constant at scale 1.0
+
+Ctrl+Plus scales the fonts. It does not scale a number written into the source,
+so every offset, row height and icon column has to be multiplied by
+`_ui_scale()` or derived from the line height. Two helpers do it:
+`_ps(value)` in `render_panels.py` for the side panels, and a local `sc(value)`
+inside a geometry function for a surface that has its own.
+
+What it looks like when this is missed, all of it found in a screenshot of the
+German editor at scale 1.5:
+
+- the asset studio drew its three columns at 10 / 165 / 320 px inside a 480 px
+  sidebar, so every heading landed on the column to its left and the labels
+  were cut to "AUTO-ZUSCH..."; the footer walked off the left edge of the modal;
+- the layers panel put "VIS" and "LOCK" 82 and 52 px from the right edge, which
+  is a measurement of the English words at scale 1.0, and drew 24 px icons under
+  a font half again as large;
+- the browser column headers were a strip of 26x24 rects at -32, -62, -92,
+  -122, -152 and -182, so "DUP" became "D..." and the strip ran under the
+  column title.
+
+A surface that grows with the scale also has to fit the window it is in.
+`_img_editor_scale()` takes the UI scale and reduces it until the studio fits
+its modal; `_gs_edit_column_fit()` does the same for the project dialog. Both
+have a floor: below it the text stops being readable and the answer is a
+smaller window, not a smaller font.
 
 ## Canvas toolbar
 
@@ -190,6 +225,31 @@ Dialog sizes follow the UI scale and are clamped to the window: the auditor also
 stays between the top bar and the status bar, so its footer cannot end up
 underneath the latter.
 
+### Asset studio
+
+`_img_editor_metrics(ex, ey, ew, eh)` is the single source of the studio
+geometry, and `_img_editor_col1_rects` / `col2` / `col3` and
+`_img_editor_footer_rects` are built from it. Renderer, click handler and drag
+handler all call it. Three things it settles:
+
+- a column is as wide as the widest label it must hold, so the German
+  "HINTERGRUND ENTFERNEN" is what sets the width in German;
+- the scale is `_img_editor_scale()`, the UI scale reduced until the content
+  fits the modal, floored at `STUDIO_SCALE_MIN`;
+- the sidebar gives width back before the canvas does: it never leaves the
+  image less than `WORK_MIN_W`.
+
+`_img_editor_icon_button()` draws the buttons that carry a PNG icon. The label
+comes first: on a narrow button a translated word takes the room the icon would
+have used, and the decision is taken for the whole row by
+`_img_editor_icons_fit()`, so one button of a pair does not drop its icon while
+its neighbour keeps one. The labels used to be centred strings padded with
+leading spaces ("      AUTO TRIM"), which cannot be translated at all.
+
+`pytest tests/test_editor_asset_studio.py` checks, in five languages at three
+scales on three window sizes, that no two controls overlap, that all of them
+stay inside the modal, and that the canvas keeps its minimum width.
+
 ### Translation editor
 
 The table is the densest surface of the editor and the one whose job is finding
@@ -252,6 +312,37 @@ it.
 The project auditor reports through the same mechanism: every issue it raises
 is a `aud_i_*` key with an English default, so the report follows the editor
 language instead of always coming out in Italian.
+
+### What the language files may contain
+
+`pytest tests/test_string_encoding.py` refuses four things, each of which had
+already happened:
+
+- an accent spelled as an apostrophe. A folding pass turned the accented
+  letters into ASCII and left an apostrophe behind, in 266 French strings, 27
+  Italian and 19 Spanish: the French editor said "E'diter", "SCE'NE" and
+  "PROJETS RE'CENTS", and a few came out worse than that ("Macinacaffa'\xa8"
+  for "Macinacaffe" with a grave accent);
+- a string read as cp1252 and written back as UTF-8, which is how "Coeur
+  Humain" with the oe ligature became "C" followed by two mojibake characters;
+- a decomposed string, which draws as the base letter with the accent floating
+  next to it rather than on it;
+- a key with an accent or an apostrophe in it: nothing can look it up, because
+  every tag id is an ASCII slug from `slugify_tag()`.
+
+Two completeness checks sit next to them. Every `label_key` a catalog points at
+must exist in **English**, because English is the only fallback and a missing
+English name has nothing behind it: 61 objects were named in Italian and
+nowhere else, and 16 in no language at all, so the editor showed the raw key.
+And every chrome key must exist in all five languages: an object name that
+falls back to English still reads, a button that does not is a bug.
+
+`pytest tests/test_source_hygiene.py` is the other half of that: it refuses a
+sentence handed straight to `_draw_text`, `_draw_text_wrapped` or `_button` as
+a literal. That is how the asset studio ended up drawing eight English buttons
+under translated headings, the preset modal stayed Italian in all five
+languages, and the game selector answered "ERRORE: Scena non trovata!" to a
+French user.
 
 ### Catalog tags
 
