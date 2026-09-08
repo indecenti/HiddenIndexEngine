@@ -335,3 +335,131 @@ def test_palette_renders_in_every_language(lang):
     palette = editor.modal_stack[-1]
     palette.render(editor)                       # must not raise
     assert palette._box.width > 0
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. LA PALETTE SEGUE LA SELEZIONE
+# ─────────────────────────────────────────────────────────────────────────────
+
+from editor.constants import PALETTE_MAX_ROWS  # noqa: E402
+
+
+def _open_palette(editor):
+    editor._palette_open()
+    palette = editor.modal_stack[-1]
+    palette.render(editor)
+    return palette
+
+
+def _press(palette, editor, key, times=1):
+    for _ in range(times):
+        palette.handle_event(editor, pygame.event.Event(
+            pygame.KEYDOWN, {"key": key, "unicode": ""}))
+        palette.render(editor)
+
+
+def test_palette_has_more_commands_than_it_can_show():
+    """Otherwise the scrolling below is not exercising anything."""
+    assert len(runnable_commands()) > PALETTE_MAX_ROWS
+
+
+def test_palette_scrolls_to_keep_the_selection_visible():
+    editor = FakeEditor()
+    palette = _open_palette(editor)
+    _press(palette, editor, pygame.K_DOWN, times=len(palette._rows) - 1)
+    assert palette.index == len(palette._rows) - 1
+    assert palette.index - palette.scroll < len(palette._row_rects), (
+        "the selected row must be one of the rows drawn")
+
+
+def test_palette_scrolls_back_up():
+    editor = FakeEditor()
+    palette = _open_palette(editor)
+    _press(palette, editor, pygame.K_DOWN, times=30)
+    _press(palette, editor, pygame.K_UP, times=30)
+    assert palette.index == 0 and palette.scroll == 0
+
+
+def test_palette_typing_resets_the_scroll():
+    editor = FakeEditor()
+    palette = _open_palette(editor)
+    _press(palette, editor, pygame.K_DOWN, times=25)
+    assert palette.scroll > 0
+    palette.handle_event(editor, pygame.event.Event(
+        pygame.KEYDOWN, {"key": ord("z"), "unicode": "z"}))
+    assert palette.scroll == 0 and palette.index == 0
+
+
+def test_palette_click_runs_the_row_that_was_clicked():
+    """With the list scrolled, a click must map to the right command."""
+    editor = FakeEditor()
+    palette = _open_palette(editor)
+    _press(palette, editor, pygame.K_DOWN, times=20)
+    expected = palette._rows[palette.scroll + 1]
+    row = palette._row_rects[1]
+    palette.handle_event(editor, pygame.event.Event(
+        pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": row.center}))
+    if expected.run[0] == "call":
+        assert expected.run[1] in editor.called
+    elif expected.run[0] == "menu":
+        assert expected.run[1] in editor.menu_called
+
+
+def test_palette_scroll_never_leaves_a_gap_at_the_end():
+    editor = FakeEditor()
+    palette = _open_palette(editor)
+    _press(palette, editor, pygame.K_DOWN, times=1000)
+    assert palette.scroll == len(palette._rows) - PALETTE_MAX_ROWS
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. I TASTI DICHIARATI SONO GESTITI DAVVERO
+# ─────────────────────────────────────────────────────────────────────────────
+
+# The registry documents the bindings; _on_key implements them. This maps what
+# the panel shows to the pygame constant the handler must reference, so a
+# shortcut can no longer be advertised without anything behind it.
+_KEY_CONSTANTS = {
+    "Del": ["K_DELETE"], "Home": ["K_HOME"], "Tab": ["K_TAB"], "/": ["K_SLASH"],
+    "+": ["K_PLUS", "K_EQUALS"], "-": ["K_MINUS"],
+    "WASD": ["K_w", "K_a", "K_s", "K_d"],
+    "Arrows": ["K_LEFT", "K_RIGHT", "K_UP", "K_DOWN"],
+    "Space+drag": ["K_SPACE"],
+    "Ctrl+Plus": ["K_PLUS", "K_EQUALS"], "Ctrl+Minus": ["K_MINUS"],
+}
+
+
+def _expected_constants(keys: str) -> list:
+    if keys in _KEY_CONSTANTS:
+        return _KEY_CONSTANTS[keys]
+    letter = keys.split("+")[-1]
+    if len(letter) == 1:
+        return [f"K_{letter.lower()}"]
+    return [f"K_{letter}"]                      # F1, F5, F11
+
+
+@pytest.fixture(scope="module")
+def handled_keys():
+    source = (ROOT / "editor" / "mixins" / "input_handlers.py").read_text(
+        encoding="utf-8")
+    tree = ast.parse(source)
+    names = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+            if node.value.id == "pygame" and node.attr.startswith("K_"):
+                names.add(node.attr)
+    return names
+
+
+@pytest.mark.parametrize("command", [c for c in COMMANDS if c.keys],
+                         ids=lambda c: c.id)
+def test_every_declared_shortcut_is_handled(command, handled_keys):
+    expected = _expected_constants(command.keys)
+    assert any(name in handled_keys for name in expected), (
+        f"{command.id} advertises {command.keys} but _on_key never looks at "
+        f"{expected}")
+
+
+def test_the_probe_would_notice_an_invented_shortcut(handled_keys):
+    """Guard the guard: a key nothing handles must not pass."""
+    assert not any(name in handled_keys for name in _expected_constants("F9"))

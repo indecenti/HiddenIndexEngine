@@ -1462,8 +1462,10 @@ class InputHandlersMixin:
                     logging.info(f"  [CATALOG] HIT: Scrollbar (Scroll: {self.catalog_scroll:.2f})")
                     return
 
-        # SELEZIONE OGGETTI (Hitbox precise esportate da render_panels.py)
-        hitboxes = getattr(self, "_catalog_item_hitboxes", [])
+        # SELEZIONE OGGETTI (Hitbox precise esportate da render_panels.py).
+        # La striscia dei recenti seleziona esattamente come una riga della lista.
+        hitboxes = (list(getattr(self, "_catalog_recent_hitboxes", []))
+                    + list(getattr(self, "_catalog_item_hitboxes", [])))
         for cat_id, hr in hitboxes:
             if _in_rect((mx, my_raw), hr):
                 logging.info(f"  [CATALOG] HIT: Object Item '{cat_id}' at {hr}")

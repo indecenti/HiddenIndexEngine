@@ -18,6 +18,7 @@ from editor.constants import (
     DEFAULT_LAYERS, CATALOG_VIEW_CACHE_MAX,
     CATALOG_ROW_PAD, CATALOG_ROW_LINE_GAP, CATALOG_ROW_GAP,
     CATALOG_THUMB_BASE, CATALOG_THUMB_GAP,
+    RECENT_STRIP_BASE, RECENT_STRIP_GAP,
     layer_color,
 )
 from editor.core.io import _load_scene_data
@@ -26,6 +27,9 @@ from editor.ui.draw import (
     _scrollbar, _draw_shape_icon, request_anim_frame, _ui_scale,
 )
 
+
+# Margin of the catalog panel, shared by the list and the recent strip.
+CATALOG_MARGIN = 12
 
 # Styles offered by the catalog filter, with the pool they select.
 CATALOG_STYLES = ("tutti", "real", "line art", "cartoon")
@@ -370,13 +374,57 @@ class RenderPanelsMixin:
         item_h = max(text_h + CATALOG_ROW_PAD * 2, thumb + CATALOG_ROW_PAD)
         return item_h, line_h, thumb
 
+    def _r_catalog_recent(self, y: int, mx: int, my: int) -> int:
+        """Strip of the objects placed most recently. Returns its height.
+
+        Zero when there is nothing to show, so the list simply starts where it
+        used to.
+        """
+        self._catalog_recent_hitboxes = []
+        recent = self._recent_objects()
+        if not recent:
+            return 0
+
+        side = int(round(RECENT_STRIP_BASE * _ui_scale()))
+        label = self._TR("cat_recent", "Recent")
+        label_h = _text_wh(label, "xs")[1]
+        _draw_text(self.screen, label, "xs", TXT_DIM, CATALOG_MARGIN + 2, y)
+        top = y + label_h + 4
+
+        x = CATALOG_MARGIN
+        limit = self.panel_l_w - CATALOG_MARGIN
+        for cat_id in recent:
+            if x + side > limit:
+                break
+            cat = next((c for c in self.catalog if c["id"] == cat_id), None)
+            if cat is None:
+                continue
+            cell = pygame.Rect(x, top, side, side)
+            selected = (self.catalog_sel == cat_id)
+            hovered = _in_rect((mx, my), cell)
+            _rect(self.screen, (45, 48, 62) if hovered else (30, 32, 42),
+                  cell, radius=6)
+            _rect(self.screen, ACCENT if selected else BORDER, cell,
+                  2 if selected else 1, radius=6)
+            if self.game_path:
+                icon = self._load_img(self.game_path / cat.get("icon", ""),
+                                      (side - 10, side - 10))
+                if icon:
+                    self.screen.blit(icon, icon.get_rect(center=cell.center))
+            if hovered:
+                self.active_tooltip = cat_id
+            self._catalog_recent_hitboxes.append((cat_id, cell))
+            x += side + RECENT_STRIP_GAP
+
+        return label_h + 4 + side + 8
+
     def _r_catalog(self, h):
         self._catalog_item_hitboxes = [] # Reset ogni frame
         mx, my_raw = pygame.mouse.get_pos()
         active_tags = getattr(self, "catalog_tag_filters", set())
 
         # Configurazione layout premium
-        MARGIN       = 12
+        MARGIN       = CATALOG_MARGIN
         INNER_W      = self.panel_l_w - MARGIN * 2
         SEARCH_H     = 32
         SEARCH_Y     = TOP_BAR_H + 38
@@ -535,9 +583,12 @@ class RenderPanelsMixin:
         sep_y = tag_clip.bottom + 12
         pygame.draw.line(self.screen, BORDER, (MARGIN, sep_y), (self.panel_l_w - MARGIN, sep_y))
 
+        # ── 3b. Oggetti usati di recente ──────────────────────────────────────
+        strip_h = self._r_catalog_recent(sep_y + 6, mx, my_raw)
+
         # ── 4. Lista oggetti (Pool catalogo) ──────────────────────────────────
         add_btn_h    = 36
-        list_y_start = sep_y + 8
+        list_y_start = sep_y + 8 + strip_h
         available_h  = h - STATUS_H - list_y_start - add_btn_h
         item_h, line_h, thumb = self._catalog_row_metrics()
         row_pitch = item_h + CATALOG_ROW_GAP

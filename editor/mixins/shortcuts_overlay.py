@@ -12,7 +12,7 @@ The panel now lists the whole of `editor/commands.py`, grouped, in the
 language the editor is set to. Adding a command to that table adds it here.
 """
 
-from typing import List, Tuple
+from typing import List
 
 import pygame
 
@@ -23,6 +23,39 @@ from editor.constants import (
     SHORTCUTS_ROW_H, SHORTCUTS_SCRIM,
 )
 from editor.ui.draw import _draw_text, _rect, _text_wh
+
+
+def _pack(blocks: list, sizes: list, columns: int):
+    """Split `blocks` into `columns` contiguous parts, shortest tallest part.
+
+    Returns the parts as lists of indices, or None when there are fewer blocks
+    than columns.
+    """
+    if columns > len(blocks):
+        return None
+
+    def fits(limit: int):
+        parts, current, used = [], [], 0
+        for i, size in enumerate(sizes):
+            if current and used + size > limit:
+                parts.append(current)
+                current, used = [], 0
+            current.append(i)
+            used += size
+        parts.append(current)
+        return parts if len(parts) <= columns else None
+
+    low, high = max(sizes), sum(sizes)
+    best = None
+    while low <= high:
+        middle = (low + high) // 2
+        parts = fits(middle)
+        if parts is None:
+            low = middle + 1
+        else:
+            best = parts
+            high = middle - 1
+    return best
 
 
 class ShortcutsOverlayMixin:
@@ -40,11 +73,8 @@ class ShortcutsOverlayMixin:
             return True
         return False
 
-    def _shortcuts_columns(self) -> Tuple[List[list], List[list]]:
-        """The groups split into two columns of roughly equal height.
-
-        An entry is a ("group", label) header or a ("row", keys, label).
-        """
+    def _shortcuts_blocks(self) -> List[list]:
+        """One block per group: a ("group", label) header then its rows."""
         blocks: List[list] = []
         for group_id, group_label in GROUPS:
             rows = [c for c in COMMANDS if c.group == group_id and c.keys]
@@ -53,47 +83,86 @@ class ShortcutsOverlayMixin:
             block = [("group", self._TR(f"cmd_group_{group_id}", group_label))]
             block += [("row", c.keys, self._TR(c.label_key, c.label)) for c in rows]
             blocks.append(block)
+        return blocks
 
-        total = sum(len(b) for b in blocks)
-        left: List[list] = []
-        right: List[list] = []
-        used = 0
-        for block in blocks:
-            if used + len(block) <= (total + 1) // 2 or not left:
-                left.append(block)
-                used += len(block)
-            else:
-                right.append(block)
-        return left, right
+    def _shortcuts_columns(self, max_rows: int = 0) -> List[List[list]]:
+        """The groups laid out in the fewest columns that fit the height.
 
-    def _r_shortcuts_overlay(self, w: int, h: int) -> None:
-        if not getattr(self, "_shortcuts_open", False):
-            return
+        `max_rows` is how many entries fit in the space available; 0 means no
+        limit, which is two columns. The panel used to clamp its box to the
+        window but lay the content out in two columns regardless, so a short
+        window drew the last rows outside the panel. A group is never split
+        across two columns.
+        """
+        blocks = self._shortcuts_blocks()
+        if not blocks:
+            return [[]]
+        sizes = [len(b) for b in blocks]
+        budget = max_rows if max_rows else sum(sizes)
 
-        left, right = self._shortcuts_columns()
-        rows_left = sum(len(b) for b in left)
-        rows_right = sum(len(b) for b in right)
+        for columns_wanted in range(2, len(blocks) + 1):
+            packed = _pack(blocks, sizes, columns_wanted)
+            if packed is None:
+                continue
+            if max(sum(sizes[i] for i in column) for column in packed) <= budget:
+                return [[blocks[i] for i in column] for column in packed]
 
+        # Nothing fits the budget: one column per group is the shortest we can
+        # be without splitting one.
+        return [[block] for block in blocks]
+
+    def _shortcuts_geometry(self, w: int, h: int) -> dict:
+        """Box, columns and column metrics of the panel, derived once.
+
+        Keys: box, columns, column_w, key_col, body_top, footer_y, rows.
+        """
         title = self._TR("shortcuts_title", "Keyboard shortcuts")
         footer = self._TR("shortcuts_close", "F1 or Esc to close")
         title_h = _text_wh(title, "lg")[1]
         footer_h = _text_wh(footer, "xs")[1]
 
+        chrome_h = SHORTCUTS_PAD * 3 + title_h + footer_h
+        max_rows = max(1, (h - 40 - chrome_h) // SHORTCUTS_ROW_H)
+        columns = self._shortcuts_columns(max_rows)
+
         # The chip column and the panel follow the content: fixed, a longer
         # key ("Space+drag") or a translated label was cut with an ellipsis.
-        rows = [entry for block in left + right for entry in block
+        rows = [entry for column in columns for block in column for entry in block
                 if entry[0] == "row"]
         key_col = max([_text_wh(keys, "mono")[0] for _, keys, _ in rows] or [0]) + 12
         key_col = max(SHORTCUTS_KEY_COL_W, key_col)
         label_w = max([_text_wh(label, "sm")[0] for _, _, label in rows] or [0])
-        column_content = key_col + SHORTCUTS_COL_GAP + label_w
+        content_w = key_col + SHORTCUTS_COL_GAP + label_w
+
+        n = len(columns)
         panel_w = min(w - 40, max(SHORTCUTS_PANEL_W,
-                                  column_content * 2 + SHORTCUTS_PAD * 3))
-        body_h = max(rows_left, rows_right) * SHORTCUTS_ROW_H
-        panel_h = SHORTCUTS_PAD * 3 + title_h + body_h + footer_h
-        panel_h = min(panel_h, h - 40)
+                                  content_w * n + SHORTCUTS_PAD * (n + 1)))
+        body_rows = max(sum(len(b) for b in column) for column in columns)
+        panel_h = min(chrome_h + body_rows * SHORTCUTS_ROW_H, h - 40)
         box = pygame.Rect((w - panel_w) // 2, max(20, (h - panel_h) // 2),
                           panel_w, panel_h)
+        return {
+            "box": box,
+            "columns": columns,
+            "column_w": (panel_w - SHORTCUTS_PAD * (n + 1)) // n,
+            "key_col": key_col,
+            "title": title,
+            "title_h": title_h,
+            "footer": footer,
+            "footer_h": footer_h,
+            "body_top": box.y + SHORTCUTS_PAD + title_h + SHORTCUTS_PAD,
+            "rows": body_rows,
+        }
+
+    def _r_shortcuts_overlay(self, w: int, h: int) -> None:
+        if not getattr(self, "_shortcuts_open", False):
+            return
+
+        geo = self._shortcuts_geometry(w, h)
+        box = geo["box"]
+        columns = geo["columns"]
+        key_col = geo["key_col"]
+        column_w = geo["column_w"]
 
         scrim = pygame.Surface((w, h), pygame.SRCALPHA)
         scrim.fill(SHORTCUTS_SCRIM)
@@ -101,17 +170,15 @@ class ShortcutsOverlayMixin:
         _rect(self.screen, PANEL, box, radius=10)
         _rect(self.screen, BORDER, box, 1, radius=10)
 
-        y = box.y + SHORTCUTS_PAD
-        _draw_text(self.screen, title, "lg", TXT_HI, box.x + SHORTCUTS_PAD, y)
-        y += title_h + SHORTCUTS_PAD // 2
-        pygame.draw.line(self.screen, BORDER, (box.x + SHORTCUTS_PAD, y),
-                         (box.right - SHORTCUTS_PAD, y), 1)
-        y += SHORTCUTS_PAD // 2
+        _draw_text(self.screen, geo["title"], "lg", TXT_HI,
+                   box.x + SHORTCUTS_PAD, box.y + SHORTCUTS_PAD)
+        line_y = geo["body_top"] - SHORTCUTS_PAD // 2
+        pygame.draw.line(self.screen, BORDER, (box.x + SHORTCUTS_PAD, line_y),
+                         (box.right - SHORTCUTS_PAD, line_y), 1)
 
-        column_w = (box.w - SHORTCUTS_PAD * 3) // 2
-        for column, blocks in ((0, left), (1, right)):
-            x = box.x + SHORTCUTS_PAD + column * (column_w + SHORTCUTS_PAD)
-            cy = y
+        for index, blocks in enumerate(columns):
+            x = box.x + SHORTCUTS_PAD + index * (column_w + SHORTCUTS_PAD)
+            cy = geo["body_top"]
             for block in blocks:
                 for entry in block:
                     if entry[0] == "group":
@@ -132,8 +199,8 @@ class ShortcutsOverlayMixin:
                                    column_w - key_col - SHORTCUTS_COL_GAP)
                     cy += SHORTCUTS_ROW_H
 
-        fw = _text_wh(footer, "xs")[0]
-        _draw_text(self.screen, footer, "xs", TXT_DIM,
-                   box.centerx - fw // 2, box.bottom - footer_h - 8)
+        fw = _text_wh(geo["footer"], "xs")[0]
+        _draw_text(self.screen, geo["footer"], "xs", TXT_DIM,
+                   box.centerx - fw // 2, box.bottom - geo["footer_h"] - 8)
 
         self._shortcuts_box = box

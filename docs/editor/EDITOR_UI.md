@@ -94,14 +94,19 @@ letter, and the shortcut panel could only list the 9 that happened to be written
 into two hint strings. One table now feeds three things:
 
 - **the F1 panel** (`editor/mixins/shortcuts_overlay.py`) — every binding,
-  grouped, in two columns sized on their own content;
+  grouped. `_shortcuts_geometry()` is its single geometry: the columns are the
+  fewest that fit the height available (two when they do, more on a short
+  window, never splitting a group), and their width follows the longest key and
+  the longest label;
 - **the command palette** (`editor/mixins/command_center.py`, Ctrl+P) — a
   search box over the localized labels; Enter runs, arrows move, Esc closes.
-  It is a modal on the unified stack, so it is app modal like every dialog;
+  It is a modal on the unified stack, so it is app modal like every dialog, and
+  it scrolls with the selection instead of drawing a fixed first page;
 - **`pytest tests/test_editor_commands.py`**, which refuses a command whose
   method does not exist, whose menu target has no branch in `_exec_menu_cmd`
-  (that is how the dead "Save as..." entry was found), or whose label is not
-  translated in all five languages.
+  (that is how the dead "Save as..." entry was found), whose label is not
+  translated in all five languages, or whose advertised shortcut no key handler
+  looks at.
 
 `InputHandlersMixin._on_key` stays the authority on what a key does; `keys` in
 the table is the documentation of it. Every toggle it performs is a method
@@ -121,7 +126,15 @@ scale. A row stacks three lines (id, localized label, tags) next to the
 thumbnail, and it is exactly as tall as they need. Raising the UI scale grows the
 rows instead of making the lines overlap.
 
-Constants: `CATALOG_ROW_*`, `CATALOG_THUMB_*` in `editor/constants.py`.
+Above the list, `_r_catalog_recent()` draws the objects placed most recently in
+this project (`_recent_objects()` / `_note_object_used()`, persisted per project
+in `.editor_settings.json`). Placing is the repetitive action of the editor and
+the catalog holds over a thousand entries: coming back to one just used meant
+searching for it again. The strip publishes `self._catalog_recent_hitboxes`,
+which the click handler treats exactly like a row of the list.
+
+Constants: `CATALOG_ROW_*`, `CATALOG_THUMB_*`, `RECENT_*` in
+`editor/constants.py`.
 
 ## Outline rows
 

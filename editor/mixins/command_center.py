@@ -117,6 +117,7 @@ class CommandPalette:
     def __init__(self) -> None:
         self.query: str = ""
         self.index: int = 0
+        self.scroll: int = 0
         self._rows: List[Command] = []
         self._row_rects: List[pygame.Rect] = []
 
@@ -146,25 +147,30 @@ class CommandPalette:
             return
         if ev.key == pygame.K_BACKSPACE:
             self.query = self.query[:-1]
-            self.index = 0
+            self.index = self.scroll = 0
             return
         if ev.unicode and ev.unicode.isprintable():
             self.query += ev.unicode
-            self.index = 0
+            self.index = self.scroll = 0
 
     def _on_click(self, editor, pos) -> None:
         for i, rect in enumerate(self._row_rects):
             if _in_rect(pos, rect):
-                self.index = i
+                self.index = self.scroll + i
                 self._run(editor)
                 return
         if not _in_rect(pos, getattr(self, "_box", pygame.Rect(0, 0, 0, 0))):
             editor._modal_pop(self)
 
     def _move(self, delta: int) -> None:
+        """Move the selection, keeping it inside the visible window."""
         if not self._rows:
             return
         self.index = max(0, min(len(self._rows) - 1, self.index + delta))
+        self.scroll = min(self.scroll, self.index)
+        self.scroll = max(self.scroll, self.index - PALETTE_MAX_ROWS + 1)
+        self.scroll = max(0, min(self.scroll,
+                                 max(0, len(self._rows) - PALETTE_MAX_ROWS)))
 
     def _run(self, editor) -> None:
         command = self._selected()
@@ -189,8 +195,10 @@ class CommandPalette:
         line_h = _text_wh("Ag", "sm")[1]
         row_h = line_h + 12
         field_h = _text_wh("Ag", "md")[1] + 14
-        shown = self._rows[:PALETTE_MAX_ROWS]
-        hidden = len(self._rows) - len(shown)
+        self.scroll = max(0, min(self.scroll,
+                                 max(0, len(self._rows) - PALETTE_MAX_ROWS)))
+        shown = self._rows[self.scroll:self.scroll + PALETTE_MAX_ROWS]
+        hidden = len(self._rows) - len(shown) - self.scroll
         more_h = (_text_wh("Ag", "xs")[1] + 6) if hidden > 0 else 0
         box_w = min(PALETTE_W, w - 60)
         box_h = (PALETTE_PAD * 2 + field_h + 8
@@ -222,9 +230,9 @@ class CommandPalette:
             row = pygame.Rect(box.x + PALETTE_PAD, y, box.w - PALETTE_PAD * 2, row_h)
             self._row_rects.append(row)
             available = editor._command_available(command)
-            if i == self.index:
+            if self.scroll + i == self.index:
                 _rect(screen, BTN_AC, row, radius=5)
-            label_colour = (TXT_HI if i == self.index
+            label_colour = (TXT_HI if self.scroll + i == self.index
                             else (TXT if available else (90, 92, 110)))
             keys = command.keys
             keys_w = _text_wh(keys, "mono")[0] if keys else 0

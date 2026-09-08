@@ -165,35 +165,89 @@ def test_shortcut_panel_lists_every_bound_command():
     """The panel is the whole registry, not a hand-kept subset."""
     from editor.commands import COMMANDS
     host = FakeChrome("en")
-    left, right = host._shortcuts_columns()
-    listed = {label for block in left + right for kind, *rest in block
-              if kind == "row" for label in [rest[1]]}
-    expected = {c.label for c in COMMANDS if c.keys}
-    assert listed == expected
+    listed = {entry[2] for column in host._shortcuts_columns()
+              for block in column for entry in block if entry[0] == "row"}
+    assert listed == {c.label for c in COMMANDS if c.keys}
 
 
-def test_shortcut_panel_splits_into_two_balanced_columns():
+def test_shortcut_panel_uses_two_columns_when_there_is_room():
     host = FakeChrome("en")
-    left, right = host._shortcuts_columns()
-    rows_left = sum(len(b) for b in left)
-    rows_right = sum(len(b) for b in right)
-    assert right, "the second column must be used"
-    assert abs(rows_left - rows_right) <= max(len(b) for b in left + right)
+    assert len(host._shortcuts_columns(max_rows=1000)) == 2
+
+
+def test_shortcut_panel_adds_columns_when_the_window_is_short():
+    host = FakeChrome("en")
+    roomy = host._shortcuts_columns(max_rows=1000)
+    cramped = host._shortcuts_columns(max_rows=20)
+    assert len(cramped) > len(roomy)
+
+
+def test_shortcut_panel_honours_the_row_budget_when_it_can():
+    host = FakeChrome("en")
+    for budget in (20, 25, 40):
+        columns = host._shortcuts_columns(max_rows=budget)
+        assert max(sum(len(b) for b in c) for c in columns) <= budget, budget
+
+
+def test_shortcut_panel_never_splits_a_group_to_meet_the_budget():
+    """With a budget below the tallest group, the group stays whole."""
+    host = FakeChrome("en")
+    tallest = max(len(b) for b in host._shortcuts_blocks())
+    columns = host._shortcuts_columns(max_rows=2)
+    assert max(sum(len(b) for b in c) for c in columns) == tallest
 
 
 def test_shortcut_panel_keeps_a_group_in_one_column():
     host = FakeChrome("en")
-    left, right = host._shortcuts_columns()
-    headers_left = {b[0][1] for b in left}
-    headers_right = {b[0][1] for b in right}
-    assert not (headers_left & headers_right)
+    seen = set()
+    for column in host._shortcuts_columns(max_rows=10):
+        headers = {b[0][1] for b in column}
+        assert not (headers & seen)
+        seen |= headers
+
+
+def test_shortcut_panel_never_drops_a_command():
+    host = FakeChrome("en")
+    for budget in (1, 5, 12, 100):
+        rows = [e for column in host._shortcuts_columns(max_rows=budget)
+                for block in column for e in block if e[0] == "row"]
+        assert len(rows) == len({r[2] for r in rows}) > 30, budget
 
 
 @pytest.mark.parametrize("lang", LANGS)
 def test_shortcut_panel_is_translated(lang):
     host = FakeChrome(lang)
-    left, right = host._shortcuts_columns()
-    assert sum(len(b) for b in left + right) > 20, lang
+    rows = [e for column in host._shortcuts_columns()
+            for block in column for e in block]
+    assert len(rows) > 20, lang
+
+
+@pytest.mark.parametrize("lang", LANGS)
+@pytest.mark.parametrize("scale", (UI_SCALE_MIN, 1.0, UI_SCALE_MAX))
+@pytest.mark.parametrize("size", ((1280, 720), (1600, 900), (1920, 1080)))
+def test_shortcut_panel_content_stays_inside_the_panel(lang, scale, size):
+    """A short window adds a column instead of drawing past the panel."""
+    from editor.constants import SHORTCUTS_ROW_H
+    _init_fonts(scale)
+    try:
+        host = FakeChrome(lang, size=size)
+        geo = host._shortcuts_geometry(*size)
+        box = geo["box"]
+        assert pygame.Rect((0, 0), size).contains(box)
+        body_bottom = geo["body_top"] + geo["rows"] * SHORTCUTS_ROW_H
+        assert body_bottom <= box.bottom, (
+            f"{lang} at {scale} on {size}: rows spill out of the panel")
+    finally:
+        _init_fonts(1.0)
+
+
+@pytest.mark.parametrize("size", ((1280, 720), (1920, 1080)))
+def test_shortcut_panel_columns_fit_side_by_side(size):
+    host = FakeChrome("de", size=size)
+    geo = host._shortcuts_geometry(*size)
+    n = len(geo["columns"])
+    assert geo["column_w"] > 0
+    assert n * geo["column_w"] <= geo["box"].w
 
 
 def test_f1_panel_toggles():

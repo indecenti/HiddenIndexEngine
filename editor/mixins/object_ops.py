@@ -17,6 +17,7 @@ from editor.constants import (
     ACCENT, BORDER, BTN, PANEL,
     TXT, TXT_DIM, TXT_HI, SEL_C, OK_C, ERR_C, WARN_C,
     TAB_PROPS, REF_W, REF_H,
+    RECENT_OBJECTS_MAX,
 )
 from editor.core.io import _default_obj
 from editor.ui.draw import _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _slider
@@ -247,6 +248,29 @@ class ObjectOpsMixin:
     # PIAZZAMENTO / CRUD
     # ─────────────────────────────────────────────────────────────────────────
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # OGGETTI USATI DI RECENTE
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def _recent_objects(self) -> list:
+        """Catalog ids most recently placed in this project, newest first."""
+        if not getattr(self, "game_name", None):
+            return []
+        by_game = self._load_editor_settings().get("recent_objects", {})
+        known = {c["id"] for c in getattr(self, "catalog", [])}
+        return [i for i in by_game.get(self.game_name, []) if i in known]
+
+    def _note_object_used(self, catalog_id: str) -> None:
+        """Remember a catalog id as just placed, and persist the list."""
+        if not catalog_id or not getattr(self, "game_name", None):
+            return
+        settings = self._load_editor_settings()
+        by_game = dict(settings.get("recent_objects", {}))
+        recent = [i for i in by_game.get(self.game_name, []) if i != catalog_id]
+        recent.insert(0, catalog_id)
+        by_game[self.game_name] = recent[:RECENT_OBJECTS_MAX]
+        self._save_editor_setting("recent_objects", by_game)
+
     def _sel_catalog(self) -> dict:
         if self.catalog_sel is None: return None
         return next((c for c in self.catalog if c["id"] == self.catalog_sel), None)
@@ -282,6 +306,7 @@ class ObjectOpsMixin:
         obj = _default_obj(cat["id"], cx, cy, "circle", radius=r,
                            hint_delay=cat.get("default_hint_delay", 30),
                            layer=lyr)
+        self._note_object_used(cat["id"])
         self._push_undo(self._TR("undo_new_circle", "New circle"))
         self.scene_data.setdefault("objects", []).append(obj)
         new_idx = len(self.scene_data["objects"]) - 1
@@ -337,6 +362,7 @@ class ObjectOpsMixin:
         obj = _default_obj(cat["id"], x, y, "rect", width=max(10, w), height=max(10, h),
                            hint_delay=cat.get("default_hint_delay", 30),
                            layer=lyr)
+        self._note_object_used(cat["id"])
         self._push_undo(self._TR("undo_new_rect", "New rectangle"))
         self.scene_data.setdefault("objects", []).append(obj)
         self.scene_dirty = True
@@ -472,6 +498,7 @@ class ObjectOpsMixin:
                             obj = _default_obj(cat["id"], obj_x - nw/2, obj_y - nh/2, "rect",
                                                width=nw, height=nh, layer=lyr,
                                                hint_delay=cat.get("default_hint_delay", 30))
+                        self._note_object_used(cat["id"])
                         
                         # Varietà Estetica (Rotazione e Flip)
                         obj["rotation"] = random.randint(0, 359) if "no_rot" not in tags else 0

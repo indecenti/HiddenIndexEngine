@@ -105,6 +105,13 @@ CATALOG_ROW_GAP      = 4    # gap between two rows
 CATALOG_THUMB_BASE   = 48   # thumbnail side at UI scale 1.0
 CATALOG_THUMB_GAP    = 16   # gap between the thumbnail and the text column
 
+# Objects placed recently, offered as a strip above the catalog list. Placing
+# is the repetitive action of the editor and the catalog holds over a thousand
+# entries: coming back to one just used meant searching for it again.
+RECENT_OBJECTS_MAX   = 10   # how many are remembered, per project
+RECENT_STRIP_BASE    = 40   # thumbnail side at UI scale 1.0
+RECENT_STRIP_GAP     = 6
+
 # ─────────────────────────────────────────────────────────────────────────────
 # TOOLBAR CANVAS / HUD
 # ─────────────────────────────────────────────────────────────────────────────

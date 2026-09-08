@@ -118,6 +118,7 @@
   "cat_btn_add_asset": "+ Añadir Asset al Catálogo",
   "cat_empty": "Catálogo vacío",
   "cat_no_results": "Sin resultados",
+  "cat_recent": "Recientes",
   "cat_search_placeholder": "Buscar objetos...",
   "cat_style_btn": "ESTILO: {v}",
   "cat_tag_all": "Todos",

@@ -68,6 +68,9 @@ Legend: [x] done · [~] in progress/partial · [ ] to do.
   "Save scene as..." was offered and never wired, and is now implemented (copy the
   folder, keep the unsaved edits, register the copy in level_config.json). Verified
   by `pytest tests/test_editor_commands.py` and `pytest tests/test_editor_save_as.py`.
+- [x] Recently placed objects offered as a strip above the catalog list, per project
+  and across sessions: placing is the repetitive action of the editor and the catalog
+  holds over a thousand entries. Verified by `pytest tests/test_editor_recent_objects.py`.
 - [ ] "Editor Pro" plan (`docs/archive/editor/EDITOR_PRO_PLAN.md`, 2026-07-12): remaining
   items - auto-scatter camouflage (single render-based metric, best-of-M, Lab color, repair
   loop), scatter UX (progress/cancel, seed, interactive ghosts), editor completeness
