@@ -17,7 +17,7 @@ from editor.constants import (
 )
 from editor.core.asset_catalog import AssetCatalog
 from editor.ui.draw import (
-    _draw_text, _rect, _button, _in_rect, _scrollbar, _draw_shape_icon, _clamp, _text_wh
+    _draw_text, _rect, _button, _in_rect, _scrollbar, _draw_shape_icon, _clamp, _text_wh, dialog_rect,
 )
 
 # Estensioni gestite dal modale background (immagini + video full-screen)
@@ -205,7 +205,8 @@ class BackgroundModalMixin:
     def _bg_modal_click(self, mx, my, w, h):
         if not self._bg_modal: return
         # Dimensioni dinamiche bilanciate
-        dw, dh = int(w * 0.88), int(h * 0.84)
+        _box = dialog_rect(w, h, int(w * 0.88), int(h * 0.84))
+        dw, dh = _box.w, _box.h
         dw = _clamp(dw, 1100, 2000)
         dh = _clamp(dh, 700, 1200)
         dx, dy = (w - dw) // 2, (h - dh) // 2
@@ -355,7 +356,8 @@ class BackgroundModalMixin:
         self.screen.blit(self._bg_overlay_surf, (0, 0))
 
         # Dimensioni Dinamiche Bilanciate
-        dw, dh = int(w * 0.88), int(h * 0.84)
+        _box = dialog_rect(w, h, int(w * 0.88), int(h * 0.84))
+        dw, dh = _box.w, _box.h
         dw = _clamp(dw, 1100, 2000)
         dh = _clamp(dh, 700, 1200)
         dx, dy = (w - dw) // 2, (h - dh) // 2

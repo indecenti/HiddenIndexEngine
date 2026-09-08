@@ -12,7 +12,7 @@ from editor.constants import (
     TXT, TXT_HI, TXT_DIM, OK_C, ERR_C
 )
 from editor.ui.draw import (
-    _rect, _txt, _draw_text, _button, _in_rect, _scrollbar, _clamp
+    _rect, _txt, _draw_text, _button, _in_rect, _scrollbar, _clamp, dialog_rect,
 )
 
 class MinigameModalMixin:
@@ -65,8 +65,8 @@ class MinigameModalMixin:
             self._minigame_modal = False
             return
 
-        mw, mh = 800, 600
-        mx0, my0 = (w - mw) // 2, (h - mh) // 2
+        _box = dialog_rect(w, h, 800, 600)
+        mw, mh, mx0, my0 = _box.w, _box.h, _box.x, _box.y
         
         # Overlay scuro
         overlay = pygame.Surface((w, h), pygame.SRCALPHA)

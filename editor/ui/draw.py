@@ -369,6 +369,21 @@ BUTTON_PAD_X = 12
 BUTTON_ICON_GAP = 8
 
 
+def dialog_rect(window_w: int, window_h: int, want_w: int, want_h: int,
+                margin: int = 20) -> pygame.Rect:
+    """A dialog of `want_w` x `want_h`, centred and clamped to the window.
+
+    A dialog larger than the window is not merely ugly: what falls outside is
+    unreachable, and it is usually the title bar and the footer buttons. The
+    editor's own minimum window is 1280x720, which several dialogs asked to be
+    taller than.
+    """
+    width = min(int(want_w), max(120, window_w - margin * 2))
+    height = min(int(want_h), max(120, window_h - margin * 2))
+    return pygame.Rect((window_w - width) // 2, (window_h - height) // 2,
+                       width, height)
+
+
 def _button_w(label: str, font: str = "sm", icon=None, min_w: int = 0) -> int:
     """Width a _button needs to show `label` (and `icon`) without clipping."""
     tw, _ = _text_wh(label, font)

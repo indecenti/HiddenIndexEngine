@@ -318,3 +318,38 @@ def test_seek_hitbox_follows_the_row():
     first = mm._seek_bar_rect(0, 0)
     second = mm._seek_bar_rect(0, mm._ROW_H)
     assert second.y - first.y == mm._ROW_H
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DIALOGHI SEMPRE DENTRO LA FINESTRA
+# ─────────────────────────────────────────────────────────────────────────────
+
+from editor.constants import MIN_EDITOR_HEIGHT, MIN_EDITOR_WIDTH  # noqa: E402
+from editor.ui.draw import dialog_rect  # noqa: E402
+
+
+def test_a_dialog_is_clamped_to_the_window():
+    """The playlist and the video picker asked for 1100x800 on a 1280x720
+    window: their title and their footer buttons were off screen."""
+    box = dialog_rect(MIN_EDITOR_WIDTH, MIN_EDITOR_HEIGHT, 1100, 800)
+    assert pygame.Rect(0, 0, MIN_EDITOR_WIDTH, MIN_EDITOR_HEIGHT).contains(box)
+
+
+def test_a_dialog_that_fits_is_left_alone():
+    box = dialog_rect(1920, 1080, 800, 600)
+    assert (box.w, box.h) == (800, 600)
+
+
+def test_a_dialog_is_centred():
+    box = dialog_rect(1000, 800, 400, 200)
+    assert box.centerx == 500 and box.centery == 400
+
+
+def test_a_dialog_keeps_the_margin_it_is_given():
+    box = dialog_rect(1000, 800, 5000, 5000, margin=50)
+    assert (box.w, box.h) == (900, 700)
+
+
+def test_a_dialog_never_collapses_on_a_tiny_window():
+    box = dialog_rect(100, 80, 800, 600)
+    assert box.w >= 120 and box.h >= 120

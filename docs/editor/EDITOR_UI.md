@@ -163,6 +163,12 @@ read:
 | Icon picker | `_icon_grid_metrics()` returns every rect, plus `visible_rows` and `max_scroll` |
 | Project auditor | `_auditor_layout()` returns every rect, plus `item_h`, `visible_rows` and `max_scroll` |
 | Music playlist | `_seek_bar_rect()` for the seek bar of a row |
+| Translation editor (table) | `_lang_geometry()` returns every rect, plus `row_h`, `key_col`, `visible_rows` and `max_scroll`; `_lang_cell_rect()` places one cell |
+
+A dialog is also never larger than the window: `dialog_rect()` in
+`editor/ui/draw.py` centres it and clamps it. The playlist and the video picker
+asked for 1100x800 while the editor's own minimum window is 1280x720, so their
+title bar and their footer buttons were off screen and unreachable.
 
 What that replaced, in each of them, was the same defect: the renderer walked
 the layout while the handler restated it as literals, and the two had already
@@ -174,6 +180,28 @@ the bar the user could see.
 Dialog sizes follow the UI scale and are clamped to the window: the auditor also
 stays between the top bar and the status bar, so its footer cannot end up
 underneath the latter.
+
+### Translation editor
+
+The table is the densest surface of the editor and the one whose job is finding
+what is missing, so it carries a little more than geometry:
+
+- each language column shows how much of the project it covers (`EN 97%`),
+  coloured by how far along it is;
+- a cell with no translation is drawn tinted and outlined, so an empty one
+  cannot be mistaken for a short one;
+- **Only incomplete** lists just the keys some language has nothing for, and
+  combines with the search;
+- a key created with **+ New key** is named on the spot instead of being left
+  as `new_key_12` — the name is what the game refers to, so a key nobody can
+  name is a key nobody can use. Only a key created in this session can be
+  renamed: renaming an existing one would break whatever refers to it.
+
+Its layout used to be written three times (the wheel handler, the renderer, the
+click handler) and the copies disagreed: the search box was drawn three pixels
+below where it was hit-tested, and the rows were clipped two pixels away from
+where clicks stopped being accepted. Verified by
+`pytest tests/test_editor_lang_modal.py`.
 
 ## Localization
 

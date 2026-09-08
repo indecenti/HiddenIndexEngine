@@ -17,7 +17,7 @@ from editor.constants import (
 )
 from editor.core.asset_catalog import AssetCatalog
 from editor.ui.draw import (
-    _draw_text, _rect, _button, _in_rect, _scrollbar, _draw_shape_icon, _clamp, _text_wh
+    _draw_text, _rect, _button, _in_rect, _scrollbar, _draw_shape_icon, _clamp, _text_wh, dialog_rect,
 )
 
 # Estensioni gestite dal modale video
@@ -217,8 +217,8 @@ class VideoModalMixin:
 
     def _vid_modal_click(self, mx, my, w, h):
         if not getattr(self, "_vid_modal", False): return
-        dw, dh = 1100, 800
-        dx, dy = (w - dw) // 2, (h - dh) // 2
+        _box = dialog_rect(w, h, 1100, 800)
+        dw, dh, dx, dy = _box.w, _box.h, _box.x, _box.y
         
         if not _in_rect((mx, my), (dx, dy, dw, dh)): self._vid_modal_close(); return
 
@@ -382,8 +382,8 @@ class VideoModalMixin:
         overlay = pygame.Surface((w, h), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 235)); self.screen.blit(overlay, (0, 0))
 
-        dw, dh = 1100, 800
-        dx, dy = (w - dw) // 2, (h - dh) // 2
+        _box = dialog_rect(w, h, 1100, 800)
+        dw, dh, dx, dy = _box.w, _box.h, _box.x, _box.y
         _rect(self.screen, (25, 30, 45), (dx, dy, dw, dh), radius=24)
         _rect(self.screen, (100, 100, 255), (dx, dy, dw, dh), 2, radius=24)
         _draw_text(self.screen, self._TR("modal_vid_title"), "lg", TXT_HI, dx + 30, dy + 25)

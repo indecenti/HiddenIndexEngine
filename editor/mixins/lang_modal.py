@@ -6,21 +6,30 @@ LangModalMixin — editor traduzioni multi-lingua: logica + rendering.
 
 import pygame
 from editor.constants import (
-    ACCENT, BORDER, BTN, BTN_HO, BTN_AC,
-    TXT, TXT_DIM, TXT_HI, WARN_C, OK_C,
+    ACCENT, BORDER, BTN_HO,
+    TXT, TXT_DIM, TXT_HI, WARN_C, OK_C, ERR_C,
 )
 from editor.core.io import _load_json, _save_json
 from editor.ui.draw import (
     _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _input_box, _clamp,
-    _button_w,
+    _button_w, _scrollbar,
 )
 
-# Geometry of the key list, mirrored from _r_lang_modal: scrolling has to know
-# how many rows fit to clamp itself.
+# Geometry of the dialog at UI scale 1.0. Everything that holds text is
+# derived from the font in _lang_geometry(), which is the only place the layout
+# is computed: the renderer, the click handler and the wheel all read it.
+LANG_DIALOG_W_RATIO = 0.92
 LANG_DIALOG_H_RATIO = 0.88
-LANG_HEADER_H = 118
-LANG_FOOTER_H = 48
-LANG_ROW_H = 28
+LANG_FX_W_RATIO = 0.80
+LANG_FX_H_RATIO = 0.80
+LANG_PAD = 10
+LANG_KEY_COL_MIN = 200      # narrowest the key column may get
+LANG_KEY_COL_MAX = 420      # and the widest, so the languages keep room
+LANG_CELL_GAP = 4
+# A cell with no translation is drawn on this, with a matching border, so an
+# empty one cannot be mistaken for a short one at a glance.
+LANG_MISSING_BG = (74, 42, 42)
+LANG_MISSING_BORDER = (140, 70, 70)
 
 
 class LangModalMixin:
@@ -30,16 +39,102 @@ class LangModalMixin:
         self._lang_context = "global"
         self._engine_strings = {}  # Cache delle stringhe originali dell'engine (sola lettura)
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # GEOMETRIA (unica sorgente per rendering, click e rotella)
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def _lang_geometry(self, w: int, h: int) -> dict:
+        """Every rect of the translation editor, derived once.
+
+        Keys: box, is_fx, row_h, header_h, key_col, lang_w, search, filter,
+        table_top, content, visible_rows, max_scroll, footer_y, btn_h.
+        """
+        is_fx = (getattr(self, "_lang_context", "global") == "fx")
+        line_h = _text_wh("Ag", "sm")[1]
+        title_h = _text_wh("Ag", "lg")[1]
+
+        dw = int(w * (LANG_FX_W_RATIO if is_fx else LANG_DIALOG_W_RATIO))
+        dh = int(h * (LANG_FX_H_RATIO if is_fx else LANG_DIALOG_H_RATIO))
+        box = pygame.Rect((w - dw) // 2, (h - dh) // 2, dw, dh)
+
+        btn_h = max(28, line_h + 10)
+        footer_y = box.bottom - btn_h - 16
+        row_h = max(28, line_h + 10)
+        search_h = max(32, line_h + 12)
+
+        if is_fx:
+            header_h = title_h + 18
+            content = pygame.Rect(box.x + LANG_PAD, box.y + header_h,
+                                  dw - LANG_PAD * 2, footer_y - box.y - header_h)
+            return {
+                "box": box, "is_fx": True, "row_h": max(50, line_h + 30),
+                "header_h": header_h, "key_col": 0, "lang_w": content.w,
+                "search": pygame.Rect(0, 0, 0, 0),
+                "filter": pygame.Rect(0, 0, 0, 0),
+                "table_top": content.y, "content": content,
+                "visible_rows": len(self.LANGS), "max_scroll": 0,
+                "footer_y": footer_y, "btn_h": btn_h,
+            }
+
+        # The key column is as wide as the keys need, within bounds: fixed at
+        # 200 px, a longer key or a larger UI scale cut it with an ellipsis.
+        keys = getattr(self, "_lang_filtered_keys", None) or self._lang_keys
+        widest = max((_text_wh(k, "sm")[0] for k in keys[:400]), default=0)
+        key_col = max(LANG_KEY_COL_MIN, min(LANG_KEY_COL_MAX, widest + 16))
+
+        filter_label = self._TR("lm_only_missing", "Only incomplete")
+        filter_w = _button_w(filter_label, "sm", min_w=140)
+        search = pygame.Rect(box.x + LANG_PAD, box.y + title_h + 16,
+                             dw - LANG_PAD * 2 - filter_w - 8, search_h)
+        filter_r = pygame.Rect(search.right + 8, search.y, filter_w, search_h)
+
+        col_head_h = line_h + 6
+        table_top = search.bottom + 10 + col_head_h
+        content = pygame.Rect(box.x + LANG_PAD, table_top,
+                              dw - LANG_PAD * 2, max(row_h, footer_y - table_top - 8))
+        visible = max(1, content.h // row_h)
+        return {
+            "box": box, "is_fx": False, "row_h": row_h,
+            "header_h": table_top - box.y, "key_col": key_col,
+            "lang_w": (content.w - key_col) // len(self.LANGS),
+            "search": search, "filter": filter_r, "filter_label": filter_label,
+            "col_head_h": col_head_h,
+            "table_top": table_top, "content": content,
+            "visible_rows": visible,
+            "max_scroll": max(0, len(keys) - visible),
+            "footer_y": footer_y, "btn_h": btn_h,
+        }
+
+    def _lang_cell_rect(self, geo: dict, row: int, lang_index: int):
+        """Rect of one language cell, at the current scroll."""
+        y = geo["table_top"] + (row - self._lang_scroll) * geo["row_h"]
+        x = geo["content"].x + geo["key_col"] + lang_index * geo["lang_w"]
+        return pygame.Rect(x, y, geo["lang_w"] - LANG_CELL_GAP,
+                           geo["row_h"] - 2)
+
+    def _lang_completion(self) -> dict:
+        """Share of the keys translated, per language, as a percentage."""
+        keys = self._lang_keys
+        if not keys:
+            return {lang: 100 for lang in self.LANGS}
+        done = {}
+        for lang in self.LANGS:
+            filled = sum(1 for k in keys
+                         if str(self._lang_cell_value(k, lang)).strip())
+            done[lang] = int(round(filled * 100 / len(keys)))
+        return done
+
+    def _lang_is_incomplete(self, key: str) -> bool:
+        """True when any language has nothing for this key."""
+        return any(not str(self._lang_cell_value(key, lang)).strip()
+                   for lang in self.LANGS)
+
     def _lang_modal_wheel(self, dy: int) -> None:
         """Scroll the key list. The effect context has no list to scroll."""
         if getattr(self, "_lang_context", "global") == "fx":
             return
-        h = self.screen.get_size()[1]
-        visible_h = int(h * LANG_DIALOG_H_RATIO) - LANG_HEADER_H - LANG_FOOTER_H
-        visible_rows = max(1, visible_h // LANG_ROW_H)
-        keys = getattr(self, "_lang_filtered_keys", self._lang_keys)
-        max_scroll = max(0, len(keys) - visible_rows)
-        self._lang_scroll = _clamp(self._lang_scroll - dy, 0, max_scroll)
+        geo = self._lang_geometry(*self.screen.get_size())
+        self._lang_scroll = _clamp(self._lang_scroll - dy, 0, geo["max_scroll"])
 
     # ─────────────────────────────────────────────────────────────────────────
     # APERTURA / SALVATAGGIO
@@ -98,6 +193,10 @@ class LangModalMixin:
         self._lang_all_sel = False
         self._lang_search = ""
         self._lang_search_active = False
+        self._lang_only_missing = False
+        self._lang_naming = None
+        self._lang_name_buf = ""
+        self._lang_new_keys = set()
         self._lang_filtered_keys = self._lang_keys[:]
 
 
@@ -185,9 +284,15 @@ class LangModalMixin:
         return self._lang_data.get(lang, {}).get(key, "")
 
     def _lang_update_filter(self):
-        """Aggiorna la lista delle chiavi filtrate in base alla ricerca."""
+        """Aggiorna la lista delle chiavi filtrate: ricerca + solo incomplete."""
+        only_missing = getattr(self, "_lang_only_missing", False)
         if not self._lang_search:
-            self._lang_filtered_keys = self._lang_keys[:]
+            self._lang_filtered_keys = [
+                k for k in self._lang_keys
+                if not only_missing or self._lang_is_incomplete(k)]
+            self._lang_sel = None
+            self._lang_buf = ""
+            self._lang_scroll = 0
             return
 
         q = self._lang_search.lower()
@@ -206,16 +311,14 @@ class LangModalMixin:
                     break
             if found:
                 filtered.append(k)
-        
+
+        if only_missing:
+            filtered = [k for k in filtered if self._lang_is_incomplete(k)]
         self._lang_filtered_keys = filtered
-        # Se la selezione corrente sparisce, la resettiamo
-        if self._lang_sel:
-            ki, li = self._lang_sel
-            # Nota: ki qui è l'indice della vecchia lista filtrata o di quella globale?
-            # È meglio resettare se cambiamo ricerca per evitare puntatori a caso.
-            self._lang_sel = None
-            self._lang_buf = ""
-        
+        # La selezione e' un indice nella lista filtrata: dopo un filtro nuovo
+        # punterebbe a una chiave diversa, quindi si azzera.
+        self._lang_sel = None
+        self._lang_buf = ""
         self._lang_scroll = 0
 
     def _lang_try_close(self) -> bool:
@@ -246,7 +349,19 @@ class LangModalMixin:
 
     def _lang_key(self, ev):
         ctrl = (pygame.key.get_mods() & pygame.KMOD_CTRL)
-        
+
+        # Editor del nome di una chiave appena creata: cattura tutto finche' e' aperto
+        if getattr(self, "_lang_naming", None) is not None:
+            if ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                self._lang_finish_naming(commit=True)
+            elif ev.key == pygame.K_ESCAPE:
+                self._lang_finish_naming(commit=False)
+            elif ev.key == pygame.K_BACKSPACE:
+                self._lang_name_buf = self._lang_name_buf[:-1]
+            elif ev.unicode and ev.unicode.isprintable() and not ctrl:
+                self._lang_name_buf += ev.unicode
+            return
+
         # Gestione input barra di ricerca
         if getattr(self, "_lang_search_active", False):
             if ev.key == pygame.K_ESCAPE or ev.key == pygame.K_RETURN:
@@ -365,210 +480,328 @@ class LangModalMixin:
                 self._lang_cursor += 1
 
     def _lang_click(self, mx, my_raw, w, h):
-        is_fx = (getattr(self, "_lang_context", "global") == "fx")
-        dw = int(w * (0.8 if is_fx else 0.92))
-        dh = int(h * (0.8 if is_fx else 0.88))
-        dx = (w - dw) // 2
-        dy = (h - dh) // 2
+        """Click inside the dialog, resolved on the rects the renderer drew.
 
+        The geometry used to be restated here, and the two copies disagreed:
+        the search box was drawn at dy+48 and hit-tested at dy+45, so its top
+        three pixels did nothing, and the row area was clipped three pixels
+        away from where clicks stopped being accepted.
+        """
+        geo = self._lang_geometry(w, h)
+        pos = (mx, my_raw)
         footer = getattr(self, "_lang_footer_hitboxes", {})
-        save_r = footer.get("save", pygame.Rect(0, 0, 0, 0))
-        close_r = footer.get("cancel", pygame.Rect(0, 0, 0, 0))
+        empty = pygame.Rect(0, 0, 0, 0)
 
-        if _in_rect((mx, my_raw), save_r):
-            if self._lang_sel: self._lang_commit()
-            self._lang_save(); return
-        if _in_rect((mx, my_raw), close_r):
-            if self._lang_sel: self._lang_commit()
+        if _in_rect(pos, footer.get("save", empty)):
+            if self._lang_sel:
+                self._lang_commit()
+            self._lang_save()
+            return
+        if _in_rect(pos, footer.get("cancel", empty)):
+            if self._lang_sel:
+                self._lang_commit()
             self._lang_try_close()
             return
 
-        if not is_fx:
-            # Barra di ricerca
-            search_r = (dx + 10, dy + 45, dw - 20, 32)
-            if _in_rect((mx, my_raw), search_r):
-                if self._lang_sel: self._lang_commit()
+        if not geo["is_fx"]:
+            if _in_rect(pos, geo["search"]):
+                self._lang_finish_naming(commit=True)
+                if self._lang_sel:
+                    self._lang_commit()
                 self._lang_search_active = True
                 self._lang_sel = None
                 return
-            else:
-                self._lang_search_active = False
+            self._lang_search_active = False
 
-            add_r = footer.get("add", pygame.Rect(0, 0, 0, 0))
-            if _in_rect((mx, my_raw), add_r):
-                new_key = f"new_key_{len(self._lang_keys)}"
-                self._lang_keys.append(new_key)
-                for lang in self.LANGS:
-                    self._lang_data.setdefault(lang, {})[new_key] = ""
-                self._bump_catalog_rev()
-                self._lang_update_filter()
+            if _in_rect(pos, geo["filter"]):
+                self._lang_toggle_only_missing()
                 return
 
-        HEADER_H = 44 if is_fx else 118
-        ROW_H    = 50 if is_fx else 28
-        KEY_W    = 0 if is_fx else 200
-        lang_w   = (dw - KEY_W - 20) // (1 if is_fx else len(self.LANGS))
-        content_y = dy + HEADER_H
-        content_x = dx + 10
+            if _in_rect(pos, footer.get("add", empty)):
+                self._lang_add_key()
+                return
 
-        if is_fx:
-            # Lista verticale lingue per FX
+        if geo["is_fx"]:
             for li, lang in enumerate(self.LANGS):
-                cell_r = (content_x, content_y + li * ROW_H, dw - 20, ROW_H - 2)
-                if _in_rect((mx, my_raw), cell_r):
-                    if self._lang_sel: self._lang_commit()
+                cell = pygame.Rect(geo["content"].x,
+                                   geo["table_top"] + li * geo["row_h"],
+                                   geo["content"].w, geo["row_h"] - 2)
+                if _in_rect(pos, cell):
+                    if self._lang_sel:
+                        self._lang_commit()
                     self._lang_sel = (0, li)
                     self._lang_buf = self._lang_cell_value(self._lang_keys[0], lang)
                     self._lang_cursor = len(self._lang_buf)
                     return
-        else:
-            # Tabella globale
-            for ki, key in enumerate(self._lang_filtered_keys):
-                ry = content_y + ki * ROW_H - self._lang_scroll * ROW_H
-                if ry < dy + HEADER_H or ry > dy + dh - 50: continue
-                for li, lang in enumerate(self.LANGS):
-                    cx_ = content_x + KEY_W + li * lang_w
-                    cell_r = (cx_, ry, lang_w - 4, ROW_H - 2)
-                    if _in_rect((mx, my_raw), cell_r):
-                        if self._lang_sel: self._lang_commit()
-                        self._lang_sel = (ki, li)
-                        self._lang_buf = self._lang_cell_value(key, lang)
-                        self._lang_cursor = len(self._lang_buf)
-                        return
+            return
+
+        first = self._lang_scroll
+        for ki in range(first, min(len(self._lang_filtered_keys),
+                                   first + geo["visible_rows"] + 1)):
+            key = self._lang_filtered_keys[ki]
+            for li, lang in enumerate(self.LANGS):
+                cell = self._lang_cell_rect(geo, ki, li)
+                if not geo["content"].contains(cell) and not geo["content"].colliderect(cell):
+                    continue
+                if _in_rect(pos, cell) and geo["content"].collidepoint(pos):
+                    self._lang_finish_naming(commit=True)
+                    if self._lang_sel:
+                        self._lang_commit()
+                    self._lang_sel = (ki, li)
+                    self._lang_buf = self._lang_cell_value(key, lang)
+                    self._lang_cursor = len(self._lang_buf)
+                    return
+            # The key column of a key added in this session can be renamed.
+            key_cell = pygame.Rect(geo["content"].x,
+                                   geo["table_top"] + (ki - first) * geo["row_h"],
+                                   geo["key_col"], geo["row_h"] - 2)
+            if _in_rect(pos, key_cell) and key in getattr(self, "_lang_new_keys", set()):
+                self._lang_start_naming(ki)
+                return
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # FILTRO E NUOVE CHIAVI
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def _lang_toggle_only_missing(self) -> None:
+        """List only the keys some language has nothing for."""
+        self._lang_only_missing = not getattr(self, "_lang_only_missing", False)
+        self._lang_update_filter()
+
+    def _lang_add_key(self) -> None:
+        """Add a key and start naming it right away.
+
+        It used to be created as "new_key_12" with no way to rename it, and
+        the name is what the game refers to: a key nobody can name is a key
+        nobody can use.
+        """
+        base = self._TR("lm_new_key_name", "new_key")
+        name, n = base, 1
+        while name in self._lang_keys:
+            n += 1
+            name = f"{base}_{n}"
+        self._lang_keys.append(name)
+        self._lang_keys.sort()
+        for lang in self.LANGS:
+            self._lang_data.setdefault(lang, {})[name] = ""
+        self._lang_new_keys = set(getattr(self, "_lang_new_keys", set())) | {name}
+        self._lang_dirty = True
+        self._bump_catalog_rev()
+        self._lang_update_filter()
+        if name in self._lang_filtered_keys:
+            index = self._lang_filtered_keys.index(name)
+            self._lang_scroll = _clamp(
+                index - 2, 0,
+                max(0, len(self._lang_filtered_keys) - 1))
+            self._lang_start_naming(index)
+
+    def _lang_start_naming(self, row: int) -> None:
+        """Edit the name of the key on `row`."""
+        if row >= len(self._lang_filtered_keys):
+            return
+        self._lang_sel = None
+        self._lang_search_active = False
+        self._lang_naming = row
+        self._lang_name_buf = self._lang_filtered_keys[row]
+
+    def _lang_finish_naming(self, commit: bool) -> None:
+        """Close the name editor, renaming the key when asked and allowed."""
+        row = getattr(self, "_lang_naming", None)
+        if row is None:
+            return
+        self._lang_naming = None
+        old = self._lang_filtered_keys[row] if row < len(self._lang_filtered_keys) else ""
+        new = (self._lang_name_buf or "").strip()
+        self._lang_name_buf = ""
+        if not commit or not old or not new or new == old:
+            return
+        if new in self._lang_keys:
+            self._status(self._TR("lm_key_exists",
+                                  "A key named '{0}' already exists").format(new),
+                         WARN_C, 3)
+            return
+        for lang in self.LANGS:
+            values = self._lang_data.setdefault(lang, {})
+            values[new] = values.pop(old, "")
+        self._lang_keys = sorted(k for k in self._lang_keys if k != old)
+        self._lang_keys.append(new)
+        self._lang_keys.sort()
+        news = set(getattr(self, "_lang_new_keys", set()))
+        news.discard(old)
+        news.add(new)
+        self._lang_new_keys = news
+        self._lang_dirty = True
+        self._bump_catalog_rev()
+        self._lang_update_filter()
 
     # ─────────────────────────────────────────────────────────────────────────
     # RENDERING
     # ─────────────────────────────────────────────────────────────────────────
 
     def _r_lang_modal(self, w, h):
-        is_fx = (getattr(self, "_lang_context", "global") == "fx")
+        geo = self._lang_geometry(w, h)
+        box, is_fx = geo["box"], geo["is_fx"]
+        row_h = geo["row_h"]
+        mx2, my2 = pygame.mouse.get_pos()
+        self._lang_scroll = _clamp(self._lang_scroll, 0, geo["max_scroll"])
+
         dim = pygame.Surface((w, h), pygame.SRCALPHA)
         dim.fill((0, 0, 0, 180))
         self.screen.blit(dim, (0, 0))
-
-        dw = int(w * (0.8 if is_fx else 0.92))
-        dh = int(h * (0.8 if is_fx else 0.88))
-        dx = (w - dw) // 2
-        dy = (h - dh) // 2
-
-        box = pygame.Rect(dx, dy, dw, dh)
         _rect(self.screen, (42, 42, 52), box, radius=8)
         _rect(self.screen, ACCENT, box, 2, radius=8)
 
         txt_hdr = (self._TR("lm_title_fx", "BUBBLE TRANSLATIONS") if is_fx
                    else self._TR("lm_title", "TRANSLATION EDITOR"))
         title = _txt(txt_hdr, "lg", TXT_HI)
-        self.screen.blit(title, (dx + 12, dy + 10))
-        
-        if is_fx and self._lang_keys:
-            key_info = _txt(self._TR("lm_key_label", "Key: {0}").format(self._lang_keys[0]), "sm", TXT_DIM)
-            self.screen.blit(key_info, (dx + dw - key_info.get_width() - 12, dy + 16))
-
+        self.screen.blit(title, (box.x + 12, box.y + 10))
         if self._lang_dirty:
-            pygame.draw.circle(self.screen, WARN_C, (dx + 16 + title.get_width() + 6, dy + 22), 5)
-
-        HEADER_H = 44
-        ROW_H    = 50 if is_fx else 28
-        KEY_W    = 0 if is_fx else 200
-        lang_w   = (dw - KEY_W - 20) // (1 if is_fx else len(self.LANGS))
-        cx       = dx + 10
-        cy       = dy + HEADER_H
-        mx2, my2 = pygame.mouse.get_pos()
+            pygame.draw.circle(self.screen, WARN_C,
+                               (box.x + 18 + title.get_width(),
+                                box.y + 12 + title.get_height() // 2), 5)
 
         if is_fx:
-            # Rendering verticale per FX (più pulito per una sola chiave)
-            HEADER_H = 44
-            ROW_H    = 50
-            KEY_W    = 0
-            lang_w   = (dw - 20)
-            cx       = dx + 10
-            cy       = dy + HEADER_H
-            
+            if self._lang_keys:
+                info = _txt(self._TR("lm_key_label", "Key: {0}").format(
+                    self._lang_keys[0]), "sm", TXT_DIM)
+                self.screen.blit(info, (box.right - info.get_width() - 12,
+                                        box.y + 16))
             for li, lang in enumerate(self.LANGS):
-                ry = cy + li * ROW_H
+                ry = geo["table_top"] + li * row_h
                 is_c = (self._lang_sel == (0, li))
-                hov_c = _in_rect((mx2, my2), (cx, ry, dw - 20, ROW_H - 2))
-                
-                # Lingua Label
-                _draw_text(self.screen, lang.upper(), "sm", ACCENT if is_c else TXT_DIM, cx, ry + 16, 40)
-                
-                # Input Field
-                field_r = pygame.Rect(cx + 50, ry + 4, dw - 70, ROW_H - 10)
-                val = self._lang_buf if is_c else self._lang_cell_value(self._lang_keys[0], lang)
-                all_s = getattr(self, "_lang_all_sel", False) if is_c else False
-                _input_box(self.screen, field_r, val, focused=is_c, font="sm", all_selected=all_s)
+                _draw_text(self.screen, lang.upper(), "sm",
+                           ACCENT if is_c else TXT_DIM, geo["content"].x, ry + 16, 40)
+                field = pygame.Rect(geo["content"].x + 50, ry + 4,
+                                    geo["content"].w - 60, row_h - 10)
+                value = (self._lang_buf if is_c
+                         else self._lang_cell_value(self._lang_keys[0], lang))
+                _input_box(self.screen, field, value, focused=is_c, font="sm",
+                           all_selected=getattr(self, "_lang_all_sel", False) if is_c
+                           else False)
         else:
-            # Traduzione Globale (Tabella)
-            HEADER_H = 118
-            ROW_H    = 28
-            KEY_W    = 200
-            lang_w   = (dw - KEY_W - 20) // len(self.LANGS)
-            cx       = dx + 10
-            cy       = dy + HEADER_H
+            self._r_lang_table(geo, mx2, my2)
 
-            # 1. BARRA DI RICERCA
-            search_r = pygame.Rect(cx, dy + 48, dw - 20, 32)
-            _input_box(self.screen, search_r, self._lang_search, focused=self._lang_search_active, 
-                      hint=self._TR("lm_search", "Search keys and translations..."), icon="search", font="sm")
+        self._r_lang_footer(geo, mx2, my2)
 
-            # 2. HEADERS TABELLA
-            _rect(self.screen, (52, 52, 66), (cx, cy - 22, KEY_W, 20))
-            _draw_text(self.screen, self._TR("lm_key", "Key"), "sm", TXT_DIM, cx + 4, cy - 20, KEY_W - 8)
+    def _r_lang_table(self, geo: dict, mx: int, my: int) -> None:
+        """Search bar, column headers with their completion, and the rows."""
+        box = geo["box"]
+        row_h, key_col, lang_w = geo["row_h"], geo["key_col"], geo["lang_w"]
+        content = geo["content"]
+
+        _input_box(self.screen, geo["search"], self._lang_search,
+                   focused=self._lang_search_active,
+                   hint=self._TR("lm_search", "Search keys and translations..."),
+                   icon="search", font="sm")
+        only_missing = getattr(self, "_lang_only_missing", False)
+        _button(self.screen, geo["filter"], geo["filter_label"],
+                _in_rect((mx, my), geo["filter"]), active=only_missing)
+
+        # Column headers. Each language says how much of the project it covers:
+        # this dialog exists to find what is missing, and nothing said so.
+        completion = self._lang_completion()
+        head_y = geo["table_top"] - geo["col_head_h"]
+        _rect(self.screen, (52, 52, 66), (content.x, head_y, key_col, geo["col_head_h"]))
+        _draw_text(self.screen, self._TR("lm_key", "Key"), "sm", TXT_DIM,
+                   content.x + 4, head_y + 3, key_col - 8)
+        for li, lang in enumerate(self.LANGS):
+            lx = content.x + key_col + li * lang_w
+            done = completion[lang]
+            _rect(self.screen, (52, 52, 66),
+                  (lx, head_y, lang_w - LANG_CELL_GAP, geo["col_head_h"]))
+            label = f"{lang.upper()}  {done}%"
+            colour = OK_C if done == 100 else (WARN_C if done >= 60 else ERR_C)
+            lw = _text_wh(label, "sm")[0]
+            _draw_text(self.screen, label, "sm", colour,
+                       lx + max(4, (lang_w - lw) // 2), head_y + 3,
+                       lang_w - LANG_CELL_GAP - 8)
+        pygame.draw.line(self.screen, BORDER, (box.x, geo["table_top"]),
+                         (box.right, geo["table_top"]))
+
+        keys = self._lang_filtered_keys
+        if not keys:
+            _draw_text(self.screen,
+                       self._TR("lm_no_match", "No key matches"), "sm", TXT_DIM,
+                       content.x + 6, content.y + 8, content.w - 12)
+            return
+
+        prev_clip = self.screen.get_clip()
+        self.screen.set_clip(content)
+        first = self._lang_scroll
+        for ki in range(first, min(len(keys), first + geo["visible_rows"] + 1)):
+            key = keys[ki]
+            ry = geo["table_top"] + (ki - first) * row_h
+            row_bg = (54, 54, 66) if ki % 2 == 0 else (46, 46, 58)
+            is_row = bool(self._lang_sel) and self._lang_sel[0] == ki
+
+            _rect(self.screen, row_bg, (content.x, ry, key_col, row_h - 2))
+            naming = (getattr(self, "_lang_naming", None) == ki)
+            if naming:
+                _input_box(self.screen,
+                           pygame.Rect(content.x, ry, key_col - 2, row_h - 2),
+                           self._lang_name_buf, focused=True, font="sm")
+            else:
+                _draw_text(self.screen, key, "sm", TXT if is_row else TXT_DIM,
+                           content.x + 4, ry + (row_h - 14) // 2, key_col - 8)
+
             for li, lang in enumerate(self.LANGS):
-                lx = cx + KEY_W + li * lang_w
-                _rect(self.screen, (52, 52, 66), (lx, cy - 22, lang_w - 4, 20))
-                ls = _txt(lang.upper(), "sm", ACCENT)
-                self.screen.blit(ls, (lx + (lang_w - ls.get_width()) // 2 - 2, cy - 20))
+                cell = self._lang_cell_rect(geo, ki, li)
+                is_c = (self._lang_sel == (ki, li))
+                value = (self._lang_buf if is_c
+                         else self._lang_cell_value(key, lang))
+                empty = not str(value).strip()
+                if is_c:
+                    # Only the cell being edited needs a field: it carries the
+                    # cursor and the selection.
+                    _input_box(self.screen, cell, value, focused=True, font="sm",
+                               all_selected=getattr(self, "_lang_all_sel", False))
+                    _rect(self.screen, ACCENT, cell, 1)
+                    continue
+                hovered = _in_rect((mx, my), cell)
+                background = (BTN_HO if hovered
+                              else (LANG_MISSING_BG if empty else row_bg))
+                _rect(self.screen, background, cell)
+                _rect(self.screen, LANG_MISSING_BORDER if empty else BORDER,
+                      cell, 1)
+                if not empty:
+                    _draw_text(self.screen, value, "sm",
+                               TXT_HI if hovered else TXT,
+                               cell.x + 6, cell.y + (cell.h - 14) // 2,
+                               cell.w - 12)
+        self.screen.set_clip(prev_clip)
 
-            pygame.draw.line(self.screen, BORDER, (dx, cy), (dx + dw, cy))
+        if geo["max_scroll"] > 0:
+            _scrollbar(self.screen, content.right - 5, content.y, 4, content.h,
+                       self._lang_scroll, len(keys), geo["visible_rows"])
 
-            # 3. CONTENUTO FILTRATO
-            clip = pygame.Rect(dx, cy, dw, dh - HEADER_H - 48)
-            self.screen.set_clip(clip)
-            for ki, key in enumerate(self._lang_filtered_keys):
-                ry = cy + ki * ROW_H - self._lang_scroll * ROW_H
-                if ry + ROW_H < cy or ry > dy + dh - 48: continue
-                row_bg = (54, 54, 66) if ki % 2 == 0 else (46, 46, 58)
-                _rect(self.screen, row_bg, (cx, ry, KEY_W, ROW_H - 2))
-                is_row = self._lang_sel and self._lang_sel[0] == ki
-                _draw_text(self.screen, key, "sm", TXT if is_row else TXT_DIM, cx + 4, ry + 6, KEY_W - 8)
-                for li, lang in enumerate(self.LANGS):
-                    lx = cx + KEY_W + li * lang_w
-                    is_c = (self._lang_sel == (ki, li))
-                    hov_c = _in_rect((mx2, my2), (lx, ry, lang_w - 4, ROW_H - 2))
-                    cell_bg = BTN_AC if is_c else (BTN_HO if hov_c else row_bg)
-                    _rect(self.screen, cell_bg, (lx, ry, lang_w - 4, ROW_H - 2))
-                    _rect(self.screen, ACCENT if is_c else BORDER, (lx, ry, lang_w - 4, ROW_H - 2), 1)
-                    
-                    val = self._lang_buf if is_c else self._lang_cell_value(key, lang)
-                    all_s = getattr(self, "_lang_all_sel", False) if is_c else False
-                    _input_box(self.screen, pygame.Rect(lx, ry, lang_w - 4, ROW_H - 2), val, 
-                              focused=is_c, font="sm", all_selected=all_s)
-            self.screen.set_clip(None)
+    def _r_lang_footer(self, geo: dict, mx: int, my: int) -> None:
+        """Footer buttons. Widths follow the translated labels."""
+        box, btn_h = geo["box"], geo["btn_h"]
+        fy = geo["footer_y"]
+        pygame.draw.line(self.screen, BORDER, (box.x, fy), (box.right, fy))
 
-        # Footer. The widths follow the translated labels: fixed at 140/150 px
-        # the two buttons overlapped and the right one was cut by the edge of
-        # the dialog as soon as a language spelled them out.
-        btn_h = max(28, _text_wh("Ag", "sm")[1] + 10)
-        fy = dy + dh - btn_h - 16
-        pygame.draw.line(self.screen, BORDER, (dx, fy), (dx + dw, fy))
         cancel_label = self._TR("lm_cancel", "Cancel (Esc)")
         save_label = self._TR("lm_save_project", "SAVE PROJECT")
         save_w = _button_w(save_label, "sm", min_w=150)
         cancel_w = _button_w(cancel_label, "sm", min_w=140)
-        save_r = pygame.Rect(dx + dw - save_w - 10, fy + 8, save_w, btn_h)
+        save_r = pygame.Rect(box.right - save_w - 10, fy + 8, save_w, btn_h)
         close_r = pygame.Rect(save_r.left - cancel_w - 10, fy + 8, cancel_w, btn_h)
-        _button(self.screen, close_r, cancel_label, _in_rect((mx2, my2), close_r))
-        _button(self.screen, save_r, save_label, _in_rect((mx2, my2), save_r),
+        _button(self.screen, close_r, cancel_label, _in_rect((mx, my), close_r))
+        _button(self.screen, save_r, save_label, _in_rect((mx, my), save_r),
                 active=self._lang_dirty)
 
-        # Hitboxes published for _lang_click: one geometry, not two (the two
-        # copies already disagreed by 4 px on y and 2 px on the height).
         hits = {"cancel": close_r, "save": save_r}
-        if not is_fx:
+        if not geo["is_fx"]:
             add_label = self._TR("lm_new_key", "+ New key")
-            add_r = pygame.Rect(dx + 10, fy + 8,
+            add_r = pygame.Rect(box.x + 10, fy + 8,
                                 _button_w(add_label, "sm", min_w=160), btn_h)
-            _button(self.screen, add_r, add_label, _in_rect((mx2, my2), add_r))
+            _button(self.screen, add_r, add_label, _in_rect((mx, my), add_r))
             hits["add"] = add_r
+
+            shown = len(self._lang_filtered_keys)
+            count = self._TR("lm_count", "{shown} of {total} keys").format(
+                shown=shown, total=len(self._lang_keys))
+            cw = _text_wh(count, "xs")[0]
+            _draw_text(self.screen, count, "xs", TXT_DIM,
+                       close_r.left - cw - 20, fy + 8 + (btn_h - 12) // 2)
         self._lang_footer_hitboxes = hits

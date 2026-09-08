@@ -71,6 +71,13 @@ Legend: [x] done · [~] in progress/partial · [ ] to do.
 - [x] Recently placed objects offered as a strip above the catalog list, per project
   and across sessions: placing is the repetitive action of the editor and the catalog
   holds over a thousand entries. Verified by `pytest tests/test_editor_recent_objects.py`.
+- [x] Translation editor: one geometry (`_lang_geometry`) instead of three that
+  disagreed, plus what a translation editor needs - completion per language, empty
+  cells marked, an "only incomplete" filter, and a name for a key when it is created.
+  Every dialog is now clamped to the window (`dialog_rect`): the playlist and the
+  video picker were taller than the minimum 1280x720 editor window, so their title
+  and footer buttons were off screen. Verified by
+  `pytest tests/test_editor_lang_modal.py` and `pytest tests/test_editor_modal_geometry.py`.
 - [ ] "Editor Pro" plan (`docs/archive/editor/EDITOR_PRO_PLAN.md`, 2026-07-12): remaining
   items - auto-scatter camouflage (single render-based metric, best-of-M, Lab color, repair
   loop), scatter UX (progress/cancel, seed, interactive ghosts), editor completeness
