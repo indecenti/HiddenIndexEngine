@@ -20,7 +20,8 @@ from editor.constants import (
     TXT, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C,
 )
 from editor.ui.draw import (
-    _txt, _draw_text, _rect, _button, _in_rect, _slider, _input_box, _text_wh,
+    _txt, _draw_text, _rect, _button, _button_w, _in_rect, _slider, _input_box,
+    _text_wh, _ui_scale,
 )
 from editor.mixins.img_editor_logic import (
     evolved_trim, brush_power_map, restore_stamp,
@@ -36,8 +37,18 @@ CROP_HANDLE_HIT = 22             # Lato dell'area cliccabile delle maniglie
 CROP_MIN_KEEP = 1                # Pixel minimi che il ritaglio deve lasciare
 CROP_OVERLAY_ALPHA = 150         # Opacita' dell'overlay sulle zone escluse
 CROP_HANDLE_FILL = (25, 25, 30)  # Riempimento maniglie (sfondo modal)
-SIDEBAR_W = 480                  # Larghezza sidebar strumenti (3 colonne)
-COL3_X_OFF = 320                 # Offset X della colonna 3 dentro la sidebar
+COL_W_BASE = 145                 # Larghezza di una colonna a scala 1.0
+COL_GAP_BASE = 20                # Spazio tra due colonne a scala 1.0
+SB_PAD_BASE = 10                 # Margine interno della sidebar a scala 1.0
+ICON_GUTTER_BASE = 42            # Icona PNG (25) piu' il respiro attorno
+FOOTER_BTN_W_BASE = 150          # Larghezza minima dei bottoni del footer
+FOOTER_BTN_H_BASE = 42
+MODAL_W_BASE = 1280              # Il modal cresce con la scala, fino alla finestra
+MODAL_H_BASE = 820
+SIDEBAR_CONTENT_H = 600          # Altezza della colonna piu' alta, a scala 1.0
+FOOTER_BAND_H = 95               # Fascia riservata al footer, a scala 1.0
+WORK_MIN_W = 300                 # La tela non scende sotto questa larghezza
+STUDIO_SCALE_MIN = 0.75          # Sotto questa soglia il testo non si legge
 FILTER_MIN = -100                # Estremo inferiore slider filtri colore
 FILTER_MAX = 100                 # Estremo superiore slider filtri colore
 OUTLINE_MIN_PX = 1               # Spessore minimo del contorno
@@ -436,9 +447,10 @@ class ImgEditorMixin:
     def _img_editor_get_img_layout(self, ew, eh, ex, ey):
         iw, ih = self._img_editor_view_surf.get_size()
         # Responsive: sidebar a 3 colonne, resto alla tela
-        sb_w = SIDEBAR_W
-        work_w = ew - sb_w - 60
-        work_h = eh - 150
+        m = self._img_editor_metrics(ex, ey, ew, eh)
+        sb_w = m["sb_w"]
+        work_w = max(120, ew - sb_w - m["sc"](60))
+        work_h = max(120, eh - m["sc"](150))
 
         base_scale = min(work_w / iw, work_h / ih)
         total_scale = base_scale * self._img_editor_zoom
@@ -456,8 +468,9 @@ class ImgEditorMixin:
     def _img_editor_get_modal_rect(self):
         """Sorgente unica per dimensioni e posizione del modal."""
         w, h = self.screen.get_size()
-        ew = int(min(w * 0.94, 1280))
-        eh = int(min(h * 0.90, 820))
+        scale = _ui_scale()
+        ew = int(min(w * 0.94, MODAL_W_BASE * scale))
+        eh = int(min(h * 0.90, MODAL_H_BASE * scale))
         ex, ey = (w - ew) // 2, (h - eh) // 2
         return ex, ey, ew, eh
 
@@ -467,23 +480,17 @@ class ImgEditorMixin:
         ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
 
         reset_confirm = True
-        sb_w = SIDEBAR_W
-        sb_x = ex + ew - sb_w - 15
-        # ALLINEATO al render: col1_x = sb_x + 10, col2_x = sb_x + 165
-        col1_x = sb_x + 10
-        col2_x = sb_x + 165
-        sl_w = 145
-        bw2 = (sl_w // 2) - 3
-
-        # Footer rects (uguale al render)
-        fy = ey + eh - 65
-        bw, bh = 150, 42
-        total_footer_w = bw * 3 + 40
-        fb_start_x = ex + (ew - sb_w) // 2 - total_footer_w // 2
-        fb_rects = [pygame.Rect(fb_start_x + i * (bw + 20), fy, bw, bh) for i in range(3)]
+        # Geometria condivisa con il render: una sola sorgente, scalata
+        m = self._img_editor_metrics(ex, ey, ew, eh)
+        sb_x, col1_x = m["sb_x"], m["col1_x"]
+        sl_w = m["col_w"]
+        r1 = self._img_editor_col1_rects(m)
+        fy = m["footer_y"]
+        fb_rects = self._img_editor_footer_rects(ex, ey, ew, eh)
 
         # Toggle background nel top-right
-        bg_r = pygame.Rect(ex + ew - 110, ey + 25, 80, 32)
+        bg_r = pygame.Rect(ex + ew - m["sc"](110), ey + m["sc"](25),
+                           m["sc"](80), m["sc"](32))
         if _in_rect((mx, my), bg_r):
             modes = ["check", "black", "white"]
             self._img_editor_bg_mode = modes[(modes.index(self._img_editor_bg_mode) + 1) % 3]
@@ -502,7 +509,7 @@ class ImgEditorMixin:
         # Editing W/H attivo: un click fuori dai campi/bottone chiude il prompt
         # e viene consumato (evita pennellate accidentali sul canvas)
         if self._img_editor_resize_edit:
-            r3 = self._img_editor_col3_rects(ex, ey, sb_x)
+            r3 = self._img_editor_col3_rects(m)
             on_prompt = (_in_rect((mx, my), r3["dim_w"]) or _in_rect((mx, my), r3["dim_h"])
                          or _in_rect((mx, my), r3["dim_btn"]))
             if not on_prompt:
@@ -510,7 +517,7 @@ class ImgEditorMixin:
                 return
 
         # Determina se il click cade su un elemento UI (sidebar / header / footer)
-        is_ui = (mx > sb_x) or (my < ey + 60) or (my >= fy - 5)
+        is_ui = (mx > sb_x) or (my < ey + m["sc"](60)) or (my >= fy - 5)
 
         if not is_ui:
             if self._img_editor_crop_mode:
@@ -549,90 +556,77 @@ class ImgEditorMixin:
             return
 
         # ---------- COLONNA 1: PENNELLI ----------
-        sy = ey + 85
-        for i, tid in enumerate(["eraser", "restore", "wand"]):
-            tool_r = (col1_x + i * TOOL_BTN_STEP, sy, TOOL_BTN_SIZE, TOOL_BTN_SIZE)
+        # Geometria condivisa con il render tramite _img_editor_col1_rects
+        for tid, tool_r in zip(["eraser", "restore", "wand"], r1["tools"]):
             if _in_rect((mx, my), tool_r):
                 self._img_editor_tool = tid; return
-        for i, sid in enumerate(["round", "square"]):
-            if _in_rect((mx, my), (col1_x + i * 60, sy + 65, 52, 52)):
+        for sid, shape_r in zip(["round", "square"], r1["shapes"]):
+            if _in_rect((mx, my), shape_r):
                 self._img_editor_shape = sid; return
 
-        # Sliders (ALLINEATO al render: sy_sl = ey + 255, offset +70 e +140)
-        sy_sl = ey + 255
+        def slider_at(rect) -> float:
+            return max(0, min(1, (mx - rect.x) / max(1, rect.w)))
+
         if self._img_editor_tool in ("eraser", "restore"):
-            if _in_rect((mx, my), (col1_x, sy_sl, sl_w, 20)):
+            if _in_rect((mx, my), r1["sl_a"]):
                 self._img_editor_dragging = "sl_radius"
-                self._img_editor_eraser_r = int(1 + max(0, min(1, (mx - col1_x) / sl_w)) * 63); return
-            if _in_rect((mx, my), (col1_x, sy_sl + 70, sl_w, 20)):
+                self._img_editor_eraser_r = int(1 + slider_at(r1["sl_a"]) * 63); return
+            if _in_rect((mx, my), r1["sl_b"]):
                 self._img_editor_dragging = "sl_hardness"
-                self._img_editor_eraser_hardness = max(0, min(1, (mx - col1_x) / sl_w)); return
-            if _in_rect((mx, my), (col1_x, sy_sl + 140, sl_w, 20)):
+                self._img_editor_eraser_hardness = slider_at(r1["sl_b"]); return
+            if _in_rect((mx, my), r1["sl_c"]):
                 self._img_editor_dragging = "sl_opacity"
-                self._img_editor_eraser_opacity = max(0, min(1, (mx - col1_x) / sl_w)); return
+                self._img_editor_eraser_opacity = slider_at(r1["sl_c"]); return
         else:
-            if _in_rect((mx, my), (col1_x, sy_sl, sl_w, 20)):
+            if _in_rect((mx, my), r1["sl_a"]):
                 self._img_editor_dragging = "sl_tol"
-                self._img_editor_wand_tol = int(max(0, min(1, (mx - col1_x) / sl_w)) * 128); return
-            if _in_rect((mx, my), (col1_x, sy_sl + 70, sl_w, 20)):
+                self._img_editor_wand_tol = int(slider_at(r1["sl_a"]) * 128); return
+            if _in_rect((mx, my), r1["sl_b"]):
                 self._img_editor_dragging = "sl_feather"
-                self._img_editor_wand_feather = int(max(0, min(1, (mx - col1_x) / sl_w)) * 32); return
+                self._img_editor_wand_feather = int(slider_at(r1["sl_b"]) * 32); return
 
-        sy_ch = sy_sl + 195
-        for i, mode in enumerate(["green", "white", "black"]):
-            if _in_rect((mx, my), (col1_x + i * 50, sy_ch, 45, 40)):
+        for mode, chroma_r in zip(["green", "white", "black"], r1["chroma"]):
+            if _in_rect((mx, my), chroma_r):
                 self._img_editor_apply_smart_chroma(mode); return
-        if _in_rect((mx, my), (col1_x, sy_ch + 100, sl_w, 20)):
+        if _in_rect((mx, my), r1["sl_chroma"]):
             self._img_editor_dragging = "sl_chroma"
-            self._img_editor_chroma_intensity = 0.5 + max(0, min(1, (mx - col1_x) / sl_w)) * 3.5; return
+            self._img_editor_chroma_intensity = 0.5 + slider_at(r1["sl_chroma"]) * 3.5; return
 
-        # ---------- COLONNA 2: NAVIGAZIONE/TRANS (ALLINEATO al render) ----------
-        sy2 = ey + 85
-        # FIT / 1:1
-        if _in_rect((mx, my), (col2_x, sy2, bw2, 40)):
+        # ---------- COLONNA 2: NAVIGAZIONE/TRANS ----------
+        # Geometria condivisa con il render tramite _img_editor_col2_rects
+        r2 = self._img_editor_col2_rects(m)
+        if _in_rect((mx, my), r2["fit"]):
             self._img_editor_zoom = 1.0; self._img_editor_pan = [0, 0]; return
-        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 40)):
+        if _in_rect((mx, my), r2["one_to_one"]):
             self._img_editor_zoom = 2.0; return
-
-        sy2 += 105  # ROTAZIONE
-        if _in_rect((mx, my), (col2_x, sy2, bw2, 42)):
+        if _in_rect((mx, my), r2["rot_ccw"]):
             self._img_editor_apply_rotation(90); return
-        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 42)):
+        if _in_rect((mx, my), r2["rot_cw"]):
             self._img_editor_apply_rotation(-90); return
-
-        sy2 += 85  # AUTO TRIM
-        if _in_rect((mx, my), (col2_x, sy2, 145, 40)):
+        if _in_rect((mx, my), r2["auto_trim"]):
             self._img_editor_auto_crop(); return
-
-        sy2 += 75  # RIFLESSO
-        if _in_rect((mx, my), (col2_x, sy2, bw2, 38)):
+        if _in_rect((mx, my), r2["flip_h"]):
             self._img_editor_apply_flip(True, False); return
-        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 38)):
+        if _in_rect((mx, my), r2["flip_v"]):
             self._img_editor_apply_flip(False, True); return
-
-        sy2 += 75  # SMOOTH
-        if _in_rect((mx, my), (col2_x, sy2, 145, 38)):
+        if _in_rect((mx, my), r2["smooth"]):
             self._img_editor_apply_smooth_edges(); return
-
-        sy2 += 85  # HITBOX
-        if _in_rect((mx, my), (col2_x, sy2, bw2, 38)):
+        if _in_rect((mx, my), r2["hit_rect"]):
             self._img_editor_asset_shape = "rect"; return
-        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 38)):
+        if _in_rect((mx, my), r2["hit_circle"]):
             self._img_editor_asset_shape = "circle"; return
-
-        sy2 += 75  # RITAGLIO MANUALE
-        if _in_rect((mx, my), (col2_x, sy2, bw2, 38)):
+        if _in_rect((mx, my), r2["crop_mode"]):
             # Toggle: ri-click sul bottone annulla il ritaglio in corso
             if self._img_editor_crop_mode: self._img_editor_cancel_crop()
             else: self._img_editor_crop_mode = True
             return
-        if _in_rect((mx, my), (col2_x + bw2 + 6, sy2, bw2, 38)):
+        if _in_rect((mx, my), r2["crop_apply"]):
             if self._img_editor_crop_mode: self._img_editor_apply_crop()
             return
 
         # ---------- COLONNA 3: AI / DIMENSIONE / FILTRI / CONTORNO ----------
         # Geometria condivisa con il render tramite _img_editor_col3_rects
-        r3 = self._img_editor_col3_rects(ex, ey, sb_x)
+        r3 = self._img_editor_col3_rects(m)
         if _in_rect((mx, my), r3["ai"]):
             self._img_editor_start_remove_bg(); return
         if self._img_editor_resize_edit:
@@ -863,32 +857,222 @@ class ImgEditorMixin:
             self._img_editor_dirty = True; self._status(self._TR("img_edges_smoothed", "Edges smoothed"), OK_C, 2)
         except Exception: self._status(self._TR("img_smooth_unavailable", "Smooth not available"), WARN_C, 2)
 
-    def _img_editor_col3_rects(self, ex: int, ey: int, sb_x: int) -> dict[str, pygame.Rect]:
+    def _img_editor_col1_rects(self, m: dict) -> dict:
+        """
+        Geometria della colonna 1 (strumenti, forma pennello, slider). It was
+        the last column still writing its rects twice.
+        """
+        sc, col1_x = m["sc"], m["col1_x"]
+        sl_w = m["col_w"]
+        tool = sc(TOOL_BTN_SIZE)
+        tool_step = sc(TOOL_BTN_STEP)
+        shape = sc(52)
+        y_tools = m["top_y"]
+        y_shape = y_tools + sc(65)
+        y_sl = m["top_y"] + sc(170)
+        return {
+            "tools": [pygame.Rect(col1_x + i * tool_step, y_tools, tool, tool)
+                      for i in range(3)],
+            "shapes": [pygame.Rect(col1_x + i * sc(60), y_shape, shape, shape)
+                       for i in range(2)],
+            "sl_a": pygame.Rect(col1_x, y_sl, sl_w, sc(20)),
+            "sl_b": pygame.Rect(col1_x, y_sl + sc(70), sl_w, sc(20)),
+            "sl_c": pygame.Rect(col1_x, y_sl + sc(140), sl_w, sc(20)),
+            "chroma": [pygame.Rect(col1_x + i * sc(50), y_sl + sc(195),
+                                   sc(45), sc(40)) for i in range(3)],
+            "sl_chroma": pygame.Rect(col1_x, y_sl + sc(295), sl_w, sc(20)),
+        }
+
+    def _img_editor_metrics(self, ex: int, ey: int, ew: int, eh: int) -> dict:
+        """
+        Sidebar and footer of the asset studio, in one place.
+
+        Everything here is derived from the UI scale and from the width the
+        translated labels actually need. It used to be constants chosen for
+        English at scale 1.0, written once in the renderer and once in the
+        click handler, and at scale 1.5 the two drifted apart while the text
+        ran over the column to the left.
+
+        The scale is then reduced until the columns fit the modal: growing the
+        rows with the font alone pushed the bottom of column 3 and the whole
+        footer off a 900 px screen.
+        """
+        scale = self._img_editor_scale(ew, eh)
+
+        def sc(value: int) -> int:
+            return int(round(value * scale))
+
+        gutter = sc(ICON_GUTTER_BASE)
+        # A column is as wide as the widest control it has to hold.
+        widest = max(
+            [sc(COL_W_BASE)]
+            + [_button_w(self._TR(key, default), "sm") + gutter
+               for key, default in (("img_auto_trim", "AUTO TRIM"),
+                                    ("img_smooth", "SMOOTH"))]
+            + [_button_w(self._TR(key, default), "sm")
+               for key, default in (("img_remove_bg", "REMOVE BACKGROUND"),
+                                    ("img_busy", "PROCESSING..."),
+                                    ("img_apply_filters", "APPLY FILTERS"),
+                                    ("img_apply_outline", "APPLY OUTLINE"),
+                                    ("img_resize_btn", "RESIZE"))]
+        )
+        gap, pad = sc(COL_GAP_BASE), sc(SB_PAD_BASE)
+        sb_w = pad * 2 + widest * 3 + gap * 2
+        # Never eat the canvas: the columns give width back before it does.
+        room = ew - pad - WORK_MIN_W
+        if sb_w > room:
+            widest = max(sc(60), (room - pad * 2 - gap * 2) // 3)
+            sb_w = pad * 2 + widest * 3 + gap * 2
+        sb_x = ex + ew - sb_w - pad
+        return {
+            "scale": scale,
+            "sc": sc,
+            "sb_w": sb_w,
+            "sb_x": sb_x,
+            "col_w": widest,
+            "gutter": gutter,
+            "col1_x": sb_x + pad,
+            "col2_x": sb_x + pad + widest + gap,
+            "col3_x": sb_x + pad + (widest + gap) * 2,
+            "top_y": ey + sc(85),
+            "head_dy": sc(25),
+            "footer_y": ey + eh - sc(65),
+            "footer_h": sc(FOOTER_BTN_H_BASE),
+        }
+
+    def _img_editor_scale(self, ew: int, eh: int) -> float:
+        """The UI scale, reduced until the studio fits the modal it has."""
+        wanted = _ui_scale()
+        fits = eh / float(SIDEBAR_CONTENT_H + FOOTER_BAND_H)
+        return max(STUDIO_SCALE_MIN, min(wanted, fits))
+
+    def _img_editor_footer_rects(self, ex: int, ey: int, ew: int,
+                                 eh: int) -> list:
+        """The three footer buttons, as wide as the labels they carry."""
+        m = self._img_editor_metrics(ex, ey, ew, eh)
+        sc, gap = m["sc"], m["sc"](20)
+        labels = self._img_editor_footer_labels()
+        widths = [max(m["sc"](FOOTER_BTN_W_BASE),
+                      _button_w(label, "sm") + m["gutter"])
+                  for label in labels]
+        total = sum(widths) + gap * 2
+        # Centred in the canvas, but never off the left edge of the modal.
+        start = max(ex + m["sc"](SB_PAD_BASE),
+                    ex + (ew - m["sb_w"]) // 2 - total // 2)
+        rects, x = [], start
+        for width in widths:
+            rects.append(pygame.Rect(x, m["footer_y"], width, m["footer_h"]))
+            x += width + gap
+        return rects
+
+    def _img_editor_footer_labels(self) -> list:
+        """Save / copy / exit, each becoming a confirmation when armed."""
+        confirm = self._TR("img_confirm", "CONFIRM?")
+        return [
+            confirm if self._img_editor_save_confirm
+            else self._TR("btn_save", "SAVE"),
+            confirm if self._img_editor_copy_confirm
+            else self._TR("img_copy", "COPY"),
+            confirm if self._img_editor_exit_confirm
+            else self._TR("img_exit", "EXIT"),
+        ]
+
+    def _img_editor_col2_rects(self, m: dict) -> dict:
+        """
+        Geometria della colonna 2 della sidebar (navigazione, rotazione,
+        auto trim, riflesso, smooth, hitbox, ritaglio). Sorgente unica
+        condivisa da click e render, come per la colonna 3.
+        """
+        sc, col2_x = m["sc"], m["col2_x"]
+        wide = m["col_w"]
+        bw2 = (wide - sc(6)) // 2
+        y_nav = m["top_y"]
+        y_rot = y_nav + sc(105)
+        y_trim = y_rot + sc(85)
+        y_flip = y_trim + sc(75)
+        y_smooth = y_flip + sc(75)
+        y_hit = y_smooth + sc(85)
+        y_crop = y_hit + sc(75)
+        h_nav, h_rot, h_row = sc(40), sc(42), sc(38)
+        step = bw2 + sc(6)
+        return {
+            "fit": pygame.Rect(col2_x, y_nav, bw2, h_nav),
+            "one_to_one": pygame.Rect(col2_x + step, y_nav, bw2, h_nav),
+            "rot_ccw": pygame.Rect(col2_x, y_rot, bw2, h_rot),
+            "rot_cw": pygame.Rect(col2_x + step, y_rot, bw2, h_rot),
+            "auto_trim": pygame.Rect(col2_x, y_trim, wide, h_nav),
+            "flip_h": pygame.Rect(col2_x, y_flip, bw2, h_row),
+            "flip_v": pygame.Rect(col2_x + step, y_flip, bw2, h_row),
+            "smooth": pygame.Rect(col2_x, y_smooth, wide, h_row),
+            "hit_rect": pygame.Rect(col2_x, y_hit, bw2, h_row),
+            "hit_circle": pygame.Rect(col2_x + step, y_hit, bw2, h_row),
+            "crop_mode": pygame.Rect(col2_x, y_crop, bw2, h_row),
+            "crop_apply": pygame.Rect(col2_x + step, y_crop, bw2, h_row),
+        }
+
+    def _img_editor_icons_fit(self, labels, rect_w: int, gutter: int) -> bool:
+        """Whether a row of buttons can all keep their icon.
+
+        The decision is taken for the row, not the button: HORZ dropping its
+        icon while VERT next to it kept one looked like a bug.
+        """
+        return all(_text_wh(label, "sm")[0] + gutter + 8 <= rect_w
+                   for label in labels)
+
+    def _img_editor_icon_button(self, rect, icon: str, label: str,
+                                hovered: bool, active: bool = False,
+                                gutter: int = ICON_GUTTER_BASE,
+                                danger: bool = False,
+                                with_icon: bool = True) -> None:
+        """A button with a PNG icon in a left gutter and the label after it.
+
+        The labels used to be centred strings padded with leading spaces to
+        clear the icon ("      AUTO TRIM"), which cannot be translated and
+        cannot survive a longer word.
+        """
+        _button(self.screen, rect, "", hovered, active=active, danger=danger)
+        tw, th = _text_wh(label, "sm")
+        # The label comes first: on a narrow button a translated word keeps the
+        # room the icon would have taken rather than being cut to "ANPAS...".
+        if not with_icon or tw + gutter + 8 > rect.w:
+            _draw_text(self.screen, label, "sm", TXT_HI,
+                       rect.x + max(5, (rect.w - min(tw, rect.w - 10)) // 2),
+                       rect.y + (rect.h - th) // 2, rect.w - 10)
+            return
+        icon_w = min(gutter - 12, rect.w // 3)
+        self._r_blit_icon(icon, pygame.Rect(rect.x + 6, rect.y, icon_w, rect.h),
+                          active=hovered)
+        text_x = rect.x + gutter
+        _draw_text(self.screen, label, "sm", TXT_HI, text_x,
+                   rect.y + (rect.h - th) // 2, max(10, rect.right - 8 - text_x))
+
+    def _img_editor_col3_rects(self, m: dict) -> dict:
         """
         Geometria della colonna 3 della sidebar (AI, dimensione, filtri,
         contorno). Sorgente unica condivisa da click, drag e render: ogni
         controllo nuovo va aggiunto SOLO qui.
         """
-        col3_x = sb_x + COL3_X_OFF
-        sl_w = 145
-        bw2 = (sl_w // 2) - 3
+        sc, col3_x, ey = m["sc"], m["col3_x"], m["top_y"] - m["sc"](85)
+        sl_w = m["col_w"]
+        bw2 = (sl_w - sc(6)) // 2
+        step = bw2 + sc(6)
         return {
             # SFONDO AI
-            "ai": pygame.Rect(col3_x, ey + 85, sl_w, 40),
+            "ai": pygame.Rect(col3_x, ey + sc(85), sl_w, sc(40)),
             # DIMENSIONE: campi W/H (solo in edit) + bottone
-            "dim_w": pygame.Rect(col3_x, ey + 160, bw2, 32),
-            "dim_h": pygame.Rect(col3_x + bw2 + 6, ey + 160, bw2, 32),
-            "dim_btn": pygame.Rect(col3_x, ey + 200, sl_w, 36),
+            "dim_w": pygame.Rect(col3_x, ey + sc(160), bw2, sc(32)),
+            "dim_h": pygame.Rect(col3_x + step, ey + sc(160), bw2, sc(32)),
+            "dim_btn": pygame.Rect(col3_x, ey + sc(200), sl_w, sc(36)),
             # FILTRI: 3 slider + applica
-            "sl_filt_b": pygame.Rect(col3_x, ey + 292, sl_w, 18),
-            "sl_filt_c": pygame.Rect(col3_x, ey + 334, sl_w, 18),
-            "sl_filt_s": pygame.Rect(col3_x, ey + 376, sl_w, 18),
-            "filt_apply": pygame.Rect(col3_x, ey + 404, sl_w, 34),
+            "sl_filt_b": pygame.Rect(col3_x, ey + sc(292), sl_w, sc(18)),
+            "sl_filt_c": pygame.Rect(col3_x, ey + sc(334), sl_w, sc(18)),
+            "sl_filt_s": pygame.Rect(col3_x, ey + sc(376), sl_w, sc(18)),
+            "filt_apply": pygame.Rect(col3_x, ey + sc(404), sl_w, sc(34)),
             # CONTORNO: spessore + colore + applica
-            "sl_outline": pygame.Rect(col3_x, ey + 486, sl_w, 18),
-            "out_white": pygame.Rect(col3_x, ey + 514, bw2, 30),
-            "out_black": pygame.Rect(col3_x + bw2 + 6, ey + 514, bw2, 30),
-            "out_apply": pygame.Rect(col3_x, ey + 550, sl_w, 34),
+            "sl_outline": pygame.Rect(col3_x, ey + sc(486), sl_w, sc(18)),
+            "out_white": pygame.Rect(col3_x, ey + sc(514), bw2, sc(30)),
+            "out_black": pygame.Rect(col3_x + step, ey + sc(514), bw2, sc(30)),
+            "out_apply": pygame.Rect(col3_x, ey + sc(550), sl_w, sc(34)),
         }
 
     def _img_editor_start_remove_bg(self) -> None:
@@ -1064,10 +1248,9 @@ class ImgEditorMixin:
 
     def _img_editor_drag(self, mx, my):
         ex, ey, ew, eh = self._img_editor_get_modal_rect()
-        sb_w = SIDEBAR_W
-        sb_x = ex + ew - sb_w - 15
-        col1_x = sb_x + 10  # ALLINEATO al render
-        sl_w = 145
+        # Geometria condivisa con il render tramite _img_editor_metrics
+        m = self._img_editor_metrics(ex, ey, ew, eh)
+        col1_x, sl_w = m["col1_x"], m["col_w"]
 
         if self._img_editor_dragging in ("eraser_active", "eraser"):
             ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
@@ -1088,11 +1271,11 @@ class ImgEditorMixin:
         elif self._img_editor_dragging == "sl_chroma":
             self._img_editor_chroma_intensity = 0.5 + max(0, min(1, (mx - col1_x) / sl_w)) * 3.5
         elif self._img_editor_dragging in ("sl_filt_b", "sl_filt_c", "sl_filt_s"):
-            r3 = self._img_editor_col3_rects(ex, ey, sb_x)
+            r3 = self._img_editor_col3_rects(m)
             self._img_editor_filter_from_mouse(
                 self._img_editor_dragging, mx, r3[self._img_editor_dragging])
         elif self._img_editor_dragging == "sl_outline":
-            r3 = self._img_editor_col3_rects(ex, ey, sb_x)
+            r3 = self._img_editor_col3_rects(m)
             self._img_editor_outline_from_mouse(mx, r3["sl_outline"])
 
     def _img_editor_erase(self, mx: int, my: int, ix: int, iy: int, scale: float) -> None:
@@ -1265,14 +1448,17 @@ class ImgEditorMixin:
 
         # Indicatore di busy AI: overlay sul canvas (clippato all'area di lavoro)
         if self._img_editor_busy:
-            work_r = pygame.Rect(ex + 25, ey + 70, ew - SIDEBAR_W - 60, eh - 150)
+            mb = self._img_editor_metrics(ex, ey, ew, eh)
+            work_r = pygame.Rect(ex + mb["sc"](25), ey + mb["sc"](70),
+                                 ew - mb["sb_w"] - mb["sc"](60),
+                                 eh - mb["sc"](150))
             clip_r = pygame.Rect(ix, iy, sw, sh).clip(work_r)
             if clip_r.w > 0 and clip_r.h > 0:
                 busy_ov = pygame.Surface(clip_r.size, pygame.SRCALPHA)
                 busy_ov.fill((0, 0, 0, BUSY_OVERLAY_ALPHA))
                 self.screen.blit(busy_ov, clip_r.topleft)
                 dots = "." * (1 + (pygame.time.get_ticks() // BUSY_DOT_MS) % 3)
-                b_msg = "Elaborazione" + dots
+                b_msg = self._TR("img_processing", "Processing") + dots
                 b_w, b_h = _text_wh(b_msg, "lg")
                 _draw_text(self.screen, b_msg, "lg", TXT_HI,
                            clip_r.x + (clip_r.w - b_w) // 2,
@@ -1289,89 +1475,104 @@ class ImgEditorMixin:
                 _draw_text(self.screen, hud_txt, "sm", TXT_DIM, ex + 320, ey + 32)
 
         # SIDEBAR (3 colonne)
-        sb_w = SIDEBAR_W
-        sb_x = ex + ew - sb_w - 15
-        col1_x, col2_x = sb_x + 10, sb_x + 165
+        # Geometria condivisa con click e drag tramite _img_editor_metrics
+        m = self._img_editor_metrics(ex, ey, ew, eh)
+        sc = m["sc"]
+        sb_w, sb_x = m["sb_w"], m["sb_x"]
+        col1_x, col2_x, col3_x = m["col1_x"], m["col2_x"], m["col3_x"]
+        sl_w, head_dy = m["col_w"], m["head_dy"]
+        r1 = self._img_editor_col1_rects(m)
 
         # Strumenti (gomma, ripristina dall'originale, bacchetta)
-        _draw_text(self.screen, self._TR("img_brushes", "BRUSHES"), "sm", TXT_DIM, col1_x, ey + 60)
-        sy = ey + 85
-        tools = [("eraser", "eraser"), ("restore", "brush"), ("wand", "wand")]
-        for i, (tid, ico) in enumerate(tools):
-            tr = pygame.Rect(col1_x + i * TOOL_BTN_STEP, sy, TOOL_BTN_SIZE, TOOL_BTN_SIZE)
+        _draw_text(self.screen, self._TR("img_brushes", "BRUSHES"), "sm", TXT_DIM,
+                   col1_x, r1["tools"][0].y - head_dy, sl_w)
+        for (tid, ico), tr in zip([("eraser", "eraser"), ("restore", "brush"),
+                                   ("wand", "wand")], r1["tools"]):
             act = (self._img_editor_tool == tid)
             _button(self.screen, tr, "", _in_rect((mx, my), tr), active=act)
             self._r_blit_icon(ico, tr, active=act)
 
-        for i, (sid, ico) in enumerate([("round", "circle_p"), ("square", "square_p")]):
-            fr = pygame.Rect(col1_x + i*60, sy + 65, 52, 52); act = (self._img_editor_shape == sid)
+        for (sid, ico), fr in zip([("round", "circle_p"),
+                                   ("square", "square_p")], r1["shapes"]):
+            act = (self._img_editor_shape == sid)
             _button(self.screen, fr, "", _in_rect((mx, my), fr), active=act)
             self._r_blit_icon(ico, fr, active=act)
 
         # Pennello (impostazioni condivise da gomma e ripristina)
-        sy_sl = ey + 255
-        sl_w = 145
+        sl_a, sl_b, sl_c = r1["sl_a"], r1["sl_b"], r1["sl_c"]
         if self._img_editor_tool in ("eraser", "restore"):
-            _draw_text(self.screen, self._TR("img_radius", "RADIUS: {0}px").format(self._img_editor_eraser_r), "sm", TXT_HI, col1_x, sy_sl - 25)
-            _slider(self.screen, (col1_x, sy_sl, sl_w, 20), (self._img_editor_eraser_r - 1) / 63, 0, 1)
-            _draw_text(self.screen, self._TR("img_hardness", "HARDNESS: {0}%").format(int(self._img_editor_eraser_hardness*100)), "sm", TXT_DIM, col1_x, sy_sl + 45)
-            _slider(self.screen, (col1_x, sy_sl + 70, sl_w, 20), self._img_editor_eraser_hardness, 0, 1)
-            _draw_text(self.screen, self._TR("img_opacity", "OPACITY: {0}%").format(int(self._img_editor_eraser_opacity*100)), "sm", TXT_DIM, col1_x, sy_sl + 115)
-            _slider(self.screen, (col1_x, sy_sl + 140, sl_w, 20), self._img_editor_eraser_opacity, 0, 1)
-            sy_ch = sy_sl + 195
+            _draw_text(self.screen, self._TR("img_radius", "RADIUS: {0}px").format(self._img_editor_eraser_r), "sm", TXT_HI, col1_x, sl_a.y - head_dy, sl_w)
+            _slider(self.screen, sl_a, (self._img_editor_eraser_r - 1) / 63, 0, 1)
+            _draw_text(self.screen, self._TR("img_hardness", "HARDNESS: {0}%").format(int(self._img_editor_eraser_hardness*100)), "sm", TXT_DIM, col1_x, sl_b.y - head_dy, sl_w)
+            _slider(self.screen, sl_b, self._img_editor_eraser_hardness, 0, 1)
+            _draw_text(self.screen, self._TR("img_opacity", "OPACITY: {0}%").format(int(self._img_editor_eraser_opacity*100)), "sm", TXT_DIM, col1_x, sl_c.y - head_dy, sl_w)
+            _slider(self.screen, sl_c, self._img_editor_eraser_opacity, 0, 1)
         else:
-            _draw_text(self.screen, self._TR("img_tolerance", "TOLERANCE: {0}").format(self._img_editor_wand_tol), "sm", TXT_HI, col1_x, sy_sl - 25)
-            _slider(self.screen, (col1_x, sy_sl, sl_w, 20), self._img_editor_wand_tol / 128, 0, 1)
-            _draw_text(self.screen, self._TR("img_feather", "FEATHER: {0}").format(self._img_editor_wand_feather), "sm", TXT_HI, col1_x, sy_sl + 45)
-            _slider(self.screen, (col1_x, sy_sl + 70, sl_w, 20), self._img_editor_wand_feather / 32, 0, 1)
-            sy_ch = sy_sl + 195
+            _draw_text(self.screen, self._TR("img_tolerance", "TOLERANCE: {0}").format(self._img_editor_wand_tol), "sm", TXT_HI, col1_x, sl_a.y - head_dy, sl_w)
+            _slider(self.screen, sl_a, self._img_editor_wand_tol / 128, 0, 1)
+            _draw_text(self.screen, self._TR("img_feather", "FEATHER: {0}").format(self._img_editor_wand_feather), "sm", TXT_HI, col1_x, sl_b.y - head_dy, sl_w)
+            _slider(self.screen, sl_b, self._img_editor_wand_feather / 32, 0, 1)
 
-        _draw_text(self.screen, self._TR("img_chroma", "CHROMA REMOVER"), "sm", TXT_DIM, col1_x, sy_ch - 25)
-        for i, (m, c) in enumerate([("G", (0, 200, 0)), ("W", (230, 230, 230)), ("B", (40, 40, 40))]):
-            tr_c = pygame.Rect(col1_x + i*50, sy_ch, 45, 40)
-            _button(self.screen, tr_c, m, _in_rect((mx, my), tr_c))
-        _draw_text(self.screen, self._TR("img_intensity", "INTENSITY: {0}").format(f"{self._img_editor_chroma_intensity:.1f}"), "sm", TXT_DIM, col1_x, sy_ch + 75)
-        _slider(self.screen, (col1_x, sy_ch + 100, sl_w, 20), (self._img_editor_chroma_intensity - 0.5) / 3.5, 0, 1)
+        chroma_rects, sl_chroma = r1["chroma"], r1["sl_chroma"]
+        _draw_text(self.screen, self._TR("img_chroma", "CHROMA REMOVER"), "sm", TXT_DIM,
+                   col1_x, chroma_rects[0].y - head_dy, sl_w)
+        for letter, tr_c in zip(["G", "W", "B"], chroma_rects):
+            _button(self.screen, tr_c, letter, _in_rect((mx, my), tr_c))
+        _draw_text(self.screen, self._TR("img_intensity", "INTENSITY: {0}").format(f"{self._img_editor_chroma_intensity:.1f}"), "sm", TXT_DIM,
+                   col1_x, sl_chroma.y - head_dy, sl_w)
+        _slider(self.screen, sl_chroma, (self._img_editor_chroma_intensity - 0.5) / 3.5, 0, 1)
 
         # Colonna 2 (Zoom & Trans)
-        _draw_text(self.screen, self._TR("img_navigation", "NAVIGATION"), "sm", TXT_DIM, col2_x, ey + 60)
-        sy2 = ey + 85; bw2 = (sl_w // 2) - 3
-        r_f, r_1 = pygame.Rect(col2_x, sy2, bw2, 40), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 40)
-        _button(self.screen, r_f, "    FIT", _in_rect((mx, my), r_f))
-        self._r_blit_icon("zoom_fit", pygame.Rect(r_f.x+4, r_f.y, 25, 40), active=_in_rect((mx, my), r_f))
-        _button(self.screen, r_1, "    1:1", _in_rect((mx, my), r_1))
-        self._r_blit_icon("zoom_100", pygame.Rect(r_1.x+4, r_1.y, 25, 40), active=_in_rect((mx, my), r_1))
+        # Geometria condivisa con il click tramite _img_editor_col2_rects
+        r2 = self._img_editor_col2_rects(m)
+        gut = m["gutter"]
+        r_f, r_1 = r2["fit"], r2["one_to_one"]
+        _draw_text(self.screen, self._TR("img_navigation", "NAVIGATION"), "sm", TXT_DIM,
+                   col2_x, r_f.y - head_dy, sl_w)
+        nav_label = self._TR("img_fit", "FIT")
+        nav_icons = self._img_editor_icons_fit([nav_label, "1:1"], r_f.w, gut)
+        self._img_editor_icon_button(r_f, "zoom_fit", nav_label,
+                                     _in_rect((mx, my), r_f), gutter=gut,
+                                     with_icon=nav_icons)
+        self._img_editor_icon_button(r_1, "zoom_100", "1:1",
+                                     _in_rect((mx, my), r_1), gutter=gut,
+                                     with_icon=nav_icons)
 
-        sy2 += 105; _draw_text(self.screen, self._TR("img_rotation", "ROTATION"), "sm", TXT_DIM, col2_x, sy2 - 25)
-        r_l, r_r = pygame.Rect(col2_x, sy2, bw2, 42), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 42)
+        r_l, r_r = r2["rot_ccw"], r2["rot_cw"]
+        _draw_text(self.screen, self._TR("img_rotation", "ROTATION"), "sm", TXT_DIM, col2_x, r_l.y - head_dy, sl_w)
         _button(self.screen, r_l, "", _in_rect((mx, my), r_l)); self._r_blit_icon("undo", r_l, active=_in_rect((mx, my), r_l))
         _button(self.screen, r_r, "", _in_rect((mx, my), r_r)); self._r_blit_icon("rotate_cw", r_r, active=_in_rect((mx, my), r_r))
 
-        sy2 += 85; _draw_text(self.screen, self._TR("img_automation", "AUTOMATION"), "sm", TXT_DIM, col2_x, sy2 - 25)
-        r_at = pygame.Rect(col2_x, sy2, 145, 40)
-        _button(self.screen, r_at, "      AUTO TRIM", _in_rect((mx, my), r_at))
-        self._r_blit_icon("crop", pygame.Rect(r_at.x+6, r_at.y, 25, 40), active=_in_rect((mx, my), r_at))
+        r_at = r2["auto_trim"]
+        _draw_text(self.screen, self._TR("img_automation", "AUTOMATION"), "sm", TXT_DIM, col2_x, r_at.y - head_dy, sl_w)
+        self._img_editor_icon_button(r_at, "crop",
+                                     self._TR("img_auto_trim", "AUTO TRIM"),
+                                     _in_rect((mx, my), r_at), gutter=gut)
 
-        sy2 += 75; _draw_text(self.screen, self._TR("img_mirror", "MIRROR"), "sm", TXT_DIM, col2_x, sy2 - 25)
-        r_fh, r_fv = pygame.Rect(col2_x, sy2, bw2, 38), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 38)
-        _button(self.screen, r_fh, "   HORZ", _in_rect((mx, my), r_fh))
-        self._r_blit_icon("flip_h", pygame.Rect(r_fh.x+3, r_fh.y, 25, 38), active=_in_rect((mx, my), r_fh))
-        _button(self.screen, r_fv, "   VRT", _in_rect((mx, my), r_fv))
-        self._r_blit_icon("flip_v", pygame.Rect(r_fv.x+3, r_fv.y, 25, 38), active=_in_rect((mx, my), r_fv))
+        r_fh, r_fv = r2["flip_h"], r2["flip_v"]
+        _draw_text(self.screen, self._TR("img_mirror", "MIRROR"), "sm", TXT_DIM, col2_x, r_fh.y - head_dy, sl_w)
+        flip_labels = [self._TR("img_flip_h", "HORZ"),
+                       self._TR("img_flip_v", "VERT")]
+        flip_icons = self._img_editor_icons_fit(flip_labels, r_fh.w, gut)
+        self._img_editor_icon_button(r_fh, "flip_h", flip_labels[0],
+                                     _in_rect((mx, my), r_fh), gutter=gut,
+                                     with_icon=flip_icons)
+        self._img_editor_icon_button(r_fv, "flip_v", flip_labels[1],
+                                     _in_rect((mx, my), r_fv), gutter=gut,
+                                     with_icon=flip_icons)
 
-        sy2 += 75; r_sm = pygame.Rect(col2_x, sy2, 145, 38)
-        _button(self.screen, r_sm, "      SMOOTH", _in_rect((mx, my), r_sm))
-        self._r_blit_icon("smooth", pygame.Rect(r_sm.x+6, r_sm.y, 25, 38), active=_in_rect((mx, my), r_sm))
+        r_sm = r2["smooth"]
+        self._img_editor_icon_button(r_sm, "smooth",
+                                     self._TR("img_smooth", "SMOOTH"),
+                                     _in_rect((mx, my), r_sm), gutter=gut)
 
-        sy2 += 85; _draw_text(self.screen, self._TR("img_hitbox", "HITBOX"), "sm", TXT_DIM, col2_x, sy2 - 25)
-        r_re, r_ci = pygame.Rect(col2_x, sy2, bw2, 38), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 38)
-        _button(self.screen, r_re, "RECT", _in_rect((mx, my), r_re), active=(self._img_editor_asset_shape=="rect"))
-        _button(self.screen, r_ci, "CIRC", _in_rect((mx, my), r_ci), active=(self._img_editor_asset_shape=="circle"))
+        r_re, r_ci = r2["hit_rect"], r2["hit_circle"]
+        _draw_text(self.screen, self._TR("img_hitbox", "HITBOX"), "sm", TXT_DIM, col2_x, r_re.y - head_dy, sl_w)
+        _button(self.screen, r_re, self._TR("img_hit_rect", "RECT"), _in_rect((mx, my), r_re), active=(self._img_editor_asset_shape=="rect"))
+        _button(self.screen, r_ci, self._TR("img_hit_circle", "CIRC"), _in_rect((mx, my), r_ci), active=(self._img_editor_asset_shape=="circle"))
 
-        # Ritaglio manuale (ALLINEATO al click: sy2 += 75)
-        sy2 += 75; _draw_text(self.screen, self._TR("img_crop", "CROP"), "sm", TXT_DIM, col2_x, sy2 - 25)
-        r_cm = pygame.Rect(col2_x, sy2, bw2, 38)
-        r_ca = pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 38)
+        r_cm, r_ca = r2["crop_mode"], r2["crop_apply"]
+        _draw_text(self.screen, self._TR("img_crop", "CROP"), "sm", TXT_DIM, col2_x, r_cm.y - head_dy, sl_w)
         _button(self.screen, r_cm, self._TR("img_crop_btn", "CROP"), _in_rect((mx, my), r_cm),
                 active=self._img_editor_crop_mode)
         can_apply = self._img_editor_crop_mode and any(self._img_editor_crop.values())
@@ -1379,16 +1580,17 @@ class ImgEditorMixin:
 
         # Colonna 3 (AI / Dimensione / Filtri / Contorno)
         # Geometria condivisa con il click tramite _img_editor_col3_rects
-        r3 = self._img_editor_col3_rects(ex, ey, sb_x)
-        col3_x = r3["ai"].x
+        r3 = self._img_editor_col3_rects(m)
         busy = self._img_editor_busy
 
-        _draw_text(self.screen, self._TR("img_ai_bg", "AI BACKGROUND"), "sm", TXT_DIM, col3_x, ey + 60)
-        ai_label = "ELABORAZIONE..." if busy else "RIMUOVI SFONDO"
+        _draw_text(self.screen, self._TR("img_ai_bg", "AI BACKGROUND"), "sm", TXT_DIM,
+                   col3_x, r3["ai"].y - head_dy, sl_w)
+        ai_label = (self._TR("img_busy", "PROCESSING...") if busy
+                    else self._TR("img_remove_bg", "REMOVE BACKGROUND"))
         _button(self.screen, r3["ai"], ai_label,
                 _in_rect((mx, my), r3["ai"]) and not busy, active=busy)
 
-        _draw_text(self.screen, self._TR("img_size", "SIZE"), "sm", TXT_DIM, col3_x, r3["dim_w"].y - 25)
+        _draw_text(self.screen, self._TR("img_size", "SIZE"), "sm", TXT_DIM, col3_x, r3["dim_w"].y - head_dy, sl_w)
         if self._img_editor_resize_edit:
             _input_box(self.screen, r3["dim_w"], self._img_editor_resize_w,
                        focused=(self._img_editor_resize_focus == "w"), hint="W", font="sm")
@@ -1398,25 +1600,29 @@ class ImgEditorMixin:
         else:
             vw, vh = self._img_editor_view_surf.get_size()
             _draw_text(self.screen, f"{vw} x {vh} px", "sm", TXT_HI,
-                       col3_x, r3["dim_w"].y + 8)
+                       col3_x, r3["dim_w"].y + sc(8), sl_w)
             _button(self.screen, r3["dim_btn"], self._TR("img_resize_btn", "RESIZE"),
                     _in_rect((mx, my), r3["dim_btn"]))
 
-        _draw_text(self.screen, self._TR("img_filters", "FILTERS"), "sm", TXT_DIM, col3_x, r3["sl_filt_b"].y - 42)
+        _draw_text(self.screen, self._TR("img_filters", "FILTERS"), "sm", TXT_DIM,
+                   col3_x, r3["sl_filt_b"].y - sc(42), sl_w)
         f_range = FILTER_MAX - FILTER_MIN
         filt3 = self._img_editor_filters
-        for f_name, f_key in (("LUMINOSITÀ", "b"), ("CONTRASTO", "c"), ("SATURAZIONE", "s")):
+        for f_key, f_default in (("b", "BRIGHTNESS"), ("c", "CONTRAST"),
+                                 ("s", "SATURATION")):
+            f_name = self._TR(f"img_filter_{f_key}", f_default)
             f_rect = r3["sl_filt_" + f_key]
             _draw_text(self.screen, f"{f_name}: {filt3[f_key]:+d}", "xs", TXT_DIM,
-                       col3_x, f_rect.y - 16)
+                       col3_x, f_rect.y - sc(16), sl_w)
             _slider(self.screen, f_rect, (filt3[f_key] - FILTER_MIN) / f_range, 0, 1)
         filt3_on = bool(filt3["b"] or filt3["c"] or filt3["s"])
         _button(self.screen, r3["filt_apply"], self._TR("img_apply_filters", "APPLY FILTERS"),
                 _in_rect((mx, my), r3["filt_apply"]), active=filt3_on)
 
-        _draw_text(self.screen, self._TR("img_outline", "OUTLINE"), "sm", TXT_DIM, col3_x, r3["sl_outline"].y - 42)
+        _draw_text(self.screen, self._TR("img_outline", "OUTLINE"), "sm", TXT_DIM,
+                   col3_x, r3["sl_outline"].y - sc(42), sl_w)
         _draw_text(self.screen, self._TR("img_thickness", "THICKNESS: {0}px").format(self._img_editor_outline_px), "xs", TXT_DIM,
-                   col3_x, r3["sl_outline"].y - 16)
+                   col3_x, r3["sl_outline"].y - sc(16), sl_w)
         o_range = OUTLINE_MAX_PX - OUTLINE_MIN_PX
         _slider(self.screen, r3["sl_outline"],
                 (self._img_editor_outline_px - OUTLINE_MIN_PX) / o_range, 0, 1)
@@ -1427,25 +1633,23 @@ class ImgEditorMixin:
         _button(self.screen, r3["out_apply"], self._TR("img_apply_outline", "APPLY OUTLINE"),
                 _in_rect((mx, my), r3["out_apply"]))
 
-        # Footer (Compattato e Corretto)
-        fy = ey + eh - 65; bw, bh = 150, 42
-        total_footer_w = bw * 3 + 40
-        fb_start_x = ex + (ew - sb_w) // 2 - total_footer_w // 2
-        fb_rects = [pygame.Rect(fb_start_x + i*(bw + 20), fy, bw, bh) for i in range(3)]
+        # Footer: i tre bottoni sono larghi quanto l'etichetta tradotta
+        fb_rects = self._img_editor_footer_rects(ex, ey, ew, eh)
+        fy = fb_rects[0].y
+        labels = self._img_editor_footer_labels()
         is_d = self._img_editor_dirty or any(self._img_editor_crop.values())
-        sl = "      SALVA" if not self._img_editor_save_confirm else "      CONF?"
-        cl = "      COPIA" if not self._img_editor_copy_confirm else "      CONF?"
-        el = "      ESCI" if not self._img_editor_exit_confirm else "      CONF?"
-
-        h0 = _in_rect((mx, my), fb_rects[0])
-        _button(self.screen, fb_rects[0], sl, h0 and is_d, active=self._img_editor_save_confirm)
-        self._r_blit_icon("save", pygame.Rect(fb_rects[0].x+8, fb_rects[0].y, 25, 42), active=h0)
-        h1 = _in_rect((mx, my), fb_rects[1])
-        _button(self.screen, fb_rects[1], cl, h1, active=self._img_editor_copy_confirm)
-        self._r_blit_icon("copy", pygame.Rect(fb_rects[1].x+8, fb_rects[1].y, 25, 42), active=h1)
-        h2 = _in_rect((mx, my), fb_rects[2])
-        _button(self.screen, fb_rects[2], el, h2, danger=True, active=self._img_editor_exit_confirm)
-        self._r_blit_icon("exit", pygame.Rect(fb_rects[2].x+12, fb_rects[2].y, 25, 42), active=h2)
+        armed = (self._img_editor_save_confirm, self._img_editor_copy_confirm,
+                 self._img_editor_exit_confirm)
+        enabled = (is_d, True, True)
+        foot_icons = all(self._img_editor_icons_fit([label], rect.w, gut)
+                         for label, rect in zip(labels, fb_rects))
+        for index, (rect, label, icon) in enumerate(
+                zip(fb_rects, labels, ("save", "copy", "exit"))):
+            hovered = _in_rect((mx, my), rect) and enabled[index]
+            self._img_editor_icon_button(rect, icon, label, hovered,
+                                         active=armed[index], gutter=gut,
+                                         danger=(index == 2),
+                                         with_icon=foot_icons)
 
         # Cursore Strumento (Workspace Wide, non in ritaglio ne' durante l'AI)
         is_in_work = mx < sb_x and my < fy - 10 and my > ey + 60

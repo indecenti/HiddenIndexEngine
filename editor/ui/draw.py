@@ -442,8 +442,13 @@ def _button(surf, r, label, hovered=False, active=False, danger=False, font="sm"
     if label in icon_map:
         _draw_shape_icon(surf, r, icon_map[label], TXT_HI)
     else:
+        # A label wider than its button used to be drawn over both borders and
+        # over whatever sat next to it. It is centred on what fits instead.
+        max_w = max(10, r[2] - 10)
         tw, th = _text_wh(label, font)
-        _draw_text(surf, label, font, TXT_HI, r[0] + (r[2]-tw)//2, r[1] + (r[3]-th)//2)
+        _draw_text(surf, label, font, TXT_HI,
+                   r[0] + max(5, (r[2] - min(tw, max_w)) // 2),
+                   r[1] + (r[3] - th) // 2, max_w)
 
 
 def _pip(surf, mx, my) -> tuple:
