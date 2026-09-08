@@ -36,7 +36,7 @@ from editor.tools.translator import (
 from editor.tools.translator_backends import discover_backends
 from editor.ui.draw import (
     _button, _button_w, _draw_text, _draw_text_wrapped, _in_rect, _rect,
-    _text_wh,
+    _text_wh, _wrap_lines,
 )
 
 logger = logging.getLogger(__name__)
@@ -233,7 +233,11 @@ class LangTranslateMixin:
         options = [] if self._lang_tr_busy else self._lang_tr_discover()
         row_h = line_h + 14
         box_w = min(TR_PANEL_W, w - 80)
-        body_h = line_h * 4 + 8
+        # The panel is as tall as the sentence it actually shows: sized for a
+        # fixed four lines it left a band of nothing under a short one.
+        body_lines = min(4, max(1, len(_wrap_lines(body, "sm",
+                                                   box_w - TR_PAD * 2))))
+        body_h = line_h * body_lines + 10
         engines_h = (line_h + 6 + len(options) * (row_h + 4)) if options else 0
         box_h = (TR_PAD * 3 + _text_wh(title, "lg")[1] + engines_h + body_h
                  + btn_h)
@@ -279,7 +283,7 @@ class LangTranslateMixin:
             y += 4
 
         _draw_text_wrapped(self.screen, body, "sm", TXT, box.x + TR_PAD, y,
-                           box.w - TR_PAD * 2, max_lines=4)
+                           box.w - TR_PAD * 2, max_lines=body_lines)
         y = box.bottom - TR_PAD - btn_h
         if self._lang_tr_busy:
             bar = pygame.Rect(box.x + TR_PAD, y - 18, box.w - TR_PAD * 2, 6)
