@@ -108,24 +108,24 @@ class GameSelectMixin:
         """Gestisce il trascinamento degli elementi per il riordino."""
         if not hasattr(self, "gs_dragging_idx") or self.gs_dragging_idx is None:
             return
-        
+
         col = self.gs_dragging_col
         idx = self.gs_dragging_idx
-        
+
         ITEM_H = 64 if col == 2 else (50 if col == 1 else 34)
-        
+
         # Sincronizzazione precisa con _r_game_select
         header_y = TOP_BAR_H
         header_h = 80
         y_rec = header_y + header_h + 30
         y_browser = y_rec + 200
         iy = y_browser + 60
-        
+
         scroll = [self.gs_scroll_game, self.gs_scroll_lvl, self.gs_scroll_scn][col]
-        
+
         # Calcolo indice target
         new_idx = (my_raw - iy + scroll * ITEM_H) // ITEM_H
-        
+
         if new_idx != idx:
             count = [len(self.gs_games), len(self.gs_cur_levels), len(self.gs_cur_scenes)][col]
             if 0 <= new_idx < count:
@@ -205,7 +205,7 @@ class GameSelectMixin:
                     str(output_dir),
                     str(status_file),
                 ]
-            
+
             p2 = subprocess.Popen(
                 cmd,
                 cwd=str(self.base_path),
@@ -324,7 +324,7 @@ class GameSelectMixin:
                 cmd = [sys.executable, "--play-game", game_id]
             else:
                 cmd = [sys.executable, "main.py", "--game", game_id]
-                
+
             subprocess.Popen(
                 cmd,
                 cwd=str(self.base_path)
@@ -347,10 +347,10 @@ class GameSelectMixin:
         # Reset scroll colonne dipendenti
         self.gs_scroll_lvl = 0
         self.gs_scroll_scn = 0
-        
+
         gname = self.gs_games[idx]
         self.game_path = self.base_path / "games" / gname
-        self._load_strings() 
+        self._load_strings()
         self.gs_cur_levels = _discover_levels(self.game_path)
         self._gs_refresh_cache(1)
         self._status(self._TR("gs_game_selected", "Game: {0}").format(gname), OK_C, 2)
@@ -360,7 +360,7 @@ class GameSelectMixin:
         self.gs_sel_scene  = None
         # Reset scroll colonna scene
         self.gs_scroll_scn = 0
-        
+
         lvl = self.gs_cur_levels[idx]
         self.gs_cur_scenes = lvl["scenes"]
         self._gs_refresh_cache(2)
@@ -441,7 +441,7 @@ class GameSelectMixin:
         """Rigenera la cache dei nomi umani per le colonne specificate (o tutte)."""
         if not hasattr(self, "_gs_labels_cache"):
             self._gs_labels_cache = [[], [], []]
-            
+
         cols = [col_idx] if col_idx is not None else [0, 1, 2]
         for c in cols:
             items = []
@@ -455,7 +455,7 @@ class GameSelectMixin:
                 for i in range(len(self.gs_cur_scenes)):
                     items.append(self._gs_get_human_name("scene", i))
             self._gs_labels_cache[c] = items
-        
+
         # Meta cache per i giochi (Tema, Categoria, etc.)
         if not hasattr(self, "_gs_meta_cache"): self._gs_meta_cache = {}
         for i in range(len(self.gs_games)):
@@ -480,7 +480,7 @@ class GameSelectMixin:
                 if p.exists():
                     cfg = _load_json(p)
                     key = cfg.get("title_key", "game_title")
-                    
+
                     # Cerca la traduzione nel gioco specifico
                     lang_p = self.base_path / "games" / gname / "strings" / f"{lang}.json"
                     if not lang_p.exists():
@@ -488,7 +488,7 @@ class GameSelectMixin:
                         lang_p = self.base_path / "games" / gname / "strings" / "it.json"
                         if not lang_p.exists():
                             lang_p = self.base_path / "games" / gname / "strings" / "en.json"
-                    
+
                     if lang_p.exists():
                         lang_data = _load_json(lang_p)
                         return lang_data.get(key, gname)
@@ -523,14 +523,14 @@ class GameSelectMixin:
     def _gs_edit_game(self, idx: int):
         self._gs_edit_mode = "game"
         self.gs_sel_game   = idx
-        
+
         gname = self.gs_games[idx]
         p = self.base_path / "games" / gname / "game_config.json"
         t_key = "game_title"
         if p.exists():
             cfg = _load_json(p)
             t_key = cfg.get("title_key", "game_title")
-            
+
         self._gs_edit_lang_bufs = {l: self._gs_get_string_for_lang(gname, l, t_key, gname) for l in self.LANGS}
         self._gs_edit_cursors = {l: len(buf) for l, buf in self._gs_edit_lang_bufs.items()}
         self._gs_edit_active_field = self.LANGS[0]
@@ -538,7 +538,7 @@ class GameSelectMixin:
         self._gs_edit_active_field = self.current_lang
         self._gs_edit_buf = self._gs_edit_lang_bufs[self._gs_edit_active_field]
         self._gs_edit_del_stage = 0
-        
+
         self._gs_edit_bg_path = ""
         self._gs_edit_vid_path = ""
         self._gs_edit_bg_preview_surf = None
@@ -579,12 +579,12 @@ class GameSelectMixin:
         if self.gs_sel_game is None: return
         self._gs_edit_mode = "level"
         self.gs_sel_level  = idx
-        
+
         gname = self.gs_games[self.gs_sel_game]
         lvl = self.gs_cur_levels[idx]
         cfg = lvl.get("cfg", {})
         nk = cfg.get("name_key", f"{lvl['id']}_name")
-        
+
         self._gs_edit_lang_bufs = {l: self._gs_get_string_for_lang(gname, l, nk, lvl["id"]) for l in self.LANGS}
         self._gs_edit_cursors = {l: len(buf) for l, buf in self._gs_edit_lang_bufs.items()}
         self._gs_edit_active_field = self.current_lang
@@ -601,7 +601,7 @@ class GameSelectMixin:
         if self.gs_sel_level is None: return
         self._gs_edit_mode = "scene"
         self.gs_sel_scene  = idx
-        
+
         scn_path = self.gs_cur_scenes[idx]
         sd = _load_scene_data(scn_path)
         nk = sd.get("name_key", f"{scn_path.name}_name")
@@ -613,7 +613,7 @@ class GameSelectMixin:
         self._gs_edit_all_selected = False
         self._gs_edit_buf = self._gs_edit_lang_bufs[self._gs_edit_active_field]
         self._gs_edit_del_stage = 0
-        
+
         bg = sd.get("background", "")
         self._gs_edit_bg_path = ""
         self._gs_edit_vid_path = ""
@@ -635,12 +635,12 @@ class GameSelectMixin:
         """Conferma e persiste le modifiche dal dialog di editing (ID, Titolo, Assets)."""
         import shutil, tempfile, gc, configparser
         from pathlib import Path
-        
+
         try:
             pygame.mixer.music.stop()
             pygame.mixer.music.unload()
         except Exception: pass
-        
+
         raw_name = self._gs_edit_buf.strip()
         if not raw_name:
             self._gs_edit_mode = None; return
@@ -683,7 +683,7 @@ class GameSelectMixin:
                         shutil.copytree(old_p, new_p, dirs_exist_ok=True)
                         from engine.utils import safe_delete
                         safe_delete(old_p, reason="game_rename_fallback")
-                    
+
                     self.gs_games[self.gs_sel_game] = clean_id
                     sync_editor_state(old_p, new_p)
                     self.gs_cur_levels = _discover_levels(new_p)
@@ -709,19 +709,19 @@ class GameSelectMixin:
                 bg_path = getattr(self, "_gs_edit_bg_path", "")
                 vid_path = getattr(self, "_gs_edit_vid_path", "")
                 sel_bg = vid_path if vid_path else bg_path
-                
+
                 old_bg = cfg.get("menu", {}).get("background", "")
                 if sel_bg:
                     if Path(sel_bg).is_absolute():
                         p = Path(sel_bg); t_name = p.name
                         dst = new_p / "assets" / t_name
                         (new_p / "assets").mkdir(parents=True, exist_ok=True)
-                        
+
                         # Pulizia vecchio background fisico se diverso (IMG <-> VID)
                         if old_bg and old_bg.startswith("assets/"):
                             old_path = (new_p / old_bg).resolve()
                             new_path = dst.resolve()
-                            
+
                             if old_path.exists() and old_path != new_path:
                                 try:
                                     logger.info(f"Pulizia asset obsoleto: {old_path}")
@@ -733,7 +733,7 @@ class GameSelectMixin:
                             shutil.copy2(str(p), str(dst))
                         cfg["menu"]["background"] = f"assets/{t_name}"
                     else: cfg["menu"]["background"] = sel_bg
-                else: 
+                else:
                     # Pulizia se rimosso
                     if old_bg and old_bg.startswith("assets/"):
                         old_p_del = (new_p / old_bg).resolve()
@@ -750,7 +750,7 @@ class GameSelectMixin:
                 if mu_paths:
                     target_dir = new_p / "audio" / "music"
                     target_dir.mkdir(parents=True, exist_ok=True)
-                    
+
                     # Copiamo in cartella temp per evitare conflitti
                     temp_d = Path(tempfile.mkdtemp())
                     staged = []
@@ -760,18 +760,18 @@ class GameSelectMixin:
                         if not src.exists(): continue
 
                         t_name = p.name
-                        
+
                         # Se già presente in audio/music, non sovrascrivere
                         final_dst = target_dir / t_name
                         if final_dst.exists():
                             music_list.append(f"audio/music/{t_name}")
                             continue
-                        
+
                         final_name = t_name
                         c = 1
                         while (temp_d / final_name).exists():
                             final_name = f"{p.stem}_{c}{p.suffix}"; c += 1
-                        
+
                         try:
                             shutil.copy2(str(src), str(temp_d / final_name))
                             staged.append((temp_d / final_name, final_name))
@@ -787,7 +787,7 @@ class GameSelectMixin:
                             music_list.append(f"audio/music/{fname}")
                         except Exception as e:
                             logger.error(f"Errore spostamento {fname} in audio/music: {e}")
-                    
+
                     try: shutil.rmtree(temp_d)
                     except Exception: pass
                 cfg["menu"]["music"] = music_list
@@ -814,7 +814,7 @@ class GameSelectMixin:
                 used_in_scenes = self._gs_get_used_music(new_p)
                 menu_music = {Path(m).name for m in music_list}
                 all_active_music = used_in_scenes.union(menu_music)
-                
+
                 audio_dir = new_p / "audio" / "music"
                 if audio_dir.exists():
                     from engine.utils import safe_delete
@@ -825,7 +825,7 @@ class GameSelectMixin:
                                 logger.error(f"Errore eliminazione file inutilizzato {f.name}")
                 for l, val in getattr(self, "_gs_edit_lang_bufs", {}).items():
                     self._gs_update_strings(clean_id, {t_key: val}, lang=l)
-                
+
                 for it in self.recent_scenes:
                     if it.get("game") == old_id:
                         it["game"] = clean_id
@@ -849,16 +849,16 @@ class GameSelectMixin:
                 scn_p = self.gs_cur_scenes[self.gs_sel_scene]
                 sd = _load_scene_data(scn_p)
                 nk = sd.setdefault("name_key", f"{scn_p.name}_name")
-                
+
                 bg_p = getattr(self, "_gs_edit_bg_path", "")
                 vid_p = getattr(self, "_gs_edit_vid_path", "")
                 sel_s = vid_p if vid_p else bg_p
-                
+
                 old_s = sd.get("background", "")
                 if sel_s:
                     if Path(sel_s).is_absolute():
                         p = Path(sel_s); dst = scn_p / p.name
-                        
+
                         # Pulizia vecchia risorsa scena (IMG <-> VID).
                         # Soft-delete: il vecchio background va nel cestino, recuperabile.
                         if old_s and old_s != p.name:
@@ -874,7 +874,7 @@ class GameSelectMixin:
                             shutil.copy2(str(p), str(dst))
                         sd["background"] = p.name
                     else: sd["background"] = Path(sel_s).name
-                else: 
+                else:
                     if old_s:
                         old_p_del = (scn_p / old_s).resolve()
                         if old_p_del.exists():
@@ -883,7 +883,7 @@ class GameSelectMixin:
                                 old_p_del.unlink(missing_ok=True)
                             except Exception: pass
                     sd["background"] = ""
-                
+
                 _save_json(scn_p / "scene.json", sd)
                 for l, val in getattr(self, "_gs_edit_lang_bufs", {}).items():
                     self._gs_update_strings(gname, {nk: val}, lang=l)
@@ -1025,7 +1025,7 @@ class GameSelectMixin:
     def _gs_update_previews(self, mode="edit"):
         """Carica le superfici di anteprima per gli asset selezionati."""
         p_prefix = "_gs_edit_" if mode == "edit" else "_gs_new_"
-        
+
         # BG Image Preview
         bg_path = getattr(self, f"{p_prefix}bg_path", "")
         setattr(self, f"{p_prefix}bg_preview_surf", None)
@@ -1035,7 +1035,7 @@ class GameSelectMixin:
                 s = pygame.transform.smoothscale(s, (200, 112))
                 setattr(self, f"{p_prefix}bg_preview_surf", s)
             except Exception: pass
-            
+
         # Video Preview (carica thumbnail .jpg se esiste)
         vid_path = getattr(self, f"{p_prefix}vid_path", "")
         setattr(self, f"{p_prefix}vid_preview_surf", None)
@@ -1053,7 +1053,7 @@ class GameSelectMixin:
                         found = True
                         break
                     except Exception: pass
-            
+
             # Fallback: OpenCV frame capture
             if not found and p.exists():
                 try:
@@ -1081,7 +1081,7 @@ class GameSelectMixin:
             pygame.mixer.music.stop()
             pygame.mixer.music.unload()
         except Exception: pass
-        
+
         name = re.sub(r'[^\w\-]', '_', self._gs_new_buf.strip().replace(" ", "_"))
         if not name:
             self._gs_new_mode = None; return
@@ -1122,7 +1122,7 @@ class GameSelectMixin:
                     final_bg_path = f"assets/{target_name}"
                 except Exception as e:
                     self._status(self._TR("gs_copy_asset_error", "Asset copy error: {0}").format(e), ERR_C)
-            
+
             # --- GESTIONE PLAYLIST MUSICA ---
             music_list = []
             if hasattr(self, "_gs_new_music_paths") and self._gs_new_music_paths:
@@ -1132,19 +1132,19 @@ class GameSelectMixin:
                     p = Path(m_path)
                     t_name = p.name
                     target_path = target_dir / t_name
-                    
+
                     # Se esiste già, non sovrascrivere
                     if target_path.exists():
                         music_list.append(f"audio/music/{t_name}")
                         continue
-                    
+
                     # Collision handling
                     c = 1
                     while target_path.exists():
                         t_name = f"{p.stem}_{c}{p.suffix}"
                         target_path = target_dir / t_name
                         c += 1
-                        
+
                     try:
                         logger.info(f"Copia nuovo brano menu: {m_path} -> {target_path}")
                         shutil.copy2(str(m_path), str(target_path))
@@ -1179,12 +1179,12 @@ class GameSelectMixin:
                        })
             # Harvesting tema default al nuovo progetto
             self._gs_harvest_theme(name, "default")
-            
+
             _save_json(gpath / "objects_catalog.json", {"objects": []})
-            
+
             # --- SEEDING INIZIALE TRADUZIONI (Harvesting di Sistema) ---
             from engine.utils import get_resource_path
-            
+
             # Chiavi HUD/SISTEMA minime necessarie per distribuire il gioco
             sys_keys = {
                 "btn_back", "btn_resume", "btn_settings", "btn_quit_to_main", "btn_play", "btn_ok", "btn_cancel",
@@ -1193,11 +1193,11 @@ class GameSelectMixin:
                 "label_music_volume", "label_sfx_volume", "label_master_volume",
                 "mg_title", "mg_description", "pause_title", "mission_complete"
             }
-            
+
             # Rileviamo lingue disponibili nell'engine
             engine_strings_dir = get_resource_path("engine", "assets", "strings")
             langs = [f.stem for f in engine_strings_dir.glob("*.json")] if engine_strings_dir.exists() else ["en", "it"]
-            
+
             for lang in langs:
                 # Carica traduzioni globali dall'engine
                 eng_p = engine_strings_dir / f"{lang}.json"
@@ -1207,10 +1207,10 @@ class GameSelectMixin:
                         with open(eng_p, "r", encoding="utf-8-sig") as f:
                             eng_data = json.load(f)
                     except Exception: pass
-                
+
                 # Crea il pool locale del gioco per questa lingua
                 local_data = {"game_title": name.replace("_", " ")}
-                
+
                 # Harvesting: inserisce le chiavi di sistema ufficiali
                 for sk in sys_keys:
                     if sk in eng_data:
@@ -1218,12 +1218,12 @@ class GameSelectMixin:
                     else:
                         # Fallback se manca nell'engine (molto raro)
                         local_data[sk] = sk.replace("btn_", "").replace("hud_", "").replace("label_", "").replace("_", " ").title()
-                
+
                 # Salva il file i18n del gioco
                 _save_json(gpath / "strings" / f"{lang}.json", local_data)
-            
+
             logger.info(f"[PROJECT] Creati file i18n per {len(langs)} lingue con seed di sistema.")
-            
+
             # --- CREAZIONE ENTRY POINT DINAMICO (main.py specifico per gioco) ---
             main_py_content = """import sys
 import importlib.util
@@ -1240,26 +1240,26 @@ if __name__ == "__main__":
 
     spec = importlib.util.spec_from_file_location("engine_entry", engine_main_p)
     engine_module = importlib.util.module_from_spec(spec)
-    
+
     # IMPORTANTE: Aggiunge la root al path per le dipendenze del motore (es. engine.utils)
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
-        
+
     spec.loader.exec_module(engine_module)
 
     # Forza il gioco da caricare basandosi sul nome di questa cartella
     game_id = Path(__file__).parent.name
     print(f"[LAUNCHER] Avvio progetto: {{game_id}}")
-    
+
     # Override degli argomenti CLI
     sys.argv = [sys.argv[0], "--game", game_id]
-    
+
     # Avvia l'engine
     engine_module.main()
 """
             with open(gpath / "main.py", "w", encoding="utf-8") as f:
                 f.write(main_py_content)
-            
+
             # Batch per comodità su Windows
             with open(gpath / "run.bat", "w", encoding="utf-8") as f:
                 f.write("@echo off\ncd /d \"%~dp0\"\npython main.py\npause")
@@ -1321,12 +1321,12 @@ if __name__ == "__main__":
             if spath.exists():
                 self._status(self._TR("gs_scene_exists", "Error: scene '{0}' already exists").format(name), ERR_C, 4); return
             spath.mkdir(parents=True, exist_ok=False)
-            
+
             import shutil
             bg_p = getattr(self, "_gs_new_bg_path", "")
             vid_p = getattr(self, "_gs_new_vid_path", "")
             sel_p = vid_p if vid_p else bg_p
-            
+
             bg_name = "background.jpg"
             if sel_p and Path(sel_p).exists():
                 p = Path(sel_p)
@@ -1339,7 +1339,7 @@ if __name__ == "__main__":
             _save_json(spath / "scene.json",
                        {"id": name, "background": bg_name,
                         "background_scale": 1.0, "objects": []})
-            
+
             # --- AGGIORNAMENTO level_config.json (Critico per la visibilità nel motore) ---
             l_cfg_p = lvl["path"] / "level_config.json"
             if l_cfg_p.exists():
@@ -1360,7 +1360,7 @@ if __name__ == "__main__":
             # Refresh della cache dei livelli per includere la nuova cartella scena
             self.gs_cur_levels = _discover_levels(self.game_path)
             self._gs_select_level(self.gs_sel_level)
-            
+
             # Trova l'indice della nuova scena nella lista aggiornata
             idx = 0
             for i, s_p in enumerate(self.gs_cur_scenes):
@@ -1410,14 +1410,14 @@ if __name__ == "__main__":
         if not self._gs_del_path:
             self._gs_del_mode = None
             return
-        
+
         # TRIPLA conferma per i GIOCHI
         if self._gs_del_mode == "game":
             stage = getattr(self, "_gs_del_stage", 0)
             if stage < 2:
                 self._gs_del_stage = stage + 1
                 return
-        
+
         try:
             p = Path(self._gs_del_path)
 
@@ -1483,18 +1483,18 @@ if __name__ == "__main__":
                 if self.gs_sel_level is not None:
                     lvl_path = self.gs_cur_levels[self.gs_sel_level]["path"]
                     l_cfg_p = lvl_path / "level_config.json"
-                    
+
                     if l_cfg_p.exists():
                         try:
                             l_cfg = _load_json(l_cfg_p)
                             old_scenes = l_cfg.get("scenes", [])
                             # Filtra via la scena eliminata
                             new_scenes = [s for s in old_scenes if s.get("id") != self._gs_del_name]
-                            
+
                             # Riordina le scene rimanenti
                             for i, s in enumerate(new_scenes):
                                 s["order"] = i + 1
-                            
+
                             l_cfg["scenes"] = new_scenes
                             _save_json(l_cfg_p, l_cfg)
                             logger.info(f"Sincronizzazione level_config: Scena '{self._gs_del_name}' rimossa.")
@@ -1539,21 +1539,21 @@ if __name__ == "__main__":
     def _gs_move_level(self, idx: int, delta: int):
         """Sposta un livello su o giù nell'ordine del progetto, aggiornando game_config.json."""
         if self.gs_sel_game is None: return
-        
+
         gname = self.gs_games[self.gs_sel_game]
         g_cfg_p = self.base_path / "games" / gname / "game_config.json"
         g_cfg = _load_json(g_cfg_p)
-        
+
         current_ids = [l["id"] for l in self.gs_cur_levels]
-        
+
         if 0 <= idx + delta < len(current_ids):
             # Swappa i nomi per il salvataggio nel config
             current_ids[idx], current_ids[idx+delta] = current_ids[idx+delta], current_ids[idx]
-            
+
             g_cfg["levels"] = current_ids
             if _save_json(g_cfg_p, g_cfg):
                 logger.info(f"Ordine livelli aggiornato per {gname}: {current_ids}")
-            
+
             # Aggiornamento locale degli oggetti senza ricaricare tutto
             self.gs_cur_levels[idx], self.gs_cur_levels[idx+delta] = self.gs_cur_levels[idx+delta], self.gs_cur_levels[idx]
             self._gs_select_level(idx + delta)
@@ -1566,17 +1566,17 @@ if __name__ == "__main__":
         l_cfg_p = lvl["path"] / "level_config.json"
         l_cfg = _load_json(l_cfg_p)
         scenes_cfg = l_cfg.get("scenes", [])
-        
+
         # Sincronizziamo la lista config con la lista reale delle cartelle
         current_names = [s.name for s in self.gs_cur_scenes]
-        
+
         if 0 <= idx + delta < len(current_names):
             # Dizionario dati esistenti per ID
             data_map = {s["id"]: s for s in scenes_cfg}
-            
+
             # Swappa i nomi nell'ordine visuale
             current_names[idx], current_names[idx+delta] = current_names[idx+delta], current_names[idx]
-            
+
             # Rigenera scenes_cfg
             new_scenes_cfg = []
             for i, name in enumerate(current_names):
@@ -1589,11 +1589,11 @@ if __name__ == "__main__":
                         "id": name, "order": i + 1,
                         "time_limit": 120, "transition_out": "fade"
                     })
-            
+
             l_cfg["scenes"] = new_scenes_cfg
             if _save_json(l_cfg_p, l_cfg):
                 logger.info(f"Ordine scene aggiornato per {lvl['id']}: {current_names}")
-            
+
             # Aggiornamento locale senza ricaricare tutto
             self.gs_cur_scenes[idx], self.gs_cur_scenes[idx+delta] = self.gs_cur_scenes[idx+delta], self.gs_cur_scenes[idx]
             self.gs_sel_scene = idx + delta
@@ -1872,7 +1872,7 @@ if __name__ == "__main__":
             # Dimensioni sincronizzate con _r_gs_del_dialog
             dw, dh = 480, 200 if stage == 0 else (240 if stage == 1 else 300)
             dx, dy = (w-dw)//2, (h-dh)//2
-            
+
             # Bottone OK (ELIMINA) - Coordinate (dx+20, dy+dh-50, 210, 32)
             if _in_rect((mx, my_raw), (dx + 20, dy + dh - 50, 210, 32)):
                 self._gs_confirm_delete(); return
@@ -1926,13 +1926,13 @@ if __name__ == "__main__":
                 if self._gs_new_mode == "game":
                     if _in_rect((mx, my_raw), (dx + 20, dy + 435 + off_y_game, dw - 40, 34)):
                         self._music_modal_open(context="game_new"); return
-                    
+
                     # Hitbox Dropdown Categoria
                     cat_r = pygame.Rect(dx + 20, dy + 142, 270, 32)
                     if _in_rect((mx, my_raw), cat_r):
                         self._gs_new_cat_dropdown = not getattr(self, "_gs_new_cat_dropdown", False)
                         return
-                    
+
                     if getattr(self, "_gs_new_cat_dropdown", False):
                         if _in_rect((mx, my_raw), (dx + 20, dy + 174, 270, 32)):
                             self._gs_new_category = "desktop"
@@ -1947,7 +1947,7 @@ if __name__ == "__main__":
             if _in_rect((mx, my_raw), (dx + 20, btn_y, 210, 34)): self._gs_confirm_new(); return
             elif _in_rect((mx, my_raw), (dx + dw - 230, btn_y, 210, 34)): self._gs_new_mode = None; return
             return
-        
+
         # 2. PRIORITÀ: Click dentro dialog "Modifica" (se aperto)
         if hasattr(self, '_gs_edit_mode') and self._gs_edit_mode:
             _box = self._gs_edit_dialog_rect(w, h)
@@ -2029,12 +2029,12 @@ if __name__ == "__main__":
                 r_col_w = dw - off_x2 - 40
                 max_prev_h = max(80, (dh - 400) // 2)
                 iprev_h = min(int(r_col_w * 9 / 16), max_prev_h)
-                
+
                 _B_Y = _A_Y + 66 + iprev_h + 22
                 btn_v_r = pygame.Rect(c2_x, _B_Y + 22, 155, 34)
                 if _in_rect((mx, my_raw), btn_v_r):
                     self._vid_modal_open(context="game_edit"); return
-                
+
                 vprev_h = iprev_h
                 _C_Y = _B_Y + 66 + vprev_h + 16
                 btn_m_r = pygame.Rect(c2_x, _C_Y + 22, r_col_w, 36)
@@ -2224,7 +2224,7 @@ if __name__ == "__main__":
                 scroll_offset = [self.gs_scroll_game, self.gs_scroll_lvl, self.gs_scroll_scn][i]
                 idx = (my_raw - iy + scroll_offset * ITEM_H) // ITEM_H
                 if idx < 0: return
-                if i == 0 and idx < len(self.gs_games): 
+                if i == 0 and idx < len(self.gs_games):
                     # Coordinate bottoni riga Giochi
                     item_y = iy + idx * ITEM_H - scroll_offset * ITEM_H
                     if (cy2 + 35 <= my_raw <= cy2 + col_h):
@@ -2275,25 +2275,25 @@ if __name__ == "__main__":
                 elif i == 2 and idx < len(self.gs_cur_scenes):
                     # Click su bottoni specifici della riga
                     item_y = iy + idx * ITEM_H - scroll_offset * ITEM_H
-                    
+
                     # Verifica che il click sia dentro l'area visibile della colonna
                     if not (cy2 + 35 <= my_raw <= cy2 + col_h):
                         return
-                    
+
                     # Coordinate bottoni (allineati a destra)
                     btn_w = 28
                     cw_safe = col_w - 15
                     bx_open = cx2 + cw_safe - 40
                     bx_down = cx2 + cw_safe - 74
                     bx_up   = cx2 + cw_safe - 108
-                    
+
                     if _in_rect((mx, my_raw), (bx_open, item_y + (ITEM_H-btn_w)//2, btn_w, btn_w)):
                         self._gs_select_scene(idx)
                         self._request_nav(self._gs_open); return
-                    
+
                     if idx > 0 and _in_rect((mx, my_raw), (bx_up, item_y + (ITEM_H-btn_w)//2, btn_w, btn_w)):
                         self._gs_move_scene(idx, -1); return
-                        
+
                     if idx < len(self.gs_cur_scenes)-1 and _in_rect((mx, my_raw), (bx_down, item_y + (ITEM_H-btn_w)//2, btn_w, btn_w)):
                         self._gs_move_scene(idx, 1); return
 
@@ -2307,14 +2307,14 @@ if __name__ == "__main__":
         # Sincronizziamo la logica coordinate con _gs_click / rendering
         col_w = (w - 80) // 3
         now   = time.time()
-        
+
         col_idx = -1
         for i in range(3):
             cx = 30 + i * (col_w + 10)
             if cx <= mx <= cx + col_w:
                 col_idx = i
                 break
-        
+
         if col_idx != -1 and now - self._gs_last_click < 0.4 and self._gs_last_col == col_idx:
             if col_idx == 0 and self.gs_sel_game is not None:
                 self._request_nav(self._gs_open)
@@ -2323,7 +2323,7 @@ if __name__ == "__main__":
                 pass # Già gestito dal click singolo, ma lasciamo lo slot
             elif col_idx == 2 and self.gs_sel_scene is not None:
                 self._request_nav(self._gs_open)
-            
+
         self._gs_last_click = now
         self._gs_last_col   = col_idx
 
@@ -2332,7 +2332,7 @@ if __name__ == "__main__":
         w, h = self.screen.get_size()
         col_w = (w - 80) // 3
         y_browser = 80 + 30 + 200 + 25
-        
+
         # Priorità: Scroll Icon Modal
         if getattr(self, "_icon_modal", False):
             self._icon_wheel(ev); return
@@ -2361,9 +2361,9 @@ if __name__ == "__main__":
                 return
 
         if my_raw < y_browser: return
-        
+
         # Calcolo numero di item visibili per i limiti di scroll
-        col_h = h - (y_browser + 25) - 35 - 80 
+        col_h = h - (y_browser + 25) - 35 - 80
         vis_count = max(1, col_h // 34)
 
         for i in range(3):
@@ -2373,7 +2373,7 @@ if __name__ == "__main__":
                 vis_count = max(1, col_h // h_item)
                 item_count = [len(self.gs_games), len(self.gs_cur_levels), len(self.gs_cur_scenes)][i]
                 max_scroll = max(0, item_count - vis_count)
-                
+
                 if i == 0: self.gs_scroll_game = max(0, min(max_scroll, self.gs_scroll_game - ev.y))
                 elif i == 1: self.gs_scroll_lvl = max(0, min(max_scroll, self.gs_scroll_lvl - ev.y))
                 elif i == 2: self.gs_scroll_scn = max(0, min(max_scroll, self.gs_scroll_scn - ev.y))
@@ -2401,7 +2401,7 @@ if __name__ == "__main__":
             af = self._gs_edit_active_field
             buf = self._gs_edit_lang_bufs.get(af, "")
             cur = self._gs_edit_cursors.get(af, 0)
-            
+
             if ev.key == pygame.K_RETURN:
                 self._gs_confirm_edit()
             elif ev.key == pygame.K_ESCAPE:
@@ -2472,7 +2472,7 @@ if __name__ == "__main__":
             mods = pygame.key.get_mods()
             ctrl = bool(mods & pygame.KMOD_CTRL)
             af = getattr(self, "_gs_new_active_field", "id")
-            
+
             # Recupero buffer e cursore corretti
             if self._gs_new_mode == "level" and af in self.LANGS:
                 l_bufs = getattr(self, "_gs_new_lang_bufs", {l: "" for l in self.LANGS})
@@ -2604,11 +2604,11 @@ if __name__ == "__main__":
                 thumb_r = pygame.Rect(rx2 + 10, thumb_y, rec_w - 20,
                                       max(20, rec_h - (thumb_y - ry2) - 10))
                 _rect(self.screen, (20, 20, 25), thumb_r, radius=4)
-                
+
                 # --- CARICAMENTO ANTEPRIMA ---
                 scn_path = Path(item["path"])
                 bg_surf = None
-                
+
                 # Tenta di recuperare l'immagine dallo scene.json
                 try:
                     sd = _load_scene_data(scn_path)
@@ -2675,7 +2675,7 @@ if __name__ == "__main__":
             cx2 = 30 + i * (col_w + 10)
             cy2 = y_browser + 25
             c_rect = pygame.Rect(cx2, cy2, col_w, col_h)
-            
+
             # --- INTESTAZIONE COLONNA ---
             # Una sola passata: l'intestazione veniva disegnata due volte, con
             # il titolo a 3 px di scarto, e il testo risultava sdoppiato.
@@ -2686,11 +2686,11 @@ if __name__ == "__main__":
             plus_r = pygame.Rect(cx2 + col_w - 32, cy2 + 5, 26, 24)
             plus_hov = _in_rect((mx, my_raw), plus_r)
             _button(self.screen, plus_r, "+", plus_hov)
-            if plus_hov: 
+            if plus_hov:
                 tip_keys = ["gs_tip_add_game", "gs_tip_add_level", "gs_tip_add_scene"]
                 tip_defs = ["Aggiungi un nuovo gioco", "Aggiungi un nuovo livello", "Aggiungi una nuova scena"]
                 self.active_tooltip = self.lang_manager.get(tip_keys[i], tip_defs[i])
-            
+
             # Pulsante COMPILA EXE (solo giochi, i==0)
             if i == 0:
                 has_sel_build = self.gs_sel_game is not None
@@ -2777,7 +2777,7 @@ if __name__ == "__main__":
         mx, my_raw = pygame.mouse.get_pos()
         # Altezza variabile: 64px scene, 50px livelli (più aria), 34px giochi
         ITEM_H = 64 if col_idx == 2 else (50 if col_idx == 1 else 34)
-        
+
         if col_idx == 0:
             count = len(self.gs_games); sel_idx = self.gs_sel_game; scroll = self.gs_scroll_game
         elif col_idx == 1:
@@ -2807,37 +2807,37 @@ if __name__ == "__main__":
         for i in range(count):
             iy = cy + i * ITEM_H - scroll * ITEM_H
             if iy + ITEM_H < cy or iy > cy + ch: continue
-            
+
             is_sel = (i == sel_idx)
             is_drag_item = (is_dragging_this_col and i == drag_idx)
-            
+
             # Box di riga
             row_rect = pygame.Rect(cx+5, iy+2, cw_safe - 10, ITEM_H-4)
-            
+
             if is_drag_item:
                 # Feedback visivo "fantasma" per l'elemento trascinato
                 _rect(self.screen, (ACCENT[0], ACCENT[1], ACCENT[2], 120), row_rect, radius=10)
                 _rect(self.screen, (255, 255, 255, 80), row_rect, 1, radius=10)
             else:
                 _rect(self.screen, (25, 26, 32), row_rect, radius=10)
-                
+
             hov = _in_rect((mx, my_raw), row_rect)
             if (is_sel or hov) and not is_drag_item:
                 _rect(self.screen, (BTN_AC if is_sel else BTN_HO), row_rect, radius=10)
-            
+
             # Bordo di rifinitura
             if not is_drag_item:
                 _rect(self.screen, (40, 42, 55) if is_sel else (32, 34, 45), row_rect, 1, radius=10)
-            
+
             if not hasattr(self, "_gs_labels_cache"): self._gs_refresh_cache()
             try: label = self._gs_labels_cache[col_idx][i]
             except Exception: label = f"item_{i}"
-            
+
             col = TXT_HI if (is_sel or hov) else TXT
             pad_w = 50
             if col_idx == 1: pad_w = 160  # Maggiore spazio per via del badge scene
             elif col_idx == 2: pad_w = 110
-            
+
             # --- Rendering specifico per SCENE con anteprima ---
             if col_idx == 2:
                 # Preview thumb (Chirurgica: usiamo la funzione centralizzata con cache)
@@ -2849,7 +2849,7 @@ if __name__ == "__main__":
                 if bg_surf:
                     self.screen.blit(bg_surf, thumb_rect.topleft)
                 _rect(self.screen, (100, 100, 120) if is_sel else (60, 60, 80), thumb_rect, 1, radius=4)
-                
+
                 # Testo spostato a destra della thumbnail
                 tx_off = 110
                 _draw_text(self.screen, label, "sm", col, cx + tx_off, iy + (ITEM_H - 20) // 2, cw_safe - tx_off - (pad_w - 15))
@@ -2858,13 +2858,13 @@ if __name__ == "__main__":
                 _meta = getattr(self, "_gs_meta_cache", {}).get(i, {})
                 _theme = _meta.get("theme", "default")
                 _cat = _meta.get("category", "desktop")
-                
+
                 # Badge Categoria (D o A)
                 cat_col = (100, 150, 255) if _cat == "desktop" else (100, 255, 150)
                 _badge_r = pygame.Rect(cx + 10, iy + (ITEM_H-18)//2, 18, 18)
                 _rect(self.screen, cat_col, _badge_r, 1, radius=4)
                 _draw_text(self.screen, _cat[0].upper(), "xs", cat_col, _badge_r.x+5, _badge_r.y+2)
-                
+
                 # Badge Tema (a sinistra dei pulsanti ✎ e ▶): posizionato per
                 # primo, cosi' il nome del gioco puo' essere troncato esattamente
                 # dove il badge comincia invece che a una riserva fissa di 180 px
@@ -2884,7 +2884,7 @@ if __name__ == "__main__":
                 v_off = (ITEM_H - 20) // 2
                 tx = cx + 20
                 _draw_text(self.screen, label, "sm", col, tx, iy + v_off - 10 if ITEM_H >= 50 else iy + v_off, cw_safe - pad_w)
-                
+
                 if col_idx == 1:
                     try:
                         n_scenes = len(self.gs_cur_levels[i].get("scenes", []))
@@ -2902,15 +2902,15 @@ if __name__ == "__main__":
                             sub_col = (255, 255, 255) if (is_sel or hov) else (130, 135, 160)
                             _draw_text(self.screen, sub_txt, "xs", sub_col, tx, iy + v_off + 12, max_w=cw_safe - 160)
                     except Exception: pass
-            
+
             if col_idx in (0, 1, 2):
                 # Dimensioni pulsanti ottimizzate (Fitt's Law)
                 btn_w, btn_h = 28, 28
                 v_off_btn = (ITEM_H - btn_h) // 2
-                
+
                 # Sistema a SLOT (passo 34px): -40, -74, -108...
                 bx_play = cx + cw_safe - 40
-                
+
                 if col_idx == 0:
                     # Bottone Play Standalone per Giochi
                     btn_play_hov = _in_rect((mx, my_raw), (bx_play, iy + (ITEM_H-24)//2, btn_w, 24))
@@ -2925,7 +2925,7 @@ if __name__ == "__main__":
                     if btn_edit_hov:
                         self.active_tooltip = self.lang_manager.get(
                             "gs_tip_edit", "Modifica impostazioni e nomi dell'elemento selezionato")
-                
+
                 elif col_idx == 1:
                     # Slot sistema: ▼=-40, ▲=-74, ✎=-108 (inline come i giochi)
                     bx_down   = cx + cw_safe - 40
@@ -2947,23 +2947,23 @@ if __name__ == "__main__":
 
                     _button(self.screen, (bx_up, iy + v_off_btn, btn_w, btn_h), "▲", btn_up_hov, active=can_up, font="sm")
                     _button(self.screen, (bx_down, iy + v_off_btn, btn_w, btn_h), "▼", btn_down_hov, active=can_down, font="sm")
-                        
+
                 elif col_idx == 2:
                     bx_open = cx + cw_safe - 40
                     bx_down = cx + cw_safe - 74
                     bx_up   = cx + cw_safe - 108
-                    
+
                     can_up   = (i > 0)
                     can_down = (i < count - 1)
-                    
+
                     btn_open_hov = _in_rect((mx, my_raw), (bx_open, iy + v_off_btn, btn_w, btn_h))
                     _button(self.screen, (bx_open, iy + v_off_btn, btn_w, btn_h), "▶", btn_open_hov, font="sm")
                     if btn_open_hov:
                         self.active_tooltip = self.lang_manager.get("gs_btn_open_scene", "APRI SCENA")
-                    
+
                     btn_up_hov   = _in_rect((mx, my_raw), (bx_up, iy + v_off_btn, btn_w, btn_h)) if can_up else False
                     btn_down_hov = _in_rect((mx, my_raw), (bx_down, iy + v_off_btn, btn_w, btn_h)) if can_down else False
-                    
+
                     _button(self.screen, (bx_up, iy + v_off_btn, btn_w, btn_h), "▲", btn_up_hov, active=can_up, font="sm")
                     _button(self.screen, (bx_down, iy + v_off_btn, btn_w, btn_h), "▼", btn_down_hov, active=can_down, font="sm")
 
@@ -2986,7 +2986,7 @@ if __name__ == "__main__":
         _rect(self.screen, (40, 42, 54), box, radius=12); _rect(self.screen, ACCENT, box, 2, radius=12)
 
         _draw_text(self.screen, stitle, "lg", TXT_HI, dx + 30, dy + 20)
-        
+
         # Bottone X di chiusura in alto a destra
         mx2, my2 = pygame.mouse.get_pos()
         xr = pygame.Rect(dx + dw - 42, dy + 15, 28, 28)
@@ -3044,10 +3044,10 @@ if __name__ == "__main__":
 
         if self._gs_new_mode in ("game", "scene"):
             # Spostiamo Point 2 e 3 più in basso se siamo in modalità gioco per far posto alla categoria
-            # Se il dropdown è aperto, spostiamo ancora più in basso o lasciamo sovrapporre? 
+            # Se il dropdown è aperto, spostiamo ancora più in basso o lasciamo sovrapporre?
             # Per ora lasciamo spazio fisso.
             off_y_game = 90 if self._gs_new_mode == "game" else 0
-            
+
             # IMMAGINE
             iy = dy + 155 + off_y_game
             _draw_text(self.screen, self.lang_manager.get("gs_label_bg_img", "Punto 2: Sfondo Immagine (Opzionale)"), "sm", TXT_DIM, dx+20, iy-25)
@@ -3055,7 +3055,7 @@ if __name__ == "__main__":
             _button(self.screen, btn_r, self.lang_manager.get("gs_btn_choose_img", "Scegli Immagine..."), _in_rect((mx2, my2), btn_r))
             _rect(self.screen, (20, 22, 30), (dx+190, iy, 380, 34), radius=4)
             _draw_text(self.screen, Path(path).name if path else self.lang_manager.get("gs_no_asset", "Nessuna immagine"), "sm", (TXT_HI if path else TXT_DIM), dx+200, iy+8, 360)
-            
+
             prev_r = pygame.Rect(dx+580, iy-20, 200, 112)
             _rect(self.screen, (10, 12, 20), prev_r, radius=8); _rect(self.screen, BORDER, prev_r, 1, radius=8)
             surf = getattr(self, "_gs_new_bg_preview_surf", None)
@@ -3074,11 +3074,11 @@ if __name__ == "__main__":
             _rect(self.screen, (10, 12, 20), vprev_r, radius=8); _rect(self.screen, BORDER, vprev_r, 1, radius=8)
             vpath = getattr(self, "_gs_new_vid_path", "")
             vsurf = getattr(self, "_gs_new_vid_preview_surf", None)
-            if vsurf: 
+            if vsurf:
                 self.screen.blit(vsurf, vprev_r.topleft)
-            else: 
+            else:
                 _draw_text(self.screen, self.lang_manager.get("gs_txt_no_preview", "[ NESSUNA ANTEPRIMA ]"), "xs", (60, 65, 90), vprev_r.x + 60, vprev_r.y + 45)
-            
+
             # Pulsante Play Overlay (Indipendente da vsurf se vpath esiste)
             if vpath:
                 cp = vprev_r.center
@@ -3117,8 +3117,8 @@ if __name__ == "__main__":
     def _r_gs_del_dialog(self, w: int, h: int):
         """Dialog di conferma eliminazione livello, scena o gioco (Tripla conferma per Game)."""
         mode_label = {
-            "level": self.lang_manager.get("gs_label_level", "livello"), 
-            "scene": self.lang_manager.get("gs_label_scene", "scena"), 
+            "level": self.lang_manager.get("gs_label_level", "livello"),
+            "scene": self.lang_manager.get("gs_label_scene", "scena"),
             "game": self.lang_manager.get("gs_label_game_caps", "GIOCO")
         }.get(self._gs_del_mode, "")
         stage = getattr(self, "_gs_del_stage", 0)
@@ -3129,15 +3129,15 @@ if __name__ == "__main__":
         dw, dh = 480, 200 if stage == 0 else (240 if stage == 1 else 300)
         dx, dy = (w - dw) // 2, (h - dh) // 2
         box = pygame.Rect(dx, dy, dw, dh)
-        
+
         bg_col  = (52, 22, 22) if stage == 0 else (80, 20, 20)
         brd_col = (200, 60, 60) if stage == 0 else (255, 0, 0)
         _rect(self.screen, bg_col, box, radius=8); _rect(self.screen, brd_col, box, 2, radius=8)
 
         # Header
         titles = [
-            self.lang_manager.get("gs_del_title_0", "Elimina?"), 
-            self.lang_manager.get("gs_del_title_1", "CONFERMA FINALE!"), 
+            self.lang_manager.get("gs_del_title_0", "Elimina?"),
+            self.lang_manager.get("gs_del_title_1", "CONFERMA FINALE!"),
             self.lang_manager.get("gs_del_title_2", "ULTIMA CHANCE!")
         ]
         hdr = titles[stage] if stage < len(titles) else titles[-1]
@@ -3145,14 +3145,14 @@ if __name__ == "__main__":
         self.screen.blit(t_surf, (dx + (dw - t_surf.get_width()) // 2, dy + 15))
 
         # Testo
-        msgs = [ 
+        msgs = [
             self.lang_manager.get("gs_del_msg_0", "Vuoi eliminare {0} \"{1}\"?").format(mode_label, self._gs_del_name),
             self.lang_manager.get("gs_del_msg_1", "L'operazione è IRREVERSIBILE e cancellerà ogni file!"),
-            self.lang_manager.get("gs_del_msg_2", "ATTENZIONE: Il progetto verrà eliminato definitivamente dal disco!") 
+            self.lang_manager.get("gs_del_msg_2", "ATTENZIONE: Il progetto verrà eliminato definitivamente dal disco!")
         ]
         info = _txt(msgs[stage], "sm", (255, 180, 180) if stage > 0 else TXT_DIM)
         self.screen.blit(info, (dx + (dw - info.get_width()) // 2, dy + 65))
-        
+
         if stage == 2:
             warning = _txt(self.lang_manager.get("gs_del_warning", "Sei veramente sicuro? Non potrai tornare indietro."), "sm", (255, 50, 50))
             self.screen.blit(warning, (dx + (dw - warning.get_width()) // 2, dy + 100))
@@ -3160,8 +3160,8 @@ if __name__ == "__main__":
         mx2, my2 = pygame.mouse.get_pos()
         ok_r, esc_r = pygame.Rect(dx+20, dy+dh-50, 210, 32), pygame.Rect(dx+250, dy+dh-50, 210, 32)
         btn_labels = [
-            self.lang_manager.get("gs_btn_del_0", "ELIMINA"), 
-            self.lang_manager.get("gs_btn_del_1", "SI, CONFERMA"), 
+            self.lang_manager.get("gs_btn_del_0", "ELIMINA"),
+            self.lang_manager.get("gs_btn_del_1", "SI, CONFERMA"),
             self.lang_manager.get("gs_btn_del_2", "SI, DISTRUGGI TUTTO")
         ]
         _button(self.screen, ok_r, btn_labels[stage] if stage < 3 else "ERRORE", _in_rect((mx2, my2), ok_r), danger=True)
@@ -3581,12 +3581,12 @@ if __name__ == "__main__":
             _draw_text(self.screen, self._TR("gs_step2_bg_image", "2. BACKGROUND IMAGE"), "sm", TXT_DIM, dx + off_x2, _y_img - 28)
             btn_i_r = pygame.Rect(dx + off_x2, _y_img, 160, 34)
             _button(self.screen, btn_i_r, self._TR("gs_choose_image", "Choose image"), _in_rect((mx2, my2), btn_i_r))
-            
+
             ipath = getattr(self, '_gs_edit_bg_path', "")
             path_w = r_col_w - 180
             _rect(self.screen, (20, 22, 30), (dx + off_x2 + 175, _y_img, path_w, 34), radius=6)
             _draw_text(self.screen, Path(ipath).name if ipath else "Nessuna immagine", "xs", TXT_HI if ipath else TXT_DIM, dx+off_x2+185, _y_img+8, path_w - 20)
-            
+
             iprev_w, iprev_h = 320, 180
             iprev_r = pygame.Rect(dx + off_x2, _y_img + 45, iprev_w, iprev_h)
             _rect(self.screen, (10, 12, 18), iprev_r, radius=12); _rect(self.screen, BORDER, iprev_r, 1, radius=12)
@@ -3600,11 +3600,11 @@ if __name__ == "__main__":
             _draw_text(self.screen, self._TR("gs_step3_bg_video", "3. BACKGROUND VIDEO"), "sm", TXT_DIM, dx + off_x2, _y_vid - 28)
             btn_v_r = pygame.Rect(dx + off_x2, _y_vid, 160, 34)
             _button(self.screen, btn_v_r, self._TR("gs_choose_video", "Choose video"), _in_rect((mx2, my2), btn_v_r))
-            
+
             vpath = getattr(self, '_gs_edit_vid_path', "")
             _rect(self.screen, (20, 22, 30), (dx + off_x2 + 175, _y_vid, path_w, 34), radius=6)
             _draw_text(self.screen, Path(vpath).name if vpath else "Nessun video", "xs", OK_C if vpath else TXT_DIM, dx+off_x2+185, _y_vid+8, path_w - 20)
-            
+
             vprev_w, vprev_h = 320, 180
             vprev_r = pygame.Rect(dx + off_x2, _y_vid + 45, vprev_w, vprev_h)
             _rect(self.screen, (10, 12, 18), vprev_r, radius=12); _rect(self.screen, BORDER, vprev_r, 1, radius=12)

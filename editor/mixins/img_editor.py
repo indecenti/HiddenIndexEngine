@@ -108,21 +108,21 @@ class ImgEditorMixin:
             Path("engine/assets/icons/img_editor"),
             Path("assets/icons/img_editor")
         ]
-        
+
         icon_dir = None
         for sp in search_paths:
             if sp.exists():
                 icon_dir = sp; break
-        
+
         if not icon_dir:
             logging.error(f"[IMG_EDITOR] Nessuna cartella icone trovata! Base: {self.base_path}")
             return
-            
+
         logging.info(f"[IMG_EDITOR] Caricamento icone da: {icon_dir.absolute()}")
-        
+
         # Carichiamo sia dalla sottocartella che dalla cartella padre (per circle/square)
         parent_dir = icon_dir.parent
-        
+
         load_count = 0
         for folder in [icon_dir, parent_dir]:
             for p in folder.glob("*.png"):
@@ -133,12 +133,12 @@ class ImgEditorMixin:
                     # Mappatura nomi per coerenza interna
                     if stem == "circle": stem = "circle_p"
                     if stem == "square": stem = "square_p"
-                    
+
                     self._img_editor_icons[stem] = img_32
                     load_count += 1
                 except Exception as e:
                     logging.error(f"[IMG_EDITOR] Errore caricamento {p.name}: {e}")
-        
+
         logging.info(f"[IMG_EDITOR] Caricate {load_count} icone PNG.")
 
     def _img_editor_open(self, cat_id: str):
@@ -147,7 +147,7 @@ class ImgEditorMixin:
         if not cat_item:
             logging.error(f"[IMG_EDITOR] Item {cat_id} not found in catalog")
             return
-        
+
         img_rel = cat_item.get("image", cat_item.get("icon", ""))
         if not img_rel:
             logging.error(f"[IMG_EDITOR] Item {cat_id} has no image/icon")
@@ -223,7 +223,7 @@ class ImgEditorMixin:
             final_surf = self._img_editor_compose_final_surf()
 
             target_name = self._img_editor_path.name
-            
+
             # 0. Aggiorna metadati nel catalogo in memoria
             cat_item = next((c for c in self.catalog if c["id"] == self._img_editor_id), None)
             if cat_item:
@@ -231,7 +231,7 @@ class ImgEditorMixin:
 
             # 1. Salva il file principale
             pygame.image.save(final_surf, str(self._img_editor_path))
-            
+
             # 2. Sincronizzazione duplicati REALI: sovrascrive solo i file omonimi
             #    il cui contenuto e' byte-identico all'originale pre-modifica.
             #    Senza questo controllo, file con lo stesso nome ma appartenenti ad
@@ -258,7 +258,7 @@ class ImgEditorMixin:
             style = cat_item.get("style", "cartoon").replace(" ", "")
             catalog_file = f"global_{style}_catalog.json"
             global_path = self.base_path / "engine" / "data" / catalog_file
-            
+
             if global_path.exists():
                 try:
                     with open(global_path, "r", encoding="utf-8") as f:
@@ -277,7 +277,7 @@ class ImgEditorMixin:
             self._asset_ratios_cache.clear()
             if hasattr(self, "_filter_cache"): self._filter_cache.clear()
             self._canvas_cache_dirty = True
-            
+
             self._img_editor_dirty = False
             self._img_editor_save_confirm = False
             self._img_editor_copy_confirm = False
@@ -298,20 +298,20 @@ class ImgEditorMixin:
             for i, item in enumerate(self.catalog):
                 if item["id"] == orig_id:
                     orig_idx = i; orig_item = item; break
-            
+
             if not orig_item: return
-            
+
             import re
             match = re.match(r"(.+)_v(\d+)$", orig_id)
             if match:
                 base_name = match.group(1); counter = int(match.group(2)) + 1
             else:
                 base_name = orig_id; counter = 1
-            
+
             new_id = f"{base_name}_v{counter}"
             while any(c["id"] == new_id for c in self.catalog):
                 counter += 1; new_id = f"{base_name}_v{counter}"
-            
+
             # Prepara Superficie Finale
             final_surf = self._img_editor_compose_final_surf()
 
@@ -325,21 +325,21 @@ class ImgEditorMixin:
             # finirebbe nell'engine mentre il catalogo punta al gioco.
             new_abs_path = self.game_path / new_rel_path
             new_abs_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             new_item = copy.deepcopy(orig_item)
             new_item["id"] = new_id
             if "image" in new_item: new_item["image"] = new_rel_path
             if "icon" in new_item: new_item["icon"] = new_rel_path
             new_item["shape"] = self._img_editor_asset_shape
-            
+
             pygame.image.save(final_surf, str(new_abs_path))
-            
+
             if orig_idx != -1: self.catalog.insert(orig_idx + 1, new_item)
             else: self.catalog.append(new_item)
             self._bump_catalog_rev()
-            
+
             if hasattr(self, "_sync_game_catalog_entry"): self._sync_game_catalog_entry(new_item)
-            
+
             self._img_cache.clear()
             self._obj_draw_cache.clear()
             self._img_editor_save_confirm = False
@@ -353,7 +353,7 @@ class ImgEditorMixin:
 
     def _img_editor_handle_event(self, ev):
         if not self._img_editor_active: return
-        
+
         if ev.type == pygame.KEYDOWN:
             # Editing campi W/H: la tastiera e' catturata dal mini-prompt
             if self._img_editor_resize_edit:
@@ -376,48 +376,48 @@ class ImgEditorMixin:
             elif ev.key == pygame.K_y and (mods & pygame.KMOD_CTRL): self._img_editor_redo()
             elif ev.key == pygame.K_r and (mods & pygame.KMOD_CTRL):
                 self._img_editor_zoom = 1.0; self._img_editor_pan = [0, 0]
-        
+
         elif ev.type == pygame.MOUSEWHEEL:
             mx, my = pygame.mouse.get_pos()
             ex, ey, ew, eh = self._img_editor_get_modal_rect()
 
             # Layout corrente prima dello zoom
             ix, iy, sw, sh, old_scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
-            
+
             # Calcolo posizione immagine-space sotto il mouse
             px = (mx - ix) / old_scale
             py = (my - iy) / old_scale
-            
+
             # Applicazione zoom
             zoom_speed = 0.15 if pygame.key.get_mods() & pygame.KMOD_LSHIFT else 0.08
             old_zoom = self._img_editor_zoom
             if ev.y > 0: self._img_editor_zoom *= (1.0 + zoom_speed)
             else: self._img_editor_zoom /= (1.0 + zoom_speed)
             self._img_editor_zoom = max(0.1, min(40.0, self._img_editor_zoom))
-            
+
             # Calcolo nuovo layout e aggiustamento pan per mantenere il punto fisso
             # Il nuovo pan deve compensare lo spostamento del pixel sotto il mouse
             new_scale = old_scale * (self._img_editor_zoom / old_zoom)
-            
+
             # iw/2 è il centro dell'immagine. px è la distanza dal bordo sinistro.
             # (px - iw/2) è l'offset dal centro in image-pixels.
             iw, ih = self._img_editor_view_surf.get_size()
             cx, cy = iw / 2.0, ih / 2.0
-            
+
             # Formula Photoshop: new_pan = (cx - px) + (old_scale / new_scale) * (old_pan + px - cx)
             self._img_editor_pan[0] = (cx - px) + (old_scale / new_scale) * (self._img_editor_pan[0] + px - cx)
             self._img_editor_pan[1] = (cy - py) + (old_scale / new_scale) * (self._img_editor_pan[1] + py - cy)
-            
+
         elif ev.type == pygame.MOUSEBUTTONDOWN:
             mx, my = ev.pos
             if ev.button == 2 or (ev.button == 1 and pygame.key.get_pressed()[pygame.K_SPACE]):
                 self._img_editor_dragging = "pan"; self._img_editor_last_m = ev.pos
             else:
                 self._img_editor_click(mx, my, ev.button)
-            
+
         elif ev.type == pygame.MOUSEBUTTONUP:
             self._img_editor_dragging = None; self._img_editor_last_m = None
-            
+
         elif ev.type == pygame.MOUSEMOTION:
             mx, my = ev.pos
             if self._img_editor_dragging == "pan":
@@ -439,16 +439,16 @@ class ImgEditorMixin:
         sb_w = SIDEBAR_W
         work_w = ew - sb_w - 60
         work_h = eh - 150
-        
+
         base_scale = min(work_w / iw, work_h / ih)
         total_scale = base_scale * self._img_editor_zoom
         scaled_w, scaled_h = int(iw * total_scale), int(ih * total_scale)
-        
+
         work_area_x = ex + 25
         work_area_y = ey + 70
         work_cx = work_area_x + work_w // 2
         work_cy = work_area_y + work_h // 2
-        
+
         ix = work_cx - (scaled_w // 2) + int(self._img_editor_pan[0] * total_scale)
         iy = work_cy - (scaled_h // 2) + int(self._img_editor_pan[1] * total_scale)
         return ix, iy, scaled_w, scaled_h, total_scale
@@ -689,11 +689,11 @@ class ImgEditorMixin:
         intensity = self._img_editor_chroma_intensity
         import pygame.surfarray as surfarray
         import numpy as np
-        
+
         arr = surfarray.array3d(surf).astype(float)
         alpha = surfarray.array_alpha(surf).astype(float)
         r, g, b = arr[:,:,0], arr[:,:,1], arr[:,:,2]
-        
+
         if mode == "green":
             score = g - (r * 0.6 + b * 0.4)
             threshold = 12 - (intensity * 10)
@@ -708,11 +708,11 @@ class ImgEditorMixin:
         mask_remove = score > threshold
         reduction = (score[mask_remove] - threshold) * (15.0 * intensity)
         alpha[mask_remove] -= reduction
-        
+
         if mode == "green":
             spill_mask = (score > -5) & (alpha > 5)
             arr[spill_mask, 1] = np.minimum(arr[spill_mask, 1], np.maximum(r[spill_mask], b[spill_mask]))
-        
+
         alpha = np.clip(alpha, 0, 255); arr = np.clip(arr, 0, 255)
         new_surf = pygame.Surface((w, h), pygame.SRCALPHA)
         surfarray.blit_array(new_surf, arr.astype(np.uint8))
@@ -1196,7 +1196,7 @@ class ImgEditorMixin:
         # Applica eventuale risultato del thread rembg nel loop principale
         self._img_editor_poll_ai()
         dim = pygame.Surface((w, h), pygame.SRCALPHA); dim.fill((0, 0, 0, 215)); self.screen.blit(dim, (0, 0))
-        
+
         # Dalla sorgente unica: il renderer reinlineava la stessa formula del
         # click handler, cioe' la duplicazione da cui nasce ogni disallineamento
         # fra cio' che si vede e cio' che si puo' cliccare.
@@ -1205,17 +1205,17 @@ class ImgEditorMixin:
         self._img_editor_box = box
         _rect(self.screen, (25, 25, 30), box, radius=18)
         _rect(self.screen, ACCENT, box, 1, radius=18)
-        
+
         mx, my = pygame.mouse.get_pos()
         _draw_text(self.screen, self._TR("img_studio_title", "ASSET STUDIO: {0}").format(self._img_editor_id), "lg", TXT_HI, ex + 30, ey + 25)
-        
+
         # Calcolo layout base con supporto Auto-Fit
         ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
         if self._img_editor_zoom == 0.0:
             self._img_editor_zoom = 1.0
             self._img_editor_pan = [0, 0]
             ix, iy, sw, sh, scale = self._img_editor_get_img_layout(ew, eh, ex, ey)
-        
+
         # Area Lavoro
         pygame.draw.rect(self.screen, (10, 10, 15), (ix-2, iy-2, sw+4, sh+4), border_radius=6)
         if self._img_editor_bg_mode == "check":
@@ -1245,7 +1245,7 @@ class ImgEditorMixin:
         if filt_on and nat_w * nat_h > sw * sh:
             apply_color_adjust_surface(scaled_img, filt["b"], filt["c"], filt["s"])
         self.screen.blit(scaled_img, (ix, iy))
-        
+
         # Overlay Hitbox (per precisione chirurgica)
         hb_col = (0, 255, 255, 120)
         if self._img_editor_asset_shape == "rect":
@@ -1292,7 +1292,7 @@ class ImgEditorMixin:
         sb_w = SIDEBAR_W
         sb_x = ex + ew - sb_w - 15
         col1_x, col2_x = sb_x + 10, sb_x + 165
-        
+
         # Strumenti (gomma, ripristina dall'originale, bacchetta)
         _draw_text(self.screen, self._TR("img_brushes", "BRUSHES"), "sm", TXT_DIM, col1_x, ey + 60)
         sy = ey + 85
@@ -1302,12 +1302,12 @@ class ImgEditorMixin:
             act = (self._img_editor_tool == tid)
             _button(self.screen, tr, "", _in_rect((mx, my), tr), active=act)
             self._r_blit_icon(ico, tr, active=act)
-            
+
         for i, (sid, ico) in enumerate([("round", "circle_p"), ("square", "square_p")]):
             fr = pygame.Rect(col1_x + i*60, sy + 65, 52, 52); act = (self._img_editor_shape == sid)
             _button(self.screen, fr, "", _in_rect((mx, my), fr), active=act)
             self._r_blit_icon(ico, fr, active=act)
-                  
+
         # Pennello (impostazioni condivise da gomma e ripristina)
         sy_sl = ey + 255
         sl_w = 145
@@ -1325,7 +1325,7 @@ class ImgEditorMixin:
             _draw_text(self.screen, self._TR("img_feather", "FEATHER: {0}").format(self._img_editor_wand_feather), "sm", TXT_HI, col1_x, sy_sl + 45)
             _slider(self.screen, (col1_x, sy_sl + 70, sl_w, 20), self._img_editor_wand_feather / 32, 0, 1)
             sy_ch = sy_sl + 195
-            
+
         _draw_text(self.screen, self._TR("img_chroma", "CHROMA REMOVER"), "sm", TXT_DIM, col1_x, sy_ch - 25)
         for i, (m, c) in enumerate([("G", (0, 200, 0)), ("W", (230, 230, 230)), ("B", (40, 40, 40))]):
             tr_c = pygame.Rect(col1_x + i*50, sy_ch, 45, 40)
@@ -1341,28 +1341,28 @@ class ImgEditorMixin:
         self._r_blit_icon("zoom_fit", pygame.Rect(r_f.x+4, r_f.y, 25, 40), active=_in_rect((mx, my), r_f))
         _button(self.screen, r_1, "    1:1", _in_rect((mx, my), r_1))
         self._r_blit_icon("zoom_100", pygame.Rect(r_1.x+4, r_1.y, 25, 40), active=_in_rect((mx, my), r_1))
-        
+
         sy2 += 105; _draw_text(self.screen, self._TR("img_rotation", "ROTATION"), "sm", TXT_DIM, col2_x, sy2 - 25)
         r_l, r_r = pygame.Rect(col2_x, sy2, bw2, 42), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 42)
         _button(self.screen, r_l, "", _in_rect((mx, my), r_l)); self._r_blit_icon("undo", r_l, active=_in_rect((mx, my), r_l))
         _button(self.screen, r_r, "", _in_rect((mx, my), r_r)); self._r_blit_icon("rotate_cw", r_r, active=_in_rect((mx, my), r_r))
-        
+
         sy2 += 85; _draw_text(self.screen, self._TR("img_automation", "AUTOMATION"), "sm", TXT_DIM, col2_x, sy2 - 25)
         r_at = pygame.Rect(col2_x, sy2, 145, 40)
         _button(self.screen, r_at, "      AUTO TRIM", _in_rect((mx, my), r_at))
         self._r_blit_icon("crop", pygame.Rect(r_at.x+6, r_at.y, 25, 40), active=_in_rect((mx, my), r_at))
-        
+
         sy2 += 75; _draw_text(self.screen, self._TR("img_mirror", "MIRROR"), "sm", TXT_DIM, col2_x, sy2 - 25)
         r_fh, r_fv = pygame.Rect(col2_x, sy2, bw2, 38), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 38)
         _button(self.screen, r_fh, "   HORZ", _in_rect((mx, my), r_fh))
         self._r_blit_icon("flip_h", pygame.Rect(r_fh.x+3, r_fh.y, 25, 38), active=_in_rect((mx, my), r_fh))
         _button(self.screen, r_fv, "   VRT", _in_rect((mx, my), r_fv))
         self._r_blit_icon("flip_v", pygame.Rect(r_fv.x+3, r_fv.y, 25, 38), active=_in_rect((mx, my), r_fv))
-        
+
         sy2 += 75; r_sm = pygame.Rect(col2_x, sy2, 145, 38)
         _button(self.screen, r_sm, "      SMOOTH", _in_rect((mx, my), r_sm))
         self._r_blit_icon("smooth", pygame.Rect(r_sm.x+6, r_sm.y, 25, 38), active=_in_rect((mx, my), r_sm))
-        
+
         sy2 += 85; _draw_text(self.screen, self._TR("img_hitbox", "HITBOX"), "sm", TXT_DIM, col2_x, sy2 - 25)
         r_re, r_ci = pygame.Rect(col2_x, sy2, bw2, 38), pygame.Rect(col2_x + bw2 + 6, sy2, bw2, 38)
         _button(self.screen, r_re, "RECT", _in_rect((mx, my), r_re), active=(self._img_editor_asset_shape=="rect"))
@@ -1436,7 +1436,7 @@ class ImgEditorMixin:
         sl = "      SALVA" if not self._img_editor_save_confirm else "      CONF?"
         cl = "      COPIA" if not self._img_editor_copy_confirm else "      CONF?"
         el = "      ESCI" if not self._img_editor_exit_confirm else "      CONF?"
-        
+
         h0 = _in_rect((mx, my), fb_rects[0])
         _button(self.screen, fb_rects[0], sl, h0 and is_d, active=self._img_editor_save_confirm)
         self._r_blit_icon("save", pygame.Rect(fb_rects[0].x+8, fb_rects[0].y, 25, 42), active=h0)

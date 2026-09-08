@@ -66,19 +66,19 @@ class InputHandlersMixin:
                     w_raw, h_raw = ev.w, ev.h
                 else:
                     w_raw, h_raw = getattr(ev, "x", MIN_EDITOR_WIDTH), getattr(ev, "y", MIN_EDITOR_HEIGHT)
-                
+
                 w = max(w_raw, MIN_EDITOR_WIDTH)
                 h = max(h_raw, MIN_EDITOR_HEIGHT)
-                
+
                 # Se le dimensioni sono sotto il limite, forziamo il ripristino
                 is_under_limit = (w_raw < MIN_EDITOR_WIDTH or h_raw < MIN_EDITOR_HEIGHT)
-                
+
                 if self.screen.get_width() != w or self.screen.get_height() != h:
                     # Chiamiamo set_mode solo se la finestra fisica è diversa dal target calcolato
                     self.screen = pygame.display.set_mode((w, h), pygame.RESIZABLE)
                     self.screen_size = (w, h)
                     self._fit_canvas()
-                    
+
                     if is_under_limit:
                         # Messaggio di feedback "cura" l'esperienza utente
                         self._status(self._TR("ih_ui_limit", "UI limit reached: {0}x{1} (HD)").format(w, h), WARN_C, 2)
@@ -150,7 +150,7 @@ class InputHandlersMixin:
             # P = palette dei comandi (ogni comando cercabile per nome)
             if ev.key == pygame.K_p or ev.unicode.lower() == 'p':
                 self._palette_open(); return
-            
+
             # Layer change (Ctrl+1, Ctrl+2...)
             if ev.key == pygame.K_1: self._set_layer("objects_low");  return
             if ev.key == pygame.K_2: self._set_layer("objects_mid");  return
@@ -342,7 +342,7 @@ class InputHandlersMixin:
                 else:
                     self.screen = pygame.display.set_mode((WIN_W, WIN_H), pygame.RESIZABLE)
                 self.screen_size = self.screen.get_size()
-                
+
                 # Applica limiti minimi se siamo tornati in windowed
                 if not self.fullscreen:
                     w, h = self.screen_size
@@ -409,7 +409,7 @@ class InputHandlersMixin:
             self._prop_buf += char
 
     def _prop_commit(self):
-        if not self._editing_prop or not self._prop_buf: 
+        if not self._editing_prop or not self._prop_buf:
             self._editing_prop = None; return
         owner, idx, key = self._editing_prop
         try:
@@ -455,7 +455,7 @@ class InputHandlersMixin:
         elif self.selected_idx is not None:
             self.selected_idx = None
             self._mark_dirty()
-        
+
         self._editing_prop = None
         self._editing_preset_name = False
         self._confirm_clear = False
@@ -475,11 +475,11 @@ class InputHandlersMixin:
         self._play_click()
         mx, my_raw = ev.pos
         btn = ev.button
-        
+
         # Ignora bottoni 4 e 5 (scroll legacy) per evitare selezioni accidentali
         if btn in (4, 5):
             return
-            
+
         w, h = self.screen.get_size()
 
         # 1. STATUS BAR (In fondo, ma sopra tutto tranne tooltip).
@@ -502,8 +502,8 @@ class InputHandlersMixin:
         if btn == 1:
             # Dashboard Modals (Nuovo, Modifica, Elimina) in primo piano
             if self.state == STATE_GAME_SELECT and (
-                getattr(self, '_gs_del_mode', None) or 
-                getattr(self, '_gs_new_mode', None) or 
+                getattr(self, '_gs_del_mode', None) or
+                getattr(self, '_gs_new_mode', None) or
                 getattr(self, '_gs_edit_mode', None)
             ):
                 self._gs_dblclick(mx, my_raw, w, h)
@@ -564,7 +564,7 @@ class InputHandlersMixin:
             self.catalog_searching = False
             self.catalog_tag_searching = False
             self.outline_searching = False
-            
+
             if btn == 1:
                 if self._toolbar_click(mx, my_raw):
                     return
@@ -586,12 +586,12 @@ class InputHandlersMixin:
                 self._save_editor_setting("panel_l_w", self.panel_l_w)
             if getattr(self, "_resizing_r", False):
                 self._save_editor_setting("panel_r_w", self.panel_r_w)
-                
+
             self._resizing_l = False
             self._resizing_r = False
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
             return
-            
+
         mx, my_raw = ev.pos
         w = self.screen.get_size()[0]
         btn = ev.button
@@ -627,7 +627,7 @@ class InputHandlersMixin:
     def _on_mmove(self, ev):
         mx, my_raw = ev.pos
         w = self.screen.get_size()[0]
-        
+
         if self.state == STATE_GAME_SELECT:
             self._gs_mmove(mx, my_raw); return
 
@@ -691,13 +691,13 @@ class InputHandlersMixin:
         # quella del router, piu' i dialog della dashboard che modali non sono.
         is_modal = (self._modal_any_open()
                     or getattr(self, "_gs_edit_mode", None) is not None)
-        
+
         if not is_modal and not self._panning and not self._handle_id and not self._drag_active:
             # 1. Bordi pannelli
             EDGE = 10
             near_l = abs(mx - self.panel_l_w) <= EDGE and self.panels_visible
             near_r = abs(mx - (w - self.panel_r_w)) <= EDGE and self.panels_visible
-            
+
             if near_l or near_r:
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_SIZEWE)
             else:
@@ -734,7 +734,7 @@ class InputHandlersMixin:
                                     else: pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
                                     has_cursor_override = True
                                     break
-                
+
                 if not has_cursor_override:
                     pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
@@ -761,20 +761,20 @@ class InputHandlersMixin:
 
         if self._handle_id:
             self._do_handle(mx, my_raw)
-        
+
         if getattr(self, "_dragging_slider", None):
             self._do_drag_slider(mx, my_raw)
 
         if getattr(self, "_dragging_ctx_slider", None):
             self._do_drag_ctx_slider(mx, my_raw)
-            
+
         if getattr(self, "_dragging_catalog_scroll", False):
             si = getattr(self, "_catalog_scroll_info", None)
             if si and si.get("max_scroll", 0) > 0:
                 ratio = _clamp((my_raw - si["y_start"]) / si["bar_h"], 0, 1)
                 self.catalog_scroll = ratio * si["max_scroll"]
             return
-        
+
         # Box Selection Drag
         if self._sel_box_active:
             self._sel_box_cur = self._s2r(mx, my_raw)
@@ -818,14 +818,14 @@ class InputHandlersMixin:
                 factor = 1.15 if ev.y > 0 else (1/1.15)
                 self._zoom_toward(mx, my_raw, factor)
                 return
-            
+
             # Pan orizzontale con SHIFT
             if mods & pygame.KMOD_SHIFT:
                 self.origin_x += ev.y * 80
             # Pan verticale standard
             else:
                 self.origin_y += ev.y * 80
-            
+
             self._mark_dirty()
             return
 
@@ -838,7 +838,7 @@ class InputHandlersMixin:
                         self.catalog_tags_scroll = _clamp(
                             self.catalog_tags_scroll - ev.y, 0, tsi["max"])
                         return
-                    
+
                     si = getattr(self, "_catalog_scroll_info", None)
                     if si:
                         self.catalog_scroll = _clamp(
@@ -857,7 +857,7 @@ class InputHandlersMixin:
                     # Scroll Albero Scena
                     self.tree_scroll = _clamp(self.tree_scroll - ev.y, 0, 100)
                 return
-            
+
             if mx > w - self.panel_r_w:
                 # Scroll pannello proprietà (in pixel)
                 self.prop_scroll = max(0, self.prop_scroll - ev.y * 30)
@@ -1009,24 +1009,24 @@ class InputHandlersMixin:
             idx = hits[0]
             self.selected_idx    = idx
             obj = self.scene_data["objects"][idx]
-            
+
             # Sincronizza layer attivo in base all'oggetto colpito
             self.active_layer = obj.get("layer", "objects_mid")
             self.r_tab = TAB_PROPS # Passaggio automatico al pannello proprietà
             self.sel_effect_idx = None # Reset selezione effetti quando clicchi un PNG
             self._editing_prop = None # Reset editing se stiamo selezionando un nuovo oggetto
-            
+
             # Se premiamo Shift, aggiungiamo alla selezione esistente
             if mods & pygame.KMOD_SHIFT:
                 if idx not in self.selected_indices:
                     self.selected_indices.append(idx)
             else:
                 self.selected_indices = [idx]
-                
+
             self._tab_cycle_hits = hits
             self._tab_cycle_pos  = 0
             self._push_undo()
-            
+
             # Prepariamo il drag di gruppo
             self._drag_active   = True
             self._drag_start_mx = mx
@@ -1151,7 +1151,7 @@ class InputHandlersMixin:
 
     def _do_handle(self, mx, my):
         h = self._handle_id
-        
+
         # --- GESTIONE HANDLE EFFETTI ( Bubble Tips ) ---
         if h.startswith("fx_"):
             fx_idx = getattr(self, "sel_effect_idx", None)
@@ -1161,22 +1161,22 @@ class InputHandlersMixin:
             orig = self._handle_snap
             ox, oy = orig["x"], orig["y"]
             ow, oh = orig.get("width", 300), orig.get("height", 180)
-            
+
             rx, ry = self._s2r(mx, my)
             res_w, res_h = ow, oh
-            
+
             # Calcolo basato su simmetria rispetto all'ancora (x, y)
             # in modo che l'ancora resti FISSA.
             # L'area del testo è centrata orizzontalmente rispetto a x.
             # Quindi |rx - ox| è metà larghezza.
             if "w" in hid or "e" in hid:
                 res_w = abs(rx - ox) * 2
-            
+
             # L'area del testo è sopra y con un offset di 35px.
             # Quindi (oy - ry) - 35 è l'altezza.
             if "n" in hid:
                 res_h = (oy - ry) - 35
-            
+
             # Applichiamo i limiti e lo snap
             fx["width"]  = max(40, self._snap(res_w))
             fx["height"] = max(30, self._snap(res_h))
@@ -1191,10 +1191,10 @@ class InputHandlersMixin:
             # Calcolo raggio come distanza euclidea tra mouse e centro effetto
             new_r = math.hypot(rx - fx["x"], ry - fx["y"])
             fx["radius"] = max(5.0, self._snap(new_r))
-            
+
             if pygame.time.get_ticks() % 10 == 0: # Log limitato per non floodare
                 logging.info(f"[FX_RESIZE] New Radius: {fx['radius']:.1f} (mx:{mx}, my:{my})")
-            
+
             self.scene_dirty = True
             return
 
@@ -1204,7 +1204,7 @@ class InputHandlersMixin:
         dt   = obj.get("detection_type", "circle")
         rx, ry = self._s2r(mx, my)
         rot = obj.get("rotation", 0)
-        
+
         # Modifiers
         mods  = pygame.key.get_mods()
         shift = bool(mods & pygame.KMOD_SHIFT)
@@ -1217,7 +1217,7 @@ class InputHandlersMixin:
         else:
             ox, oy = orig["x"], orig["y"]
             ow, oh = orig.get("width", 60), orig.get("height", 60)
-        
+
         cx, cy = ox + ow/2, oy + oh/2
         lrx, lry = self._rotate_pt(rx, ry, cx, cy, -rot)
         ratio = ow / oh if oh != 0 else 1.0
@@ -1269,7 +1269,7 @@ class InputHandlersMixin:
             elif h in ("sw", "s", "se"): res_h = lry - oy
             if h in ("nw", "w", "sw"): res_x = lrx; res_w = ox + ow - lrx
             elif h in ("ne", "e", "se"): res_w = lrx - ox
-        
+
         # Limita dimensioni massime ragionevoli (evita artefatti da over-scaling)
         # Max 4000px per dimensione è un buon limite per evitare memory leak
         MAX_DIM = 4000
@@ -1297,7 +1297,7 @@ class InputHandlersMixin:
         else:
             obj["x"], obj["y"] = res_x, res_y
             obj["width"], obj["height"] = res_w, res_h
-        
+
         self.scene_dirty = True
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -1312,13 +1312,13 @@ class InputHandlersMixin:
         if getattr(self, "_layer_dropdown_open", False):
             self._layer_dropdown_open = False
         my = my_raw - TOP_BAR_H
-        
+
         # 1. Gestione Tab (Area superiore 32px)
         if my < 32:
             order = (TAB_TREE, TAB_OUTLINE, TAB_CATALOG, TAB_EFFECTS)
             tw = max(1, self.panel_l_w // len(order))
             new_tab = order[min(len(order) - 1, mx // tw)]
-            
+
             is_disabled = (self.active_layer == "effects"
                            and new_tab in (TAB_TREE, TAB_CATALOG, TAB_OUTLINE))
             if not is_disabled:
@@ -1346,7 +1346,7 @@ class InputHandlersMixin:
     def _right_click(self, rx, my_raw):
         if not self.panels_visible: return True
         my = my_raw - TOP_BAR_H
-        
+
         if my < 32:
             self.r_tab = TAB_LAYERS if rx < self.panel_r_w // 2 else TAB_PROPS
             return True
@@ -1358,7 +1358,7 @@ class InputHandlersMixin:
         self._props_click(rx, my + self.prop_scroll); return True
 
     def _tree_click(self, mx, my):
-        # Sincronizzato con _r_tree: TOP_BAR_H + 36 nel render, 
+        # Sincronizzato con _r_tree: TOP_BAR_H + 36 nel render,
         # qui my è già privo di TOP_BAR_H (quindi 0-30 = 0). Pertanto usiamo 36 base.
         y = 36 - self.tree_scroll * 28
         for level in self.levels:
@@ -1378,7 +1378,7 @@ class InputHandlersMixin:
 
     def _catalog_click(self, mx, my_raw):
         logging.info(f"  [CATALOG] _catalog_click called at ({mx}, {my_raw})")
-        
+
         # 1. Search Bar Principale
         MARGIN = 12
         INNER_W = self.panel_l_w - MARGIN * 2
@@ -1409,7 +1409,7 @@ class InputHandlersMixin:
             logging.info("  [CATALOG] HIT: Style Dropdown Toggle")
             self.catalog_style_open = not getattr(self, "catalog_style_open", False)
             self._play_click(); return
-            
+
         if getattr(self, "catalog_style_open", False):
             opt_rects = getattr(self, "_catalog_style_opt_rects", [])
             for s_id, opt_r in opt_rects:
@@ -1452,7 +1452,7 @@ class InputHandlersMixin:
         if si:
             list_y = si["list_y"]
             available_h = si["bar_h"]
-            
+
             # PRIORITÀ SCROLLBAR: zona destra del pannello
             if mx >= self.panel_l_w - 22 and my_raw >= list_y:
                 if si["max_scroll"] > 0:
@@ -1470,17 +1470,17 @@ class InputHandlersMixin:
             if _in_rect((mx, my_raw), hr):
                 logging.info(f"  [CATALOG] HIT: Object Item '{cat_id}' at {hr}")
                 self.catalog_sel = cat_id
-                
+
                 # Trova i dati del catalogo per il detection type
                 cat_item = next((c for c in self.catalog if c["id"] == cat_id), None)
                 det = cat_item.get("default_detection", "circle") if cat_item else "circle"
-                
+
                 self.mode = MODE_CIRCLE if det == "circle" else MODE_RECT
                 self.selected_idx = None
                 self.selected_indices = []
                 self._play_click()
                 return
-        
+
         logging.debug(f"  [CATALOG] No hit found at ({mx}, {my_raw})")
 
 
@@ -1496,16 +1496,16 @@ class InputHandlersMixin:
                     "type": "catalog"
                 }
                 return
-        
+
     def _layers_click(self, rx, my):
         # Allineamento millimetrico: 36 (start) + 18 (testo) + 4 (margine) = 58
-        y = 58 
+        y = 58
         all_layers = self._get_all_layers()
         for layer in all_layers:
             lid = layer["id"]
             is_scn = layer.get("is_scene", False)
             is_fx  = layer.get("is_fx", False)
-            
+
             row_h = 40
             # Centratura hitbox icone (Occhio/Lucchetto) nell'altezza di 40px
             if not is_scn:
@@ -1514,7 +1514,7 @@ class InputHandlersMixin:
                     self.layer_vis[lid] = not self.layer_vis.get(lid, True)
                     self._mark_dirty()
                     return
-            
+
             if not is_scn and not is_fx:
                 # Lucchetto (LOCK)
                 if _in_rect((rx, my), (self.panel_r_w - 50, y + 8, 24, 24)):
@@ -1545,10 +1545,10 @@ class InputHandlersMixin:
 
         if self.selected_idx is None or self.selected_idx >= len(self.scene_data.get("objects", [])):
             if not self.scene_path: return
-            
+
             hboxes = getattr(self, "_scene_props_hitboxes", {})
             mx, my = rx, my # rx e my sono già coordinati relativi al pannello e allo scroll
-            
+
             # 1. Background
             if _in_rect((mx, my), hboxes.get("bg_btn", pygame.Rect(0,0,0,0))):
                 self._load_background(); return
@@ -1604,7 +1604,7 @@ class InputHandlersMixin:
                         self._mark_dirty()
                         self._status(self._TR("ih_removed_f", "Removed: {0}").format(removed), WARN_C, 2)
                     return
-            
+
             # 10. Svuota Scena (con conferma)
             if _in_rect((mx, my), hboxes.get("clear_scene_btn", pygame.Rect(0,0,0,0))):
                 if getattr(self, "_confirm_clear", False):
@@ -1613,7 +1613,7 @@ class InputHandlersMixin:
                 else:
                     self._confirm_clear = True
                 return
-            
+
             self._confirm_clear = False
             return
 
@@ -1718,7 +1718,7 @@ class InputHandlersMixin:
         mg_btn = hboxes.get("minigame_btn")
         if mg_btn and _in_rect((rx, my), mg_btn):
             self._minigame_open(); return
-            
+
         mg_clr = hboxes.get("minigame_clear_btn")
         if mg_clr and _in_rect((rx, my), mg_clr):
             self._push_undo()
@@ -1735,7 +1735,7 @@ class InputHandlersMixin:
             self._editing_prop = ('object', self.selected_idx, 'mg_max_levels')
             self._prop_buf = str(obj.get("minigame_trigger", {}).get("max_levels", 5))
             return
-            
+
         ml_slider = hboxes.get("mg_levels_slider")
         if ml_slider and _in_rect((rx, my), ml_slider):
             self._push_undo()
@@ -1770,7 +1770,7 @@ class InputHandlersMixin:
                     self._status(self._TR("ih_place_effect_layer", "Place effect: {0} (layer enabled)").format(fx_id), FX_C, 2)
                 else:
                     self._status(self._TR("ih_place_effect", "Place effect: {0}").format(fx_id), FX_C, 2)
-                
+
                 self.selected_idx = None
                 self.selected_indices = []
                 self.sel_effect_idx = None
@@ -1780,7 +1780,7 @@ class InputHandlersMixin:
         """Gestore click per il pannello proprietà degli effetti (destra)."""
         idx = self.sel_effect_idx
         if idx is None or idx >= len(self.scene_data["effects"]): return
-        
+
         fx = self.scene_data["effects"][idx]
         hboxes = getattr(self, "_fx_props_hitboxes", {})
         self._editing_prop = None # Reset focus
@@ -1791,7 +1791,7 @@ class InputHandlersMixin:
             self._play_click(); return
 
         is_bt = (fx.get("type") == "bubble_tip")
-        
+
         if is_bt:
             # --- LOGICA BUBBLE TIP ---
             if getattr(self, "_editing_preset_name", False):
@@ -1815,7 +1815,7 @@ class InputHandlersMixin:
                     self._editing_preset_name = True
                     self._preset_name_buf = getattr(self, "_preset_selected", "")
                     return
-                
+
                 if getattr(self, "_preset_dropdown_open", False):
                     for p_key in self.bubble_presets.keys():
                         if _in_rect((rx, my), hboxes.get(f"pitem_{p_key}", pygame.Rect(0,0,0,0))):
@@ -1856,13 +1856,13 @@ class InputHandlersMixin:
         # --- LOGICA SLIDERS & BOXES (COMUNE) ---
         keys = ["radius", "intensity", "pulse_period", "pulse_min", "phase"]
         if is_bt: keys = ["width", "height", "alpha", "font_size"]
-        
+
         for k in keys:
             br = hboxes.get(f"box_{k}")
             if br and _in_rect((rx, my), br):
                 self._editing_prop = ('effect', idx, k)
                 self._prop_buf = str(fx.get(k, 0)); return
-            
+
             sr = hboxes.get(f"slider_{k}")
             if sr and _in_rect((rx, my), sr):
                 self._push_undo()
@@ -1877,13 +1877,13 @@ class InputHandlersMixin:
                 elif k == "height": mn, mx_v = 30, 600
                 elif k == "alpha": mn, mx_v = 0, 255
                 elif k == "font_size": mn, mx_v = 10, 80
-                
+
                 ratio = _clamp((rx - sr.x) / sr.w, 0.0, 1.0)
                 if k in ("pulse_period", "pulse_min"):
                     fx[k] = round(mn + (ratio**2) * (mx_v - mn), 2)
                 else:
                     fx[k] = round(mn + ratio * (mx_v - mn), 2)
-                
+
                 self.scene_dirty = True
                 self._mark_dirty()
                 self._dragging_slider = ('effect', idx, k, mn, mx_v, sr.x, sr.w); return
@@ -1915,7 +1915,7 @@ class InputHandlersMixin:
         rx, ry = self._s2r(mx, my)
         cat = next((c for c in self.effects_catalog if c["id"] == self.effects_catalog_sel), None)
         if not cat: return
-        
+
         self._push_undo()
         from editor.core.io import _default_effect
 
@@ -1927,7 +1927,7 @@ class InputHandlersMixin:
         # Nuovo sistema: tutti gli effetti vanno nel layer "effects"
         lyr_id = "effects"
         lyr_z  = 100
-        
+
         if cat["type"] == "bubble_tip":
             import uuid, re
             scene_str = str(self.scene_data.get("id", getattr(self.scene_path, "stem", "scene")))
@@ -1963,7 +1963,7 @@ class InputHandlersMixin:
         # Pulisci selezione oggetti quando piazzi un effetto
         self.selected_idx = None
         self.selected_indices = []
-        
+
         self.scene_dirty = True
         self._mark_dirty()
         self.mode = MODE_SELECT
@@ -1976,10 +1976,10 @@ class InputHandlersMixin:
             lid = fx.get("layer", "effects")
             if not self.layer_vis.get(lid, True):
                 continue
-            
+
             t_type = fx.get("type", "glint")
             hit = False
-            
+
             if t_type == "bubble_tip":
                 bw, bh = fx.get("width", 300), fx.get("height", 180)
                 bx, by = fx["x"] - bw//2, fx["y"] - bh - 35
@@ -1997,10 +1997,10 @@ class InputHandlersMixin:
                     if abs(rx - fx["x"]) < 40 and fx["y"]-150 < ry < fx["y"]+20:
                         hit = True
                     hit_dist = 30
-                
-                if not hit and dist < hit_dist: 
+
+                if not hit and dist < hit_dist:
                     hit = True
-            
+
             if hit:
                 self._push_undo()
                 self.sel_effect_idx = len(effects) - 1 - i
@@ -2042,12 +2042,12 @@ class InputHandlersMixin:
         rx = mx - (w - self.panel_r_w)
         rel_x = rx - sx
         ratio = _clamp(rel_x / sw, 0.0, 1.0)
-        
+
         if key in ("pulse_period", "pulse_min") and owner == 'effect':
             val = min_v + (ratio**2) * (max_v - min_v)
         else:
             val = min_v + ratio * (max_v - min_v)
-            
+
         if isinstance(min_v, int) and isinstance(max_v, int):
             val = int(val)
         else:
@@ -2072,7 +2072,7 @@ class InputHandlersMixin:
                         objs[i][key] = val
         elif owner == 'scene':
             self.scene_data[key] = val
-        
+
         self.scene_dirty = True
         self._mark_dirty()
         return True
@@ -2096,11 +2096,11 @@ class InputHandlersMixin:
         if self._active_menu:
             root_r = self._menu_bounds[self._active_menu]
             items = self._get_menu_items(self._active_menu)
-            
+
             ITEM_H = 26
             from editor.constants import MENU_W
             drop_r = pygame.Rect(root_r.x, TOP_BAR_H, MENU_W, len(items) * ITEM_H)
-            
+
             if _in_rect((mx, my), drop_r):
                 idx = (my - TOP_BAR_H) // ITEM_H
                 if 0 <= idx < len(items) and items[idx] is not None:
@@ -2117,7 +2117,7 @@ class InputHandlersMixin:
     def _exec_menu_cmd(self, cmd: str):
         """Esegue il comando logico del menu."""
         logging.info(f"[MENU] Esecuzione comando: {cmd}")
-        
+
         # FILE
         if cmd == "file_new_game":
             self.state = STATE_GAME_SELECT
@@ -2131,7 +2131,7 @@ class InputHandlersMixin:
             self._save()
         elif cmd == "file_quit":
             self.running = False
-            
+
         # EDIT
         elif cmd == "edit_undo": self._undo()
         elif cmd == "edit_redo": self._redo()
@@ -2141,7 +2141,7 @@ class InputHandlersMixin:
         elif cmd == "edit_lang_modal": self._lang_open()
         elif cmd == "edit_preset_save": self._preset_open_save()
         elif cmd == "edit_preset_insert": self._preset_open_insert()
-        
+
         # LANG SWITCH
         elif cmd.startswith("lang_switch_"):
             new_lang = cmd.replace("lang_switch_", "")
@@ -2151,13 +2151,13 @@ class InputHandlersMixin:
             # Se siamo in un gioco, ricarichiamo per quel gioco
             g_id = self.game_path.name if self.game_path else "engine"
             self.lang_manager.load_for_game(g_id, new_lang)
-            
+
             # Reset cache labels per il Game Selector se siamo lì
             if self.state == STATE_GAME_SELECT:
                 self._gs_refresh_cache()
-                
+
             self._status(self._TR("ih_language_set", "Language set: {0}").format(new_lang.upper()), OK_C, 2)
-        
+
         # STATISTICHE SCENA
         elif cmd == "file_scene_stats":
             self._stats_open()
@@ -2197,24 +2197,24 @@ class InputHandlersMixin:
             # Salvataggio + Azione pendente (tutto sotto overlay)
             def _save_and_nav():
                 self._save()
-                if callable(self._pending_action): 
+                if callable(self._pending_action):
                     self._pending_action()
-                else: 
+                else:
                     self._exec_menu_cmd(self._pending_action)
-            
+
             self._confirm_leave_modal = False
             self._with_loading(_save_and_nav)
             self._pending_action = None
-            
+
         elif _in_rect((mx, my), hboxes.get("discard")):
             self.scene_dirty = False # Forza pulizia per evitare loop
             self._confirm_leave_modal = False
-            
+
             if callable(self._pending_action):
                 self._with_loading(self._pending_action)
             else:
                 self._with_loading(self._exec_menu_cmd, self._pending_action)
-            
+
             self._pending_action = None
         elif _in_rect((mx, my), hboxes.get("cancel")):
             self._confirm_leave_modal = False
