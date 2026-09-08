@@ -24,6 +24,7 @@ from editor.constants import (
     PANEL, BORDER, TXT, TXT_HI, TXT_DIM, ACCENT, OK_C, ERR_C, WARN_C,
 )
 from editor.ui.draw import _rect, _txt, _draw_text, _in_rect
+from engine.language_manager import tr
 from editor.ui.widgets import Button, InputBox, ScrollList, WidgetGroup
 
 logger = logging.getLogger(__name__)
@@ -297,9 +298,12 @@ class _PresetListModal:
         screen.blit(overlay, (0, 0))
         _rect(screen, PANEL, panel, radius=8)
         _rect(screen, BORDER, panel, 1, radius=8)
-        _draw_text(screen, "Inserisci gruppo", "md", TXT_HI,
+        _draw_text(screen, tr("pr_insert_group", "Insert a group"), "md", TXT_HI,
                    panel.x + _MODAL_PAD, panel.y + _MODAL_PAD)
-        _draw_text(screen, "Click = inserisci al centro vista, x = elimina",
-                   "xs", TXT_DIM, panel.x + _MODAL_PAD, panel.y + 40)
+        _draw_text(screen,
+                   tr("pr_insert_hint",
+                      "Click = insert at the centre of the view, x = delete"),
+                   "xs", TXT_DIM, panel.x + _MODAL_PAD, panel.y + 40,
+                   panel.w - _MODAL_PAD * 2)
         self._del_rects.clear()
         self.group.draw(screen)

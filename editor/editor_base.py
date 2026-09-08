@@ -821,7 +821,8 @@ class LevelEditor(
         # Testo tradotto
         msg = self._TR("msg_loading")
         _draw_text(self.screen, msg, "lg", TXT_HI, bx + 105, by + bh // 2 - 15)
-        _draw_text(self.screen, "Please wait...", "xs", (120, 120, 140), bx + 105, by + bh // 2 + 16)
+        _draw_text(self.screen, self._TR("msg_please_wait", "Please wait..."),
+                   "xs", (120, 120, 140), bx + 105, by + bh // 2 + 16)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

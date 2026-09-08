@@ -787,7 +787,10 @@ class SceneStatsMixin:
                               x, cur_y)
             _draw_text(self.screen, label, "sm", _label_color(label), x + used, cur_y)
         else:
-            _draw_text(self.screen, "Media scena: " + _LBL_NA, "sm", TXT_DIM, x, cur_y)
+            _draw_text(self.screen,
+                       self._TR("st_scene_avg", "Scene average: {0}  ")
+                       .format(_LBL_NA).rstrip(),
+                       "sm", TXT_DIM, x, cur_y)
         if diff.get("note"):
             _draw_text(self.screen, diff["note"], "xs", TXT_DIM, x, cur_y + _LINE_H,
                        max_w=w - 8)
