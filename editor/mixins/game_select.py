@@ -30,6 +30,7 @@ from editor.build_system import next_build_version
 from editor.ui.draw import (
     _txt, _draw_text, _text_wh, _rect, _button, _in_rect, _draw_shape_icon,
     _scrollbar, _input_box, request_anim_frame, _button_w, dialog_rect,
+    _ui_scale,
 )
 from editor.ui.widgets import Button, WidgetGroup
 from engine.utils import get_base_path, get_logger
@@ -2119,7 +2120,9 @@ if __name__ == "__main__":
                     self._request_nav(lambda: self._load_scene(path))
                     self.state = STATE_MAIN; return
                 else:
-                    self.status_msg = "ERRORE: Scena non trovata!"; return
+                    self._status(self._TR("gs_scene_missing",
+                                          "Error: scene not found"), ERR_C, 3)
+                    return
 
         y_browser = y_rec + 200
         col_w = (w - 80) // 3
@@ -2128,97 +2131,13 @@ if __name__ == "__main__":
             cx2 = 30 + i * (col_w + 10)
             cy2 = y_browser + 25
             if _in_rect((mx, my_raw), (cx2, cy2, col_w, col_h)):
-                plus_r = (cx2 + col_w - 32, cy2 + 5, 26, 24)
-                if _in_rect((mx, my_raw), plus_r):
-                    if i == 0: self._gs_new_game()
-                    elif i == 1: self._gs_new_level()
-                    elif i == 2: self._gs_new_scene()
+                # Header buttons: geometria condivisa con il render
+                header = self._gs_header_rects(i, cx2, cy2, col_w)
+                for name, _label, _tip, _destructive in self._GS_HEADER_BUTTONS[i]:
+                    if not _in_rect((mx, my_raw), header[name]):
+                        continue
+                    self._gs_header_action(i, name)
                     return
-                # Bottone COMPILA EXE (solo per i==0, colonna giochi)
-                if i == 0:
-                    build_r = (cx2 + col_w - 62, cy2 + 5, 26, 24)
-                    if _in_rect((mx, my_raw), build_r):
-                        if self.gs_sel_game is not None:
-                            self._gs_compile_game(self.gs_sel_game)
-                        else:
-                            self._status(self._TR("gs_select_game_first", "Select a game first"), WARN_C, 2)
-                        return
-
-                # Bottone COMPILA APK Android (solo per i==0)
-                if i == 0:
-                    apk_r = (cx2 + col_w - 92, cy2 + 5, 26, 24)
-                    if _in_rect((mx, my_raw), apk_r):
-                        if self.gs_sel_game is not None:
-                            self._gs_compile_apk(self.gs_sel_game)
-                        else:
-                            self._status(self._TR("gs_select_game_first", "Select a game first"), WARN_C, 2)
-                        return
-
-                # Bottone ESPORTA HTML (solo per i==0)
-                if i == 0:
-                    html_r = (cx2 + col_w - 122, cy2 + 5, 26, 24)
-                    if _in_rect((mx, my_raw), html_r):
-                        if self.gs_sel_game is not None:
-                            self._gs_export_html(self.gs_sel_game)
-                        else:
-                            self._status(self._TR("gs_select_game_first", "Select a game first"), WARN_C, 2)
-                        return
-
-                if i in (1, 2):
-                    del_r = (cx2 + col_w - 62, cy2 + 5, 26, 24)
-                    if _in_rect((mx, my_raw), del_r):
-                        sel = self.gs_sel_level if i == 1 else self.gs_sel_scene
-                        if sel is None: self._status(self._TR("gs_select_item_first", "Select an item first"), WARN_C, 2)
-                        elif i == 1: self._gs_del_level(sel)
-                        else: self._gs_del_scene(sel)
-                        return
-
-                # Bottone DUPLICA (livelli: slot -92, scene: slot -122 dopo il ✎)
-                if i in (1, 2):
-                    dup_x = cx2 + col_w - (92 if i == 1 else 122)
-                    dup_r = (dup_x, cy2 + 5, 26, 24)
-                    if _in_rect((mx, my_raw), dup_r):
-                        sel = self.gs_sel_level if i == 1 else self.gs_sel_scene
-                        if sel is None:
-                            self._status(self._TR("gs_select_item_first", "Select an item first"), WARN_C, 2)
-                        elif i == 1:
-                            self._gs_duplicate_level(sel)
-                        else:
-                            self._gs_duplicate_scene(sel)
-                        return
-
-                # Bottone SPOSTA scena in altro livello (solo scene, slot -152)
-                if i == 2:
-                    mv_r = (cx2 + col_w - 152, cy2 + 5, 26, 24)
-                    if _in_rect((mx, my_raw), mv_r):
-                        if self.gs_sel_scene is None:
-                            self._status(self._TR("gs_select_scene_first", "Select a scene first"), WARN_C, 2)
-                        else:
-                            self._gs_move_scene_dialog(self.gs_sel_scene)
-                        return
-
-                if i == 0:
-                    # Spostato a -182 per fare spazio ai bottoni APK e HTML
-                    del_r = (cx2 + col_w - 182, cy2 + 5, 26, 24)
-                    if _in_rect((mx, my_raw), del_r):
-                        if self.gs_sel_game is not None:
-                            self._gs_del_game(self.gs_sel_game)
-                        else:
-                            self._status(self._TR("gs_select_game_first", "Select a game first"), WARN_C, 2)
-                        return
-
-                # Clic su Modifica (✎) — solo per Scene (i==2)
-                # Per i Giochi (i==0) e Livelli (i==1): ✎ è inline nella riga
-                if i == 2:
-                    edit_off = -92
-                    edit_r = (cx2 + col_w + edit_off, cy2 + 5, 26, 24)
-                    if _in_rect((mx, my_raw), edit_r):
-                        sel = self.gs_sel_scene
-                        if sel is None:
-                            self._status(self._TR("gs_select_item_first", "Select an item first"), WARN_C, 2)
-                        else:
-                            self._gs_edit_scene(sel)
-                        return
                 iy     = cy2 + 35
                 ITEM_H = 64 if i == 2 else (50 if i == 1 else 34)
                 scroll_offset = [self.gs_scroll_game, self.gs_scroll_lvl, self.gs_scroll_scn][i]
@@ -2682,86 +2601,25 @@ if __name__ == "__main__":
             _rect(self.screen, (25, 25, 32), c_rect, radius=6)
             _rect(self.screen, BORDER, c_rect, 1, radius=6)
             _rect(self.screen, (34, 34, 44), (cx2, cy2, col_w, 35), radius=6, border=0)
-            _draw_text(self.screen, title, "sm", ACCENT, cx2 + 12, cy2 + 8)
-            plus_r = pygame.Rect(cx2 + col_w - 32, cy2 + 5, 26, 24)
-            plus_hov = _in_rect((mx, my_raw), plus_r)
-            _button(self.screen, plus_r, "+", plus_hov)
-            if plus_hov:
-                tip_keys = ["gs_tip_add_game", "gs_tip_add_level", "gs_tip_add_scene"]
-                tip_defs = ["Aggiungi un nuovo gioco", "Aggiungi un nuovo livello", "Aggiungi una nuova scena"]
-                self.active_tooltip = self.lang_manager.get(tip_keys[i], tip_defs[i])
-
-            # Pulsante COMPILA EXE (solo giochi, i==0)
-            if i == 0:
-                has_sel_build = self.gs_sel_game is not None
-                build_r = pygame.Rect(cx2 + col_w - 62, cy2 + 5, 26, 24)
-                build_hov = _in_rect((mx, my_raw), build_r)
-                _button(self.screen, build_r, "EXE", build_hov, active=has_sel_build)
-                if build_hov: self.active_tooltip = self.lang_manager.get("gs_tip_build", "Compila e pacchettizza il gioco (Crea EXE Windows)")
-
-                # Pulsante COMPILA APK Android
-                apk_r = pygame.Rect(cx2 + col_w - 92, cy2 + 5, 26, 24)
-                apk_hov = _in_rect((mx, my_raw), apk_r)
-                _button(self.screen, apk_r, "APK", apk_hov, active=has_sel_build)
-                if apk_hov: self.active_tooltip = self.lang_manager.get("gs_tip_build_apk", "Compila e pacchettizza il gioco per Android (Crea APK)")
-
-                # Pulsante ESPORTA HTML (sito statico)
-                html_r = pygame.Rect(cx2 + col_w - 122, cy2 + 5, 26, 24)
-                html_hov = _in_rect((mx, my_raw), html_r)
-                _button(self.screen, html_r, "WEB", html_hov, active=has_sel_build)
-                if html_hov: self.active_tooltip = self.lang_manager.get("gs_tip_export_html", "Esporta il gioco come sito statico HTML/JS → build_web/")
-
-                # Pulsante ELIMINA GIOCO — spostato a -182 per fare spazio a EXE/APK/WEB
-                del_g_r = pygame.Rect(cx2 + col_w - 182, cy2 + 5, 26, 24)
-                del_g_hov = _in_rect((mx, my_raw), del_g_r)
-                _button(self.screen, del_g_r, "×", del_g_hov, danger=has_sel_build)
-                if del_g_hov: self.active_tooltip = self.lang_manager.get("gs_tip_delete_game", "ELIMINA COMPLETAMENTE il progetto dal disco")
-
-            # Pulsante ✎ di modifica — solo per Scene (i==2)
-            # Per Giochi (i==0) e Livelli (i==1) il ✎ è inline nella riga
-            if i == 2:
-                has_sel = (self.gs_sel_scene is not None)
-                edit_r = pygame.Rect(cx2 + col_w - 92, cy2 + 5, 26, 24)
-                edit_hov = _in_rect((mx, my_raw), edit_r)
-                _button(self.screen, edit_r, "✎", edit_hov, active=has_sel)
-                if edit_hov: self.active_tooltip = self.lang_manager.get(
-                    "gs_tip_edit", "Modifica impostazioni e nomi dell'elemento selezionato")
-
-            # Pulsante × di eliminazione (solo livelli e scene)
-            if i in (1, 2):
-                has_sel_del = (i == 1 and self.gs_sel_level is not None) or \
-                              (i == 2 and self.gs_sel_scene is not None)
-                del_r = pygame.Rect(cx2 + col_w - 62, cy2 + 5, 26, 24)
-                del_hov = _in_rect((mx, my_raw), del_r)
-                _button(self.screen, del_r, "×",
-                        del_hov,
-                        danger=has_sel_del)
-                if del_hov: self.active_tooltip = self.lang_manager.get("gs_tip_delete_item", "Elimina definitivamente l'elemento selezionato")
-
-            # Pulsante DUPLICA (livelli: slot -92, scene: slot -122 dopo il ✎)
-            if i in (1, 2):
-                has_sel_dup = (i == 1 and self.gs_sel_level is not None) or \
-                              (i == 2 and self.gs_sel_scene is not None)
-                dup_x = cx2 + col_w - (92 if i == 1 else 122)
-                dup_r = pygame.Rect(dup_x, cy2 + 5, 26, 24)
-                dup_hov = _in_rect((mx, my_raw), dup_r)
-                _button(self.screen, dup_r, "DUP", dup_hov, active=has_sel_dup, font="xs")
-                if dup_hov:
-                    tip_key = "gs_tip_dup_level" if i == 1 else "gs_tip_dup_scene"
-                    tip_def = ("Duplica il livello selezionato (tutte le scene incluse)"
-                               if i == 1 else
-                               "Duplica la scena selezionata (cartella completa)")
-                    self.active_tooltip = self.lang_manager.get(tip_key, tip_def)
-
-            # Pulsante SPOSTA scena in altro livello (solo scene, slot -152)
-            if i == 2:
-                mv_r = pygame.Rect(cx2 + col_w - 152, cy2 + 5, 26, 24)
-                mv_hov = _in_rect((mx, my_raw), mv_r)
-                _button(self.screen, mv_r, "MV", mv_hov,
-                        active=(self.gs_sel_scene is not None), font="xs")
-                if mv_hov:
-                    self.active_tooltip = self.lang_manager.get(
-                        "gs_tip_move_scene", "Sposta la scena selezionata in un altro livello")
+            # Header buttons: geometria condivisa con il click
+            selected = (self.gs_sel_game, self.gs_sel_level,
+                        self.gs_sel_scene)[i] is not None
+            header = self._gs_header_rects(i, cx2, cy2, col_w)
+            # Il titolo si ferma dove comincia la striscia di bottoni: senza
+            # limite finiva sotto di essa appena la scala cresceva.
+            title_x = cx2 + 12
+            title_w = min(r.left for r in header.values()) - title_x - 8
+            _draw_text(self.screen, title, "sm", ACCENT, title_x, cy2 + 8,
+                       max(20, title_w))
+            for name, label, tip_key, destructive in self._GS_HEADER_BUTTONS[i]:
+                rect = header[name]
+                hovered = _in_rect((mx, my_raw), rect)
+                enabled = selected or name == "new"
+                _button(self.screen, rect, label, hovered, font="xs",
+                        danger=destructive and enabled,
+                        active=enabled and not destructive and name != "new")
+                if hovered:
+                    self.active_tooltip = self._TR(tip_key, tip_key)
             self._r_gs_column(i, cx2, cy2 + 35, col_w, col_h - 35)
 
         if self._gs_new_mode:
@@ -2772,6 +2630,72 @@ if __name__ == "__main__":
             self._r_gs_del_dialog(w, h)
         if getattr(self, "_gs_mv_mode", False):
             self._r_gs_move_dialog(w, h)
+
+    # Header buttons of a browser column, right to left. One declaration for
+    # the renderer and the click handler: they used to be two strips of fixed
+    # rects, and neither of them scaled with the UI.
+    _GS_HEADER_BUTTONS = {
+        0: (("new", "+", "gs_tip_add_game", False),
+            ("build", "EXE", "gs_tip_build", False),
+            ("apk", "APK", "gs_tip_build_apk", False),
+            ("web", "WEB", "gs_tip_export_html", False),
+            ("delete", "\u00d7", "gs_tip_delete_game", True)),
+        1: (("new", "+", "gs_tip_add_level", False),
+            ("delete", "\u00d7", "gs_tip_delete_item", True),
+            ("dup", "DUP", "gs_tip_dup_level", False)),
+        2: (("new", "+", "gs_tip_add_scene", False),
+            ("delete", "\u00d7", "gs_tip_delete_item", True),
+            ("edit", "\u270e", "gs_tip_edit", False),
+            ("dup", "DUP", "gs_tip_dup_scene", False),
+            ("move", "MV", "gs_tip_move_scene", False)),
+    }
+
+    def _gs_header_action(self, column: int, name: str) -> None:
+        """What one header button does, once its rect has been hit."""
+        if name == "new":
+            (self._gs_new_game, self._gs_new_level, self._gs_new_scene)[column]()
+            return
+
+        selected = (self.gs_sel_game, self.gs_sel_level, self.gs_sel_scene)[column]
+        if selected is None:
+            key = ("gs_select_game_first", "gs_select_item_first",
+                   "gs_select_item_first")[column]
+            self._status(self._TR(key, "Select an item first"), WARN_C, 2)
+            return
+
+        if name == "build":
+            self._gs_compile_game(selected)
+        elif name == "apk":
+            self._gs_compile_apk(selected)
+        elif name == "web":
+            self._gs_export_html(selected)
+        elif name == "edit":
+            self._gs_edit_scene(selected)
+        elif name == "move":
+            self._gs_move_scene_dialog(selected)
+        elif name == "dup":
+            (self._gs_duplicate_level if column == 1
+             else self._gs_duplicate_scene)(selected)
+        elif name == "delete":
+            (self._gs_del_game, self._gs_del_level,
+             self._gs_del_scene)[column](selected)
+
+    def _gs_header_rects(self, column: int, cx2: int, cy2: int,
+                         col_w: int) -> dict:
+        """Where each header button of a column is, at the current UI scale."""
+        scale = _ui_scale()
+        height = int(round(24 * scale))
+        gap = int(round(4 * scale))
+        wide_gap = int(round(12 * scale))
+        top = cy2 + int(round(5 * scale))
+        right = cx2 + col_w - int(round(6 * scale))
+        rects = {}
+        for name, label, _tip, separated in self._GS_HEADER_BUTTONS[column]:
+            width = max(int(round(26 * scale)), _button_w(label, "xs"))
+            right -= width + (wide_gap if separated else 0)
+            rects[name] = pygame.Rect(right, top, width, height)
+            right -= gap
+        return rects
 
     def _r_gs_column(self, col_idx, cx, cy, cw, ch):
         mx, my_raw = pygame.mouse.get_pos()
