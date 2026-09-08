@@ -102,7 +102,7 @@ class CyberNeonSkin(DefaultSkin):
         text = ms._state_title_text()
         if not text:
             return
-        size = as_int(theme.layout("title_font_size", 48), 48)
+        size = ms._state_title_size()
         spacing = sm.scale_value(
             as_int((theme._typography.get("title", {}) or {}).get("spacing", 3), 3))
         up = text.upper()
@@ -130,7 +130,7 @@ class CyberNeonSkin(DefaultSkin):
 
         comp = cached_title(self, key, _build)
         cx = screen.get_width() // 2 - comp.get_width() // 2
-        ty = sm.scale_value(as_int(theme.layout("title_y_offset", 100), 100))
+        ty = sm.scale_value(ms._state_title_y())
         screen.blit(comp, (cx, ty))
 
     def button_jitter(self, ms, b):

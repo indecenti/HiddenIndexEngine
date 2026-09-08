@@ -155,7 +155,7 @@ class KidsSkin(DefaultSkin):
         text = ms._state_title_text()
         if not text:
             return
-        size = as_int(theme.layout("title_font_size", 46), 46)
+        size = ms._state_title_size()
         col = theme.color3("text_normal")
         sh_col = as_rgb(theme.decor("toy_shadow", None), (42, 126, 192))
         # The two font.render calls (text + shadow) used to run EVERY frame while
@@ -172,7 +172,7 @@ class KidsSkin(DefaultSkin):
         if self.fx_on(ms, "bounce") and not self.reduced(ms):
             bounce = int(sm.scale_value(6) * (0.5 + 0.5 * math.sin(self._t * 3.2)))
         tx = (screen.get_width() - surf.get_width()) // 2
-        ty = sm.scale_value(as_int(theme.layout("title_y_offset", 100), 100)) - bounce
+        ty = sm.scale_value(ms._state_title_y()) - bounce
         screen.blit(sh_surf, (tx, ty + max(2, sm.scale_value(3))))
         screen.blit(surf, (tx, ty))
 

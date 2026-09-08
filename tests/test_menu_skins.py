@@ -79,6 +79,17 @@ class FakeMenu:
     def _state_title_text(self) -> str:
         return "Main Menu"
 
+    def _state_title_size(self) -> int:
+        """Mirrors the core: the main state carries the larger game wordmark."""
+        if self.state == "main":
+            return int(self.theme.layout("game_title_font_size", 78))
+        return int(self.theme.layout("title_font_size", 44))
+
+    def _state_title_y(self) -> int:
+        if self.state == "main":
+            return int(self.theme.layout("game_title_y", 96))
+        return int(self.theme.layout("title_y_offset", 100))
+
     def _draw_state_title(self, screen) -> None:
         self.title_calls += 1
 

@@ -169,6 +169,108 @@ class MenuTheme:
         c = self.color(key)
         return (c[0], c[1], c[2])
 
+    @staticmethod
+    def luminance(color) -> float:
+        """Perceived brightness of an RGB(A) colour, 0..255."""
+        r, g, b = color[0], color[1], color[2]
+        return 0.299 * r + 0.587 * g + 0.114 * b
+
+    # Minimum WCAG contrast for a decoration that carries meaning (rule, focus
+    # bar, section header): below it the accent is swapped for the text colour.
+    ACCENT_MIN_CONTRAST = 3.0
+
+    @staticmethod
+    def _srgb(channel: float) -> float:
+        c = channel / 255.0
+        return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+    @classmethod
+    def rel_luminance(cls, color) -> float:
+        """WCAG relative luminance (0..1) of an RGB(A) colour."""
+        r, g, b = (cls._srgb(color[i]) for i in range(3))
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+    @classmethod
+    def contrast(cls, fg, bg) -> float:
+        """WCAG contrast ratio between two opaque colours (1..21)."""
+        a, b = cls.rel_luminance(fg), cls.rel_luminance(bg)
+        hi, lo = max(a, b), min(a, b)
+        return (hi + 0.05) / (lo + 0.05)
+
+    def accent(self) -> tuple[int, int, int]:
+        """The theme accent, guaranteed to be an actual colour.
+
+        `btn_border_hover` is authored as a BORDER, and a theme whose buttons
+        have no frame leaves it fully transparent (horror shipped [0,0,0,0]):
+        taken as an accent that paints the section headers, the title rule and
+        the row hover in pure black.
+        """
+        for key in ("btn_border_hover", "slider_fill", "text_hover"):
+            raw = self._colors.get(key)
+            if not raw:
+                continue
+            rgb = (int(raw[0]), int(raw[1]), int(raw[2]))
+            # The alpha is ignored on purpose: "no border" is authored as alpha
+            # 0 while the hue stays meaningful (mystery ships [255,140,0,0]).
+            # Only a colour with no hue at all - horror's [0,0,0,0] - is skipped.
+            if max(rgb) >= 24:
+                return rgb
+        return self.color3("text_normal")
+
+    def accent_on(self, background) -> tuple[int, int, int]:
+        """Accent, swapped for the text colour where it would not be visible.
+
+        The kids accent is a pale yellow tuned for a white card; on its own sky
+        it disappears.
+        """
+        acc = self.accent()
+        if self.contrast(acc, background) >= self.ACCENT_MIN_CONTRAST:
+            return acc
+        return self.color3("text_normal")
+
+    def scrim_color(self) -> tuple[int, int, int]:
+        """Colour of the veil the engine paints under the menu chrome."""
+        return self.color3("background_overlay")
+
+    def caption_text(self, locked: bool = False) -> tuple[int, int, int]:
+        """Colour of a caption printed over the dark gradient of a card.
+
+        A theme meant for light plates has DARK text (kids: 40,55,70), and that
+        text was being printed on a photograph darkened to near black.
+        """
+        base = self.color3("text_locked") if locked else self.color3("text_normal")
+        if self.rel_luminance(base) * 255 >= 90:
+            return base
+        return (156, 158, 164) if locked else (242, 244, 248)
+
+    def row_bg(self) -> tuple[int, int, int, int]:
+        """Background of a settings row.
+
+        Optional `row_bg` in the theme colours; otherwise the control surface
+        (`slider_bg`), which every theme already tunes to its own palette. The
+        button colour cannot be used here: several themes paint it fully
+        saturated (magenta on cyber_neon) because it is only ever drawn as a
+        small chip, never as a full width band.
+        """
+        raw = self._colors.get("row_bg")
+        if raw:
+            r, g, b = int(raw[0]), int(raw[1]), int(raw[2])
+            return (r, g, b, int(raw[3]) if len(raw) > 3 else 190)
+        r, g, b = self.color3("slider_bg")
+        return (r, g, b, 190)
+
+    def row_value_bg(self) -> tuple[int, int, int]:
+        """Fill of the value pill, kept readable against the row it sits on."""
+        r, g, b, _ = self.row_bg()
+        if self.luminance((r, g, b)) > 140:      # light row: sink the control
+            return (int(r * 0.86), int(g * 0.86), int(b * 0.86))
+        # Dark row: lift the control instead of sinking it, so the thing you can
+        # click reads as raised rather than as a hole in the row.
+        lift = 0.16
+        return (min(255, int(r + (255 - r) * lift)),
+                min(255, int(g + (255 - g) * lift)),
+                min(255, int(b + (255 - b) * lift)))
+
     def lerp_color(self, c1: tuple, c2: tuple, t: float) -> tuple:
         """Interpola tra due colori RGBA/RGB."""
         # Assicura che entrambi siano della stessa lunghezza (3 o 4)
@@ -208,9 +310,6 @@ class MenuTheme:
 
     def btn_center_x(self) -> float:
         return float(self.layout("btn_center_x", 640))
-
-    def btn_y_start(self) -> float:
-        return float(self.layout("btn_y_start", 300))
 
     def btn_y_step(self) -> float:
         return float(self.layout("btn_y_step", 80))
@@ -517,14 +616,23 @@ class MenuTheme:
             "do_new_game": "new_game",
             "confirm_new": "new_game",
             "set_music_volume": "audio",
-            "set_sfx_volume": "audio",
+            "set_sfx_volume": "sfx",
             "toggle_lang": "language",
-            "toggle_res": "fullscreen",
+            "toggle_res": "resolution",
             "toggle_fs": "fullscreen",
+            "toggle_vibration": "vibration",
             "quit_to_main": "back"
         }
+        # Fallback for the icons added with the generated sets: a theme whose
+        # folder predates them (or a game with a harvested older copy) keeps
+        # working with the icon the action used to share.
+        legacy_fallback = {"sfx": "audio", "resolution": "fullscreen",
+                           "vibration": "settings"}
         key = map_alias.get(base_action, base_action)
-        return self._icons.get(key)
+        icon = self._icons.get(key)
+        if icon is None:
+            icon = self._icons.get(legacy_fallback.get(key, ""))
+        return icon
 
     def flashlight_pos(self, screen_w: int, screen_h: int) -> tuple[int, int]:
         """Calcola la posizione della torcia con movimento automatico organico."""

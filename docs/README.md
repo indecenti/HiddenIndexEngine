@@ -15,7 +15,7 @@ rules see `CLAUDE.md` in the root. For the status and the remaining work see
 - [engine/HINT_SYSTEM.md](engine/HINT_SYSTEM.md) — hint system, per object and per layer.
 - [engine/I18N.md](engine/I18N.md) — localization: EN as default and single fallback, keys, placeholders, the contract verified by the tests.
 - [engine/MINIGAMES_DEVELOPMENT.md](engine/MINIGAMES_DEVELOPMENT.md) — how to develop and integrate a minigame (plugin architecture).
-- [engine/MENU_SKINS.md](engine/MENU_SKINS.md) — menu skins (game menu templates): hooks, fail-soft dispatch, theme.json sections, per-frame cost, how to add a skin.
+- [engine/MENU_SKINS.md](engine/MENU_SKINS.md) — menu skins and menu chrome: hooks, fail-soft dispatch, the layout every theme shares (wordmark, icon captions, settings grid, level cards), theme.json sections, generated icon sets, per-frame cost, how to add a skin.
 
 ## Editor
 

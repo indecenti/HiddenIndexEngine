@@ -112,7 +112,7 @@ class MysterySkin(DefaultSkin):
         text = ms._state_title_text()
         if not text:
             return
-        size = as_int(theme.layout("title_font_size", 44), 44)
+        size = ms._state_title_size()
         spacing = sm.scale_value(
             as_int((theme._typography.get("title", {}) or {}).get("spacing", 2), 2))
         col = theme.color3("text_hover")
@@ -129,6 +129,6 @@ class MysterySkin(DefaultSkin):
 
         surf, shadow = cached_title(self, key, _build)
         tx = (screen.get_width() - surf.get_width()) // 2
-        ty = sm.scale_value(as_int(theme.layout("title_y_offset", 105), 105))
+        ty = sm.scale_value(ms._state_title_y())
         screen.blit(shadow, (tx + 2, ty + 2))
         screen.blit(surf, (tx, ty))

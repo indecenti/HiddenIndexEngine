@@ -16,6 +16,7 @@
     "text_locked":          [110, 112, 120],
     "icon_color":           [232, 236, 244],
     "slider_bg":            [ 30,  33,  40],
+    "row_bg":               [ 22,  26,  34, 185],
     "slider_fill":          [ 90, 150, 235],
     "slider_handle":        [255, 255, 255],
     "scene_border_normal":  [255, 255, 255,  45],
@@ -31,7 +32,6 @@
     "btn_width":            360,
     "btn_height":           64,
     "btn_center_x":         640,
-    "btn_y_start":          470,
     "btn_y_step":           90,
     "btn_border_width":     0,
     "icons_only":           true,
@@ -41,8 +41,7 @@
     "scene_grid_cols":      3,
     "scene_thumb_w":        320,
     "scene_thumb_h":        180,
-    "title_font_size":      44,
-    "title_y_offset":       110
+    "title_font_size":      44
   },
 
   "font": {

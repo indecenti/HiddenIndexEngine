@@ -78,7 +78,7 @@ class HorrorSkin(DefaultSkin):
         text = ms._state_title_text()
         if not text:
             return
-        size = as_int(theme.layout("title_font_size", 48), 48)
+        size = ms._state_title_size()
         spacing = sm.scale_value(
             as_int((theme._typography.get("title", {}) or {}).get("spacing", 4), 4))
         up = text.upper()
@@ -105,7 +105,7 @@ class HorrorSkin(DefaultSkin):
         surf.set_alpha(alpha)
         glow.set_alpha(min(alpha, 130))
         tx = (screen.get_width() - surf.get_width()) // 2
-        ty = sm.scale_value(as_int(theme.layout("title_y_offset", 100), 100))
+        ty = sm.scale_value(ms._state_title_y())
         screen.blit(glow, (tx + 2, ty + 2))
         screen.blit(surf, (tx, ty))
 
