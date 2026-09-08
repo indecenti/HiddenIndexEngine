@@ -29,7 +29,7 @@ from editor.core.io import (
 from editor.build_system import next_build_version
 from editor.ui.draw import (
     _txt, _draw_text, _text_wh, _rect, _button, _in_rect, _draw_shape_icon,
-    _scrollbar, _input_box, request_anim_frame, _button_w,
+    _scrollbar, _input_box, request_anim_frame, _button_w, dialog_rect,
 )
 from editor.ui.widgets import Button, WidgetGroup
 from engine.utils import get_base_path, get_logger
@@ -43,6 +43,34 @@ GS_EMPTY_COLUMN = (
     ("gs_empty_levels", "Select a project to see its levels"),
     ("gs_empty_scenes", "Select a level to see its scenes"),
 )
+
+
+# Height reserved at the bottom of the project edit dialog for its buttons.
+_GS_EDIT_FOOTER_H = 72        # room the footer buttons need
+_GS_LANG_STRIDE_MIN = 24      # tightest the language fields may get
+_GS_THEME_BTN_MIN = 32        # and the theme buttons
+
+
+def _gs_edit_column_fit(available: int, n_langs: int, n_theme_rows: int,
+                        stride: int, theme_h: int, theme_gap: int,
+                        fixed_extra: int) -> tuple:
+    """Shrink the compressible parts of the edit dialog until the column fits.
+
+    The sections cascade from fixed offsets adding up to more than the dialog
+    is tall once it is clamped to a 1280x720 window, and the last ones ran
+    under the footer buttons. The language fields give up their spacing first,
+    the theme buttons after them; both stop at a floor.
+    """
+    def below(button_h: int) -> int:
+        return fixed_extra + n_theme_rows * (button_h + theme_gap)
+
+    room = available - below(theme_h)
+    stride = max(_GS_LANG_STRIDE_MIN, min(stride, room // max(1, n_langs)))
+    short_by = stride * n_langs + below(theme_h) - available
+    if short_by > 0 and n_theme_rows:
+        theme_h = max(_GS_THEME_BTN_MIN,
+                      theme_h - -(-short_by // n_theme_rows))
+    return stride, theme_h
 
 
 class GameSelectMixin:
@@ -1922,10 +1950,8 @@ if __name__ == "__main__":
         
         # 2. PRIORITÀ: Click dentro dialog "Modifica" (se aperto)
         if hasattr(self, '_gs_edit_mode') and self._gs_edit_mode:
-            # Dimensioni sincronizzate con _r_gs_edit_dialog
-            dw = min(1600, max(1200, int(w * 0.92)))
-            dh = min(1000, max(820, int(h * 0.92)))
-            dx, dy = (w-dw)//2, (h-dh)//2
+            _box = self._gs_edit_dialog_rect(w, h)
+            dw, dh, dx, dy = _box.w, _box.h, _box.x, _box.y
 
             # STILE CAMPO LINGUA: stride e altezza aggiornati
             _LANG_FIELD_H: int = 34
@@ -1943,57 +1969,56 @@ if __name__ == "__main__":
                 c2_x   = dx + off_x2 + 10
                 f_w    = off_x2 - 120
 
-                _SEC1_Y = dy + 68
+                layout = getattr(self, "_gs_modal_layout", None)
+                if not layout:
+                    return          # not drawn yet: nothing to hit
+                _stride = layout["_lang_stride"]
+                _field_h = layout["_lang_field_h"]
+                _SEC1_Y = layout["_SEC1_Y"]
                 for i, l in enumerate(self.LANGS):
-                    field_r = (c1_x + 50, _SEC1_Y + 38 + i * _LANG_FIELD_STRIDE, f_w, _LANG_FIELD_H)
+                    field_r = (c1_x + 50, _SEC1_Y + 38 + i * _stride, f_w, _field_h)
                     if _in_rect((mx, my_raw), field_r):
                         self._gs_edit_active_field = l
-                        self._gs_edit_all_selected = False
+                        self._gs_edit_buf = self._gs_edit_lang_bufs.get(l, "")
                         self._gs_edit_cursors[l] = len(self._gs_edit_lang_bufs[l])
+                        self._gs_edit_all_selected = False
                         return
 
-                _sep1_y = _SEC1_Y + 38 + len(self.LANGS) * _LANG_FIELD_STRIDE + 8
-                _SEC2_Y = _sep1_y + 16
-                cat_r = pygame.Rect(c1_x, _SEC2_Y + 22, 260, 34)
+                _SEC2_Y = layout["_SEC2_Y"]
+                cat_r = layout["cat_r"]
                 if _in_rect((mx, my_raw), cat_r):
-                    self._gs_edit_cat_dropdown = not getattr(self, "_gs_edit_cat_dropdown", False)
+                    self._gs_edit_cat_dropdown = not getattr(
+                        self, "_gs_edit_cat_dropdown", False)
                     return
-
                 if getattr(self, "_gs_edit_cat_dropdown", False):
                     if _in_rect((mx, my_raw), (c1_x, _SEC2_Y + 22 + 34, 260, 34)):
-                        self._gs_edit_category = "desktop"; self._gs_edit_cat_dropdown = False; return
+                        self._gs_edit_category = "desktop"
+                        self._gs_edit_cat_dropdown = False
+                        return
                     if _in_rect((mx, my_raw), (c1_x, _SEC2_Y + 22 + 68, 260, 34)):
-                        self._gs_edit_category = "android"; self._gs_edit_cat_dropdown = False; return
-                    self._gs_edit_cat_dropdown = False
-                    return
+                        self._gs_edit_category = "android"
+                        self._gs_edit_cat_dropdown = False
+                        return
 
-                _sep2_y = _SEC2_Y + 68
-                _SEC3_Y = _sep2_y + 16
-                _cur_cat = getattr(self, "_gs_edit_category", "desktop")
-                _THEME_INFO = [t for t in self.theme_manager.discover_themes()
-                               if t.get("category", "desktop") == _cur_cat]
-                if not _THEME_INFO: _THEME_INFO = [{"id": "default", "name": "Default"}]
-                _t_btn_w, _t_btn_h, _t_gap = min(260, (off_x2 - 60) // 2), 42, 6
-                _theme_grid_y = _SEC3_Y + 22
-                for _ti, _tdata in enumerate(_THEME_INFO):
-                    _tid = _tdata["id"]
+                _t_btn_w = layout["_t_btn_w"]
+                _t_btn_h = layout["_t_btn_h"]
+                _t_gap = layout["_t_gap"]
+                _theme_grid_y = layout["_theme_grid_y"]
+                for _ti, _tdata in enumerate(layout["_THEME_INFO"]):
                     _tx = c1_x + (_ti % 2) * (_t_btn_w + _t_gap)
                     _ty = _theme_grid_y + (_ti // 2) * (_t_btn_h + _t_gap)
                     if _in_rect((mx, my_raw), (_tx, _ty, _t_btn_w, _t_btn_h)):
-                        self._gs_edit_theme_id = _tid; return
+                        self._gs_edit_theme_id = _tdata["id"]
+                        return
 
-                _n_theme_rows = (len(_THEME_INFO) + 1) // 2
-                _sep3_y = _theme_grid_y + _n_theme_rows * (_t_btn_h + _t_gap) + 12
-                _SEC4_Y = _sep3_y + 10
-                mag_r = pygame.Rect(c1_x, _SEC4_Y, off_x2 - 50, 32)
-                if _in_rect((mx, my_raw), mag_r):
-                    self._gs_edit_magnifier = not getattr(self, "_gs_edit_magnifier", False)
+                if _in_rect((mx, my_raw), layout["mag_r"]):
+                    self._gs_edit_magnifier = not getattr(
+                        self, "_gs_edit_magnifier", False)
                     return
 
-                _SEC5_Y = _SEC4_Y + 44
-                btn_icon_r = pygame.Rect(c1_x, _SEC5_Y + 22, 190, 36)
-                if _in_rect((mx, my_raw), btn_icon_r):
-                    self._icon_modal_open(); return
+                if _in_rect((mx, my_raw), layout["btn_icon_r"]):
+                    self._icon_modal_open()
+                    return
 
                 # Colonna 2 (Destra)
                 _A_Y = dy + 68
@@ -2322,11 +2347,9 @@ if __name__ == "__main__":
 
         # Priorità: Scroll Playlist in Dialog Modifica (se aperto)
         if hasattr(self, '_gs_edit_mode') and self._gs_edit_mode == "game":
-            # Calcolo dinamico allineato con _r_gs_edit_dialog
-            _dw_e = min(1600, max(1200, int(w * 0.92)))
-            _dh_e = min(1000, max(820, int(h * 0.92)))
-            _dx_e = (w - _dw_e) // 2
-            _dy_e = (h - _dh_e) // 2
+            _box_e = self._gs_edit_dialog_rect(w, h)
+            _dw_e, _dh_e = _box_e.w, _box_e.h
+            _dx_e, _dy_e = _box_e.x, _box_e.y
             _off_x2_e = int(_dw_e * 0.52)
             _y_mu_e = _dy_e + int(_dh_e * 0.78)
             _r_col_w_e = _dw_e - _off_x2_e - 40
@@ -3192,6 +3215,16 @@ if __name__ == "__main__":
                 self.lang_manager.get("gs_btn_cancel_esc", "Annulla (Esc)"),
                 _in_rect((mx2, my2), cancel_r))
 
+    def _gs_edit_dialog_rect(self, w: int, h: int):
+        """Rect of the project edit dialog: one source for draw and input.
+
+        It asked for at least 1200x820 while the editor's minimum window is
+        1280x720, so on it the dialog started fifty pixels above the top edge.
+        """
+        return dialog_rect(w, h,
+                           min(1600, max(1200, int(w * 0.92))),
+                           min(1000, max(820, int(h * 0.92))))
+
     def _r_gs_edit_dialog(self, w, h):
         labels = {
             "game": self.lang_manager.get("gs_modal_edit_game", "Impostazioni Progetto"),
@@ -3203,11 +3236,9 @@ if __name__ == "__main__":
         dim = pygame.Surface((w, h), pygame.SRCALPHA)
         dim.fill((0, 0, 0, 180)); self.screen.blit(dim, (0, 0))
 
-        # Dimensioni dinamiche relative alla finestra — ingrandite per miglior usabilità
-        dw = min(1600, max(1200, int(w * 0.92)))
-        dh = min(1000, max(820, int(h * 0.92)))
-        dx, dy = (w - dw) // 2, (h - dh) // 2
-        box = pygame.Rect(dx, dy, dw, dh)
+        # Dimensioni dinamiche relative alla finestra, mai piu' grandi di essa
+        box = self._gs_edit_dialog_rect(w, h)
+        dw, dh, dx, dy = box.w, box.h, box.x, box.y
         # Sfondo con leggero gradiente simulato (layer doppio)
         _rect(self.screen, (22, 24, 36), box, radius=14)
         _rect(self.screen, (28, 30, 42), pygame.Rect(dx, dy + dh // 2, dw, dh // 2), radius=0)
@@ -3236,16 +3267,6 @@ if __name__ == "__main__":
                 self.screen, (*BORDER[:3], 60),
                 (dx + off_x2 - 14, dy + 62), (dx + off_x2 - 14, dy + dh - 70), 1
             )
-            # ── COLONNA 1 (Sinistra): TESTI E TEMA ────────────────────────────
-            # Punto 1: Localizzazione
-            _draw_text(self.screen, self._TR("gs_step_title_tr", "1. TITLE AND TRANSLATIONS"), "sm", TXT_DIM, dx + 20, dy + 68)
-            f_w = off_x2 - 150  # Larghezza dinamica campo testo
-            for i, l in enumerate(self.LANGS):
-                fy = dy + 106 + i * _LANG_FIELD_STRIDE
-                is_active = (self._gs_edit_active_field == l)
-                lbl_col = ACCENT if is_active else TXT_DIM
-                # Etichetta lingua (font sm per leggibilità)
-                _draw_text(self.screen, l.upper(), "sm", lbl_col, dx + 20, fy + 8)
             # ── LAYOUT: coordinate fisse dentro la modale (no percentuali di dh) ──
             # Colonna sx: 0..off_x2-14  Colonna dx: off_x2..dw
             off_x2 = int(dw * 0.52)
@@ -3265,7 +3286,31 @@ if __name__ == "__main__":
             # ══════════════════════════════════════════════════
 
             # ── Sez. 1: Titolo e traduzioni ───────────────────
+            # The five language fields are the only compressible part of the
+            # column: the sections under them are fixed blocks. When the dialog
+            # is clamped to a short window they tighten instead of pushing the
+            # icon section under the footer buttons.
             _SEC1_Y = dy + 68   # Y inizio sezione 1
+
+            # What sits under the fields is a chain of fixed blocks, and the
+            # theme grid grows with the number of themes: measure it rather
+            # than guess, then give the fields whatever is left.
+            _cur_cat = getattr(self, "_gs_edit_category", "desktop")
+            _THEME_INFO = [t for t in self.theme_manager.discover_themes()
+                           if t.get("category", "desktop") == _cur_cat]
+            if not _THEME_INFO:
+                _THEME_INFO = [{"id": "default", "name": "Default"}]
+            _t_btn_w, _t_btn_h, _t_gap = min(260, (off_x2 - 60) // 2), 42, 6
+            _n_theme_rows = (len(_THEME_INFO) + 1) // 2
+
+            # Blocchi fissi sotto i campi lingua (separatori, piattaforma,
+            # header temi, magnifier, icona) esclusa la griglia dei temi.
+            _FIXED_EXTRA = 8 + 16 + 68 + 16 + 22 + 12 + 10 + 44 + 22 + 48
+            _available = (dy + dh - _GS_EDIT_FOOTER_H) - (_SEC1_Y + 38)
+            _LANG_FIELD_STRIDE, _t_btn_h = _gs_edit_column_fit(
+                _available, len(self.LANGS), _n_theme_rows,
+                _LANG_FIELD_STRIDE, _t_btn_h, _t_gap, _FIXED_EXTRA)
+            _LANG_FIELD_H = min(_LANG_FIELD_H, _LANG_FIELD_STRIDE - 6)
             _draw_text(self.screen, self._TR("gs_step_game_title", "❶  GAME TITLE"), "sm", TXT_DIM, c1_x, _SEC1_Y)
 
             # Hint TAB
@@ -3296,11 +3341,13 @@ if __name__ == "__main__":
             # ── Sez. 2: Piattaforma target ────────────────────
             _SEC2_Y = _sep1_y + 16
             _draw_text(self.screen, self._TR("gs_step_platform", "❷  TARGET PLATFORM"), "sm", TXT_DIM, c1_x, _SEC2_Y)
-            _cur_cat = getattr(self, "_gs_edit_category", "desktop")
             _is_open = getattr(self, "_gs_edit_cat_dropdown", False)
             cat_r = pygame.Rect(c1_x, _SEC2_Y + 22, 260, 34)
+            _platform_label = (self._TR("gs_platform_desktop", "DESKTOP")
+                               if _cur_cat == "desktop"
+                               else self._TR("gs_platform_android", "ANDROID"))
             _button(self.screen, cat_r,
-                    f"{'💻 DESKTOP' if _cur_cat == 'desktop' else '📱 ANDROID'}  {'▲' if _is_open else '▼'}",
+                    f"{_platform_label}  {'▲' if _is_open else '▼'}",
                     _in_rect((mx2, my2), cat_r), active=_is_open)
 
             # ── Sez. 3: Tema interfaccia ──────────────────────
@@ -3312,13 +3359,7 @@ if __name__ == "__main__":
             _SEC3_Y = _sep2_y + 16
             _draw_text(self.screen, self._TR("gs_step_theme", "❸  MENU INTERFACE THEME"), "sm", TXT_DIM, c1_x, _SEC3_Y)
 
-            _THEME_INFO = [t for t in self.theme_manager.discover_themes()
-                           if t.get("category", "desktop") == _cur_cat]
-            if not _THEME_INFO:
-                _THEME_INFO = [{"id": "default", "name": "Default"}]
-
             _cur_theme = getattr(self, "_gs_edit_theme_id", "default")
-            _t_btn_w, _t_btn_h, _t_gap = min(260, (off_x2 - 60) // 2), 42, 6
 
             def _tcol(colors, key, fallback):
                 v = colors.get(key)
@@ -3490,6 +3531,7 @@ if __name__ == "__main__":
             self._gs_modal_layout = {
                 "off_x2": off_x2, "c1_x": c1_x, "c2_x": c2_x,
                 "f_w": f_w, "c2_w": c2_w, "r_col_w": r_col_w,
+                "_lang_stride": _LANG_FIELD_STRIDE, "_lang_field_h": _LANG_FIELD_H,
                 "_SEC1_Y": _SEC1_Y, "_SEC2_Y": _SEC2_Y, "_SEC3_Y": _SEC3_Y,
                 "_SEC4_Y": _SEC4_Y, "_SEC5_Y": _SEC5_Y,
                 "_A_Y": _A_Y, "_B_Y": _B_Y, "_C_Y": _C_Y,

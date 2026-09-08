@@ -86,9 +86,9 @@ def run_build(
         timeout_error_fmt=(
             "TIMEOUT GLOBALE: Build superato {timeout}s. Progresso fermo a {progress}%"
         ),
-        success_step_fn=lambda result: "✓ Build completato!",
-        failure_step="✗ Errore build",
-        timeout_step="✗ TIMEOUT Build",
+        success_step_fn=lambda result: "OK: Build completato!",
+        failure_step="ERROR: Errore build",
+        timeout_step="ERROR: TIMEOUT Build",
         extra_defaults={"zip_path": None},
         result_extra_fn=lambda result: {"zip_path": result.get("zip_path")},
         log=logger,

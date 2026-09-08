@@ -268,15 +268,15 @@ def _verify_pyinstaller_available():
             timeout=5
         )
         version = result.stdout.strip() if result.returncode == 0 else "sconosciuta"
-        logger.info(f"✓ PyInstaller disponibile (versione: {version})")
+        logger.info(f"OK: PyInstaller disponibile (versione: {version})")
         return "pyinstaller"
     except FileNotFoundError:
-        logger.error("✗ PyInstaller non trovato in PATH")
+        logger.error("ERROR: PyInstaller non trovato in PATH")
         raise RuntimeError(
             "PyInstaller non trovato. Installa con: pip install pyinstaller"
         )
     except Exception as e:
-        logger.error(f"✗ Errore verifica PyInstaller: {e}")
+        logger.error(f"ERROR: Errore verifica PyInstaller: {e}")
         raise
 
 
@@ -530,7 +530,7 @@ def build_game(
                 f"App directory troppo grande ({app_size_mb:.1f} MB). "
                 f"PyInstaller ha incluso librerie non necessarie — controlla gli --exclude-module."
             )
-        log_step(f"✓ App directory: {app_size_mb:.1f} MB", 88)
+        log_step(f"OK: App directory: {app_size_mb:.1f} MB", 88)
 
         # ── STEP 9: Preparazione cartella di distribuzione ─────────────────────
         # In directory mode l'EXE è in dist/{game_id}/{game_id}.exe.
@@ -734,10 +734,10 @@ def build_game(
                 total_mb = total_uncompressed / 1024 / 1024
                 ratio = 100 * (1 - zip_size_mb / total_mb) if total_mb > 0 else 0
                 
-                log_step(f"✓ ZIP creato: {zip_path.name} ({zip_size_mb:.1f} MB)", 98)
+                log_step(f"OK: ZIP creato: {zip_path.name} ({zip_size_mb:.1f} MB)", 98)
                 logger.info(f"[ZIP] {zip_size_mb:.1f} MB ({file_count} file, compressione {ratio:.0f}%)")
             except Exception as e:
-                logger.error(f"✗ Errore creazione ZIP: {e}")
+                logger.error(f"ERROR: Errore creazione ZIP: {e}")
                 raise
         else:
             log_step("Build completata! (ZIP saltato)", 98)
@@ -748,12 +748,12 @@ def build_game(
         if temp_dir and temp_dir.exists():
             try:
                 shutil.rmtree(temp_dir, ignore_errors=True)
-                logger.info(f"[Cleanup] ✓ Cartella temp rimossa: {temp_dir}")
+                logger.info(f"[Cleanup] OK: Cartella temp rimossa: {temp_dir}")
             except Exception as cleanup_err:
-                logger.warning(f"[Cleanup] ⚠ Errore pulizia: {cleanup_err}")
+                logger.warning(f"[Cleanup] WARNING: Errore pulizia: {cleanup_err}")
 
         elapsed = time.time() - build_start_time
-        log_step(f"✓ Build completato! ({elapsed:.1f}s)", 100)
+        log_step(f"OK: Build completato! ({elapsed:.1f}s)", 100)
         logger.info(f"[Build Complete] Tempo totale: {elapsed:.1f}s")
 
         # Aggiorna la versione in game_config.json (per il prossimo build)
@@ -771,16 +771,16 @@ def build_game(
 
     except Exception as e:
         elapsed = time.time() - build_start_time
-        logger.exception(f"✗ Errore durante build di '{game_id}' ({elapsed:.1f}s): {e}")
-        log_step(f"✗ ERRORE: {str(e)[:100]}", 100)
+        logger.exception(f"ERROR: Errore durante build di '{game_id}' ({elapsed:.1f}s): {e}")
+        log_step(f"ERROR: ERRORE: {str(e)[:100]}", 100)
 
         # Cleanup in caso di errore
         if temp_dir and temp_dir.exists():
             try:
                 shutil.rmtree(temp_dir, ignore_errors=True)
-                logger.info(f"[Cleanup Error] ✓ Cartella temp rimossa: {temp_dir}")
+                logger.info(f"[Cleanup Error] OK: Cartella temp rimossa: {temp_dir}")
             except Exception as cleanup_err:
-                logger.warning(f"[Cleanup Error] ⚠ Errore pulizia temp dir: {cleanup_err}")
+                logger.warning(f"[Cleanup Error] WARNING: Errore pulizia temp dir: {cleanup_err}")
 
         return {
             "success": False,

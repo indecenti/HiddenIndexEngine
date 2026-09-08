@@ -449,3 +449,102 @@ def test_the_probe_would_notice_an_inlined_rect():
                      for t in c.targets)
              and isinstance(c.value, ast.Call)]
     assert found == ["r"]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DASHBOARD: DIALOG MODIFICA PROGETTO
+# ─────────────────────────────────────────────────────────────────────────────
+
+from editor.mixins.game_select import GameSelectMixin  # noqa: E402
+
+
+class FakeDashboard(GameSelectMixin):
+    pass
+
+
+@pytest.mark.parametrize("size", ((1280, 720), (1600, 900), (1920, 1080)))
+def test_the_edit_dialog_fits_the_window(size):
+    """It asked for at least 1200x820 on a 1280x720 minimum window, so it
+    started fifty pixels above the top edge."""
+    box = FakeDashboard()._gs_edit_dialog_rect(*size)
+    assert pygame.Rect((0, 0), size).contains(box)
+
+
+def test_the_edit_dialog_rect_is_stable():
+    """Three call sites used to restate the formula; they now share one."""
+    host = FakeDashboard()
+    assert host._gs_edit_dialog_rect(1600, 900) == host._gs_edit_dialog_rect(1600, 900)
+
+
+def test_the_edit_dialog_grows_with_the_window():
+    host = FakeDashboard()
+    small = host._gs_edit_dialog_rect(1280, 720)
+    large = host._gs_edit_dialog_rect(1920, 1080)
+    assert large.h > small.h
+
+
+def test_the_edit_column_fits_the_shortest_dialog():
+    """The sections cascaded from fixed offsets adding up to more than the
+    dialog is tall once clamped, so the last ones ran under the footer."""
+    from editor.mixins.game_select import _gs_edit_column_fit
+    host = FakeDashboard()
+    box = host._gs_edit_dialog_rect(1280, 720)
+    fixed_extra = 8 + 16 + 68 + 16 + 22 + 12 + 10 + 44 + 22 + 48
+    available = (box.bottom - 72) - (box.y + 68 + 38)
+    stride, theme_h = _gs_edit_column_fit(available, 5, 3, 40, 42, 6, fixed_extra)
+    used = stride * 5 + fixed_extra + 3 * (theme_h + 6)
+    assert used <= available, "the column must fit above the footer"
+
+
+def test_the_edit_column_keeps_its_spacing_when_there_is_room():
+    from editor.mixins.game_select import _gs_edit_column_fit
+    stride, theme_h = _gs_edit_column_fit(2000, 5, 3, 40, 42, 6, 300)
+    assert (stride, theme_h) == (40, 42), "nothing is compressed for nothing"
+
+
+def test_the_edit_column_never_compresses_past_the_floor():
+    from editor.mixins.game_select import (
+        _GS_LANG_STRIDE_MIN, _GS_THEME_BTN_MIN, _gs_edit_column_fit)
+    stride, theme_h = _gs_edit_column_fit(10, 5, 3, 40, 42, 6, 266)
+    assert stride == _GS_LANG_STRIDE_MIN and theme_h == _GS_THEME_BTN_MIN
+
+
+def test_the_edit_column_shrinks_the_fields_before_the_themes():
+    from editor.mixins.game_select import _gs_edit_column_fit
+    stride, theme_h = _gs_edit_column_fit(600, 5, 3, 40, 42, 6, 266)
+    assert stride < 40, "the fields give up their spacing first"
+    assert theme_h == 42, "the themes only give up theirs when that is not enough"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NESSUN EMOJI NEL SORGENTE
+# ─────────────────────────────────────────────────────────────────────────────
+
+_SOURCE_DIRS = ("engine", "editor", "tools")
+_ROOT = _Path(__file__).resolve().parents[1]
+
+
+def _emoji_in(text: str) -> list:
+    """Codepoints from the emoji planes. Dingbats used as icon keys (the "x"
+    of a close button, the arrows of a dropdown) are not emoji and stay."""
+    return [c for c in text if 0x1F000 <= ord(c) <= 0x1FAFF or ord(c) == 0xFE0F]
+
+
+def test_no_emoji_in_the_source():
+    """CLAUDE.md: never emoji in code, docs, UI or output - and the UI font
+    stack has no glyph for them, so "DESKTOP" showed an empty box."""
+    found = []
+    for folder in _SOURCE_DIRS:
+        for path in sorted((_ROOT / folder).rglob("*.py")):
+            if "__pycache__" in path.parts:
+                continue
+            for number, line in enumerate(
+                    path.read_text(encoding="utf-8").splitlines(), 1):
+                if _emoji_in(line):
+                    found.append(f"{path.relative_to(_ROOT)}:{number}")
+    assert not found, f"emoji in the source: {found[:10]}"
+
+
+def test_the_emoji_probe_would_notice_one():
+    assert _emoji_in("a laptop \U0001F4BB here")
+    assert not _emoji_in("arrows and ticks: up down x")

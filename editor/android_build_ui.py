@@ -73,8 +73,8 @@ class AndroidBuildProgressWindow(BaseBuildProgressWindow):
         "Il processo potrebbe essere bloccato (controllare WSL).\n"
         "Chiudere la finestra per terminare il build."
     )
-    timeout_status_text = "✗ TIMEOUT Build APK"
-    failure_status_text = "✗ Errore build APK"
+    timeout_status_text = "ERROR: TIMEOUT Build APK"
+    failure_status_text = "ERROR: Errore build APK"
     failure_msg_prefix = "Build APK fallito:"
     cancel_confirm_text = "Annullare la build APK?"
     close_confirm_text = "La build APK è ancora in corso. Chiudere comunque?"
@@ -120,7 +120,7 @@ class AndroidBuildProgressWindow(BaseBuildProgressWindow):
         return None
 
     def _success_status_text(self, status: dict) -> str:
-        return "✓ APK pronto!"
+        return "OK: APK pronto!"
 
     def _success_message(self, status: dict) -> str:
         apk_path = status.get("apk_path")

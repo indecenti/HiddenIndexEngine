@@ -1011,7 +1011,7 @@ def build_game_apk(
         ok, msg = _verify_wsl_toolchain()
         if not ok:
             raise RuntimeError(f"Toolchain WSL non pronta:\n{msg}")
-        log_step("✓ Toolchain WSL pronta", 4)
+        log_step("OK: Toolchain WSL pronta", 4)
 
         # ── 2) Validazione gioco ──────────────────────────────────────────
         game_path = base_path / "games" / game_id
@@ -1021,7 +1021,7 @@ def build_game_apk(
         if not game_config_path.exists():
             raise FileNotFoundError(f"game_config.json non trovato per '{game_id}'")
         game_config = _load_json(game_config_path)
-        log_step(f"✓ Gioco validato: {game_id} v{version}", 6)
+        log_step(f"OK: Gioco validato: {game_id} v{version}", 6)
 
         # ── 3) Workspace WSL ──────────────────────────────────────────────
         wsl_workspace = _prepare_workspace(game_id, progress_callback)
@@ -1057,7 +1057,7 @@ def build_game_apk(
         action = "release" if release else "debug"
 
         if use_fast_path:
-            log_step("⚡ Avvio Fast Path (p4a bypass)...", 18)
+            log_step("Avvio Fast Path (p4a bypass)...", 18)
             build_cmd = (
                 f"set -o pipefail; "
                 f"source {WSL_VENV_ACTIVATE} && "
@@ -1130,7 +1130,7 @@ def build_game_apk(
             tail = "\n".join(lines[-40:])
             raise RuntimeError(f"Build fallita (rc={rc}).\nOutput finale:\n{tail}")
 
-        log_step(f"✓ {'Fast Path' if use_fast_path else 'Buildozer'} completato con successo", 95)
+        log_step(f"OK: {'Fast Path' if use_fast_path else 'Buildozer'} completato con successo", 95)
 
         # ── 6) Recupero artefatto ─────────────────────────────────────────
         # In release buildozer produce un .aab (App Bundle), non un .apk: glob
@@ -1165,10 +1165,10 @@ def build_game_apk(
                 logger.warning(f"[Re-sign] errore non critico: {_rs_err}")
 
         apk_size_mb = dst_apk.stat().st_size / 1024 / 1024
-        log_step(f"✓ APK copiato in {dst_apk} ({apk_size_mb:.1f} MB)", 99)
+        log_step(f"OK: APK copiato in {dst_apk} ({apk_size_mb:.1f} MB)", 99)
 
         elapsed = time.time() - build_start
-        log_step(f"✓ Build APK completato ({elapsed/60:.1f} min)", 100)
+        log_step(f"OK: Build APK completato ({elapsed/60:.1f} min)", 100)
 
         return {
             "success": True,
@@ -1180,8 +1180,8 @@ def build_game_apk(
 
     except Exception as e:
         elapsed = time.time() - build_start
-        logger.exception(f"✗ Errore build APK '{game_id}' ({elapsed/60:.1f} min): {e}")
-        log_step(f"✗ ERRORE: {str(e)[:200]}", 100)
+        logger.exception(f"ERROR: Errore build APK '{game_id}' ({elapsed/60:.1f} min): {e}")
+        log_step(f"ERROR: ERRORE: {str(e)[:200]}", 100)
         return {
             "success": False,
             "apk_path": None,

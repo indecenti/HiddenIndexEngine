@@ -671,8 +671,8 @@ class BaseBuildProgressWindow:
         "Il processo potrebbe essere bloccato.\n"
         "Chiudere la finestra per terminare il build."
     )
-    timeout_status_text: ClassVar[str] = "✗ TIMEOUT Build"
-    failure_status_text: ClassVar[str] = "✗ Errore compilazione"
+    timeout_status_text: ClassVar[str] = "ERROR: TIMEOUT Build"
+    failure_status_text: ClassVar[str] = "ERROR: Errore compilazione"
     failure_msg_prefix: ClassVar[str] = "Build fallito:"
     cancel_confirm_text: ClassVar[str] = "Annullare la compilazione?"
     close_confirm_text: ClassVar[str] = "La compilazione è ancora in corso. Chiudere comunque?"
@@ -734,7 +734,7 @@ class BaseBuildProgressWindow:
 
     def _success_status_text(self, status: dict) -> str:
         """Hook: testo della status label in caso di successo."""
-        return "✓ Compilazione completata!"
+        return "OK: Compilazione completata!"
 
     def _success_message(self, status: dict) -> str:
         """Hook: testo del messagebox di successo."""

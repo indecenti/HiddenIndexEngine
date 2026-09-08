@@ -62,8 +62,8 @@ class BuildProgressWindow(BaseBuildProgressWindow):
         "Il processo potrebbe essere bloccato.\n"
         "Chiudere la finestra per terminare il build."
     )
-    timeout_status_text = "✗ TIMEOUT Build"
-    failure_status_text = "✗ Errore compilazione"
+    timeout_status_text = "ERROR: TIMEOUT Build"
+    failure_status_text = "ERROR: Errore compilazione"
     failure_msg_prefix = "Build fallito:"
     cancel_confirm_text = "Annullare la compilazione?"
     close_confirm_text = "La compilazione è ancora in corso. Chiudere comunque?"
@@ -99,7 +99,7 @@ class BuildProgressWindow(BaseBuildProgressWindow):
         return None
 
     def _success_status_text(self, status: dict) -> str:
-        return "✓ Compilazione completata!"
+        return "OK: Compilazione completata!"
 
     def _success_message(self, status: dict) -> str:
         zip_path = status.get("zip_path")

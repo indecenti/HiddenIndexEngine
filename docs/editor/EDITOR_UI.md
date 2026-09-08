@@ -45,6 +45,7 @@ renderer stores the rects on the editor and the input handler reads them back:
 | Canvas toolbar | `self._get_toolbar_layout()` (shared by draw and hit test) |
 | Catalog rows | `self._catalog_item_hitboxes` |
 | Outline rows | `self._outline_hitboxes` |
+| Project edit (dashboard) | `_gs_edit_dialog_rect()` for the box, `self._gs_modal_layout` for every section; `_gs_edit_column_fit()` compresses the column when the dialog is short |
 | Asset studio | `_img_editor_get_modal_rect()`, called by the renderer as well as the click handler |
 | Scene outline | `_outline_hitboxes`, `_outline_list_top()`, `_outline_row_h()` |
 | Auto-scatter | `_scatter_hitboxes` |
@@ -237,6 +238,16 @@ stripped those bytes: "citta" and "casino" were left in the registry as `citt`
 and `casin`, ids no `tag_<id>` lookup could ever match. `slugify_tag()` in
 `editor/core/tags.py` is now the single normalizer (NFKD, ASCII, non
 alphanumerics to underscores) and both harvest and `ensure_tag()` go through it.
+
+### No emoji
+
+`CLAUDE.md` says never emoji, and the font stack agrees: the platform dropdown
+shipped with a laptop and a phone emoji, which the UI font has no glyph for, so
+it drew an empty box next to "DESKTOP". The build systems used tick and cross
+marks in their log lines for the same reason. `pytest
+tests/test_editor_modal_geometry.py` walks `engine/`, `editor/` and `tools/`
+and refuses a codepoint from the emoji planes; the dingbats used as icon keys
+(the close button, the dropdown arrows) are not emoji and stay.
 
 ### Characters the font can draw
 

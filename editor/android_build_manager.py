@@ -90,9 +90,9 @@ def run_apk_build(
         timeout_error_fmt=(
             "TIMEOUT GLOBALE: build APK superato {timeout}s. Progresso a {progress}%"
         ),
-        success_step_fn=lambda result: f"✓ APK pronto ({result['apk_size_mb']:.1f} MB)",
-        failure_step="✗ Errore build APK",
-        timeout_step="✗ TIMEOUT Build APK",
+        success_step_fn=lambda result: f"OK: APK pronto ({result['apk_size_mb']:.1f} MB)",
+        failure_step="ERROR: Errore build APK",
+        timeout_step="ERROR: TIMEOUT Build APK",
         extra_defaults={"apk_path": None, "apk_size_mb": None},
         result_extra_fn=lambda result: {
             "apk_path": result.get("apk_path"),

@@ -237,8 +237,8 @@ def run_migration(dry_run: bool = False) -> dict:
     if not dry_run:
         backup = make_backup(CATALOG_PATH)
         save_catalog(data, CATALOG_PATH)
-        print(f"✓ Backup salvato: {backup.name}")
-        print(f"✓ Catalogo aggiornato: {CATALOG_PATH.name}")
+        print(f"OK: Backup salvato: {backup.name}")
+        print(f"OK: Catalogo aggiornato: {CATALOG_PATH.name}")
     else:
         print("─── DRY RUN ─── (nessun file modificato)\n")
 
