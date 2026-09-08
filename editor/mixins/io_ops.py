@@ -357,6 +357,64 @@ class IoOpsMixin:
             if recent_path.exists():
                 self._load_scene(recent_path)
 
+    def _register_scene_after(self, level_dir: Path, after: str, new_id: str) -> None:
+        """Add `new_id` to level_config.json right after the scene `after`.
+
+        A scene that is not in level_config.json is never played, so a copy has
+        to be registered as soon as it is created. The original is registered
+        too when it was orphaned, to keep the pair adjacent.
+        """
+        cfg_path = level_dir / "level_config.json"
+        if not cfg_path.exists():
+            return
+        cfg = _load_json(cfg_path) or {}
+        scenes = cfg.get("scenes", [])
+        source = next((s for s in scenes if s.get("id") == after), None)
+        if source is None:
+            source = {"id": after, "time_limit": 120, "transition_out": "fade"}
+            scenes.append(source)
+        entry = dict(source)
+        entry["id"] = new_id
+        scenes.insert(scenes.index(source) + 1, entry)
+        for i, scene in enumerate(scenes):
+            scene["order"] = i + 1
+        cfg["scenes"] = scenes
+        _save_json(cfg_path, cfg)
+
+    def _save_scene_as(self) -> None:
+        """Save the scene being edited into a new folder, and open it."""
+        if not self.scene_path:
+            self._status(self._TR("io_no_scene_path",
+                                  "Error: scene path not set"), ERR_C, 3)
+            return
+
+        level_dir = self.scene_path.parent
+        original = self.scene_path.name
+        new_name = self._gs_unique_copy_name(level_dir, original)
+        destination = level_dir / new_name
+        try:
+            shutil.copytree(self.scene_path, destination)
+        except OSError as exc:
+            self._status(self._TR("io_save_as_error",
+                                  "Save as failed: {0}").format(exc), ERR_C, 4)
+            return
+
+        # The autosave of the original does not belong to the copy.
+        autosave = destination / "scene.json.autosave"
+        if autosave.exists():
+            try:
+                autosave.unlink()
+            except OSError as exc:
+                logging.debug(f"[EDITOR] autosave della copia non rimosso: {exc}")
+
+        self.scene_data["id"] = new_name
+        self.scene_path = destination
+        self._save()                       # writes the edited scene into the copy
+        self._register_scene_after(level_dir, original, new_name)
+        self._load_scene(destination)
+        self._status(self._TR("io_saved_as", "Saved as: {0}").format(new_name),
+                     OK_C, 3)
+
     def _load_scene(self, scene_path: Path):
         logging.info(f"[EDITOR] Loading scene: {scene_path}")
         self.scene_path  = scene_path

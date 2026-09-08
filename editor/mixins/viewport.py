@@ -8,12 +8,94 @@ import math
 import pygame
 from editor.constants import (
     TOP_BAR_H, STATUS_H, PANEL_MIN_W, PANEL_MAX_W,
-    REF_W, REF_H,
+    REF_W, REF_H, GRID_SIZES, ACCENT, TAB_LAYERS, TAB_PROPS,
+    MIN_EDITOR_WIDTH, MIN_EDITOR_HEIGHT, WIN_W, WIN_H,
 )
 
 
 class ViewportMixin:
     """Gestione viewport: coordinate screen↔reference, zoom, pan, layout."""
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # TOGGLE DI VISTA
+    # ─────────────────────────────────────────────────────────────────────────
+    # One method per toggle, so the canvas toolbar, the keyboard and the
+    # command palette all drive the same code instead of three copies.
+
+    def _toggle_overlay(self) -> None:
+        """Show or hide the coloured hit areas over the background."""
+        self.show_overlay = not self.show_overlay
+        self._mark_dirty()
+
+    def _toggle_grid(self) -> None:
+        """Show or hide the grid."""
+        self.show_grid = not self.show_grid
+        self._mark_dirty()
+
+    def _toggle_icons(self) -> None:
+        """Show or hide the PNG icons of the placed objects."""
+        self.show_icons = not self.show_icons
+        self._mark_dirty()
+
+    def _cycle_grid_size(self) -> None:
+        """Next grid size, persisted. Turns the grid on if it was off."""
+        try:
+            index = GRID_SIZES.index(self.grid_size)
+        except ValueError:
+            index = -1
+        self.grid_size = GRID_SIZES[(index + 1) % len(GRID_SIZES)]
+        self._save_editor_setting("grid_size", self.grid_size)
+        self.show_grid = True
+        self._mark_dirty()
+        self._status(self._TR("ih_grid", "Grid: {0}px").format(self.grid_size),
+                     ACCENT, 2)
+
+    def _toggle_obj_snap(self) -> None:
+        """Snap to the edges of the other objects, persisted."""
+        self.obj_snap = not getattr(self, "obj_snap", True)
+        self._save_editor_setting("obj_snap", self.obj_snap)
+        self._status(
+            self._TR("ih_snap_objects", "Snap to objects: {0}").format(
+                "ON" if self.obj_snap else "OFF"), ACCENT, 2)
+
+    def _toggle_panels(self) -> None:
+        """Hide the side panels to give the canvas the whole window."""
+        self.panels_visible = not self.panels_visible
+        self._update_layout()
+        self._mark_dirty()
+
+    def _toggle_layers_tab(self) -> None:
+        """Swap the right panel between the layers and the properties."""
+        self.r_tab = TAB_LAYERS if self.r_tab != TAB_LAYERS else TAB_PROPS
+
+    def _zoom_in(self) -> None:
+        self._zoom_by(1.2)
+
+    def _zoom_out(self) -> None:
+        self._zoom_by(1 / 1.2)
+
+    def _toggle_fullscreen(self) -> None:
+        """Fullscreen on and off, keeping the window above its minimum size."""
+        self.fullscreen = not self.fullscreen
+        if self.fullscreen:
+            self.screen = pygame.display.set_mode(
+                (0, 0), pygame.FULLSCREEN | pygame.RESIZABLE)
+        else:
+            self.screen = pygame.display.set_mode((WIN_W, WIN_H), pygame.RESIZABLE)
+        self.screen_size = self.screen.get_size()
+
+        if not self.fullscreen:
+            w, h = self.screen_size
+            if w < MIN_EDITOR_WIDTH or h < MIN_EDITOR_HEIGHT:
+                w = max(w, MIN_EDITOR_WIDTH)
+                h = max(h, MIN_EDITOR_HEIGHT)
+                self.screen = pygame.display.set_mode((w, h), pygame.RESIZABLE)
+                self.screen_size = (w, h)
+
+        self._update_layout()
+        self._mark_dirty()
+        self._status(self._TR("ih_fullscreen", "Fullscreen: {0}").format(
+            "ON" if self.fullscreen else "OFF"), ACCENT, 2)
 
     # ─────────────────────────────────────────────────────────────────────────
     # LAYOUT

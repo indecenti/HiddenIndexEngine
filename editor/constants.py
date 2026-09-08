@@ -126,17 +126,30 @@ HUD_PAD_X     = 10
 HUD_PAD_Y     = 6
 HUD_MARGIN    = 10
 HUD_LINE_GAP  = 2
+HUD_BTN_PAD   = 10   # padding that turns a label into a HUD button
+HUD_GAP       = 4    # gap between two HUD controls
 HUD_BG        = (18, 18, 24, 200)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # OVERLAY SCORCIATOIE (F1)
 # ─────────────────────────────────────────────────────────────────────────────
 
-SHORTCUTS_PANEL_W   = 620
-SHORTCUTS_ROW_H     = 26
+SHORTCUTS_PANEL_W   = 760
+SHORTCUTS_ROW_H     = 24
 SHORTCUTS_PAD       = 22
-SHORTCUTS_KEY_COL_W = 190   # width reserved for the key chip column
+SHORTCUTS_KEY_COL_W = 92    # width of the key chip column
+SHORTCUTS_COL_GAP   = 12    # gap between the chip and its label
 SHORTCUTS_SCRIM     = (10, 10, 15, 170)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COMMAND PALETTE (Ctrl+P)
+# ─────────────────────────────────────────────────────────────────────────────
+
+PALETTE_W        = 620
+PALETTE_MAX_ROWS = 12
+PALETTE_PAD      = 14
+PALETTE_TOP      = 120      # distance from the top of the window
+PALETTE_SCRIM    = (10, 10, 15, 150)
 
 SND_CLICK      = "engine/assets/sounds/click_Low.wav"
 CACHE_OBJ_MAX  = 400

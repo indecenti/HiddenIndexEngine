@@ -1,49 +1,32 @@
 """
 editor/mixins/shortcuts_overlay.py
 
-ShortcutsOverlayMixin — the F1 keyboard shortcuts panel.
+ShortcutsOverlayMixin - the F1 keyboard shortcuts panel.
 
 The editor used to advertise its shortcuts as two permanent one-line strings:
 one centred in the status bar, one blitted on the canvas in (60, 65, 75) on
-top of the toolbar. Neither was readable. Both strings are still the single
-source of truth for the shortcut list, they are just parsed and laid out as a
-proper panel that the user opens on demand.
+top of the toolbar. Neither was readable, and between them they named 9 of the
+57 bindings the editor actually has.
+
+The panel now lists the whole of `editor/commands.py`, grouped, in the
+language the editor is set to. Adding a command to that table adds it here.
 """
 
 from typing import List, Tuple
 
 import pygame
 
+from editor.commands import COMMANDS, GROUPS
 from editor.constants import (
     ACCENT, BORDER, PANEL, TXT, TXT_DIM, TXT_HI,
-    SHORTCUTS_PANEL_W, SHORTCUTS_ROW_H, SHORTCUTS_PAD, SHORTCUTS_KEY_COL_W,
-    SHORTCUTS_SCRIM,
+    SHORTCUTS_COL_GAP, SHORTCUTS_KEY_COL_W, SHORTCUTS_PAD, SHORTCUTS_PANEL_W,
+    SHORTCUTS_ROW_H, SHORTCUTS_SCRIM,
 )
 from editor.ui.draw import _draw_text, _rect, _text_wh
 
-# The shortcut strings are written as "KEYS=description" runs separated by
-# spaces. A run without "=" belongs to the description of the previous one:
-# a translator is free to write "Del=delete object" without breaking the list.
-_SEP = "="
-
-
-def _parse_shortcuts(text: str) -> List[Tuple[str, str]]:
-    """Split a "Ctrl+S=Save Ctrl+Z=Undo" string into (keys, description)."""
-    rows: List[Tuple[str, str]] = []
-    for token in str(text).split(" "):
-        if not token:
-            continue
-        if _SEP in token:
-            keys, _, desc = token.partition(_SEP)
-            rows.append((keys, desc))
-        elif rows:
-            keys, desc = rows[-1]
-            rows[-1] = (keys, f"{desc} {token}".strip())
-    return rows
-
 
 class ShortcutsOverlayMixin:
-    """F1 shortcuts panel: toggle, hit test and rendering."""
+    """F1 shortcuts panel: toggle and rendering."""
 
     def _shortcuts_toggle(self) -> None:
         self._shortcuts_open = not getattr(self, "_shortcuts_open", False)
@@ -57,42 +40,64 @@ class ShortcutsOverlayMixin:
             return True
         return False
 
-    def _shortcuts_rows(self) -> List[Tuple[str, str]]:
-        """Every shortcut the editor advertises, in display order.
+    def _shortcuts_columns(self) -> Tuple[List[list], List[list]]:
+        """The groups split into two columns of roughly equal height.
 
-        The two source strings overlap (both list Ctrl+Z/Y), and one writes
-        its descriptions in lower case: the panel keeps the first spelling of
-        each key combination and capitalises what it shows.
+        An entry is a ("group", label) header or a ("row", keys, label).
         """
-        rows: List[Tuple[str, str]] = []
-        seen: set = set()
-        for text in (self._TR("tb_shortcuts"), self._TR("canvas_hints")):
-            for keys, desc in _parse_shortcuts(text):
-                folded = keys.casefold()
-                if folded in seen:
-                    continue
-                seen.add(folded)
-                rows.append((keys, desc[:1].upper() + desc[1:]))
-        return rows
+        blocks: List[list] = []
+        for group_id, group_label in GROUPS:
+            rows = [c for c in COMMANDS if c.group == group_id and c.keys]
+            if not rows:
+                continue
+            block = [("group", self._TR(f"cmd_group_{group_id}", group_label))]
+            block += [("row", c.keys, self._TR(c.label_key, c.label)) for c in rows]
+            blocks.append(block)
+
+        total = sum(len(b) for b in blocks)
+        left: List[list] = []
+        right: List[list] = []
+        used = 0
+        for block in blocks:
+            if used + len(block) <= (total + 1) // 2 or not left:
+                left.append(block)
+                used += len(block)
+            else:
+                right.append(block)
+        return left, right
 
     def _r_shortcuts_overlay(self, w: int, h: int) -> None:
         if not getattr(self, "_shortcuts_open", False):
             return
-        rows = self._shortcuts_rows()
+
+        left, right = self._shortcuts_columns()
+        rows_left = sum(len(b) for b in left)
+        rows_right = sum(len(b) for b in right)
+
+        title = self._TR("shortcuts_title", "Keyboard shortcuts")
+        footer = self._TR("shortcuts_close", "F1 or Esc to close")
+        title_h = _text_wh(title, "lg")[1]
+        footer_h = _text_wh(footer, "xs")[1]
+
+        # The chip column and the panel follow the content: fixed, a longer
+        # key ("Space+drag") or a translated label was cut with an ellipsis.
+        rows = [entry for block in left + right for entry in block
+                if entry[0] == "row"]
+        key_col = max([_text_wh(keys, "mono")[0] for _, keys, _ in rows] or [0]) + 12
+        key_col = max(SHORTCUTS_KEY_COL_W, key_col)
+        label_w = max([_text_wh(label, "sm")[0] for _, _, label in rows] or [0])
+        column_content = key_col + SHORTCUTS_COL_GAP + label_w
+        panel_w = min(w - 40, max(SHORTCUTS_PANEL_W,
+                                  column_content * 2 + SHORTCUTS_PAD * 3))
+        body_h = max(rows_left, rows_right) * SHORTCUTS_ROW_H
+        panel_h = SHORTCUTS_PAD * 3 + title_h + body_h + footer_h
+        panel_h = min(panel_h, h - 40)
+        box = pygame.Rect((w - panel_w) // 2, max(20, (h - panel_h) // 2),
+                          panel_w, panel_h)
 
         scrim = pygame.Surface((w, h), pygame.SRCALPHA)
         scrim.fill(SHORTCUTS_SCRIM)
         self.screen.blit(scrim, (0, 0))
-
-        title = self._TR("shortcuts_title", "Keyboard shortcuts")
-        footer = self._TR("shortcuts_close", "F1 or Esc to close")
-        _, title_h = _text_wh(title, "lg")
-        _, footer_h = _text_wh(footer, "xs")
-        body_h = len(rows) * SHORTCUTS_ROW_H
-        box_h = SHORTCUTS_PAD * 3 + title_h + body_h + footer_h
-        box = pygame.Rect((w - SHORTCUTS_PANEL_W) // 2, max(20, (h - box_h) // 2),
-                          SHORTCUTS_PANEL_W, box_h)
-
         _rect(self.screen, PANEL, box, radius=10)
         _rect(self.screen, BORDER, box, 1, radius=10)
 
@@ -103,24 +108,32 @@ class ShortcutsOverlayMixin:
                          (box.right - SHORTCUTS_PAD, y), 1)
         y += SHORTCUTS_PAD // 2
 
-        key_x = box.x + SHORTCUTS_PAD
-        desc_x = key_x + SHORTCUTS_KEY_COL_W
-        desc_w = box.right - SHORTCUTS_PAD - desc_x
-        for keys, desc in rows:
-            kw, kh = _text_wh(keys, "mono")
-            chip = pygame.Rect(key_x, y + (SHORTCUTS_ROW_H - kh) // 2 - 2,
-                               min(kw + 10, SHORTCUTS_KEY_COL_W - 10), kh + 4)
-            _rect(self.screen, (46, 46, 58), chip, radius=3)
-            _rect(self.screen, ACCENT, chip, 1, radius=3)
-            _draw_text(self.screen, keys, "mono", TXT_HI, chip.x + 5,
-                       chip.y + 2, chip.w - 10)
-            _draw_text(self.screen, desc, "sm", TXT, desc_x,
-                       y + (SHORTCUTS_ROW_H - kh) // 2, desc_w)
-            y += SHORTCUTS_ROW_H
+        column_w = (box.w - SHORTCUTS_PAD * 3) // 2
+        for column, blocks in ((0, left), (1, right)):
+            x = box.x + SHORTCUTS_PAD + column * (column_w + SHORTCUTS_PAD)
+            cy = y
+            for block in blocks:
+                for entry in block:
+                    if entry[0] == "group":
+                        _draw_text(self.screen, entry[1], "xs", ACCENT, x,
+                                   cy + 4, column_w)
+                    else:
+                        _, keys, label = entry
+                        kw, kh = _text_wh(keys, "mono")
+                        chip = pygame.Rect(x, cy + (SHORTCUTS_ROW_H - kh) // 2 - 2,
+                                           min(kw + 10, key_col), kh + 4)
+                        _rect(self.screen, (46, 46, 58), chip, radius=3)
+                        _rect(self.screen, (70, 74, 92), chip, 1, radius=3)
+                        _draw_text(self.screen, keys, "mono", TXT_HI,
+                                   chip.x + 5, chip.y + 2, chip.w - 10)
+                        _draw_text(self.screen, label, "sm", TXT,
+                                   x + key_col + SHORTCUTS_COL_GAP,
+                                   cy + (SHORTCUTS_ROW_H - kh) // 2,
+                                   column_w - key_col - SHORTCUTS_COL_GAP)
+                    cy += SHORTCUTS_ROW_H
 
-        y += SHORTCUTS_PAD // 2
-        fw, _ = _text_wh(footer, "xs")
+        fw = _text_wh(footer, "xs")[0]
         _draw_text(self.screen, footer, "xs", TXT_DIM,
-                   box.centerx - fw // 2, y)
+                   box.centerx - fw // 2, box.bottom - footer_h - 8)
 
         self._shortcuts_box = box

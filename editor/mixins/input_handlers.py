@@ -18,7 +18,7 @@ from editor.constants import (
     STATE_GAME_SELECT, STATE_MAIN,
     TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_OUTLINE, TAB_LAYERS, TAB_PROPS,
     ACCENT, OK_C, ERR_C, WARN_C, TXT_DIM, FX_C,
-    GRID_SIZES, NUDGE_STEP, NUDGE_STEP_FAST, NUDGE_UNDO_GAP_S, OBJ_SNAP_PX,
+    NUDGE_STEP, NUDGE_STEP_FAST, NUDGE_UNDO_GAP_S, OBJ_SNAP_PX,
     UI_SCALE_STEP,
 )
 from editor.core.io import _discover_games, _default_effect
@@ -147,6 +147,9 @@ class InputHandlersMixin:
             # A = Seleziona Tutti
             if ev.key == pygame.K_a or ev.unicode.lower() == 'a':
                 self._select_all(); return
+            # P = palette dei comandi (ogni comando cercabile per nome)
+            if ev.key == pygame.K_p or ev.unicode.lower() == 'p':
+                self._palette_open(); return
             
             # Layer change (Ctrl+1, Ctrl+2...)
             if ev.key == pygame.K_1: self._set_layer("objects_low");  return
@@ -162,11 +165,7 @@ class InputHandlersMixin:
 
             # G = snap a oggetti on/off (persistito)
             if ev.key == pygame.K_g:
-                self.obj_snap = not getattr(self, "obj_snap", True)
-                self._save_editor_setting("obj_snap", self.obj_snap)
-                self._status(
-                    self._TR("ih_snap_objects", "Snap to objects: {0}").format('ON' if self.obj_snap else 'OFF'), ACCENT, 2)
-                return
+                self._toggle_obj_snap(); return
 
         # ── 3. MODALITÀ EDITING TESTO (Search bars, Numeric props) ────────────────
         # Se siamo in queste modalità e NON è premuto Ctrl, catturiamo l'input.
@@ -259,35 +258,21 @@ class InputHandlersMixin:
                 return
             if ev.key == pygame.K_TAB:     self._tab_cycle();                             return
             if ev.key == pygame.K_SLASH:   self._focus_catalog_search();                  return
-            if ev.key == pygame.K_o:  self.show_overlay = not self.show_overlay; return
+            if ev.key == pygame.K_o:  self._toggle_overlay();                    return
             if ev.key == pygame.K_g:
                 if mods & pygame.KMOD_SHIFT:
-                    # Shift+G: cicla la dimensione della griglia (persistita)
-                    try:
-                        gi = GRID_SIZES.index(self.grid_size)
-                    except ValueError:
-                        gi = -1
-                    self.grid_size = GRID_SIZES[(gi + 1) % len(GRID_SIZES)]
-                    self._save_editor_setting("grid_size", self.grid_size)
-                    self.show_grid = True
-                    self._status(self._TR("ih_grid", "Grid: {0}px").format(self.grid_size), ACCENT, 2)
+                    self._cycle_grid_size()
                 else:
-                    self.show_grid = not self.show_grid
-                self._mark_dirty()
+                    self._toggle_grid()
                 return
-            if ev.key == pygame.K_i:
-                self.show_icons = not self.show_icons
-                self._mark_dirty()
-                return
-            if ev.key == pygame.K_f:  self._fit_canvas();                         return
-            if ev.key == pygame.K_z:  self._zoom_to_selection();                  return
-            if ev.key == pygame.K_l:
-                self.r_tab = TAB_LAYERS if self.r_tab != TAB_LAYERS else TAB_PROPS
-                return
+            if ev.key == pygame.K_i:  self._toggle_icons();                      return
+            if ev.key == pygame.K_f:  self._fit_canvas();                        return
+            if ev.key == pygame.K_z:  self._zoom_to_selection();                 return
+            if ev.key == pygame.K_l:  self._toggle_layers_tab();                 return
             if ev.key in (pygame.K_PLUS, pygame.K_EQUALS, pygame.K_KP_PLUS):
-                self._zoom_by(1.2);  return
+                self._zoom_in();  return
             if ev.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
-                self._zoom_by(1/1.2); return
+                self._zoom_out(); return
             if ev.key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN):
                 # Frecce: nudge della selezione (Shift = passo grande);
                 # senza selezione mantengono il pan del canvas.
@@ -582,6 +567,8 @@ class InputHandlersMixin:
             
             if btn == 1:
                 if self._toolbar_click(mx, my_raw):
+                    return
+                if self._hud_click(mx, my_raw):
                     return
                 self._canvas_ldown(mx, my_raw)
             elif btn in (2, 3):
@@ -2136,6 +2123,8 @@ class InputHandlersMixin:
             self._gs_new_buf = ""
         elif cmd == "file_open_game" or cmd == "file_exit_to_gs":
             self.state = STATE_GAME_SELECT
+        elif cmd == "file_save_as":
+            self._with_loading(self._save_scene_as)
         elif cmd == "file_save_scene":
             self._save()
         elif cmd == "file_quit":

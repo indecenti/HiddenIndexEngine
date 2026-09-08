@@ -16,6 +16,7 @@ from editor.constants import (
     TOOLBAR_BTN_PAD_X, TOOLBAR_BTN_PAD_Y, TOOLBAR_BTN_MIN_W, TOOLBAR_GAP,
     TOOLBAR_GROUP_GAP, TOOLBAR_MARGIN, TOOLBAR_ROW_GAP,
     HUD_PAD_X, HUD_PAD_Y, HUD_MARGIN, HUD_LINE_GAP, HUD_BG,
+    HUD_BTN_PAD, HUD_GAP,
     layer_color,
 )
 from editor.ui.draw import (
@@ -31,6 +32,14 @@ from engine.effect_renderer import (
 
 # Alpha dell'overlay heatmap debug dello scatter (0..255)
 SCATTER_DEBUG_OVERLAY_ALPHA = 110
+
+
+# HUD control -> tooltip key.
+_HUD_TIPS = {
+    "zoom_out": "cmd_zoom_out",
+    "zoom_in": "cmd_zoom_in",
+    "fit": "cmd_fit",
+}
 
 
 # Toolbar item -> tooltip key. Auto-scatter opens a modal rather than
@@ -1036,13 +1045,9 @@ class RenderCanvasMixin:
                 elif item['type'] == 'mode':
                     self.mode = item['id']
                     self._cancel_rect()
-                elif item['id'] == 'overlay': self.show_overlay = not self.show_overlay
-                elif item['id'] == 'grid':
-                    self.show_grid = not self.show_grid
-                    self._mark_dirty()
-                elif item['id'] == 'icons':
-                    self.show_icons = not self.show_icons
-                    self._mark_dirty()
+                elif item['id'] == 'overlay': self._toggle_overlay()
+                elif item['id'] == 'grid':    self._toggle_grid()
+                elif item['id'] == 'icons':   self._toggle_icons()
                 return True
         return False
 
@@ -1076,36 +1081,88 @@ class RenderCanvasMixin:
         self._r_canvas_hud(cr)
 
     def _r_canvas_hud(self, cr):
-        """Zoom level and cursor position, bottom right of the canvas.
+        """Zoom controls and cursor position, bottom right of the canvas.
 
         Both used to be blitted at the top right, exactly where the toolbar
         row is drawn: the two overlapped and neither could be read. Down here
-        they sit on their own translucent pill, legible over any background.
+        they sit on their own translucent pill, legible over any background,
+        and the zoom level is a control rather than a readout - zooming was
+        only ever reachable through F, Z and +/-.
         """
         mx, my = pygame.mouse.get_pos()
-        lines = [self._TR("canvas_zoom_info").format(int(round(self.zoom * 100)))]
-        fonts = ["sm"]
+        zoom_label = self._TR("canvas_zoom_info").format(int(round(self.zoom * 100)))
+        fit_label = self._TR("hud_fit", "FIT")
+
+        line_h = _text_wh("Ag", "sm")[1]
+        btn = line_h + HUD_BTN_PAD
+        zoom_w = max(_text_wh(zoom_label, "sm")[0], _text_wh("100%", "sm")[0])
+        fit_w = _text_wh(fit_label, "sm")[0] + HUD_BTN_PAD
+
+        widths = [btn, zoom_w, btn, fit_w]
+        bar_w = sum(widths) + HUD_GAP * (len(widths) - 1) + HUD_PAD_X * 2
+        bar_h = btn + HUD_PAD_Y * 2
+
+        coords = None
         if _in_rect((mx, my), cr):
             rx, ry = self._s2r(mx, my)
-            lines.append(f"({int(rx)}, {int(ry)})")
-            fonts.append("mono")
+            coords = f"({int(rx)}, {int(ry)})"
+            coords_w, coords_h = _text_wh(coords, "mono")
+            box_w = max(bar_w, coords_w + HUD_PAD_X * 2)
+            box_h = bar_h + coords_h + HUD_LINE_GAP
+        else:
+            box_w, box_h = bar_w, bar_h
 
-        sizes = [_text_wh(t, f) for t, f in zip(lines, fonts)]
-        box_w = max(w for w, _ in sizes) + HUD_PAD_X * 2
-        box_h = sum(h for _, h in sizes) + HUD_LINE_GAP * (len(sizes) - 1)             + HUD_PAD_Y * 2
         box = pygame.Rect(cr.right - HUD_MARGIN - box_w,
                           cr.bottom - HUD_MARGIN - box_h, box_w, box_h)
-
         pill = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
         pygame.draw.rect(pill, HUD_BG, pill.get_rect(), border_radius=6)
         self.screen.blit(pill, box.topleft)
         _rect(self.screen, BORDER, box, 1, radius=6)
 
-        ty = box.y + HUD_PAD_Y
-        for (text, font), (tw, th) in zip(zip(lines, fonts), sizes):
-            self.screen.blit(_txt(text, font, TXT_DIM),
-                             (box.right - HUD_PAD_X - tw, ty))
-            ty += th + HUD_LINE_GAP
+        if coords:
+            self.screen.blit(_txt(coords, "mono", TXT_DIM),
+                             (box.right - HUD_PAD_X - _text_wh(coords, "mono")[0],
+                              box.y + HUD_PAD_Y // 2))
+
+        # Hitboxes published for _hud_click: the controls are where they draw.
+        hits: dict = {}
+        self._hud_hitboxes = hits
+        x = box.x + HUD_PAD_X
+        y = box.bottom - HUD_PAD_Y - btn
+        for name, label, width in (("zoom_out", "-", btn),
+                                   ("zoom", zoom_label, zoom_w),
+                                   ("zoom_in", "+", btn),
+                                   ("fit", fit_label, fit_w)):
+            r = pygame.Rect(x, y, width, btn)
+            if name == "zoom":
+                tw = _text_wh(label, "sm")[0]
+                self.screen.blit(_txt(label, "sm", TXT_DIM),
+                                 (r.centerx - tw // 2, r.y + (btn - line_h) // 2))
+            else:
+                hovered = _in_rect((mx, my), r)
+                _rect(self.screen, BTN_HO if hovered else (48, 50, 62), r, radius=4)
+                _rect(self.screen, ACCENT if hovered else BORDER, r, 1, radius=4)
+                tw = _text_wh(label, "sm")[0]
+                self.screen.blit(_txt(label, "sm", TXT_HI if hovered else TXT),
+                                 (r.centerx - tw // 2, r.y + (btn - line_h) // 2))
+                hits[name] = r
+                if hovered:
+                    self.active_tooltip = self._TR(_HUD_TIPS[name])
+            x = r.right + HUD_GAP
+
+    def _hud_click(self, mx: int, my: int) -> bool:
+        """Click on a canvas HUD control. True when it was one."""
+        hits = getattr(self, "_hud_hitboxes", None)
+        if not hits:
+            return False
+        for name, action in (("zoom_out", self._zoom_out),
+                             ("zoom_in", self._zoom_in),
+                             ("fit", self._fit_canvas)):
+            rect = hits.get(name)
+            if rect and _in_rect((mx, my), rect):
+                action()
+                return True
+        return False
 
     def _r_confirm_leave_modal(self, w: int, h: int):
         """Disegna un modale di conferma per modifiche non salvate."""

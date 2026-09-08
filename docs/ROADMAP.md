@@ -60,6 +60,14 @@ Legend: [x] done · [~] in progress/partial · [ ] to do.
   Verified by `pytest tests/test_editor_modal_geometry.py` and
   `pytest tests/test_string_glyphs.py` (no UI string may use a character the font
   cannot draw).
+- [x] Command registry (`editor/commands.py`): one declaration per feature feeding
+  the F1 panel (all 40 bindings, grouped, instead of the 9 two hint strings named),
+  a command palette on Ctrl+P that searches the localized labels, and the zoom
+  controls in the canvas HUD. Every view toggle became a method, so keyboard,
+  toolbar and palette share one implementation. It also surfaced a dead menu entry:
+  "Save scene as..." was offered and never wired, and is now implemented (copy the
+  folder, keep the unsaved edits, register the copy in level_config.json). Verified
+  by `pytest tests/test_editor_commands.py` and `pytest tests/test_editor_save_as.py`.
 - [ ] "Editor Pro" plan (`docs/archive/editor/EDITOR_PRO_PLAN.md`, 2026-07-12): remaining
   items - auto-scatter camouflage (single render-based metric, best-of-M, Lab color, repair
   loop), scatter UX (progress/cancel, seed, interactive ghosts), editor completeness

@@ -19,6 +19,7 @@ Struttura moduli:
   editor/mixins/render_panels.py  — pannelli tree/catalog/layers/props
   editor/mixins/render_topbar.py  — top bar, status bar
   editor/mixins/shortcuts_overlay.py — pannello scorciatoie F1
+  editor/mixins/command_center.py — comandi dichiarati + palette (Ctrl+P)
 
 Uso:
     python -m editor.editor_base
@@ -103,6 +104,7 @@ from editor.mixins.outline import OutlineMixin
 from editor.mixins.modal_router import ModalRouterMixin
 from editor.mixins.prop_fields import PropFieldsMixin
 from editor.mixins.shortcuts_overlay import ShortcutsOverlayMixin
+from editor.mixins.command_center import CommandCenterMixin
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -137,6 +139,7 @@ class LevelEditor(
     BatchImportMixin,
     OutlineMixin,
     ShortcutsOverlayMixin,
+    CommandCenterMixin,
 ):
     """
     Editor di livelli HiddenEngine.

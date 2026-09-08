@@ -23,7 +23,7 @@ the catalog, tags and languages, and launch the builds.
 | `engine/data/` | Global catalogs `global_*_catalog.json` (cartoon, lineart, ...). |
 | `engine/assets/` | Shared assets: `objects_cartoon/`, `objects_lineart/`, `strings/`. |
 | `engine/schemas/` | JSON Schemas (`scene_schema.json`, `catalog_schema.json`). |
-| `editor/` | Level editor (mixins, desktop/Android builds, web exporter). |
+| `editor/` | Level editor (mixins, desktop/Android builds, web exporter). `commands.py` declares every command: adding a feature there puts it in the F1 panel and in the Ctrl+P palette. Layout rules in `docs/editor/EDITOR_UI.md`. |
 | `games/<id>/` | Games: `game_config.json`, `objects_catalog.json`, `levels/<level>/<scene>/scene.json`, `strings/`. |
 | `tools/` | Development utilities (catalog audit, tag normalization, preview). |
 | `tools/hie_mcp_server.py` | **Project MCP server** (headless render, scene validation, catalog search). |

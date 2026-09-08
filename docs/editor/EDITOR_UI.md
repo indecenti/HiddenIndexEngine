@@ -72,21 +72,46 @@ the scene coordinates under it. It is a translucent pill anchored to the
 any scene image. It is deliberately at the opposite corner from the toolbar: the
 two used to be drawn on top of each other at the top right.
 
+The zoom level is a control, not a readout: the pill carries `-`, the
+percentage, `+` and a fit button, published as `self._hud_hitboxes` and served
+by `_hud_click()` before the canvas sees the click. Zooming used to be reachable
+only through F, Z and +/-, which a mouse-only user had no way to discover.
+
 Constants: `HUD_*` in `editor/constants.py`.
 
-## Shortcuts panel (F1)
+## Commands
 
-`editor/mixins/shortcuts_overlay.py`. F1 toggles it anywhere, Esc closes it, and
-while it is open no other key reaches the scene.
+`editor/commands.py` is the single description of what the editor can do: one
+`Command` per feature, with its group, its label, the keys that trigger it and
+how to run it (`("call", "_fit_canvas")`, `("menu", "file_auditor")`,
+`("mode", "circle")`, or nothing for a binding that is only documentation, like
+panning). `needs` says what it acts on (`"scene"`, `"selection"`), which is what
+greys it out when there is nothing to act on.
 
-Its rows are **parsed from the existing shortcut strings**, `tb_shortcuts` and
-`canvas_hints`, written as `KEYS=description` runs separated by spaces. There is
-no second list of shortcuts to keep in sync: adding one to those strings adds it
-to the panel. A run without `=` is appended to the previous description, so a
-translator may write `Del=delete object`.
+It exists because the editor had 57 keyboard bindings, a File/Edit menu and no
+relationship between the two: most features could only be reached by knowing a
+letter, and the shortcut panel could only list the 9 that happened to be written
+into two hint strings. One table now feeds three things:
 
-The status bar shows only the pointer to it (`tb_shortcuts_hint`), not the whole
-list.
+- **the F1 panel** (`editor/mixins/shortcuts_overlay.py`) — every binding,
+  grouped, in two columns sized on their own content;
+- **the command palette** (`editor/mixins/command_center.py`, Ctrl+P) — a
+  search box over the localized labels; Enter runs, arrows move, Esc closes.
+  It is a modal on the unified stack, so it is app modal like every dialog;
+- **`pytest tests/test_editor_commands.py`**, which refuses a command whose
+  method does not exist, whose menu target has no branch in `_exec_menu_cmd`
+  (that is how the dead "Save as..." entry was found), or whose label is not
+  translated in all five languages.
+
+`InputHandlersMixin._on_key` stays the authority on what a key does; `keys` in
+the table is the documentation of it. Every toggle it performs is a method
+(`_toggle_grid`, `_cycle_grid_size`, `_toggle_fullscreen`, ...) so the keyboard,
+the canvas toolbar and the palette drive the same code.
+
+Adding a feature means adding a row to `COMMANDS` and its five translations: it
+then appears in the panel and in the palette by itself.
+
+The status bar shows the pointer to both (`tb_shortcuts_hint`), not a list.
 
 ## Catalog rows
 

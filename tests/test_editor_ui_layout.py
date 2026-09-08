@@ -31,7 +31,7 @@ pygame = pytest.importorskip("pygame")
 from editor.constants import LANGS, MODE_SELECT, UI_SCALE_MAX, UI_SCALE_MIN
 from editor.mixins.io_ops import _is_scene_dir, _resolve_recent
 from editor.mixins.render_canvas import RenderCanvasMixin
-from editor.mixins.shortcuts_overlay import ShortcutsOverlayMixin, _parse_shortcuts
+from editor.mixins.shortcuts_overlay import ShortcutsOverlayMixin
 from editor.mixins.viewport import ViewportMixin
 from editor.ui.draw import _button_w, _init_fonts, _text_wh
 from engine.language_manager import LanguageManager
@@ -161,35 +161,39 @@ def test_narrow_canvas_wraps_the_toolbar_instead_of_overflowing():
 # 3. PANNELLO SCORCIATOIE (F1)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def test_parse_shortcuts_splits_key_and_description():
-    assert _parse_shortcuts("Ctrl+S=Save R=Rotate") == [
-        ("Ctrl+S", "Save"), ("R", "Rotate")]
-
-
-def test_parse_shortcuts_keeps_multi_word_descriptions():
-    assert _parse_shortcuts("Space+drag=Pan the view") == [
-        ("Space+drag", "Pan the view")]
-
-
-def test_parse_shortcuts_ignores_a_leading_stray_word():
-    assert _parse_shortcuts("hello Ctrl+S=Save") == [("Ctrl+S", "Save")]
-
-
-def test_shortcut_rows_list_each_key_once():
+def test_shortcut_panel_lists_every_bound_command():
+    """The panel is the whole registry, not a hand-kept subset."""
+    from editor.commands import COMMANDS
     host = FakeChrome("en")
-    keys = [k.casefold() for k, _ in host._shortcuts_rows()]
-    assert len(keys) == len(set(keys))
+    left, right = host._shortcuts_columns()
+    listed = {label for block in left + right for kind, *rest in block
+              if kind == "row" for label in [rest[1]]}
+    expected = {c.label for c in COMMANDS if c.keys}
+    assert listed == expected
 
 
-def test_shortcut_rows_are_capitalised():
+def test_shortcut_panel_splits_into_two_balanced_columns():
     host = FakeChrome("en")
-    for _, desc in host._shortcuts_rows():
-        assert desc[:1] == desc[:1].upper()
+    left, right = host._shortcuts_columns()
+    rows_left = sum(len(b) for b in left)
+    rows_right = sum(len(b) for b in right)
+    assert right, "the second column must be used"
+    assert abs(rows_left - rows_right) <= max(len(b) for b in left + right)
 
 
-def test_every_language_produces_shortcut_rows():
-    for lang in LANGS:
-        assert FakeChrome(lang)._shortcuts_rows(), lang
+def test_shortcut_panel_keeps_a_group_in_one_column():
+    host = FakeChrome("en")
+    left, right = host._shortcuts_columns()
+    headers_left = {b[0][1] for b in left}
+    headers_right = {b[0][1] for b in right}
+    assert not (headers_left & headers_right)
+
+
+@pytest.mark.parametrize("lang", LANGS)
+def test_shortcut_panel_is_translated(lang):
+    host = FakeChrome(lang)
+    left, right = host._shortcuts_columns()
+    assert sum(len(b) for b in left + right) > 20, lang
 
 
 def test_f1_panel_toggles():
@@ -282,3 +286,58 @@ def test_drawing_primitives_work_before_init_fonts():
     finally:
         draw._FONTS.clear()
         draw._FONTS.update(saved)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. CONTROLLI ZOOM NELL'HUD DEL CANVAS
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_hud_publishes_its_controls():
+    host = FakeChrome("en")
+    host._r_canvas_hud(host._canvas_rect())
+    assert set(host._hud_hitboxes) == {"zoom_out", "zoom_in", "fit"}
+
+
+@pytest.mark.parametrize("lang", LANGS)
+@pytest.mark.parametrize("scale", (UI_SCALE_MIN, 1.0, UI_SCALE_MAX))
+def test_hud_controls_stay_inside_the_canvas(lang, scale):
+    _init_fonts(scale)
+    try:
+        host = FakeChrome(lang)
+        canvas = host._canvas_rect()
+        host._r_canvas_hud(canvas)
+        for name, rect in host._hud_hitboxes.items():
+            assert canvas.contains(rect), f"{lang} at {scale}: {name} leaves the canvas"
+    finally:
+        _init_fonts(1.0)
+
+
+def test_hud_controls_never_overlap():
+    host = FakeChrome("de")
+    host._r_canvas_hud(host._canvas_rect())
+    rects = list(host._hud_hitboxes.values())
+    for i, first in enumerate(rects):
+        for second in rects[i + 1:]:
+            assert not first.colliderect(second)
+
+
+def test_hud_zoom_buttons_change_the_zoom():
+    host = FakeChrome("en")
+    host._r_canvas_hud(host._canvas_rect())
+    before = host.zoom
+    zoom_in = host._hud_hitboxes["zoom_in"]
+    assert host._hud_click(zoom_in.centerx, zoom_in.centery) is True
+    assert host.zoom > before
+    zoom_out = host._hud_hitboxes["zoom_out"]
+    host._hud_click(zoom_out.centerx, zoom_out.centery)
+    assert host.zoom == pytest.approx(before)
+
+
+def test_hud_click_elsewhere_is_not_consumed():
+    host = FakeChrome("en")
+    host._r_canvas_hud(host._canvas_rect())
+    assert host._hud_click(0, 0) is False
+
+
+def test_hud_click_before_the_first_frame_is_a_no_op():
+    assert FakeChrome("en")._hud_click(10, 10) is False
