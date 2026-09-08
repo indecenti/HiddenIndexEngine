@@ -81,6 +81,7 @@ from editor.mixins.viewport       import ViewportMixin
 from editor.mixins.history        import HistoryMixin
 from editor.mixins.io_ops         import IoOpsMixin
 from editor.mixins.lang_modal     import LangModalMixin
+from editor.mixins.lang_translate import LangTranslateMixin
 from editor.mixins.newobj_modal   import NewObjModalMixin
 from editor.mixins.object_ops     import ObjectOpsMixin
 from editor.mixins.input_handlers import InputHandlersMixin
@@ -118,6 +119,7 @@ class LevelEditor(
     HistoryMixin,
     IoOpsMixin,
     LangModalMixin,
+    LangTranslateMixin,
     NewObjModalMixin,
     ObjectOpsMixin,
     InputHandlersMixin,

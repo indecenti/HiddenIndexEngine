@@ -32,6 +32,7 @@ pygame = pytest.importorskip("pygame")
 
 from editor.constants import LANGS, UI_SCALE_MAX, UI_SCALE_MIN
 from editor.mixins.lang_modal import LangModalMixin
+from editor.mixins.lang_translate import LangTranslateMixin
 from editor.ui.draw import _init_fonts, _text_wh
 from engine.language_manager import LanguageManager
 
@@ -48,7 +49,7 @@ def _pygame_init():
     pygame.quit()
 
 
-class FakeLang(LangModalMixin):
+class FakeLang(LangModalMixin, LangTranslateMixin):
     """The translation editor without an editor behind it."""
 
     def __init__(self, data=None, context="global", size=SIZE):
@@ -79,6 +80,7 @@ class FakeLang(LangModalMixin):
         self._lang_dirty = False
         self._lang_modal = True
         self._lang_footer_hitboxes: dict = {}
+        self._lang_tr_init()
         self.status: list = []
         self.saved = False
         self.closed = False

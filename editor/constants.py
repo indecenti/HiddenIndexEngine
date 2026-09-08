@@ -158,6 +158,14 @@ PALETTE_PAD      = 14
 PALETTE_TOP      = 120      # distance from the top of the window
 PALETTE_SCRIM    = (10, 10, 15, 150)
 
+# ─────────────────────────────────────────────────────────────────────────────
+# TRADUZIONE AUTOMATICA (pannello di conferma / avanzamento)
+# ─────────────────────────────────────────────────────────────────────────────
+
+TR_PANEL_W = 620
+TR_PAD     = 20
+TR_SCRIM   = (8, 8, 12, 190)
+
 SND_CLICK      = "engine/assets/sounds/click_Low.wav"
 CACHE_OBJ_MAX  = 400
 CACHE_FILTER_MAX = 100

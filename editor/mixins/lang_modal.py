@@ -10,6 +10,7 @@ from editor.constants import (
     TXT, TXT_DIM, TXT_HI, WARN_C, OK_C, ERR_C,
 )
 from editor.core.io import _load_json, _save_json
+from editor.mixins.lang_translate import SCOPE_CELL, SCOPE_VISIBLE
 from editor.ui.draw import (
     _txt, _draw_text, _rect, _button, _in_rect, _text_wh, _input_box, _clamp,
     _button_w, _scrollbar,
@@ -71,6 +72,7 @@ class LangModalMixin:
                 "header_h": header_h, "key_col": 0, "lang_w": content.w,
                 "search": pygame.Rect(0, 0, 0, 0),
                 "filter": pygame.Rect(0, 0, 0, 0),
+                "translate": pygame.Rect(0, 0, 0, 0),
                 "table_top": content.y, "content": content,
                 "visible_rows": len(self.LANGS), "max_scroll": 0,
                 "footer_y": footer_y, "btn_h": btn_h,
@@ -84,9 +86,12 @@ class LangModalMixin:
 
         filter_label = self._TR("lm_only_missing", "Only incomplete")
         filter_w = _button_w(filter_label, "sm", min_w=140)
+        tr_label = self._TR("tr_button", "Translate...")
+        tr_w = _button_w(tr_label, "sm", min_w=130)
         search = pygame.Rect(box.x + LANG_PAD, box.y + title_h + 16,
-                             dw - LANG_PAD * 2 - filter_w - 8, search_h)
+                             dw - LANG_PAD * 2 - filter_w - tr_w - 16, search_h)
         filter_r = pygame.Rect(search.right + 8, search.y, filter_w, search_h)
+        translate_r = pygame.Rect(filter_r.right + 8, search.y, tr_w, search_h)
 
         col_head_h = line_h + 6
         table_top = search.bottom + 10 + col_head_h
@@ -98,6 +103,7 @@ class LangModalMixin:
             "header_h": table_top - box.y, "key_col": key_col,
             "lang_w": (content.w - key_col) // len(self.LANGS),
             "search": search, "filter": filter_r, "filter_label": filter_label,
+            "translate": translate_r, "translate_label": tr_label,
             "col_head_h": col_head_h,
             "table_top": table_top, "content": content,
             "visible_rows": visible,
@@ -197,6 +203,7 @@ class LangModalMixin:
         self._lang_naming = None
         self._lang_name_buf = ""
         self._lang_new_keys = set()
+        self._lang_tr_init()
         self._lang_filtered_keys = self._lang_keys[:]
 
 
@@ -348,6 +355,8 @@ class LangModalMixin:
     # ─────────────────────────────────────────────────────────────────────────
 
     def _lang_key(self, ev):
+        if self._lang_tr_key(ev):
+            return
         ctrl = (pygame.key.get_mods() & pygame.KMOD_CTRL)
 
         # Editor del nome di una chiave appena creata: cattura tutto finche' e' aperto
@@ -487,6 +496,8 @@ class LangModalMixin:
         three pixels did nothing, and the row area was clipped three pixels
         away from where clicks stopped being accepted.
         """
+        if self._lang_tr_click(mx, my_raw):
+            return
         geo = self._lang_geometry(w, h)
         pos = (mx, my_raw)
         footer = getattr(self, "_lang_footer_hitboxes", {})
@@ -515,6 +526,10 @@ class LangModalMixin:
 
             if _in_rect(pos, geo["filter"]):
                 self._lang_toggle_only_missing()
+                return
+
+            if _in_rect(pos, geo["translate"]):
+                self._lang_tr_request(SCOPE_CELL if self._lang_sel else SCOPE_VISIBLE)
                 return
 
             if _in_rect(pos, footer.get("add", empty)):
@@ -682,6 +697,8 @@ class LangModalMixin:
             self._r_lang_table(geo, mx2, my2)
 
         self._r_lang_footer(geo, mx2, my2)
+        self._lang_tr_poll()
+        self._r_lang_translate(w, h)
 
     def _r_lang_table(self, geo: dict, mx: int, my: int) -> None:
         """Search bar, column headers with their completion, and the rows."""
@@ -696,6 +713,8 @@ class LangModalMixin:
         only_missing = getattr(self, "_lang_only_missing", False)
         _button(self.screen, geo["filter"], geo["filter_label"],
                 _in_rect((mx, my), geo["filter"]), active=only_missing)
+        _button(self.screen, geo["translate"], geo["translate_label"],
+                _in_rect((mx, my), geo["translate"]))
 
         # Column headers. Each language says how much of the project it covers:
         # this dialog exists to find what is missing, and nothing said so.
