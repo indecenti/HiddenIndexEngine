@@ -1197,12 +1197,12 @@ class ImgEditorMixin:
         self._img_editor_poll_ai()
         dim = pygame.Surface((w, h), pygame.SRCALPHA); dim.fill((0, 0, 0, 215)); self.screen.blit(dim, (0, 0))
         
-        # Responsive Modal Size (Liquida & Studio-Grade)
-        ew = int(min(w * 0.94, 1280))
-        eh = int(min(h * 0.90, 820))
-        ex, ey = (w - ew) // 2, (h - eh) // 2
-        
+        # Dalla sorgente unica: il renderer reinlineava la stessa formula del
+        # click handler, cioe' la duplicazione da cui nasce ogni disallineamento
+        # fra cio' che si vede e cio' che si puo' cliccare.
+        ex, ey, ew, eh = self._img_editor_get_modal_rect()
         box = pygame.Rect(ex, ey, ew, eh)
+        self._img_editor_box = box
         _rect(self.screen, (25, 25, 30), box, radius=18)
         _rect(self.screen, ACCENT, box, 1, radius=18)
         

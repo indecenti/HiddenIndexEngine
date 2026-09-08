@@ -45,6 +45,9 @@ renderer stores the rects on the editor and the input handler reads them back:
 | Canvas toolbar | `self._get_toolbar_layout()` (shared by draw and hit test) |
 | Catalog rows | `self._catalog_item_hitboxes` |
 | Outline rows | `self._outline_hitboxes` |
+| Asset studio | `_img_editor_get_modal_rect()`, called by the renderer as well as the click handler |
+| Scene outline | `_outline_hitboxes`, `_outline_list_top()`, `_outline_row_h()` |
+| Auto-scatter | `_scatter_hitboxes` |
 | Scene / object / effect properties | `self._scene_props_hitboxes`, `self._obj_props_hitboxes`, `self._fx_props_hitboxes` |
 
 `editor.mixins.input_handlers.EMPTY_RECT` stands in for a button the current

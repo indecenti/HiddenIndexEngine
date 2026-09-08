@@ -402,3 +402,50 @@ def test_a_dialog_keeps_the_margin_it_is_given():
 def test_a_dialog_never_collapses_on_a_tiny_window():
     box = dialog_rect(100, 80, 800, 600)
     assert box.w >= 120 and box.h >= 120
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ASSET STUDIO: IL RENDERER USA LA SORGENTE UNICA
+# ─────────────────────────────────────────────────────────────────────────────
+
+import ast  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+
+_IMG_EDITOR = _Path(__file__).resolve().parents[1] / "editor" / "mixins" / "img_editor.py"
+
+
+def test_the_asset_studio_rect_is_computed_in_one_place():
+    """It had the helper and the renderer inlined the same formula anyway.
+
+    The two agreed, which is how this class of defect always starts: the
+    editor's other dialogs had the same pair and had already drifted apart.
+    """
+    tree = ast.parse(_IMG_EDITOR.read_text(encoding="utf-8"))
+    inlined = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.FunctionDef):
+            continue
+        if node.name == "_img_editor_get_modal_rect":
+            continue                      # the source itself
+        for child in ast.walk(node):
+            # ew = int(min(w * 0.94, 1280)) and friends
+            if (isinstance(child, ast.Assign)
+                    and any(isinstance(t, ast.Name) and t.id in ("ew", "eh")
+                            for t in child.targets)
+                    and isinstance(child.value, ast.Call)):
+                inlined.append(node.name)
+    assert not inlined, (
+        "these recompute the dialog rect instead of calling "
+        f"_img_editor_get_modal_rect(): {sorted(set(inlined))}")
+
+
+def test_the_probe_would_notice_an_inlined_rect():
+    """Guard the guard: the same walk must flag a function that inlines it."""
+    tree = ast.parse("def r(self, w, h):\n    ew = int(min(w * 0.94, 1280))\n")
+    found = [n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)
+             for c in ast.walk(n)
+             if isinstance(c, ast.Assign)
+             and any(isinstance(t, ast.Name) and t.id in ("ew", "eh")
+                     for t in c.targets)
+             and isinstance(c.value, ast.Call)]
+    assert found == ["r"]
