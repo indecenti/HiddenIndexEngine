@@ -869,11 +869,32 @@ class RenderPanelsMixin:
         layers.append({"id": "effects", "z": 100, "label": self._TR("layers_all_effects"), "is_fx": True})
         return sorted(layers, key=lambda l: l["z"], reverse=True)
 
+    def _layers_columns(self) -> tuple:
+        """Where the eye and the lock sit, and how big they are.
+
+        One source for the renderer and the click handler, scaled: the icons
+        used to stay 24 px wide under a font half again as large, and the two
+        headings above them ran off the right edge of the panel.
+        """
+        icon = _ps(24)
+        lock_x = self.panel_r_w - icon - _ps(26)
+        eye_x = lock_x - icon - _ps(8)
+        return eye_x, lock_x, icon
+
     def _r_layers(self, rx0, h):
-        y = TOP_BAR_H + 36
-        for lbl, lx in [(self._TR("tab_layers"), 8), (self._TR("layers_label_vis"), self.panel_r_w-82), (self._TR("layers_label_lock"), self.panel_r_w-52)]:
-            self.screen.blit(_txt(lbl, "sm", TXT_DIM), (rx0+lx, y))
-        y += 18
+        # Geometria pubblicata per InputHandlers: le righe e le due colonne di
+        # icone sono quelle disegnate, non una seconda copia delle costanti.
+        self._layers_hitboxes = {"rows": [], "eye": {}, "lock": {}}
+        eye_x, lock_x, icon = self._layers_columns()
+        line_h = _text_wh("Ag", "sm")[1]
+        y = TOP_BAR_H + _ps(36)
+        head = [(self._TR("tab_layers"), rx0 + 8, self.panel_r_w // 2)]
+        for label, cx in ((self._TR("layers_label_vis"), rx0 + eye_x + icon // 2),
+                          (self._TR("layers_label_lock"), rx0 + lock_x + icon // 2)):
+            head.append((label, cx - _text_wh(label, "sm")[0] // 2, None))
+        for label, lx, max_w in head:
+            _draw_text(self.screen, label, "sm", TXT_DIM, lx, y, max_w)
+        y += line_h + 2
         pygame.draw.line(self.screen, BORDER, (rx0, y), (rx0+self.panel_r_w, y))
         y += 4
 
@@ -883,33 +904,42 @@ class RenderPanelsMixin:
             is_act = (self.active_layer == lid)
             if is_scn: is_act = (self.selected_idx is None and getattr(self, "sel_effect_idx", None) is None)
 
-            row_h, row = 40, pygame.Rect(rx0 + 8, y, self.panel_r_w - 24, 40)
+            row_h = max(_ps(40), line_h * 2)
+            row = pygame.Rect(rx0 + 8, y, self.panel_r_w - 24, row_h)
+            self._layers_hitboxes["rows"].append((lid, row))
             hov = _in_rect((mx, my_raw), row)
             _rect(self.screen, BTN_AC if is_act else (BTN_HO if hov else BTN), row, radius=5)
 
+            mid = y + row_h // 2
             if is_act:
                 _rect(self.screen, ACCENT, row, 1, radius=5)
-                self.screen.blit(_txt(">", "sm", TXT_HI), (rx0+8, y+12))
+                self.screen.blit(_txt(">", "sm", TXT_HI),
+                                 (rx0 + 8, mid - line_h // 2))
 
             lc = (100, 100, 120) if is_scn else ((255,180,50) if is_fx else layer_color(lid))
-            if is_scn: pygame.draw.rect(self.screen, lc, (rx0 + 24, y + 14, 12, 12), border_radius=2)
-            else: pygame.draw.circle(self.screen, lc, (rx0 + 30, y + 20), 6)
+            if is_scn: pygame.draw.rect(self.screen, lc, (rx0 + _ps(24), mid - 6, 12, 12), border_radius=2)
+            else: pygame.draw.circle(self.screen, lc, (rx0 + _ps(30), mid), 6)
 
             vis = self.layer_vis.get(lid, True)
             cnt = sum(1 for o in self.scene_data.get("objects", []) if o.get("layer") == lid)
             txt_s = f"{layer['label']} {'[FX]' if is_fx else ('' if is_scn else f'({cnt})')}"
-            _draw_text(self.screen, txt_s, "sm", TXT_HI if vis else TXT_DIM, rx0+42, y+12, self.panel_r_w-125)
+            label_x = rx0 + _ps(42)
+            _draw_text(self.screen, txt_s, "sm", TXT_HI if vis else TXT_DIM,
+                       label_x, mid - line_h // 2,
+                       max(20, rx0 + eye_x - 8 - label_x))
 
             if not is_scn:
                 # Occhio
-                er = pygame.Rect(rx0+self.panel_r_w-80, y+8, 24, 24)
+                er = pygame.Rect(rx0 + eye_x, mid - icon // 2, icon, icon)
+                self._layers_hitboxes["eye"][lid] = er
                 ecol = (TXT_HI if vis else TXT_DIM) if not _in_rect((mx, my_raw), er) else ACCENT
                 if _in_rect((mx, my_raw), er): self.active_tooltip = self._TR("tip_layer_visible")
                 _draw_shape_icon(self.screen, er.inflate(0, -6), "eye_visible" if vis else "eye_hidden", ecol)
 
                 # Lucchetto
                 if not is_fx:
-                    lr = pygame.Rect(rx0+self.panel_r_w-50, y+8, 24, 24)
+                    lr = pygame.Rect(rx0 + lock_x, mid - icon // 2, icon, icon)
+                    self._layers_hitboxes["lock"][lid] = lr
                     lkd = self.layer_locked.get(lid, False)
                     lcol = (WARN_C if lkd else TXT_DIM) if not _in_rect((mx, my_raw), lr) else ACCENT
                     if _in_rect((mx, my_raw), lr): self.active_tooltip = self._TR("tip_layer_locked")

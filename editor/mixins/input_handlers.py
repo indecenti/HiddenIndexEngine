@@ -1498,44 +1498,41 @@ class InputHandlersMixin:
                 return
 
     def _layers_click(self, rx, my):
-        # Allineamento millimetrico: 36 (start) + 18 (testo) + 4 (margine) = 58
-        y = 58
-        all_layers = self._get_all_layers()
-        for layer in all_layers:
-            lid = layer["id"]
-            is_scn = layer.get("is_scene", False)
-            is_fx  = layer.get("is_fx", False)
-
-            row_h = 40
-            # Centratura hitbox icone (Occhio/Lucchetto) nell'altezza di 40px
-            if not is_scn:
-                # Occhio (VIS)
-                if _in_rect((rx, my), (self.panel_r_w - 80, y + 8, 24, 24)):
-                    self.layer_vis[lid] = not self.layer_vis.get(lid, True)
-                    self._mark_dirty()
-                    return
-
-            if not is_scn and not is_fx:
-                # Lucchetto (LOCK)
-                if _in_rect((rx, my), (self.panel_r_w - 50, y + 8, 24, 24)):
-                    self.layer_locked[lid] = not self.layer_locked.get(lid, False)
-                    return
-
-            # Selezione del layer
-            if _in_rect((rx, my), (8, y, self.panel_r_w - 24, row_h)):
-                if layer.get("is_scene"):
-                    self.active_layer = lid # "scene_global"
-                    self.selected_idx = None
-                    self.selected_indices = []
-                    self.sel_effect_idx = None
-                    self.l_tab = TAB_TREE
-                    self.r_tab = TAB_PROPS
-                else:
-                    self.active_layer = lid
-                    if lid == "effects":
-                        self.l_tab = TAB_EFFECTS
+        # Le righe e le due colonne di icone sono quelle pubblicate dal render
+        # (_r_layers): erano una seconda copia delle costanti, ferme a scala
+        # 1.0 mentre il pannello cresceva con il font.
+        hits = getattr(self, "_layers_hitboxes", None)
+        if not hits:
+            return
+        point = (rx + self.screen_size[0] - self.panel_r_w, my + TOP_BAR_H)
+        for lid, rect in hits["eye"].items():
+            if _in_rect(point, rect):
+                self.layer_vis[lid] = not self.layer_vis.get(lid, True)
+                self._mark_dirty()
                 return
-            y += row_h + 4
+        for lid, rect in hits["lock"].items():
+            if _in_rect(point, rect):
+                self.layer_locked[lid] = not self.layer_locked.get(lid, False)
+                return
+
+        by_id = {layer["id"]: layer for layer in self._get_all_layers()}
+        for lid, row in hits["rows"]:
+            layer = by_id.get(lid)
+            if layer is None or not _in_rect(point, row):
+                continue
+            # Selezione del layer
+            if layer.get("is_scene"):
+                self.active_layer = lid  # "scene_global"
+                self.selected_idx = None
+                self.selected_indices = []
+                self.sel_effect_idx = None
+                self.l_tab = TAB_TREE
+                self.r_tab = TAB_PROPS
+            else:
+                self.active_layer = lid
+                if lid == "effects":
+                    self.l_tab = TAB_EFFECTS
+            return
 
     def _props_click(self, rx, my):
         # Se c'è un effetto selezionato, gestiamo i suoi click
