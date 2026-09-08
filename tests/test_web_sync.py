@@ -286,6 +286,59 @@ def test_miss_penalty_parity_python_vs_js():
     )
 
 
+# ── Parita' dei NOMI mostrati nei menu (desktop <-> web) ─────────────────────
+#
+# Livelli e scene sono cartelle: senza traduzione il loro ID finirebbe sulla
+# card ("Welcome_To_Malonno"). Entrambi i runtime lo ripuliscono, con la STESSA
+# regola; se una delle due implementazioni cambia, i due menu mostrano nomi
+# diversi per lo stesso contenuto.
+
+MENU_SKIN_JS = RUNTIME_DIR / "skins" / "base.js"
+
+PRETTY_NAME_CASES = [
+    "welcome_to_malonno", "Sotterranei_Villa_Rosa", "BRESCIA_EDOLO",
+    "Formis", "pizza_king", "IT", "", "  spaced  name  ",
+]
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node non disponibile")
+def test_pretty_name_matches_between_runtimes():
+    """MenuSystem._pretty_name (Python) e prettyName (JS) danno lo stesso nome."""
+    from engine.menu_system import MenuSystem
+
+    script = (
+        "const fs=require('fs');"
+        "const src=fs.readFileSync(process.argv[1],'utf8');"
+        "const m=src.match(/prettyName\\(raw\\) \\{([\\s\\S]*?)\\n  \\}/);"
+        "if(!m){console.error('prettyName non trovata in base.js');process.exit(2);}"
+        "const fn=new Function('raw', m[1]);"
+        "const cases=JSON.parse(process.argv[2]);"
+        "console.log(JSON.stringify(cases.map(fn)));"
+    )
+    proc = subprocess.run(
+        ["node", "-e", script, str(MENU_SKIN_JS), json.dumps(PRETTY_NAME_CASES)],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 0, f"harness JS fallito:\n{proc.stderr}"
+    js_names = json.loads(proc.stdout)
+    py_names = [MenuSystem._pretty_name(c) for c in PRETTY_NAME_CASES]
+    assert py_names == js_names, (
+        f"DRIFT nomi menu Python<->JS:\n  python={py_names}\n  js    ={js_names}\n"
+        "Allinea skins/base.js::prettyName con MenuSystem._pretty_name."
+    )
+
+
+def test_settings_group_keys_exist_for_both_runtimes():
+    """Le sezioni delle Impostazioni usano le stesse chiavi i18n su entrambi."""
+    keys = ("settings_group_audio", "settings_group_general", "settings_group_display")
+    js = MENU_SKIN_JS.read_text(encoding="utf-8")
+    for key in ("settings_group_audio", "settings_group_general"):
+        assert key in js, f"{key} non usata dallo skin web"
+    strings = json.loads((ROOT / "engine/assets/strings/en.json").read_text(encoding="utf-8"))
+    for key in keys:
+        assert key in strings, f"{key} mancante dal catalogo stringhe"
+
+
 # NOTA / TODO parita' ANCORA da coprire (divergenze note, NON ancora pinnate):
 #   - Incremento hint da combo (+0.02/livello): l'engine lo applica solo se il gioco
 #     definisce hint_earn_config.combo_thresholds; NESSUN gioco attuale lo fa, quindi

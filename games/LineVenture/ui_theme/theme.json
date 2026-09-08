@@ -67,7 +67,12 @@
       18,
       35
     ],
-    "row_bg":    [ 10,  24,  34, 205],
+    "row_bg": [
+      10,
+      24,
+      34,
+      205
+    ],
     "slider_fill": [
       0,
       255,
@@ -166,5 +171,88 @@
     "flicker_intensity": 0.08,
     "flicker_speed": 14.0,
     "magnifier_fx": true
+  },
+  "layout_profile": {
+    "type": "carousel"
+  },
+  "motion": {
+    "carousel_zoom": 0.22,
+    "float_amp": 2.5,
+    "magnetic": true,
+    "glitch": 1.0,
+    "hover": {
+      "scale": 1.04,
+      "speed": 9.0
+    },
+    "reduced_motion": {
+      "disable": [
+        "glitch",
+        "scanline",
+        "grid",
+        "particles"
+      ]
+    }
+  },
+  "background": {
+    "mode": "shader",
+    "shader": "synthwave",
+    "grid_color": [
+      0,
+      170,
+      200
+    ],
+    "glow_color": [
+      255,
+      0,
+      255
+    ]
+  },
+  "particles": {
+    "type": "digital",
+    "density": 16,
+    "color": [
+      0,
+      255,
+      255
+    ]
+  },
+  "typography": {
+    "display": {
+      "family": [
+        "Share Tech Mono",
+        "Consolas",
+        "monospace"
+      ],
+      "file": "fonts/ShareTechMono-Regular.ttf",
+      "bold": true,
+      "spacing": 3
+    },
+    "title": {
+      "family": [
+        "Share Tech Mono",
+        "Consolas",
+        "monospace"
+      ],
+      "file": "fonts/ShareTechMono-Regular.ttf",
+      "bold": true,
+      "spacing": 3
+    },
+    "body": {
+      "family": [
+        "Share Tech Mono",
+        "Consolas",
+        "monospace"
+      ],
+      "file": "fonts/ShareTechMono-Regular.ttf",
+      "bold": true
+    }
+  },
+  "decor": {
+    "scanline": 0.12,
+    "grid": true
+  },
+  "audio_feel": {
+    "hover": "hover",
+    "click": "click"
   }
 }

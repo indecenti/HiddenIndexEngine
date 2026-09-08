@@ -50,6 +50,9 @@ var _BASE_CSS = "\
 #menu-root .lock-badge svg{width:36px;height:36px;fill:var(--lock,#ff5a5a)}\
 #menu-root .settings-screen{max-width:560px;margin:0 auto;padding:42px 22px;min-height:100%;display:flex;flex-direction:column;gap:18px;justify-content:center}\
 #menu-root .set-panel{background:rgba(0,0,0,.25);border:1px solid var(--card-border,#33405a);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:20px}\
+#menu-root .set-group-title{font-size:13px;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent,#5aa0eb);margin:2px 0 -8px}\
+#menu-root .set-group-title+.set-row,#menu-root .set-group-title+.lang-row{margin-top:2px}\
+#menu-root .build-line{position:fixed;left:16px;bottom:12px;font-size:13px;color:var(--text,#eaf0fa);opacity:.5;letter-spacing:.5px;pointer-events:none}\
 #menu-root .set-row-top{display:flex;justify-content:space-between;font-size:14px;color:var(--text-dim,#9fb3d8);margin-bottom:8px}\
 #menu-root .set-range{width:100%;accent-color:var(--slider-fill,#5aa0eb)}\
 #menu-root .lang-row{display:flex;flex-direction:column;gap:10px}\
@@ -148,6 +151,29 @@ class MenuSkinWeb {
     if (this._shaderBg) { try { this._shaderBg.destroy(); } catch (e) {} this._shaderBg = null; }
   }
 
+  // Il titolo arriva dal catalogo stringhe e a volte E' l'id della cartella
+  // ("Malonno_Survivors"): nessun separatore deve arrivare al giocatore.
+  // Stessa regola del menu desktop (MenuSystem._resolve_game_title).
+  gameTitle() {
+    var g = this.game, m = g.manifest;
+    var raw = String(g.t(m.title_key, m.game_id) || m.game_id || "");
+    return raw.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  }
+
+  // Livelli e scene sono cartelle: senza traduzione il loro ID finiva sulla
+  // card ("Welcome_To_Malonno"). Stessa regola del menu desktop
+  // (MenuSystem._pretty_name).
+  prettyName(raw) {
+    var text = String(raw == null ? "" : raw).trim();
+    if (!text) return "";
+    if (text.indexOf("_") === -1 && text !== text.toUpperCase() &&
+        text !== text.toLowerCase()) return text;
+    return text.replace(/_/g, " ").split(/\s+/).map(function (w) {
+      if (w === w.toUpperCase() && w.length <= 3) return w;
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    }).join(" ");
+  }
+
   el(tag, cls, text) {
     var e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -224,9 +250,11 @@ class MenuSkinWeb {
   _startScreen() {
     var g = this.game, m = g.manifest;
     var wrap = this.el("div", "start-screen");
-    wrap.appendChild(this.el("h1", "menu-title big", g.t(m.title_key, m.game_id)));
+    wrap.appendChild(this.el("h1", "menu-title big", this.gameTitle()));
     wrap.appendChild(this.el("div", "start-prompt", g.t("start_prompt", "Clicca per iniziare")));
     wrap.addEventListener("click", function () { g._startFromMenu(); });
+    // Build line, same corner as the desktop menu.
+    if (m.version) wrap.appendChild(this.el("div", "build-line", "v" + m.version));
     return wrap;
   }
 
@@ -238,11 +266,12 @@ class MenuSkinWeb {
     gear.innerHTML = _SVG_GEAR;
     gear.addEventListener("click", function () { g.audio.sfx("click"); g._openSettings(); });
     wrap.appendChild(gear);
-    wrap.appendChild(this.el("h1", "menu-title", g.t(m.title_key, m.game_id)));
+    wrap.appendChild(this.el("h1", "menu-title", this.gameTitle()));
     wrap.appendChild(this.el("div", "ls-sub", g.t("menu_select_scene", "Seleziona una scena")));
     (m.levels || []).forEach(function (lvl) {
       var grp = self.el("div", "level-group");
-      grp.appendChild(self.el("h2", "level-name", g.t(lvl.name_key || lvl.id, lvl.id)));
+      grp.appendChild(self.el("h2", "level-name",
+        self.prettyName(g.t(lvl.name_key || lvl.id, lvl.id))));
       var grid = self.el("div", "scene-grid");
       (lvl.scenes || []).forEach(function (sc, i) {
         var locked = !Save.isSceneUnlocked(data, m, lvl.id, i);
@@ -263,7 +292,8 @@ class MenuSkinWeb {
           card.appendChild(st);
         }
         var meta = self.el("div", "card-meta");
-        meta.appendChild(self.el("div", "scene-name", g.t(sc.id + "_name", sc.id)));
+        meta.appendChild(self.el("div", "scene-name",
+          self.prettyName(g.t(sc.id + "_name", sc.id))));
         var n = (sc.objects || []).filter(function (o) { return o.is_goal; }).length;
         meta.appendChild(self.el("div", "scene-count", n + " " + g.t("menu_objects", "oggetti")));
         card.appendChild(meta);
@@ -285,6 +315,11 @@ class MenuSkinWeb {
     var wrap = this.el("div", "settings-screen");
     wrap.appendChild(this.el("h1", "menu-title", g.t("settings_title", "Impostazioni")));
     var panel = this.el("div", "set-panel");
+    // Grouped exactly like the desktop settings list: a flat run of unrelated
+    // controls gives the eye nothing to hold on to. The web build has no
+    // resolution or fullscreen row (the browser owns both), so there is no
+    // DISPLAY group here.
+    panel.appendChild(this.el("div", "set-group-title", g.t("settings_group_audio", "AUDIO")));
     panel.appendChild(this._slider(g.t("label_music_volume", "Volume Musica"), g.audio.musicVol, function (v) {
       g.audio.musicVol = v;
       if (g.audio.musicEl) g.audio.musicEl.volume = g.audio.muted ? 0 : v;
@@ -293,8 +328,10 @@ class MenuSkinWeb {
     panel.appendChild(this._slider(g.t("label_sfx_volume", "Volume Effetti"), g.audio.sfxVol, function (v) {
       g.audio.sfxVol = v; g._saveSettings();
     }, true));
+    panel.appendChild(this.el("div", "set-group-title", g.t("settings_group_general", "GENERAL")));
     var langRow = this.el("div", "lang-row");
-    langRow.appendChild(this.el("div", "set-label", g.t("label_language", "Lingua")));
+    langRow.appendChild(this.el("div", "set-label",
+      String(g.t("label_language", "Lingua")).replace(/\s*:\s*$/, "")));
     var btns = this.el("div", "lang-btns");
     var langs = (m.languages && m.languages.length) ? m.languages : ["it", "en", "de", "es", "fr"];
     langs.forEach(function (lg) {
@@ -317,7 +354,7 @@ class MenuSkinWeb {
   _slider(label, val, onInput, sfxChange) {
     var self = this, row = this.el("div", "set-row");
     var top = this.el("div", "set-row-top");
-    top.appendChild(this.el("span", "set-label", label));
+    top.appendChild(this.el("span", "set-label", String(label).replace(/\s*:\s*$/, "")));
     var out = this.el("span", "set-val", Math.round(val * 100) + "%");
     top.appendChild(out); row.appendChild(top);
     var r = this.el("input", "set-range");

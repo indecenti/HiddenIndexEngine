@@ -180,6 +180,34 @@ duplicated in the respective JS classes (`AST`, `TET_*`, `AE_*`). If they change
 
 ---
 
+## K. Menus: two implementations, three shared rules
+
+The menus are the one part that is **not** a 1:1 replica. Desktop draws them on
+the pygame surface (`engine/menu_system.py` + `engine/menu_skins/`), the web
+builds a DOM/CSS overlay over the canvas (`runtime/skins/*.js`): a browser menu
+made of real DOM is better for reflow, focus and screen readers than a canvas
+copy of it would be. Layout, spacing and effects are therefore allowed to differ.
+
+Three things are not, because they are what the player reads:
+
+1. **Names.** Levels and scenes are folders; without a translation their id would
+   reach the card. `MenuSystem._pretty_name` and `MenuSkinWeb.prototype.prettyName`
+   must produce the same string - pinned by
+   `tests/test_web_sync.py::test_pretty_name_matches_between_runtimes`.
+2. **Settings sections.** Both runtimes group the list under the same keys:
+   `settings_group_audio`, `settings_group_general`, `settings_group_display`
+   (the web has no DISPLAY group: the browser owns resolution and fullscreen).
+3. **The game title and the build line.** Both strip the separators out of the
+   title (`Malonno_Survivors` never reaches a player) and both show
+   `v<version>` in the bottom corner of the first screen.
+
+Theme colours flow to the web through the manifest, so a colour fixed in
+`engine/assets/themes/<id>/theme.json` fixes both runtimes at once. Note that
+`btn_border_hover` is a border colour some themes leave transparent: Python
+resolves the accent through `MenuTheme.accent()`, the web through
+`Theme.accent()/accent2()` in `runtime/core.js`, and both skip a colour with no
+hue rather than painting the chrome black.
+
 ## Checklist when you change the engine
 
 1. Does the change touch a line in this document? If so, update the corresponding WEB side.

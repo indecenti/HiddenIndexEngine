@@ -1023,7 +1023,10 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
 
     # ── Meta del sito (SEO/social/PWA) ───────────────────────────────────────
     default_lang = manifest["default_language"]
-    title = (strings.get(default_lang, {}) or {}).get(manifest["title_key"], game_id)
+    raw_title = (strings.get(default_lang, {}) or {}).get(manifest["title_key"], game_id)
+    # The catalogue often stores the folder name ("Malonno_Survivors"): the page
+    # title and the social cards must not ship the separators either.
+    title = " ".join(str(raw_title).replace("_", " ").split())
     n_scenes_meta = sum(len(l["scenes"]) for l in levels_out)
     desc = (f"{title} — gioco hidden object. "
             f"{len(levels_out)} livelli, {n_scenes_meta} scene, {len(languages)} lingue. Gioca online.")
