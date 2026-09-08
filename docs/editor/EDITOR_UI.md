@@ -162,8 +162,13 @@ read:
 | Translation editor | `_r_lang_modal()` publishes `self._lang_footer_hitboxes` |
 | Icon picker | `_icon_grid_metrics()` returns every rect, plus `visible_rows` and `max_scroll` |
 | Project auditor | `_auditor_layout()` returns every rect, plus `item_h`, `visible_rows` and `max_scroll` |
-| Music playlist | `_seek_bar_rect()` for the seek bar of a row |
+| Music playlist | `_music_geometry()` returns every rect, plus `row_h`, `visible_rows` and `max_scroll_px`; `_seek_bar_rect()` places the seek bar of a row |
 | Translation editor (table) | `_lang_geometry()` returns every rect, plus `row_h`, `key_col`, `visible_rows` and `max_scroll`; `_lang_cell_rect()` places one cell |
+
+Spacing follows from the same rule. A content area is measured from the chrome
+around it, never from a constant: the playlist reserved `dy+130` at the top and
+110 px at the bottom whatever the dialog was, so a clamped one kept a hundred
+empty pixels under its list.
 
 A dialog is also never larger than the window: `dialog_rect()` in
 `editor/ui/draw.py` centres it and clamps it. The playlist and the video picker

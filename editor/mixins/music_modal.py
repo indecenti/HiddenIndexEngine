@@ -42,6 +42,38 @@ def _seek_bar_rect(list_x: int, row_y: int) -> pygame.Rect:
                        _BAR_W, _BAR_HIT_H)
 
 
+
+def _music_geometry(editor, w: int, h: int) -> dict:
+    """Every rect of the playlist, derived once from the window size.
+
+    Keys: box, close, search, list, row_h, hint_y, visible_rows, max_scroll_px.
+    """
+    box = dialog_rect(w, h, 1100, 800)
+    line_h = _text_wh("Ag", "md")[1]
+    title_h = _text_wh("Ag", "lg")[1]
+
+    search_h = max(36, line_h + 14)
+    search = pygame.Rect(box.x + 30, box.y + 25 + title_h + 12,
+                         box.w - 60, search_h)
+    hint_h = _text_wh("Ag", "sm")[1]
+    hint_y = box.bottom - hint_h - 16
+    top = search.bottom + 14
+    listing = pygame.Rect(box.x + 25, top, box.w - 50,
+                          max(_ROW_H, hint_y - top - 12))
+    total_h = len(getattr(editor, "_music_files", [])) * _ROW_H
+    return {
+        "box": box,
+        "close": pygame.Rect(box.right - 45, box.y + 20, 30, 30),
+        "search": search,
+        "list": listing,
+        "row_h": _ROW_H,
+        "hint_y": hint_y,
+        "visible_rows": max(1, listing.h // _ROW_H),
+        "max_scroll_px": max(0, total_h - listing.h),
+        "total_h": total_h,
+    }
+
+
 class MusicModalMixin:
     """Modale avanzata per la gestione della musica con UX testo migliorata."""
 
@@ -250,11 +282,12 @@ class MusicModalMixin:
 
     def _music_modal_click(self, mx, my, w, h):
         if not getattr(self, "_music_modal", False): return
-        _box = dialog_rect(w, h, 1100, 800)
+        geo = _music_geometry(self, w, h)
+        _box = geo["box"]
         dw, dh, dx, dy = _box.w, _box.h, _box.x, _box.y
-        
+
         # Area lista
-        list_x, list_y, list_w, list_h = dx + 25, dy + 130, dw - 50, dh - 240
+        list_x, list_y, list_w, list_h = geo["list"]
         
         if not _in_rect((mx, my), (dx, dy, dw, dh)): self._music_modal_close(); return
 
@@ -270,16 +303,15 @@ class MusicModalMixin:
                 s_r = pygame.Rect(self._last_t_x + i*130, self._last_t_y + 40, 120, 28)
                 if _in_rect((mx, my), s_r): self._music_apply_suggestion(sug); return
 
-        if _in_rect((mx, my), (dx + dw - 45, dy + 20, 30, 30)): self._music_modal_close(); return
+        if _in_rect((mx, my), geo["close"]): self._music_modal_close(); return
 
-        search_r = pygame.Rect(dx + 25, dy + 60, dw - 50, 36)
+        search_r = geo["search"]
         if _in_rect((mx, my), search_r):
             self._music_confirm_rename(); self._music_confirm_tags()
             self._music_search_active = True; self._music_cursor = len(self._music_search)
             return
 
-        list_x, list_y, list_w, list_h = dx + 25, dy + 130, dw - 50, dh - 240
-        row_h = _ROW_H
+        row_h = geo["row_h"]
         
         if _in_rect((mx, my), (list_x, list_y, list_w, list_h)):
             # Troviamo l'indice di partenza visibile
@@ -425,8 +457,9 @@ class MusicModalMixin:
         self._music_pre_cache_data()
 
         # Scorrimento automatico a fine lista
-        v_rows = (800 - 160) // 125
-        self._music_scroll = max(0, len(self._music_files) - v_rows)
+        geo = _music_geometry(self, *self.screen.get_size())
+        self._music_scroll = geo["max_scroll_px"]
+        self._music_scroll_target = geo["max_scroll_px"]
 
     def _music_modal_mup(self):
         """Fine trascinamento o seek."""
@@ -468,18 +501,19 @@ class MusicModalMixin:
             self._music_overlay_surf.fill((0, 0, 0, 235))
         self.screen.blit(self._music_overlay_surf, (0, 0))
 
-        _box = dialog_rect(w, h, 1100, 800)
+        geo = _music_geometry(self, w, h)
+        _box = geo["box"]
         dw, dh, dx, dy = _box.w, _box.h, _box.x, _box.y
         _rect(self.screen, (32, 28, 48), (dx, dy, dw, dh), radius=24)
         _rect(self.screen, ACCENT, (dx, dy, dw, dh), 2, radius=24)
         _draw_text(self.screen, self._TR("modal_music_title"), "lg", TXT_HI, dx + 30, dy + 25)
         
         mx, my = pygame.mouse.get_pos()
-        xr = pygame.Rect(dx + dw - 45, dy + 20, 30, 30)
+        xr = geo["close"]
         _rect(self.screen, (200, 50, 50) if _in_rect((mx, my), xr) else (50, 55, 75), xr, radius=8)
         _draw_text(self.screen, "x", "md", TXT_HI, xr.x + 10, xr.y + 2)
 
-        search_r = pygame.Rect(dx + 30, dy + 70, dw - 60, 38)
+        search_r = geo["search"]
         s_bg = (20, 22, 32) if self._music_search_active else (25, 27, 38)
         _rect(self.screen, s_bg, search_r, radius=12)
         _rect(self.screen, ACCENT if self._music_search_active else BORDER, search_r, 1, radius=12)
@@ -491,15 +525,14 @@ class MusicModalMixin:
             pygame.draw.line(self.screen, ACCENT, (search_r.x + 15 + tw, search_r.y + 10), (search_r.x + 15 + tw, search_r.y + 28), 2)
 
         # LIST CONTAINER
-        list_x, list_y, list_w, list_h = dx + 25, dy + 130, dw - 50, dh - 240
+        list_x, list_y, list_w, list_h = geo["list"]
         _rect(self.screen, (15, 12, 26), (list_x, list_y, list_w, list_h), radius=16)
         _rect(self.screen, (40, 42, 65), (list_x, list_y, list_w, list_h), 1, radius=16) 
         
         # --- SISTEMA SCROLL FISICO (LERP + MOMENTUM) ---
-        row_h = _ROW_H
-        total_items = len(self._music_files)
-        total_h = total_items * row_h
-        max_scroll_px = max(0, total_h - list_h)
+        row_h = geo["row_h"]
+        total_h = geo["total_h"]
+        max_scroll_px = geo["max_scroll_px"]
 
         if self._music_is_dragging:
             delta_y = self._music_drag_start_y - my
@@ -520,7 +553,7 @@ class MusicModalMixin:
             self._music_scroll = self._music_scroll_target
 
         start_idx = max(0, int(self._music_scroll // row_h))
-        end_idx = min(total_items, start_idx + (list_h // row_h) + 2)
+        end_idx = min(len(self._music_files), start_idx + (list_h // row_h) + 2)
 
         # Pre-calcolo stati outside loop
         ctx = getattr(self, "_music_modal_context", "scene")
@@ -624,7 +657,9 @@ class MusicModalMixin:
 
         self.screen.set_clip(None)
         _scrollbar(self.screen, dx+dw-18, list_y + 10, 5, list_h - 20, self._music_scroll, total_h, list_h)
-        _draw_text(self.screen, self._TR("modal_drag_drop"), "sm", (80, 90, 120), dx+dw-290, dy+dh-35)
+        hint = self._TR("modal_drag_drop")
+        _draw_text(self.screen, hint, "sm", (80, 90, 120),
+                   dx + dw - _text_wh(hint, "sm")[0] - 30, geo["hint_y"])
 
     def _set_clipboard(self, text):
         from editor.ui.widgets import clipboard_set

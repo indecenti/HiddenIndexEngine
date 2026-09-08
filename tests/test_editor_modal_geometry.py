@@ -296,6 +296,55 @@ def test_auditor_header_buttons_never_collide(lang):
 from editor.mixins import music_modal as mm  # noqa: E402
 
 
+class FakeMusic:
+    """Only what _music_geometry reads off the editor."""
+
+    def __init__(self, tracks: int):
+        self._music_files = [f"t{i}.mp3" for i in range(tracks)]
+
+
+def _music_geo(tracks: int, size=(1280, 720)):
+    return mm._music_geometry(FakeMusic(tracks), *size)
+
+
+def test_the_playlist_fits_the_minimum_window():
+    geo = _music_geo(20)
+    assert pygame.Rect(0, 0, 1280, 720).contains(geo["box"])
+
+
+def test_the_playlist_fills_the_dialog():
+    """The list was dy+130 to dy+dh-110 whatever the dialog was, so a clamped
+    one kept a hundred empty pixels under it."""
+    geo = _music_geo(20)
+    box, listing = geo["box"], geo["list"]
+    assert listing.top > geo["search"].bottom
+    assert box.bottom - listing.bottom < 60, "no empty band under the list"
+
+
+def test_the_playlist_search_is_one_rect():
+    """It used to be drawn ten pixels below where it was hit-tested."""
+    first = _music_geo(20)["search"]
+    second = _music_geo(20)["search"]
+    assert first == second
+    assert _music_geo(20)["box"].contains(first)
+
+
+def test_the_playlist_scroll_counts_the_rows_that_fit():
+    geo = _music_geo(20)
+    assert geo["visible_rows"] == geo["list"].h // geo["row_h"]
+    assert geo["max_scroll_px"] == geo["total_h"] - geo["list"].h
+
+
+def test_a_short_playlist_does_not_scroll():
+    assert _music_geo(1)["max_scroll_px"] == 0
+
+
+def test_the_playlist_grows_with_the_window():
+    small = _music_geo(20, (1280, 720))["list"]
+    large = _music_geo(20, (1920, 1080))["list"]
+    assert large.h > small.h
+
+
 def test_seek_hitbox_sits_on_the_bar_that_is_drawn():
     """The bar is drawn on the row surface; the hitbox is the same place."""
     list_x, row_y = 100, 400
