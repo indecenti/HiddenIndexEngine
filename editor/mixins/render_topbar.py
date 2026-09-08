@@ -181,6 +181,10 @@ class RenderTopbarMixin:
         # con costanti che il rendering non usa (i bottoni tradotti erano piu'
         # larghi della loro hitbox e meta' click andavano persi).
         self._status_hitboxes: dict = {}
+        # The three text runs of the bar, as drawn. They share one line, so the
+        # only way to know they do not write over each other is to publish
+        # where each one actually ended (test_editor_status_bar.py reads this).
+        self._status_spans: dict = {}
 
         # Geometria pulsanti basata sulla nuova altezza
         padding = 6
@@ -228,8 +232,9 @@ class RenderTopbarMixin:
         # Messaggio status (Chirurgicamente spostato a destra)
         # Centratura verticale nella barra
         ty = y + (STATUS_H - 18) // 2
-        _draw_text(self.screen, self.status_msg, "sm", self.status_col,
-                   msg_x, ty, w // 2 - msg_x)
+        msg_w = _draw_text(self.screen, self.status_msg, "sm", self.status_col,
+                           msg_x, ty, w // 2 - msg_x)
+        self._status_spans["msg"] = (msg_x, msg_x + msg_w)
 
         # Info destra (Game / Scene / Undo)
         parts = []
@@ -242,7 +247,15 @@ class RenderTopbarMixin:
         
         info = "  |  ".join(parts)
         si_w, si_h = _txt(info, "sm", TXT_DIM).get_size()
-        _draw_text(self.screen, info, "sm", TXT_DIM, w - si_w - 15, y + (STATUS_H - si_h)//2)
+        # A long game name plus a long scene name is wider than the room left
+        # of it: the block keeps its right edge and loses its head instead of
+        # running into the status message.
+        info_max = max(120, w - 15 - (msg_x + msg_w + 20))
+        si_w = min(si_w, info_max)
+        info_x = w - si_w - 15
+        si_w = _draw_text(self.screen, info, "sm", TXT_DIM, info_x,
+                          y + (STATUS_H - si_h) // 2, info_max)
+        self._status_spans["info"] = (info_x, info_x + si_w)
 
         # Shortcut hint (centrato, solo se c'è spazio sufficiente).
         # La riga intera resta la fonte delle scorciatoie per il pannello F1;
@@ -250,5 +263,8 @@ class RenderTopbarMixin:
         hints = self._TR("tb_shortcuts_hint", "F1 = shortcuts")
         hw, hh = _txt(hints, "sm", (75, 75, 95)).get_size()
         hx = (w - hw) // 2
-        if hx > msg_x + 40 and hx + hw < w - si_w - 20:
+        # The bound on the left is where the status message actually ended, not
+        # where it began: a long message used to be written over by this hint.
+        if hx > msg_x + msg_w + 20 and hx + hw < info_x - 20:
             _draw_text(self.screen, hints, "sm", (75, 75, 95), hx, y + (STATUS_H - hh)//2)
+            self._status_spans["hint"] = (hx, hx + hw)
