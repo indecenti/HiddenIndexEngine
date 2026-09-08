@@ -14,3 +14,8 @@ pytest==9.0.2
 # MCP server di progetto (tools/hie_mcp_server.py). Serve SOLO per usare il
 # server come tool MCP da un client (es. Claude Code). Non finisce nelle build.
 mcp>=1.2.0
+
+# Optional: offline machine translation in the editor's translation editor.
+# Not required to run the editor - it detects a local Ollama or LibreTranslate
+# first, and reports what is missing when nothing is there.
+# argostranslate==1.9.6

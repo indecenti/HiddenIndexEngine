@@ -201,6 +201,22 @@ def test_discovery_can_be_faked_for_a_caller():
     assert discover_backends(probe=lambda: marker) == marker
 
 
+def test_a_detail_is_a_key_and_a_count_not_a_sentence(http):
+    """The detail is shown in the editor's language, so this module must not
+    format it: it shipped as "3 models available" in English for everyone."""
+    http.get_answers[f"{tb.OLLAMA_URL}/api/tags"] = {
+        "models": [{"name": "a"}, {"name": "b"}]}
+    option = discover_backends()[0]
+    assert option.detail_key == "tr_detail_models" and option.detail_count == 2
+    assert option.detail_text == ""
+
+
+def test_an_uninstallable_engine_carries_its_install_hint(http):
+    argos = discover_backends()[-1]
+    if not argos.ready:
+        assert "argostranslate" in argos.detail_text
+
+
 def test_discovery_never_raises_on_a_broken_service(monkeypatch):
     def explode(*_args, **_kw):
         raise OSError("connection reset")

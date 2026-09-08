@@ -206,6 +206,35 @@ what is missing, so it carries a little more than geometry:
   name is a key nobody can use. Only a key created in this session can be
   renamed: renaming an existing one would break whatever refers to it.
 
+#### Machine translation
+
+`editor/tools/translator.py` decides *what* to translate and a backend does the
+translating; `editor/tools/translator_backends.py` finds the backends. The
+split is what makes it testable without a model, and what lets the editor
+prefer an engine the machine already has:
+
+1. a **local service already running** - Ollama on 11434, LibreTranslate on
+   5000, probed with a 0.4 s timeout so discovery cannot be what makes the
+   dialog slow. Only the standard library is used, so a machine that has one
+   needs no new dependency;
+2. **Argos Translate**, a pip package with downloadable offline language
+   packages, which the panel offers to fetch;
+3. nothing, which the panel reports with the command to install one.
+
+Nothing runs before a plan is shown: how many cells, from which language into
+which, and whether a package must be downloaded. Only empty cells are ever
+filled. The batch runs in a worker thread with progress and cancel, and its
+results are applied in the render loop.
+
+The safety that makes it usable at all: a UI string carries placeholders like
+`{n}`, and a model that rewords one breaks `str.format` the first time the game
+shows that string. The prompt tells the model to keep them, and
+`keeps_placeholders()` refuses any result whose placeholders differ from the
+source rather than writing it.
+
+`editor/mixins/lang_translate.py` is the UI, reachable from the panel's
+**Translate...** button and from the command palette.
+
 Its layout used to be written three times (the wheel handler, the renderer, the
 click handler) and the copies disagreed: the search box was drawn three pixels
 below where it was hit-tested, and the rows were clipped two pixels away from

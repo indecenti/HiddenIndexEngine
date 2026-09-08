@@ -102,6 +102,19 @@ class LangTranslateMixin:
             if current in option.models else 0
         backend.model = option.models[index]
 
+    def _lang_tr_detail(self, option) -> str:
+        """The engine detail in the editor's language."""
+        if option.detail_text:
+            return option.detail_text
+        if not option.detail_key:
+            return ""
+        defaults = {"tr_detail_models": "{n} models available",
+                    "tr_detail_languages": "{n} languages",
+                    "tr_detail_offline": "offline models"}
+        return self._TR(option.detail_key,
+                        defaults.get(option.detail_key, "")).format(
+                            n=option.detail_count)
+
     def _lang_tr_selected(self):
         options = self._lang_tr_options
         if not options:
@@ -139,6 +152,18 @@ class LangTranslateMixin:
         self._lang_tr_plan = service.plan(keys, targets, self._lang_cell_value)
         self._lang_tr_message = ""
         self._lang_tr_confirm = True
+
+    def _lang_translate_missing(self) -> None:
+        """Open the translation editor on what is missing, and offer to fill it.
+
+        The entry point from the command palette: the feature has to be
+        reachable by name, not only by a button inside a dialog.
+        """
+        if not getattr(self, "_lang_modal", False):
+            self._lang_open()
+        self._lang_only_missing = True
+        self._lang_update_filter()
+        self._lang_tr_request(SCOPE_VISIBLE)
 
     def _lang_tr_dismiss(self) -> None:
         """Close the confirmation without translating anything."""
@@ -267,7 +292,7 @@ class LangTranslateMixin:
                 _draw_text(self.screen, option.label, "sm",
                            TXT_HI if chosen else TXT, row.x + 10,
                            row.y + (row_h - line_h) // 2, row.w // 2)
-                detail = option.detail
+                detail = self._lang_tr_detail(option)
                 model = getattr(option.backend, "model", "")
                 if model:
                     detail = f"{model}  ({detail})"

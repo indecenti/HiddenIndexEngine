@@ -78,6 +78,13 @@ Legend: [x] done · [~] in progress/partial · [ ] to do.
   video picker were taller than the minimum 1280x720 editor window, so their title
   and footer buttons were off screen. Verified by
   `pytest tests/test_editor_lang_modal.py` and `pytest tests/test_editor_modal_geometry.py`.
+- [x] Machine translation of the missing strings, one cell or in bulk, behind a plan
+  the user confirms. The engine is whatever the machine already has: a running Ollama
+  or LibreTranslate first (probed on localhost, standard library only), Argos Translate
+  otherwise, with its offline packages downloaded on request. A result whose
+  placeholders differ from the source is refused, since it would crash `str.format`
+  in game. Verified by `pytest tests/test_editor_translator.py` and
+  `pytest tests/test_editor_translator_backends.py`.
 - [ ] "Editor Pro" plan (`docs/archive/editor/EDITOR_PRO_PLAN.md`, 2026-07-12): remaining
   items - auto-scatter camouflage (single render-based metric, best-of-M, Lab color, repair
   loop), scatter UX (progress/cancel, seed, interactive ghosts), editor completeness

@@ -205,13 +205,19 @@ def _clean_model_output(text: str) -> str:
 
 @dataclass
 class BackendOption:
-    """One engine the user can pick, and what it would take to use it."""
+    """One engine the user can pick, and what it would take to use it.
+
+    `detail_key` and `detail_count` instead of a sentence: the detail is shown
+    in the editor's language, and this module has no business formatting it.
+    """
 
     backend: object
     label: str
-    detail: str
+    detail_key: str
     ready: bool
     models: List[str] = field(default_factory=list)
+    detail_count: int = 0
+    detail_text: str = ""          # only for what is not translatable, a URL
 
 
 def discover_backends(probe: Optional[Callable[[], Sequence]] = None) -> List[BackendOption]:
@@ -231,21 +237,23 @@ def discover_backends(probe: Optional[Callable[[], Sequence]] = None) -> List[Ba
     if models:
         ollama.model = _best_ollama_model(models)
         options.append(BackendOption(
-            ollama, "Ollama", f"{len(models)} models available", True, models))
+            ollama, "Ollama", "tr_detail_models", True, models,
+            detail_count=len(models)))
 
     libre = LibreTranslateBackend()
     if libre.is_installed():
         options.append(BackendOption(
-            libre, "LibreTranslate",
-            f"{len(libre.languages())} languages", True))
+            libre, "LibreTranslate", "tr_detail_languages", True,
+            detail_count=len(libre.languages())))
 
     from editor.tools.translator import ArgosBackend
     argos = ArgosBackend()
     installed = argos.is_installed()
     options.append(BackendOption(
         argos, "Argos Translate",
-        "offline models" if installed else ArgosBackend.install_hint,
-        installed))
+        "tr_detail_offline" if installed else "",
+        installed,
+        detail_text="" if installed else ArgosBackend.install_hint))
     return options
 
 

@@ -106,6 +106,8 @@ COMMANDS: Tuple[Command, ...] = (
             ("menu", "edit_preset_insert"), needs="scene"),
     Command("translations", "edit", "Translation editor...", "",
             ("menu", "edit_lang_modal")),
+    Command("translate_missing", "edit", "Translate the missing strings...", "",
+            ("call", "_lang_translate_missing")),
 
     # ── Tools ───────────────────────────────────────────────────────────────
     Command("tool_select", "tools", "Selection tool", "S", ("mode", "select")),

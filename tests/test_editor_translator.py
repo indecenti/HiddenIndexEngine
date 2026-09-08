@@ -289,3 +289,36 @@ def test_the_service_accepts_a_result_that_kept_them():
     assert service.run(service.plan(["k"], ["it"], _values(data)),
                        on_done=lambda j, t: written.append(t)) == 1
     assert written == ["Trovati {n} oggetti"]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. NIENTE TESTO A SCHERMO SENZA TRADUZIONE
+# ─────────────────────────────────────────────────────────────────────────────
+
+import json as _json  # noqa: E402
+import re as _re  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+
+_ROOT = _Path(__file__).resolve().parents[1]
+_STRINGS = _ROOT / "engine" / "assets" / "strings"
+_MODULES = ("editor/tools/translator.py", "editor/tools/translator_backends.py",
+            "editor/mixins/lang_translate.py")
+
+
+@pytest.mark.parametrize("lang", ("en", "it", "es", "fr", "de"))
+def test_every_key_the_feature_uses_is_translated(lang):
+    strings = _json.loads((_STRINGS / f"{lang}.json").read_text(encoding="utf-8"))
+    keys = set()
+    for module in _MODULES:
+        keys |= set(_re.findall(r'_TR\(\s*"([a-z0-9_]+)"',
+                                (_ROOT / module).read_text(encoding="utf-8")))
+    keys |= {"tr_detail_models", "tr_detail_languages", "tr_detail_offline"}
+    missing = sorted(k for k in keys if k not in strings)
+    assert not missing, f"{lang}: {missing}"
+
+
+def test_the_engine_detail_is_not_an_english_sentence():
+    """It shipped as "3 models available" for every language."""
+    source = (_ROOT / "editor/tools/translator_backends.py").read_text(
+        encoding="utf-8")
+    assert "models available" not in source.split('"""')[-1]
