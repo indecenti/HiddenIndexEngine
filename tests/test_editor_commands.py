@@ -426,6 +426,7 @@ _KEY_CONSTANTS = {
     "Arrows": ["K_LEFT", "K_RIGHT", "K_UP", "K_DOWN"],
     "Space+drag": ["K_SPACE"],
     "Ctrl+Plus": ["K_PLUS", "K_EQUALS"], "Ctrl+Minus": ["K_MINUS"],
+    "Ctrl+PageUp": ["K_PAGEUP"], "Ctrl+PageDown": ["K_PAGEDOWN"],
 }
 
 

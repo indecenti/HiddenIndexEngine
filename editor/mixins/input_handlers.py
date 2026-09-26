@@ -167,6 +167,12 @@ class InputHandlersMixin:
             if ev.key == pygame.K_g:
                 self._toggle_obj_snap(); return
 
+            # Ctrl+PageUp / Ctrl+PageDown = previous / next scene of the campaign
+            if ev.key == pygame.K_PAGEUP and self.state == STATE_MAIN:
+                self._open_prev_scene(); return
+            if ev.key == pygame.K_PAGEDOWN and self.state == STATE_MAIN:
+                self._open_next_scene(); return
+
         # ── 3. MODALITÀ EDITING TESTO (Search bars, Numeric props) ────────────────
         # Se siamo in queste modalità e NON è premuto Ctrl, catturiamo l'input.
         if self._editing_prop:
@@ -497,6 +503,10 @@ class InputHandlersMixin:
                 self._with_loading(self._save); return
             if _in_rect((mx, my_raw), status_hits.get("play", EMPTY_RECT)):
                 self._playtest_scene(); return
+            if _in_rect((mx, my_raw), status_hits.get("prev", EMPTY_RECT)):
+                self._open_prev_scene(); return
+            if _in_rect((mx, my_raw), status_hits.get("next", EMPTY_RECT)):
+                self._open_next_scene(); return
 
         # 2. DASHBOARD / CANVAS (i modali sono gia' stati serviti dal router)
         if btn == 1:

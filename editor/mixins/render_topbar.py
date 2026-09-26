@@ -4,15 +4,21 @@ editor/mixins/render_topbar.py
 RenderTopbarMixin — top bar con menù a discesa, titolo e status bar.
 """
 
+from pathlib import Path
+
 import pygame
 
 from editor.constants import (
-    TOP_BAR_H, STATUS_H, MENU_W, STATUS_BTN_MIN_W,
+    TOP_BAR_H, STATUS_H, MENU_W, STATUS_BTN_MIN_W, STATUS_BTN_GAP,
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC, STATUS,
     TXT, TXT_DIM, TXT_HI, OK_C, PANEL, BG
 )
 from editor.ui.draw import (_txt, _draw_text, _rect, _button, _in_rect, _text_wh,
                             _button_w)
+
+# Status message: share of the bar it may reach, and the least it always gets.
+STATUS_MSG_SHARE = 0.66
+STATUS_MSG_MIN_W = 160
 
 # Geometria menu principale: le hitbox seguono la larghezza del testo localizzato
 MENU_START_X = 10
@@ -168,6 +174,36 @@ class RenderTopbarMixin:
     # STATUS BAR
     # ─────────────────────────────────────────────────────────────────────────
 
+    def _status_scene_neighbors(self) -> tuple:
+        """(previous, next) scene folders of the open scene, campaign order."""
+        from editor.core.io import scene_neighbors
+        return scene_neighbors(getattr(self, "levels", None) or [],
+                               getattr(self, "scene_path", None))
+
+    def _status_nav_button(self, which: str, target, x: int, y: int, h: int,
+                           mx: int, my: int) -> pygame.Rect:
+        """Draw the previous/next scene button and publish its hitbox.
+
+        The label is short ("Previous" / "Next") so the bar keeps room for the
+        status message; the scene it leads to is named in the tooltip.
+        """
+        if which == "prev":
+            label = self._TR("tb_prev_scene", "Previous")
+            tip = self._TR("tip_btn_prev_scene", "Open the previous scene: {name}")
+        else:
+            label = self._TR("tb_next_scene", "Next")
+            tip = self._TR("tip_btn_next_scene", "Open the next scene: {name}")
+        width = _button_w(label, "sm", icon=which, min_w=STATUS_BTN_MIN_W)
+        rect = pygame.Rect(x, y, width, h)
+        hovered = _in_rect((mx, my), rect)
+        if hovered:
+            self.active_tooltip = tip.replace("{name}", Path(target).name.replace("_", " "))
+        _button(self.screen, rect, label, hovered, icon=which)
+        self._status_hitboxes[which] = rect
+        self._status_nav_targets = getattr(self, "_status_nav_targets", {})
+        self._status_nav_targets[which] = Path(target)
+        return rect
+
     def _r_status(self, w, h):
         y = h - STATUS_H
         # Background barra con linea di separazione chiara
@@ -203,12 +239,21 @@ class RenderTopbarMixin:
             self._status_hitboxes["back"] = btn_r
             msg_x = btn_r.right + 20
 
+            # Previous / next scene of the campaign: shown only when there is
+            # one, so the bar never offers a button that does nothing.
+            prev_scene, next_scene = self._status_scene_neighbors()
+
             # Pulsante SALVA
             if hasattr(self, "scene_path") and self.scene_path:
+                left_r = btn_r
+                if prev_scene is not None:
+                    left_r = self._status_nav_button(
+                        "prev", prev_scene, btn_r.right + STATUS_BTN_GAP, btn_y, btn_h,
+                        mx2, my2)
                 save_label = self._TR("tb_save")
                 save_w = _button_w(save_label, "sm", icon="save",
                                    min_w=STATUS_BTN_MIN_W)
-                save_r = pygame.Rect(btn_r.right + 10, btn_y, save_w, btn_h)
+                save_r = pygame.Rect(left_r.right + STATUS_BTN_GAP, btn_y, save_w, btn_h)
                 hov_save = _in_rect((mx2, my2), save_r)
                 if hov_save: self.active_tooltip = self._TR("tip_btn_save")
 
@@ -222,18 +267,26 @@ class RenderTopbarMixin:
                 play_label = self._TR("tb_play_scene")
                 play_w = _button_w(play_label, "sm", icon="play",
                                    min_w=STATUS_BTN_MIN_W)
-                play_r = pygame.Rect(save_r.right + 10, btn_y, play_w, btn_h)
+                play_r = pygame.Rect(save_r.right + STATUS_BTN_GAP, btn_y, play_w, btn_h)
                 hov_play = _in_rect((mx2, my2), play_r)
                 if hov_play: self.active_tooltip = self._TR("tip_btn_play_scene")
                 _button(self.screen, play_r, play_label, hov_play, icon="play")
                 self._status_hitboxes["play"] = play_r
-                msg_x = play_r.right + 25
+                last_r = play_r
+                if next_scene is not None:
+                    last_r = self._status_nav_button(
+                        "next", next_scene, play_r.right + STATUS_BTN_GAP, btn_y, btn_h,
+                        mx2, my2)
+                msg_x = last_r.right + 25
 
         # Messaggio status (Chirurgicamente spostato a destra)
         # Centratura verticale nella barra
         ty = y + (STATUS_H - 18) // 2
+        # The message may run up to STATUS_MSG_SHARE of the bar: with the two
+        # scene buttons (and German at UI scale 1.5) half the bar left it a few
+        # pixels, "S...". The info block on the right shrinks to what remains.
         msg_w = _draw_text(self.screen, self.status_msg, "sm", self.status_col,
-                           msg_x, ty, w // 2 - msg_x)
+                           msg_x, ty, max(STATUS_MSG_MIN_W, int(w * STATUS_MSG_SHARE) - msg_x))
         self._status_spans["msg"] = (msg_x, msg_x + msg_w)
 
         # Info destra (Game / Scene / Undo)

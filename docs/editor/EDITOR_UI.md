@@ -45,7 +45,7 @@ renderer stores the rects on the editor and the input handler reads them back:
 
 | Surface | Published as |
 |---------|--------------|
-| Status bar buttons | `self._status_hitboxes` (`back` / `save` / `play`) |
+| Status bar buttons | `self._status_hitboxes` (`back` / `prev` / `save` / `play` / `next`); `prev` and `next` exist only when the open scene has a neighbour in campaign order (`editor.core.io.scene_neighbors`) |
 | Status bar text | `self._status_spans` (`msg` / `info` / `hint`), the three runs that share the line |
 | Layers panel | `self._layers_hitboxes` (`rows` / `eye` / `lock`), placed by `_layers_columns()` |
 | Browser column headers | `_gs_header_rects(column, ...)`, declared once in `_GS_HEADER_BUTTONS` |

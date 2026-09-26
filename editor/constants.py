@@ -31,6 +31,8 @@ STATUS_H       = 40
 # Minimum width of a status bar action button; longer labels grow the button
 # instead of being clipped (see editor.ui.draw._button_w).
 STATUS_BTN_MIN_W = 110
+# Gap between two status bar buttons.
+STATUS_BTN_GAP = 10
 AUTOSAVE_SECS  = 60
 # Main loop: consecutive frames that may crash before giving up. A single bad
 # frame (a modal with stale state, a missing asset) must not throw away the

@@ -337,6 +337,19 @@ def _draw_shape_icon(surf, r, icon_id, color):
     elif icon_id == "play":
         pts = [(cx + sz - 1, cy), (cx - sz + 1, cy - sz), (cx - sz + 1, cy + sz)]
         pygame.draw.polygon(surf, color, pts)
+    elif icon_id in ("prev", "next"):
+        # Skip back / skip forward: a triangle against a bar, the media-player
+        # glyph for "the one before / the one after".
+        bar_w = max(2, sz // 3)
+        tri = sz - 1
+        if icon_id == "next":
+            pts = [(cx + tri - bar_w, cy), (cx - tri, cy - tri), (cx - tri, cy + tri)]
+            bar = (cx + tri - bar_w + 1, cy - tri, bar_w, tri * 2)
+        else:
+            pts = [(cx - tri + bar_w, cy), (cx + tri, cy - tri), (cx + tri, cy + tri)]
+            bar = (cx - tri - 1, cy - tri, bar_w, tri * 2)
+        pygame.draw.polygon(surf, color, pts)
+        pygame.draw.rect(surf, color, bar)
     elif icon_id == "edit" or icon_id == "pencil":
         # Simbolo matita stilizzato
         rect = (cx - 2, cy - sz + 2, 4, sz * 2 - 4)

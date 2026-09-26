@@ -238,9 +238,11 @@ def _discover_levels(game_path: Path) -> list:
         # Troviamo tutte le sottocartelle (scene)
         found_dirs = [s for s in ld.iterdir() if s.is_dir()]
         
-        # Ordiniamo le scene in base alla lista in level_config.json se presente
-        scenes_cfg = cfg.get("scenes", [])
-        order_map = {s.get("id"): i for i, s in enumerate(scenes_cfg)}
+        # Scenes in CAMPAIGN order (`order`, then position in level_config.json):
+        # the same order the game plays them in (engine.campaign), so the
+        # editor tree and its previous/next buttons match what the player sees.
+        from engine.campaign import ordered_scene_ids
+        order_map = {sid: i for i, sid in enumerate(ordered_scene_ids(cfg))}
         
         # Separiamo scene registrate da scene "orfane" (nuove o non in config)
         registered = []
@@ -270,6 +272,29 @@ def _discover_levels(game_path: Path) -> list:
     orphan_levels.sort(key=lambda x: x["id"])
     
     return registered_levels + orphan_levels
+
+
+def scene_neighbors(levels: list, scene_path) -> tuple:
+    """(previous, next) scene folders of `scene_path` in campaign order.
+
+    The order runs across levels: after the last scene of a level comes the
+    first scene of the next one. Either side is None at the ends, or when the
+    scene is not part of any level (a folder opened by hand).
+    """
+    if not scene_path:
+        return None, None
+    target = Path(scene_path)
+    if target.name == "scene.json":
+        target = target.parent
+    flat = [Path(s) for level in (levels or []) for s in level.get("scenes", [])]
+    try:
+        key = target.resolve()
+        idx = next(i for i, s in enumerate(flat) if s.resolve() == key)
+    except StopIteration:
+        return None, None
+    prev_s = flat[idx - 1] if idx > 0 else None
+    next_s = flat[idx + 1] if idx + 1 < len(flat) else None
+    return prev_s, next_s
 
 
 # ─────────────────────────────────────────────────────────────────────────────

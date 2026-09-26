@@ -415,10 +415,48 @@ class IoOpsMixin:
         self._status(self._TR("io_saved_as", "Saved as: {0}").format(new_name),
                      OK_C, 3)
 
+    def _refresh_levels_for(self, scene_path: Path) -> None:
+        """Re-read the level tree when the scene being opened is not in it.
+
+        "Save scene as..." registers the copy in level_config.json but the
+        editor kept the tree it read when the game was opened, so the new scene
+        was missing from the tree and from the previous/next buttons until the
+        game was reopened.
+        """
+        game_path = getattr(self, "game_path", None)
+        if not game_path:
+            return
+        levels = getattr(self, "levels", None) or []
+        known = any(Path(s).resolve() == Path(scene_path).resolve()
+                    for level in levels for s in level.get("scenes", []))
+        if not known:
+            self.levels = _discover_levels(game_path)
+
+    def _open_neighbor_scene(self, which: str) -> None:
+        """Open the previous ("prev") or next ("next") scene of the campaign,
+        through the unsaved-changes guard like every other navigation."""
+        from editor.core.io import scene_neighbors
+        prev_s, next_s = scene_neighbors(getattr(self, "levels", None) or [],
+                                         getattr(self, "scene_path", None))
+        target = prev_s if which == "prev" else next_s
+        if target is None:
+            key = "io_no_prev_scene" if which == "prev" else "io_no_next_scene"
+            default = "This is the first scene" if which == "prev" else "This is the last scene"
+            self._status(self._TR(key, default), WARN_C, 2)
+            return
+        self._request_nav(lambda: self._load_scene(target))
+
+    def _open_prev_scene(self) -> None:
+        self._open_neighbor_scene("prev")
+
+    def _open_next_scene(self) -> None:
+        self._open_neighbor_scene("next")
+
     def _load_scene(self, scene_path: Path):
         logging.info(f"[EDITOR] Loading scene: {scene_path}")
         self.scene_path  = scene_path
         self.scene_data  = _load_scene_data(scene_path)
+        self._refresh_levels_for(scene_path)
         self._sanitize_effects()
         self.selected_idx = None
         self.sel_effect_idx = None

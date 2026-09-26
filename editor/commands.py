@@ -168,6 +168,10 @@ COMMANDS: Tuple[Command, ...] = (
     # ── Navigation ──────────────────────────────────────────────────────────
     Command("search_catalog", "nav", "Search the catalog", "/",
             ("call", "_focus_catalog_search"), needs="scene"),
+    Command("scene_prev", "nav", "Previous scene", "Ctrl+PageUp",
+            ("call", "_open_prev_scene"), needs="scene"),
+    Command("scene_next", "nav", "Next scene", "Ctrl+PageDown",
+            ("call", "_open_next_scene"), needs="scene"),
     Command("pan", "nav", "Pan the canvas", "WASD"),
     Command("pan_drag", "nav", "Pan by dragging", "Space+drag"),
     Command("nudge", "nav", "Nudge the selection (Shift: 10 px)", "Arrows"),
