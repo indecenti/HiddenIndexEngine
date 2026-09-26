@@ -349,3 +349,41 @@ def test_settings_group_keys_exist_for_both_runtimes():
 #     l'engine (RewardTracker.on_object_found) lo aggiunge, il web no. Divergenza di
 #     punteggio reale ma minore; allineabile esponendolo nelle rules + aggiungendolo
 #     in game.js _onPointer.
+
+
+FX_CASES = [
+    ("glint", [0.0, 0.0, 0.1]), ("glint", [0.3, 0.1, 0.1]), ("glint", [1.75, 0.66, 0.0]),
+    ("glint", [2.2, 0.0, 1.5]),
+    ("smoke", [0, 0.0, 30.0, 0.84]), ("smoke", [3, 0.4, 30.0, 0.84]),
+    ("smoke", [17, 5.25, 64.8, 2.36]), ("smoke", [9, -0.3, 12.0, 0.6]),
+    ("flies", [0, 0.0, 0.0, 0.0, 0.0, 120.0]), ("flies", [5, 1.2, 3.4, 100.0, 200.0, 120.0]),
+    ("flies", [39, 7.7, 12.3, -5.0, 3.0, 111.0]),
+]
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node non disponibile")
+def test_ambient_effects_match_between_runtimes():
+    """engine/effect_renderer.py and runtime/core.js draw the same glint breath,
+    the same smoke puffs and the same fly paths (pure functions of time)."""
+    from engine import effect_renderer as fx
+
+    core_js = ROOT / "editor" / "web_template" / "runtime" / "core.js"
+    script = (
+        "const fs=require('fs');"
+        "const src=fs.readFileSync(process.argv[1],'utf8');"
+        "const api=new Function('window','document','localStorage',"
+        "src+'; return {glint: glintBrightness, smoke: smokePuff, flies: flyPosition};')({},{},{});"
+        "const cases=JSON.parse(process.argv[2]);"
+        "console.log(JSON.stringify(cases.map(([k,a])=>{const r=api[k](...a);"
+        "return Array.isArray(r)?r:[r];})));"
+    )
+    proc = subprocess.run(["node", "-e", script, str(core_js), json.dumps(FX_CASES)],
+                          capture_output=True, text=True)
+    assert proc.returncode == 0, f"harness JS fallito:\n{proc.stderr}"
+    js = json.loads(proc.stdout)
+    py_fn = {"glint": fx.glint_brightness, "smoke": fx.smoke_puff, "flies": fx.fly_position}
+    for (kind, args), js_vals in zip(FX_CASES, js):
+        py_vals = py_fn[kind](*args)
+        py_vals = list(py_vals) if isinstance(py_vals, tuple) else [py_vals]
+        assert py_vals == pytest.approx(js_vals, rel=1e-9, abs=1e-9), (
+            f"DRIFT {kind}{tuple(args)}: python={py_vals} js={js_vals}")

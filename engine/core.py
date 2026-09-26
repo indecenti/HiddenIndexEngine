@@ -44,6 +44,8 @@ except ImportError:
 MENU_SCRIM_COLOR = (8, 10, 18)
 MENU_SCRIM_ALPHA_MAIN = 96
 MENU_SCRIM_ALPHA_LIST = 172
+# Smallest px size the hint panel may shrink a label to.
+HUD_LABEL_MIN_SIZE = 9
 
 class EngineState:
     """Stati principali della state machine di sistema."""
@@ -1705,6 +1707,16 @@ class EngineCore:
             cache[key] = g
         return g
 
+    def _fit_hud_label(self, text: str, size: int, bold: bool, color, max_w: int) -> pygame.Surface:
+        """Label of the hint panel, shrunk until it fits `max_w` (German labels
+        are twice as long as the English ones the panel was drawn for)."""
+        size = max(8, int(size))
+        while True:
+            surf = self._hud_font("segoeui", size, bold=bold).render(text, True, color)
+            if surf.get_width() <= max_w or size <= HUD_LABEL_MIN_SIZE:
+                return surf
+            size -= 1
+
     def _hud_font(self, family: str, size: int, bold: bool = False, italic: bool = False) -> pygame.font.Font:
         """Restituisce un SysFont cacheato per evitare di ricrearlo ogni frame."""
         key = (family, size, bold, italic)
@@ -1817,8 +1829,9 @@ class EngineCore:
         panel_surf.blit(hint_surf, hint_rect)
 
         # Disegna label "HINTS" in Off-white
-        font_label = self._hud_font("segoeui", _sv(9), bold=False)
-        label_surf = font_label.render("HINTS AVAILABLE", True, COLOR_TEXT)
+        label_surf = self._fit_hud_label(
+            self.lang.get("hud_hints_available", "Hints available").upper(),
+            _sv(9), False, COLOR_TEXT, panel_w - _sv(6))
         label_rect = label_surf.get_rect(center=(panel_w // 2, _sv(44)))
         panel_surf.blit(label_surf, label_rect)
 
@@ -1873,22 +1886,22 @@ class EngineCore:
         if is_max_used:
             btn_bg_color = (100, 100, 110, 140)
             btn_text_color = (160, 160, 170)
-            btn_text = "DISABLED"
+            btn_text = self.lang.get("hud_hint_disabled", "Off")
             progress_color = (120, 120, 140)
         elif available_hints <= 0:
             btn_bg_color = (80, 80, 90, 140)
             btn_text_color = (140, 140, 150)
-            btn_text = "EMPTY"
+            btn_text = self.lang.get("hud_hint_empty", "Empty")
             progress_color = (100, 100, 110)
         elif cooldown_time > 0:
             btn_bg_color = (220, 40, 40, 140)
             btn_text_color = (255, 200, 200)
-            btn_text = "WAIT"
+            btn_text = self.lang.get("hud_hint_wait", "Wait")
             progress_color = (220, 100, 100)
         else:
             btn_bg_color = (60, 240, 120, 140)  # Maggiore trasparenza richiesta
             btn_text_color = (20, 80, 60)
-            btn_text = "HINT"
+            btn_text = self.lang.get("hud_hint", "Hint")
             progress_color = (100, 255, 180)
 
         # Disegna pulsante (rettangolo arrotondato)
@@ -1897,8 +1910,8 @@ class EngineCore:
         pygame.draw.rect(panel_surf, COLOR_BORDER, btn_rect, max(1, sm.scale_value(1)), border_radius=_sv(6))
 
         # Testo sul bottone
-        font_btn = self._hud_font("segoeui", _sv(11), bold=True)
-        btn_label = font_btn.render(btn_text, True, btn_text_color)
+        btn_label = self._fit_hud_label(btn_text.upper(), _sv(11), True, btn_text_color,
+                                        btn_rect.w - _sv(6))
         btn_label_rect = btn_label.get_rect(center=(panel_w // 2, btn_y_off + btn_h // 2))
         panel_surf.blit(btn_label, btn_label_rect)
 
@@ -1921,22 +1934,21 @@ class EngineCore:
 
         # Testo informativo sotto progress bar
         info_y = progress_y + progress_h + _sv(10)
-        font_info = self._hud_font("segoeui", _sv(10), bold=True)
 
         if is_max_used:
-            info_text = "Max used"
+            info_text = self.lang.get("hud_hint_max_used", "Max used")
             info_color = (200, 120, 120)
         elif available_hints <= 0:
-            info_text = "No hints"
+            info_text = self.lang.get("hud_hint_none", "No hints")
             info_color = (180, 180, 190)
         elif cooldown_time > 0:
             info_text = f"{cooldown_time:.1f}s"
             info_color = (255, 180, 120)
         else:
-            info_text = "Ready"
+            info_text = self.lang.get("hud_hint_ready", "Ready")
             info_color = (150, 240, 150)
 
-        info_surf = font_info.render(info_text, True, info_color)
+        info_surf = self._fit_hud_label(info_text, _sv(10), True, info_color, panel_w - _sv(6))
         info_rect = info_surf.get_rect(center=(panel_w // 2, info_y))
         panel_surf.blit(info_surf, info_rect)
 

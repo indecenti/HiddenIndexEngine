@@ -333,81 +333,164 @@ function loadImage(src) {
 // Effetti ambientali — replica di engine/effect_renderer.py
 // Posizionati in bg-space: sx,sy = bgToScreen(fx.x,fx.y), sr = radius*bgScale.
 // ──────────────────────────────────────────────────────────────────────────
+// Tuning: identical values in engine/effect_renderer.py.
+const FX = {
+  GLINT_HALO_ALPHA: 0.92, GLINT_HALO_FALLOFF: 2.4, GLINT_WHITE_CORE: 0.55, GLINT_CORE_SIZE: 10.0,
+  GLINT_SPARKLE_FROM: 0.55, GLINT_SPARKLE_LEN: 1.15, GLINT_SPARKLE_SPIN: 0.08,
+  GLINT_SPARKLE_MAX: 80, GLINT_SPARKLE_FULL_RADIUS: 90, GLINT_MIN_RADIUS: 6,
+  SMOKE_PUFFS: 16, SMOKE_RISE: 5.0, SMOKE_WIND: 1.8, SMOKE_SWAY: 0.55, SMOKE_FADE_IN: 0.2,
+  SMOKE_SCATTER: 0.9, SMOKE_FADE_OUT: 1.4, SMOKE_ALPHA: 1.25, SMOKE_GROW_FROM: 0.7,
+  SMOKE_GROW_TO: 2.4, SMOKE_SIZE_BASE: 0.6, SMOKE_SIZE_GAIN: 0.8, SMOKE_SPRITE: 64,
+  SMOKE_SPRITE_FALLOFF: 1.6, SMOKE_LIT_CORE: 0.3, SMOKE_LIT_SIZE: 3.0,
+  FLIES_PER_INTENSITY: 40, FLIES_SPEED: 6.0, FLIES_BUZZ_HZ: 9.0, FLIES_BUZZ_AMP: 0.025,
+  FLIES_BASE_SIZE: 4.2, FLIES_WING_ALPHA: 90,
+};
+
+function fxHash01(n) { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); }
+function fxSmooth(e0, e1, x) {
+  if (e1 === e0) return x >= e1 ? 1 : 0;
+  const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
+  return t * t * (3 - 2 * t);
+}
+function glintBrightness(tAccum, phase, pulseMin) {
+  const floor = Math.max(0, Math.min(1, pulseMin));
+  const raw = 0.5 - 0.5 * Math.cos(2 * Math.PI * (tAccum + phase));
+  return floor + (1 - floor) * fxSmooth(0, 1, raw);
+}
+
+// Radial gradient sampling the same profile as effect_renderer._radial_sprite:
+// alpha = peak * exp(-k d^2) * (1 - d), colour whitened towards the centre.
+function fxRadialGradient(ctx, x, y, r, color, peak, falloff, whiteCore, coreSize) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  const [r0, g0, b0] = color;
+  const STOPS = 14;
+  for (let k = 0; k <= STOPS; k++) {
+    const d = k / STOPS;
+    const a = peak * Math.exp(-falloff * d * d) * (1 - d);
+    const w = whiteCore * Math.exp(-coreSize * d * d);
+    const cr = Math.round(r0 + (255 - r0) * w), cg = Math.round(g0 + (255 - g0) * w),
+      cb = Math.round(b0 + (255 - b0) * w);
+    g.addColorStop(d, `rgba(${cr},${cg},${cb},${a.toFixed(4)})`);
+  }
+  return g;
+}
+
+// A glow that breathes: soft halo, warm-white heart, a star at the crest.
 function drawGlint(ctx, sx, sy, sr, color, intensity, tAccum, phase, pulseMin) {
-  const t = tAccum + phase;
-  const pulse = pulseMin + ((Math.sin(2 * Math.PI * t) + 1) * 0.5) * (1 - pulseMin);
-  const eff = intensity * pulse;
-  if (eff <= 0 || sr <= 0) return;
-  const [r, g, b] = color;
-  const a = Math.min(1, eff);
+  const b = glintBrightness(tAccum, phase, pulseMin);
+  const level = Math.max(0, Math.min(1, intensity * b));
+  if (level <= 0.01 || sr <= 0) return;
+  const r = Math.max(FX.GLINT_MIN_RADIUS, Math.round(sr));
   ctx.save();
-  ctx.globalCompositeOperation = "lighter"; // blending additivo (BLEND_RGB_ADD)
-  const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr);
-  // Approssima il falloff (1-ratio)^2.4 dell'engine con piu' stop.
-  grad.addColorStop(0.0, `rgba(${r},${g},${b},${a})`);
-  grad.addColorStop(0.15, `rgba(${r},${g},${b},${a * 0.6})`);
-  grad.addColorStop(0.4, `rgba(${r},${g},${b},${a * 0.22})`);
-  grad.addColorStop(0.7, `rgba(${r},${g},${b},${a * 0.05})`);
-  grad.addColorStop(1.0, `rgba(${r},${g},${b},0)`);
-  ctx.fillStyle = grad;
-  ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.fill();
-  if (eff > 0.3) {
-    const cv = Math.min(255, Math.round(230 * eff * 0.9));
-    ctx.fillStyle = `rgb(${cv},${cv},${cv})`;
-    ctx.beginPath(); ctx.arc(sx, sy, Math.max(1, sr / 8), 0, Math.PI * 2); ctx.fill();
-  }
-  ctx.restore();
-}
-
-function drawSmoke(ctx, sx, sy, sr, color, intensity, tAccum, phase, pulseMin) {
-  const t = tAccum + phase;
-  const [rc, gc, bc] = color;
-  const numPuffs = 12;
-  ctx.save();
-  for (let i = 0; i < numPuffs; i++) {
-    const seed = i * 2.618;
-    const vSpeed = 0.7 + 0.3 * Math.sin(seed * 0.5);
-    const pT = (((t * vSpeed + i / numPuffs) % 1) + 1) % 1;
-    const sway = Math.sin(pT * 4.5 + seed) * 0.7 + Math.cos(pT * 8.5 + seed * 1.5) * 0.3;
-    const driftX = sway * (sr * 0.8 * (1.1 + pT * 1.5));
-    const driftY = -pT * sr * 9.0;
-    const puffR = sr * (0.55 + pT * 0.7) * pulseMin;
-    const alphaBase = 180 * intensity * Math.max(0, Math.pow(1 - pT, 1.6));
-    if (alphaBase <= 1) continue;
-    const numBlobs = 5;
-    for (let bb = 0; bb < numBlobs; bb++) {
-      const bAng = bb * (Math.PI * 2 / numBlobs) + pT * 0.4;
-      const bDist = puffR * 0.2 * (0.7 + 0.3 * Math.sin(seed + bb));
-      const bx = sx + driftX + Math.cos(bAng) * bDist;
-      const by = sy + driftY + Math.sin(bAng) * bDist;
-      for (let layer = 0; layer < 3; layer++) {
-        const lRatio = (3 - layer) / 3;
-        const subR = puffR * (0.6 + 0.12 * bb) * lRatio;
-        const subA = (alphaBase * (0.1 + 0.07 * layer)) / 255;
-        if (subR > 0 && subA > 0) {
-          ctx.fillStyle = `rgba(${rc},${gc},${bc},${subA})`;
-          ctx.beginPath(); ctx.arc(bx, by, subR, 0, Math.PI * 2); ctx.fill();
-        }
-      }
+  ctx.globalAlpha = level;
+  ctx.fillStyle = fxRadialGradient(ctx, sx, sy, r, color, FX.GLINT_HALO_ALPHA,
+    FX.GLINT_HALO_FALLOFF, FX.GLINT_WHITE_CORE, FX.GLINT_CORE_SIZE);
+  ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+  const spark = fxSmooth(FX.GLINT_SPARKLE_FROM, 1, b) * Math.min(1, intensity)
+    * Math.min(1, FX.GLINT_SPARKLE_FULL_RADIUS / r);
+  if (spark > 0.02) {
+    const len = Math.max(4, Math.min(r * FX.GLINT_SPARKLE_LEN, FX.GLINT_SPARKLE_MAX) * (0.75 + 0.25 * b));
+    const tint = color.map(c => Math.min(255, Math.round((c + 510) / 3)));
+    const ang = 2 * Math.PI * ((FX.GLINT_SPARKLE_SPIN * (tAccum + phase)) % 0.25);
+    ctx.globalAlpha = spark;
+    ctx.translate(sx, sy); ctx.rotate(-ang);
+    for (let arm = 0; arm < 2; arm++) {
+      const grad = arm === 0 ? ctx.createLinearGradient(-len, 0, len, 0)
+        : ctx.createLinearGradient(0, -len, 0, len);
+      grad.addColorStop(0, `rgba(${tint[0]},${tint[1]},${tint[2]},0)`);
+      grad.addColorStop(0.5, `rgba(${tint[0]},${tint[1]},${tint[2]},0.9)`);
+      grad.addColorStop(1, `rgba(${tint[0]},${tint[1]},${tint[2]},0)`);
+      ctx.fillStyle = grad;
+      const w = 2.2;
+      if (arm === 0) ctx.fillRect(-len, -w / 2, len * 2, w);
+      else ctx.fillRect(-w / 2, -len, w, len * 2);
     }
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.beginPath(); ctx.arc(0, 0, Math.max(1, len / 10), 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
 }
 
-function drawFlies(ctx, sx, sy, sr, color, intensity, tAccum, tGlobal, pulseMin) {
-  const numFlies = Math.floor(intensity * 40);
-  if (numFlies < 1) return;
-  const baseSz = Math.max(1, Math.round(pulseMin * 3.0));
-  const [r, g, b] = color;
+function smokePuff(i, t, sr, size) {
+  const seed = fxHash01(i + 1);
+  const speed = 0.85 + 0.3 * fxHash01(i + 17);
+  const p = (((t * speed + i / FX.SMOKE_PUFFS + seed * 0.05) % 1) + 1) % 1;
+  const opacity = fxSmooth(0, FX.SMOKE_FADE_IN, p) * Math.pow(1 - p, FX.SMOKE_FADE_OUT);
+  const rise = -p * sr * FX.SMOKE_RISE;
+  const wind = FX.SMOKE_WIND * sr * p * p;
+  const sway = Math.sin(2 * Math.PI * (p * 1.3 + seed)) * FX.SMOKE_SWAY * sr * (0.3 + p);
+  const radius = sr * size * (FX.SMOKE_GROW_FROM + (FX.SMOKE_GROW_TO - FX.SMOKE_GROW_FROM) * p)
+    * (0.85 + 0.3 * fxHash01(i + 31));
+  const scatter = (fxHash01(i + 53) - 0.5) * FX.SMOKE_SCATTER * sr * (0.4 + p);
+  return [wind + sway + scatter, rise, radius, opacity];
+}
+
+const _smokeSprites = {};
+function smokeSprite(color) {
+  const key = color.join(",");
+  if (_smokeSprites[key]) return _smokeSprites[key];
+  const d = FX.SMOKE_SPRITE, c = document.createElement("canvas");
+  c.width = c.height = d;
+  const cx = c.getContext("2d");
+  cx.fillStyle = fxRadialGradient(cx, d / 2, d / 2, d / 2, color, 1, FX.SMOKE_SPRITE_FALLOFF,
+    FX.SMOKE_LIT_CORE, FX.SMOKE_LIT_SIZE);
+  cx.fillRect(0, 0, d, d);
+  _smokeSprites[key] = c;
+  return c;
+}
+
+// Soft puffs that appear, rise, drift with the wind, swell and fade.
+function drawSmoke(ctx, sx, sy, sr, color, intensity, tAccum, phase, pulseMin) {
+  if (sr <= 0 || intensity <= 0) return;
+  const sprite = smokeSprite(color);
+  const size = Math.max(0.25, FX.SMOKE_SIZE_BASE + FX.SMOKE_SIZE_GAIN * (pulseMin || 0));
+  const peak = FX.SMOKE_ALPHA * Math.min(2, intensity);
+  const t = tAccum + (phase || 0);
+  const age = i => (((t * (0.85 + 0.3 * fxHash01(i + 17)) + i / FX.SMOKE_PUFFS) % 1) + 1) % 1;
+  const order = [...Array(FX.SMOKE_PUFFS).keys()].sort((a, b) => age(b) - age(a));
   ctx.save();
-  ctx.fillStyle = `rgb(${r},${g},${b})`;
-  for (let i = 0; i < numFlies; i++) {
-    const phi = i * 1.234;
-    const posX = sx + Math.cos(tAccum * (1 + Math.sin(phi * 0.5)) + phi) * sr * (0.4 + 0.4 * Math.sin(tAccum * 0.8 + phi)) + Math.sin(tGlobal * 12 + phi) * (sr * 0.1);
-    const posY = sy + Math.sin(tAccum * (0.8 + Math.cos(phi * 0.3)) + phi * 1.1) * sr * (0.4 + 0.4 * Math.cos(tAccum * 0.7 + phi * 1.2)) + Math.cos(tGlobal * 14 + phi * 1.5) * (sr * 0.1);
-    const sz = Math.round((i % 4 !== 0) ? baseSz : baseSz * 0.8);
-    if (sz <= 1) ctx.fillRect(Math.round(posX), Math.round(posY), 1, 1);
-    else ctx.fillRect(Math.round(posX - sz / 2), Math.round(posY - sz / 2), sz, sz);
+  for (const i of order) {
+    const [dx, dy, pr, op] = smokePuff(i, t, sr, size);
+    const a = Math.min(1, peak * op);
+    if (a * 255 <= 2 || pr < 1) continue;
+    ctx.globalAlpha = a;
+    ctx.drawImage(sprite, sx + dx - pr, sy + dy - pr, pr * 2, pr * 2);
+  }
+  ctx.restore();
+}
+
+function flyPosition(i, tAccum, tGlobal, sx, sy, sr) {
+  const h = [];
+  for (let k = 0; k < 8; k++) h.push(fxHash01(i * 7 + k));
+  const t = tAccum * FX.FLIES_SPEED;
+  const fx1 = 0.6 + 0.8 * h[0], fx2 = 1.3 + 1.2 * h[1], fy1 = 0.5 + 0.9 * h[2], fy2 = 1.1 + 1.3 * h[3];
+  let x = sr * (0.55 * Math.sin(t * fx1 + 6.283 * h[4]) + 0.3 * Math.sin(t * fx2 + 6.283 * h[5]));
+  let y = sr * 0.6 * (0.55 * Math.cos(t * fy1 + 6.283 * h[6]) + 0.3 * Math.sin(t * fy2 + 6.283 * h[7]));
+  const buzz = FX.FLIES_BUZZ_AMP * sr;
+  x += buzz * Math.sin(2 * Math.PI * FX.FLIES_BUZZ_HZ * tGlobal + 11 * h[0]);
+  y += buzz * Math.cos(2 * Math.PI * FX.FLIES_BUZZ_HZ * 1.13 * tGlobal + 7 * h[1]);
+  return [sx + x, sy + y, 0.6 + 0.4 * h[5]];
+}
+
+// A swarm: small dark bodies with two flickering wings, nearer flies bigger.
+function drawFlies(ctx, sx, sy, sr, color, intensity, tAccum, tGlobal, pulseMin) {
+  const count = Math.round(Math.max(0, intensity) * FX.FLIES_PER_INTENSITY);
+  if (count < 1 || sr <= 0) return;
+  const [r, g, b] = color;
+  const scale = Math.max(0.8, Math.min(2, sr / 120)) * Math.max(0.3, pulseMin == null ? 1 : pulseMin);
+  const wing = `rgba(${Math.min(255, r + 150)},${Math.min(255, g + 150)},${Math.min(255, b + 160)},${FX.FLIES_WING_ALPHA / 255})`;
+  ctx.save();
+  for (let i = 0; i < count; i++) {
+    const [x, y, depth] = flyPosition(i, tAccum, tGlobal, sx, sy, sr);
+    const len = Math.max(1.5, FX.FLIES_BASE_SIZE * scale * depth);
+    if (len < 2.2) { ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fillRect(Math.floor(x), Math.floor(y), 1, 1); continue; }
+    const w = Math.round(len), h = Math.max(1, Math.round(len * 0.6));
+    const beat = Math.floor(tGlobal * 40 + i * 3) % 2;
+    const wh = Math.max(1, h - beat);
+    ctx.fillStyle = wing;
+    ctx.beginPath(); ctx.ellipse(x, y - h + beat, (w + 2) / 2, (wh + 1) / 2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.beginPath(); ctx.ellipse(x, y, w / 2, h / 2, 0, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
 }

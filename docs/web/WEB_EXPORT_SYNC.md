@@ -104,12 +104,18 @@ update `_awardHintProgress`.
 
 ## E. Ambient effects (`engine/effect_renderer.py`)
 
+Pure functions of time and parameters (no random state); the tuning constants are
+the `FX` object in `runtime/core.js` and the module constants in Python - change
+both. Pinned by `tests/test_web_sync.py::test_ambient_effects_match_between_runtimes`
+(breath brightness, smoke puff positions, fly paths, compared to 1e-9).
+
 | ENGINE | WEB | Notes |
 |---|---|---|
-| `update_effect_state`: glint `t+=dt/period`, others `t+=dt*period` (period default 2.0) | `_updateAndDrawEffects` | |
-| `draw_glint_effect` (pulse, additive glow, core>0.3) | `drawGlint` | additive blending = `globalCompositeOperation="lighter"` |
-| `draw_smoke_effect` (12 puffs x 5 blobs x 3 layers) | `drawSmoke` | direct port of the loop |
-| `draw_flies_effect` (intensity*40 particles) | `drawFlies` | |
+| `update_effect_state`: glint `t+=dt/period` (breaths), others `t+=dt*period` | `_updateAndDrawEffects` | unchanged contract |
+| `glint_brightness`: eased cosine breath, floor `pulse_min` | `glintBrightness` | continuous, no quantized levels |
+| `draw_glint_effect`: gaussian halo whitened at the centre, faded by alpha; four-arm star above `GLINT_SPARKLE_FROM`, slowly turning | `drawGlint` | normal blending in both (was additive with a grey core disc) |
+| `smoke_puff` / `draw_smoke_effect`: 18 soft sprites, fade in, rise, wind, sway, scatter, swell, fade out | `smokePuff` / `drawSmoke` | `pulse_min` = size factor `0.6 + 0.8 * pulse_min` |
+| `fly_position` / `draw_flies_effect`: two orbits per axis + small buzz, body + flickering wings, depth | `flyPosition` / `drawFlies` | `intensity * 40` flies |
 | Position: bg space -> screen via `bg_to_screen` | same | radius scaled by `bg_display_scale` |
 
 ---

@@ -766,8 +766,10 @@ class RenderCanvasMixin:
                 draw_flies_effect(self.screen, sx, sy, sr_f, color, intensity, 
                                   fx["_t_accum"], t_global, fx.get("pulse_min", 1.0))
             elif t_type == "smoke":
-                draw_smoke_effect(self.screen, sx, sy, sr_f, color, intensity, 
-                                  fx["_t_accum"], phase)
+                # pulse_min is the puff size: without it the preview drew every
+                # column at the default size while the game used the saved one.
+                draw_smoke_effect(self.screen, sx, sy, sr_f, color, intensity,
+                                  fx["_t_accum"], phase, fx.get("pulse_min", 0.1))
             elif t_type == "glint":
                 draw_glint_effect(self.screen, sx, sy, sr_f, color, intensity, 
                                   fx["_t_accum"], phase, fx.get("pulse_min", 0.1))
