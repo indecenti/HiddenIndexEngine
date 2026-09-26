@@ -76,6 +76,27 @@ class ThemeManager:
             
         return MenuTheme(data if data else {}, game_id=game_id)
 
+def _default_font(size: int, bold: bool = False) -> pygame.font.Font:
+    """pygame's bundled face at the size asked for.
+
+    `Font(None, size)` / `SysFont(None, size)` silently scale the default face
+    to 0.6875 of `size`: every theme without its own font (default, horror,
+    android_std and every "body" role left empty) drew a "24" as 16 px text.
+    Loading the same file by path gives the real size. Falls back to the None
+    face when the file cannot be found.
+    """
+    path = Path(pygame.__file__).resolve().parent / pygame.font.get_default_font()
+    try:
+        font = pygame.font.Font(str(path), size) if path.exists() else pygame.font.Font(None, size)
+    except (OSError, pygame.error):
+        font = pygame.font.Font(None, size)
+    font.set_bold(bold and "bold" not in path.name)
+    return font
+
+
+# Smallest reference size of any text the player must read (MENU_UX_PLAN.md).
+MIN_READABLE_REF = 18
+
 # Valore sentinella per colori invalidi
 _FALLBACK_COLOR: tuple[int, int, int] = (128, 128, 128)
 
@@ -391,31 +412,42 @@ class MenuTheme:
                     f = pygame.font.SysFont(font_family, scaled_size,
                                             bold=self._font_cfg.get("bold", False))
             else:
-                f = pygame.font.SysFont(None, scaled_size,
-                                        bold=self._font_cfg.get("bold", False))
+                f = _default_font(scaled_size, bold=self._font_cfg.get("bold", False))
         except Exception as e:
             logger.warning("MenuTheme: errore caricamento font '%s': %s", font_family, e)
-            f = pygame.font.SysFont(None, scaled_size)
+            f = _default_font(scaled_size)
 
         self._font_cache[scaled_size] = f
         return f
 
-    def get_auto_font(self, text: str, ref_size: int, max_w: int, sm) -> pygame.font.Font:
+    def get_auto_font(self, text: str, ref_size: int, max_w: int, sm,
+                      min_size: int = MIN_READABLE_REF) -> pygame.font.Font:
+        """Scaled font for `text`, shrunk while it is wider than `max_w`.
+
+        It never goes below `min_size` (reference px), nor starts below it: the
+        old floor of 12 turned long card names and some themes' value pills into
+        11-16 px text. What still does not fit is shortened by fit_text().
         """
-        Restituisce un font scalato, riducendone la dimensione se il testo eccede max_w.
-        """
-        current_size = ref_size
+        current_size = max(int(ref_size), int(min_size))
         font = self.get_font(current_size, sm)
-        
-        # Prova a ridurre fino a un minimo di 12px (ref)
-        while current_size > 12:
+        while current_size > min_size:
             t_w, _ = font.size(text)
-            if t_w <= sm.scale_value(max_w - 20): # Padding 20
+            if t_w <= sm.scale_value(max_w - 20):  # 20 px of padding
                 break
             current_size -= 2
-            font = self.get_font(current_size, sm)
-
+            font = self.get_font(max(current_size, min_size), sm)
         return font
+
+    @staticmethod
+    def fit_text(font: pygame.font.Font, text: str, max_px: int) -> str:
+        """`text` shortened with an ellipsis until it fits `max_px` pixels."""
+        if max_px <= 0 or font.size(text)[0] <= max_px:
+            return text
+        ell = "..."
+        cut = text
+        while cut and font.size(cut.rstrip() + ell)[0] > max_px:
+            cut = cut[:-1]
+        return (cut.rstrip() + ell) if cut else ell
 
     def get_font_role(self, role: str, ref_size: int, sm) -> pygame.font.Font:
         """

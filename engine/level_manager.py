@@ -21,16 +21,15 @@ Score:
                 the maximum, 2 when everything is found, 1 otherwise
   scene score = (points + time bonus) * star multiplier
 
-Not wired, despite appearances (measured 2026-09-07):
-  - The clock counts up and nothing compares it against a limit, so a scene is
-    never lost on time. `timer_behavior` is in the level schema with values
-    "complete" and "fail", the editor writes it and the web exporter ships it
-    in the manifest, but no runtime reads it.
-  - `_emit_scene_failed` and SCENE_FAILED therefore never fire, even though
-    engine/core.py handles that event, and the web runtime has no failure path
-    at all. The `failed` argument of compute_scene_score is only reachable by
-    calling it directly; its behaviour is pinned by tests/test_level_manager.py
-    so that wiring the mode later gives a defined result.
+Timer (`timer_behavior` of level_config.json, see engine/campaign.py):
+  - "complete" (default): the clock counts up and only scores; a scene cannot
+    be lost.
+  - "fail": when the elapsed time reaches the scene's `time_limit` with goals
+    still missing, the scene is lost (SCENE_FAILED). The web runtime applies
+    the same rule (docs/web/WEB_EXPORT_SYNC.md, section L).
+
+Scene order is the campaign order (`order`, then position), shared with the
+menu and the web export through engine.campaign.ordered_scene_ids.
 """
 
 from __future__ import annotations
@@ -41,6 +40,8 @@ from typing import Optional, TYPE_CHECKING, Tuple
 
 import pygame
 
+from engine.campaign import (DEFAULT_TIMER_BEHAVIOR, TIMER_FAIL, ordered_scene_ids,
+                             timer_behavior)
 from engine.json_validator import load_and_validate
 from engine.scene_loader import SceneLoader, SceneData
 from engine.utils import get_resource_path, get_logger
@@ -237,6 +238,7 @@ class LevelManager:
         # Timer
         self._time_elapsed: float = 0.0
         self._time_total: float = 0.0
+        self._timer_behavior: str = DEFAULT_TIMER_BEHAVIOR
         self._timer_running: bool = False
 
         # Score corrente scena
@@ -308,7 +310,7 @@ class LevelManager:
         Restituisce la SceneData della scena di partenza.
         """
         level_cfg = self._load_level_config(level_id)
-        scene_ids = [s["id"] for s in level_cfg.get("scenes", [])]
+        scene_ids = ordered_scene_ids(level_cfg)
         if not scene_ids:
             raise ValueError(f"Livello '{level_id}' senza scene definite")
 
@@ -349,6 +351,7 @@ class LevelManager:
 
         time_limit = float(scene_cfg.get("time_limit", 120))
         self._time_total = time_limit
+        self._timer_behavior = timer_behavior(level_cfg)
         self._time_elapsed  = 0.0
         self._timer_running  = True
         self._scene_score    = 0
@@ -396,6 +399,11 @@ class LevelManager:
         # Incrementa timer (countup) finché non sono trovati tutti
         if found < total:
             self._time_elapsed += dt
+            if (self._timer_behavior == TIMER_FAIL and self._time_total > 0
+                    and self._time_elapsed >= self._time_total):
+                self._time_elapsed = self._time_total
+                self._emit_scene_failed()
+                return
 
         # Preload predittivo — oggetti
         if (not self._preload_triggered_found and total > 0

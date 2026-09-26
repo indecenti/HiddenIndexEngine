@@ -90,6 +90,13 @@ class FakeMenu:
             return int(self.theme.layout("game_title_y", 96))
         return int(self.theme.layout("title_y_offset", 100))
 
+    def probe(self, kind, rect, owner="") -> None:
+        """Mirrors the core's layout probe (off)."""
+
+    def ref_y_to_screen(self, ref_y: float) -> int:
+        """Mirrors the core; the fake scaling has no letterbox offset."""
+        return int(ref_y)
+
     def _draw_state_title(self, screen) -> None:
         self.title_calls += 1
 

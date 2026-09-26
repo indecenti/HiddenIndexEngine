@@ -130,8 +130,9 @@ class CyberNeonSkin(DefaultSkin):
 
         comp = cached_title(self, key, _build)
         cx = screen.get_width() // 2 - comp.get_width() // 2
-        ty = sm.scale_value(ms._state_title_y())
+        ty = ms.ref_y_to_screen(ms._state_title_y())
         screen.blit(comp, (cx, ty))
+        ms.probe("text", comp.get_rect(topleft=(cx, ty)), "title")
 
     def button_jitter(self, ms, b):
         if not (self.fx_on(ms, "glitch") and not self.reduced(ms)):

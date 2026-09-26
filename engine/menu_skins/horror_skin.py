@@ -105,9 +105,10 @@ class HorrorSkin(DefaultSkin):
         surf.set_alpha(alpha)
         glow.set_alpha(min(alpha, 130))
         tx = (screen.get_width() - surf.get_width()) // 2
-        ty = sm.scale_value(ms._state_title_y())
+        ty = ms.ref_y_to_screen(ms._state_title_y())
         screen.blit(glow, (tx + 2, ty + 2))
         screen.blit(surf, (tx, ty))
+        ms.probe("text", surf.get_rect(topleft=(tx, ty)), "title")
 
     def button_jitter(self, ms, b):
         if not (self.fx_on(ms, "jitter") and not self.reduced(ms)):

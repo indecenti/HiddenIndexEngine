@@ -97,7 +97,12 @@
   "views": {
     "main": {
       "buttons": [
-        {"text_key": "btn_play", "action": "goto_levels", "tip_key": "tip_play"},
+        {"text_key": "btn_continue", "action": "goto_levels", "tip_key": "tip_continue",
+         "requires_save": true},
+        {"text_key": "btn_play", "action": "goto_levels", "tip_key": "tip_play",
+         "requires_save": false},
+        {"text_key": "btn_new_game", "action": "confirm_new", "tip_key": "tip_new_game",
+         "requires_save": true},
         {"text_key": "btn_settings", "action": "goto_settings", "tip_key": "tip_settings"},
         {"text_key": "btn_quit", "action": "quit", "is_quit": true}
       ]

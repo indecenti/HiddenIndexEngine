@@ -280,15 +280,14 @@ def test_the_build_line_only_shows_on_the_main_state():
     assert pygame.image.tostring(screen, "RGB") != before
 
 
-def test_the_edge_fade_only_covers_the_side_with_more_content():
-    """Fading the left edge while the first card rests against it just dims it."""
+def test_the_card_pages_have_no_edge_fade():
+    """Pages show whole cards only: a fade would just dim the page arrows."""
     menu = _menu(state="scenes")
-    menu.max_scroll_x = 600.0        # a carousel with cards past the right edge
+    menu.max_scroll_x = 1280.0       # a second page exists
     menu.scroll_x = 0.0
     screen = pygame.Surface((REF_W, REF_H))
     menu._draw_edge_fade(screen, REF_W, REF_H)
-    assert screen.get_at((2, REF_H // 2))[:3] == (0, 0, 0), "left edge faded too early"
-    assert screen.get_at((REF_W - 2, REF_H // 2))[:3] != (0, 0, 0)
+    assert screen.get_at((REF_W - 2, REF_H // 2))[:3] == (0, 0, 0)
 
 
 # ── 5. Icon sets ────────────────────────────────────────────────────────────

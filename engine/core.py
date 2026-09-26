@@ -40,6 +40,11 @@ except ImportError:
     cv2 = None  # type: ignore
     HAS_CV2 = False
 
+# Menu background darkening (video and still image alike).
+MENU_SCRIM_COLOR = (8, 10, 18)
+MENU_SCRIM_ALPHA_MAIN = 96
+MENU_SCRIM_ALPHA_LIST = 172
+
 class EngineState:
     """Stati principali della state machine di sistema."""
     BOOT = "BOOT"
@@ -331,7 +336,8 @@ class EngineCore:
         self.hud.on_screen_resize(self.res_w, self.res_h)
 
         # ResultsScreen - schermata di risultati premium tra i livelli
-        self.results_screen = ResultsScreen(self.res_w, self.res_h, self.lang, self.scaling_manager)
+        self.results_screen = ResultsScreen(self.res_w, self.res_h, self.lang, self.scaling_manager,
+                                            theme=self.menu_system.theme)
 
         from engine.minigame_manager import MinigameManager
         self.minigame_manager = MinigameManager(self.screen, self.scaling_manager, self.audio, self.lang)
@@ -1502,7 +1508,8 @@ class EngineCore:
             total_objects = sum(1 for obj in self._current_scene_objects if obj.is_goal)
 
             # Ottieni nome scena
-            scene_name = getattr(self._last_result, 'scene_id', 'Scene')
+            scene_name = self.menu_system._scene_name(
+                getattr(self._last_result, 'scene_id', ''))
 
             self.results_screen.show(
                 score=score,
@@ -1987,6 +1994,27 @@ class EngineCore:
             import time as _t
             self._perf_sec[name] = self._perf_sec.get(name, 0.0) + (_t.perf_counter() - t0)
 
+    def _menu_scrim_alpha(self) -> int:
+        """Darkening of the menu background: light on main, stronger under lists."""
+        menu_state = getattr(self.menu_system, "state", "main")
+        return MENU_SCRIM_ALPHA_MAIN if menu_state == "main" else MENU_SCRIM_ALPHA_LIST
+
+    def _menu_scrim_surface(self) -> pygame.Surface:
+        """Opaque full-screen scrim with surface alpha, cached per (size, alpha).
+
+        Surface alpha (not per-pixel SRCALPHA) keeps the per-frame blit cheap;
+        the still-image path bakes the same darkening into its cached cover.
+        """
+        alpha = self._menu_scrim_alpha()
+        key = (self.res_w, self.res_h, alpha)
+        if getattr(self, "_menu_scrim_key", None) != key:
+            scrim = pygame.Surface((self.res_w, self.res_h))
+            scrim.fill(MENU_SCRIM_COLOR)
+            scrim.set_alpha(alpha)
+            self._menu_scrim = scrim
+            self._menu_scrim_key = key
+        return self._menu_scrim
+
     def _draw(self) -> None:
         """Renderizza la logica corrente (delegate to state)."""
         if self.state == EngineState.MINIGAME:
@@ -2047,12 +2075,19 @@ class EngineCore:
                             frame = frame.transpose(1, 0, 2)
                             self._menu_video_surface = pygame.surfarray.make_surface(frame)
                             
-                            # Scaling (NO CACHE per il video, altrimenti si blocca sul primo frame!)
-                            target_w, target_h = 1280.0, 720.0
-                            scaled_v = self.scaling_manager.scale_surface_to_ref(
-                                self._menu_video_surface, target_w, target_h, cache_key=None
-                            )
-                            self.screen.blit(scaled_v, (self.scaling_manager.offset_x, self.scaling_manager.offset_y))
+                            # Cover-fill like the still image (the video used to be
+                            # scaled to the 16:9 reference box: black bars on 20:9
+                            # phones and 4:3 monitors), plus the same legibility
+                            # scrim, which the video path did not have at all.
+                            # No cache: every frame is a new image.
+                            vw, vh = self._menu_video_surface.get_size()
+                            cover = max(self.res_w / vw, self.res_h / vh)
+                            cw, ch = max(1, int(vw * cover)), max(1, int(vh * cover))
+                            scaled_v = pygame.transform.smoothscale(
+                                self._menu_video_surface, (cw, ch))
+                            self.screen.blit(scaled_v, ((self.res_w - cw) // 2,
+                                                        (self.res_h - ch) // 2))
+                            self.screen.blit(self._menu_scrim_surface(), (0, 0))
                 
                 # --- Gestione IMMAGINE STATICA ---
                 # Skippiamo anche i file MP4/MOV/MKV se siamo arrivati qui:
@@ -2070,8 +2105,7 @@ class EngineCore:
                     # Scrim di leggibilità INCORPORATO nello sfondo (scurito UNA
                     # volta in cache): evita il blit SRCALPHA a schermo intero per
                     # frame, che su pygame ARM è lentissimo (~130ms!).
-                    menu_state = getattr(self.menu_system, "state", "main")
-                    scrim_alpha = 96 if menu_state == "main" else 172
+                    scrim_alpha = self._menu_scrim_alpha()
                     if hasattr(self, '_menu_bg_surface') and self._menu_bg_surface:
                         # Cover-fill + scrim bakeato. Cache per (res, alpha).
                         if getattr(self, "_menu_bg_cover_key", None) != (self.res_w, self.res_h, scrim_alpha):
@@ -2081,7 +2115,7 @@ class EngineCore:
                             base = pygame.transform.smoothscale(self._menu_bg_surface, (cw, ch))
                             # Scurisci una sola volta (alpha a livello di superficie, opaco dopo)
                             dark = pygame.Surface((cw, ch))
-                            dark.fill((8, 10, 18))
+                            dark.fill(MENU_SCRIM_COLOR)
                             dark.set_alpha(scrim_alpha)
                             base.blit(dark, (0, 0))
                             self._menu_bg_cover = base

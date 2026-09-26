@@ -172,9 +172,10 @@ class KidsSkin(DefaultSkin):
         if self.fx_on(ms, "bounce") and not self.reduced(ms):
             bounce = int(sm.scale_value(6) * (0.5 + 0.5 * math.sin(self._t * 3.2)))
         tx = (screen.get_width() - surf.get_width()) // 2
-        ty = sm.scale_value(ms._state_title_y()) - bounce
+        ty = ms.ref_y_to_screen(ms._state_title_y()) - bounce
         screen.blit(sh_surf, (tx, ty + max(2, sm.scale_value(3))))
         screen.blit(surf, (tx, ty))
+        ms.probe("text", surf.get_rect(topleft=(tx, ty)), "title")
 
     # -- Confetti --------------------------------------------------------------
     def update(self, ms, dt) -> None:

@@ -873,6 +873,8 @@ class IoOpsMixin:
             lang: (_load_json(engine_sp / f"{lang}.json") if (engine_sp / f"{lang}.json").exists() else {})
             for lang in langs
         }
+        # Every engine language, to recognise a value copied from the wrong one.
+        all_engine = {f.stem: _load_json(f) for f in engine_sp.glob("*.json")}
 
         # ── 3. Audita ogni file lingua del gioco ──────────────────────────────
         game_sp = self.game_path / "strings"
@@ -919,6 +921,26 @@ class IoOpsMixin:
                         g_data[key] = key.replace("btn_", "").replace("hud_", "").replace("label_", "").replace("_", " ").title()
                         stats["added"] += 1
                         changed = True
+
+            # A.ter Re-align system keys copied wrong in the past. Harvesting
+            # only fills MISSING keys, so a value copied from the wrong language
+            # (Malonno's de/es/fr carried the Italian "Impostazioni", "Riprendi",
+            # "Volume Musica") or a placeholder written while the engine lacked
+            # the key ("Mission Complete") stayed forever. Such a value is
+            # replaced by the engine's own; a real per-game override is kept.
+            for key in needed_sys_keys:
+                cur = g_data.get(key)
+                good = eng.get(key)
+                if not cur or not good or cur == good:
+                    continue
+                placeholder = key.replace("btn_", "").replace("hud_", "") \
+                    .replace("label_", "").replace("_", " ").title()
+                foreign = any(o != lang and cur == data.get(key)
+                              for o, data in all_engine.items())
+                if cur == placeholder or foreign:
+                    g_data[key] = good
+                    stats["filled"] += 1
+                    changed = True
 
             # B. Generazione automatica nomi per oggetti se la chiave è vuota
             for key in list(g_data.keys()):

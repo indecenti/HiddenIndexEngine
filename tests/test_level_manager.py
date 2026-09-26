@@ -269,3 +269,42 @@ def test_a_combo_speeds_up_the_earning_of_hints():
     plain.on_object_found(dt_since_scene_start=10.0)
     with_combo.on_object_found(dt_since_scene_start=10.0)
     assert with_combo.get_earn_progress() > plain.get_earn_progress()
+
+
+# -----------------------------------------------------------------------------
+# TIMER MODE (timer_behavior, see engine/campaign.py)
+# -----------------------------------------------------------------------------
+
+def _ticking_manager(behavior: str, limit: float = 10.0) -> tuple[LevelManager, list]:
+    """A LevelManager mid-scene with 0 of 3 goals found, failures recorded."""
+    lm = object.__new__(LevelManager)
+    lm._scene_data = object()
+    lm._level_state = object()
+    lm._timer_running = True
+    lm._scene_complete_sent = False
+    lm._time_elapsed = 0.0
+    lm._time_total = limit
+    lm._timer_behavior = behavior
+    lm._preload_triggered_found = True
+    lm._found_count = lambda: 0
+    lm._total_count = lambda: 3
+    failures: list = []
+    lm._emit_scene_failed = lambda: failures.append(lm._time_elapsed)
+    return lm, failures
+
+
+def test_in_fail_mode_the_scene_is_lost_when_the_time_runs_out():
+    lm, failures = _ticking_manager("fail", limit=10.0)
+    for _ in range(9):
+        lm.update(1.0)
+    assert failures == []
+    lm.update(1.5)
+    assert failures == [10.0]
+
+
+def test_in_complete_mode_the_clock_never_loses_the_scene():
+    lm, failures = _ticking_manager("complete", limit=10.0)
+    for _ in range(30):
+        lm.update(1.0)
+    assert failures == []
+    assert lm._time_elapsed == pytest.approx(30.0)

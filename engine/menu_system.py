@@ -11,7 +11,7 @@ import pygame
 import math
 
 from engine.utils import get_logger, get_resource_path, is_android_runtime
-from engine.menu_theme import MenuTheme, load_theme_for_game
+from engine.menu_theme import MIN_READABLE_REF, MenuTheme, load_theme_for_game
 from engine.menu_skins import skin_call
 
 
@@ -35,6 +35,40 @@ MAIN_ROW_CENTER_Y = 424    # centre of the icon row on main/pause (main_row_cent
 CARD_ROW_CENTER_Y = 412    # centre of the level/scene cards      (card_row_center_y)
 ICON_LABEL_GAP = 14        # icon bottom -> caption top
 ICON_LABEL_SIZE = 22       # caption size under an icon button
+ICON_ROW_GAP = 44          # between two slots of the icon row (main/pause)
+# Card pages (levels, scenes).
+CARD_SCENE_W, CARD_SCENE_H = 320, 180   # default scene card (themes: scene_thumb_w/h)
+CARD_LEVEL_SCALE = 1.4     # a level card is this much wider than a scene card
+CARD_GAP = 32              # between two cards of a page
+CARD_STATES = ("levels", "scenes")
+PAGER_ARROW = 64           # page arrows: above the 48 dp touch minimum
+PAGER_ARROW_GAP = 16       # arrow -> first card
+PAGER_DOT = 10
+PAGER_DOT_GAP = 12
+PAGER_DOTS_GAP = 30        # card bottom -> centre of the page dots
+CARD_AREA_TOP = 170        # floor of the card area; the header may push it lower
+CARD_HEADER_GAP = 26       # header bottom -> first row of cards
+SUBTITLE_GAP = 18          # accent rule -> breadcrumb line
+CARD_AREA_FOOT = 44        # room under the grid for the page dots
+CARD_MAX_ROWS = 2
+CARD_MIN_FIT = 0.65        # smallest scale _grid_fit may apply to a card
+CARD_BADGE_H = 30          # star / progress badge on a card
+CARD_BADGE_PAD = 10
+CARD_BADGE_TEXT = 18
+CARD_BADGE_PLATE = (10, 12, 18, 200)
+CARD_BADGE_TEXT_COL = (242, 244, 248)
+CARD_STAR_GOLD = (236, 184, 52)
+CARD_STAR_MIN_CONTRAST = 3.0
+CARD_HINT_TEXT = 18        # "Complete <scene>" on a locked card
+CARD_HINT_DIM = 0.3        # hint colour: 0 = normal caption, 1 = locked caption
+CARD_NAME_BOTTOM = 12      # card bottom -> baseline band of the name
+# Plate a skin may paint around an icon button (default: chip 10% per side):
+# the slot is sized on it, so two neighbouring plates never touch.
+ICON_PLATE_RATIO = 1.2
+# States whose centred item is zoomed: none any more. On the icon rows the
+# zoom grew the middle plate into its neighbours, on the card pages it
+# made the centred card overlap the next one. Focus is the hover outline.
+CAROUSEL_STATES: tuple = ()
 
 # The first action of a state (Play, Continue, Resume) is the one the player
 # came for: it is drawn larger than its siblings so the eye lands on it.
@@ -70,6 +104,9 @@ SETTINGS_ROW_W = 720
 SETTINGS_ROW_H = 72
 SETTINGS_ROW_STEP = 82
 SETTINGS_ROW_Y = 132       # first group header, under the state header
+# Top of the scrolling list: rows and group headers are clipped here so that,
+# scrolled, they pass under the state header instead of over it.
+SETTINGS_VIEWPORT_TOP = SETTINGS_ROW_Y - 10
 SETTINGS_PAD = 24          # inner padding of a row
 SETTINGS_ICON_BOX = 46     # icon column
 SETTINGS_LABEL_X = 88      # label offset from the row left edge
@@ -91,11 +128,16 @@ DIALOG_Y = 220
 DIALOG_BTN_W = 268
 DIALOG_BTN_H = 64
 DIALOG_PAD = 30
+DIALOG_BTN_PAD = 28       # label side padding inside a dialog button
+DIALOG_BTN_GAP = 24
+DIALOG_TEXT_SIZE = 26
+DIALOG_DANGER = (176, 52, 46)  # fill of the action that erases the save
 
 # Level/scene cards.
 CARD_CAPTION_H = 0.34      # caption gradient, as a fraction of the card height
 CARD_LOCK_H = 0.30         # padlock badge, as a fraction of the card height
 CARD_LOCK_DIM = 130        # extra darkening baked into a locked card
+CARD_TEXT_PAD = 12         # side padding of a caption inside its card or pill
 
 
 def _jitter_pair(value) -> tuple[float, float]:
@@ -233,6 +275,15 @@ class MenuSystem:
         self.game_title = self._resolve_game_title()
         self._settings_groups: list[tuple[str, float]] = []
 
+        # Layout probe: when a list, every draw pass appends the boxes it paints
+        # as (kind, screen rect, owner). None in the game; the layout tests and
+        # tools/menu_audit.py switch it on to check overlaps and clipping.
+        self.layout_probe: list | None = None
+        # Clip in force while the settings list is drawn: probed boxes are cut
+        # to it, as the pixels are, so a row scrolling under the header does
+        # not count as clipped by the screen.
+        self._probe_clip: pygame.Rect | None = None
+
         self.build_buttons()
 
     def _resolve_game_title(self) -> str:
@@ -319,6 +370,395 @@ class MenuSystem:
             btn.icon_surf = self.theme.get_icon(icon or self._icon_for(action))
         self._set_tooltip(btn, action)
         return btn
+
+    # ── Card pages (levels, scenes) ─────────────────────────────
+
+    def _campaign(self):
+        """Campaign view of the game, rebuilt on every page build (cheap JSON reads)."""
+        from engine.campaign import Campaign
+        return Campaign(self.game_id, self.save_manager)
+
+    def _card_size(self, level: bool) -> tuple[int, int]:
+        """Card size in reference px: the theme's scene thumbnail, levels 1.4x wider."""
+        w = int(self.theme.layout("scene_thumb_w", CARD_SCENE_W))
+        h = int(self.theme.layout("scene_thumb_h", CARD_SCENE_H))
+        if level:
+            w = int(round(w * CARD_LEVEL_SCALE))
+            h = int(round(w * 9 / 16))
+        avail = 1280 - 2 * (SAFE_X + PAGER_ARROW + PAGER_ARROW_GAP)
+        if w > avail:
+            h = int(round(h * avail / w))
+            w = avail
+        return w, h
+
+    def _content_top(self) -> float:
+        """Reference y where the page content may start: under the title, its
+        rule and, when there is one, the breadcrumb line, plus CARD_HEADER_GAP.
+
+        A fixed value put the first row of cards 10 px under the breadcrumb on
+        themes with a taller title face.
+        """
+        y = self._state_title_y() + self._state_title_size() * 1.12 + TITLE_RULE_GAP
+        if self._state_subtitle_text():
+            sm = self.scaling_manager
+            font = self.theme.get_font_role("body", self.theme.font_size_label() + 2, sm)
+            y += SUBTITLE_GAP + font.get_height() / (sm.scale or 1.0)
+        return y + CARD_HEADER_GAP
+
+    def _card_area(self) -> tuple[float, float]:
+        top = max(CARD_AREA_TOP, self._content_top())
+        return top, 720 - SAFE_BOTTOM - CARD_AREA_FOOT
+
+    def _grid_fit(self, size: tuple[int, int], n: int) -> tuple[int, int]:
+        """Shrink the cards a little when that buys the page one more row.
+
+        A theme's thumbnail can miss a second row by a few pixels (cyber_neon's
+        380x214 needs 460 of a 440 area) or be so large that a page holds one
+        card (android_std's 520x292: fourteen pages for fourteen scenes). Down to
+        CARD_MIN_FIT of the authored size the cards are scaled so the extra row
+        fits; below that the authored size wins.
+        """
+        w, h = size
+        avail_w = 1280 - 2 * (SAFE_X + PAGER_ARROW + PAGER_ARROW_GAP)
+        area_top, area_bottom = self._card_area()
+        area_h = area_bottom - area_top
+        cols = max(1, int((avail_w + CARD_GAP) // (w + CARD_GAP)))
+        rows = max(1, int((area_h + CARD_GAP) // (h + CARD_GAP)))
+        if rows >= CARD_MAX_ROWS or n <= cols:
+            return size
+        want = rows + 1
+        fit = (area_h - (want - 1) * CARD_GAP) / (want * h)
+        if fit < CARD_MIN_FIT:
+            return size
+        return int(w * fit), int(h * fit)
+
+    def _cover_preview(self, raw: "pygame.Surface | None", size: tuple[int, int],
+                       unlocked: bool) -> pygame.Surface:
+        """Preview cropped to the card (cover-fill), never stretched.
+
+        The level card used to squeeze a 16:9 screenshot into 640x160. A scene
+        without a readable background gets a plain themed plate, so it still
+        draws as a card instead of falling back to a bare button.
+        """
+        w, h = size
+        if raw is None:
+            plate = pygame.Surface(size)
+            plate.fill(self.theme.row_bg()[:3])
+            return plate
+        iw, ih = raw.get_size()
+        cover = max(w / iw, h / ih)
+        cw, ch = max(w, int(iw * cover + 0.5)), max(h, int(ih * cover + 0.5))
+        big = pygame.transform.smoothscale(raw, (cw, ch))
+        out = big.subsurface(pygame.Rect((cw - w) // 2, (ch - h) // 2, w, h)).copy()
+        if not unlocked:
+            try:
+                out = pygame.transform.grayscale(out)
+            except (pygame.error, AttributeError):
+                pass  # grayscale missing on old SDL builds: keep the colour preview
+        return out
+
+    def _unlock_hint(self, name: str) -> str:
+        return self.lang.get("card_unlock_hint", "Complete {name}").replace("{name}", name)
+
+    def _level_name(self, camp, level_id: str) -> str:
+        key = camp.level_config(level_id).get("name_key")
+        raw = self.lang.get(key, level_id) if key else level_id
+        return self._pretty_name(raw)
+
+    def _scene_name(self, scene_id: str) -> str:
+        return self._pretty_name(self.lang.get(f"{scene_id}_name", scene_id))
+
+    def _build_level_cards(self) -> None:
+        camp = self._campaign()
+        size = self._grid_fit(self._card_size(level=True), len(camp.levels()))
+        levels_root = get_resource_path("games", self.game_id, "levels")
+        cards, focus = [], 0
+        levels = camp.levels()
+        for i, level_id in enumerate(levels):
+            unlocked = camp.is_level_unlocked(level_id)
+            if unlocked:
+                focus = i
+            scenes = camp.scenes(level_id)
+            raw = self._load_preview_raw(levels_root / level_id / scenes[0]) if scenes else None
+            btn = MenuButton(self._level_name(camp, level_id),
+                             f"goto_scenes:{level_id}" if unlocked else "none",
+                             0, 0, size[0], size[1],
+                             image=self._cover_preview(raw, size, unlocked))
+            done, total, stars, max_stars = camp.level_progress(level_id)
+            btn.card_info = {"stars": stars, "max_stars": max_stars,
+                             "progress": f"{done}/{total}"}
+            if not unlocked and i > 0:
+                btn.card_info["hint"] = self._unlock_hint(self._level_name(camp, levels[i - 1]))
+            self._set_tooltip(btn, "goto_scenes")
+            cards.append(btn)
+        self._uniform_captions(cards, size)
+        self._layout_cards(cards, size, focus)
+
+    def _build_scene_cards(self) -> None:
+        level_id = self.selected_level
+        if not level_id:
+            return
+        camp = self._campaign()
+        size = self._grid_fit(self._card_size(level=False), len(camp.scenes(level_id)))
+        lvl_path = get_resource_path("games", self.game_id, "levels", level_id)
+        resume = camp.resume_target()
+        cards, focus = [], 0
+        for i, scene_id in enumerate(camp.scenes(level_id)):
+            unlocked = camp.is_scene_unlocked(level_id, i)
+            if unlocked:
+                focus = i
+            raw = self._load_preview_raw(lvl_path / scene_id)
+            btn = MenuButton(self._scene_name(scene_id),
+                             f"play_scene:{level_id}:{scene_id}" if unlocked else "none",
+                             0, 0, size[0], size[1],
+                             image=self._cover_preview(raw, size, unlocked))
+            info: dict = {}
+            if camp.is_scene_completed(level_id, scene_id):
+                info["stars"] = camp.best_stars(level_id, scene_id)
+                info["max_stars"] = 3
+            req = camp.unlock_requirement(level_id, i)
+            if req is not None:
+                info["hint"] = self._unlock_hint(self._scene_name(req.scene_id))
+            btn.card_info = info
+            self._set_tooltip(btn, "play_scene")
+            cards.append(btn)
+        if resume is not None and resume.level_id == level_id:
+            focus = resume.index
+        self._uniform_captions(cards, size)
+        self._layout_cards(cards, size, focus)
+
+    @staticmethod
+    def _star_points(cx: float, cy: float, r: float) -> list[tuple[float, float]]:
+        pts = []
+        for i in range(10):
+            ang = math.pi / 2 + i * math.pi / 5
+            rad = r if i % 2 == 0 else r * 0.45
+            pts.append((cx + rad * math.cos(ang), cy - rad * math.sin(ang)))
+        return pts
+
+    def _bake_card_info(self, base: pygame.Surface, b: "MenuButton", size: tuple[int, int],
+                        is_locked: bool, sm) -> None:
+        """Stars, progress and the unlock hint, baked into the card image.
+
+        Static per card, so they cost nothing per frame. Badges sit in the top
+        corners on a plate of their own; the hint takes the line above the name,
+        inside the caption gradient.
+        """
+        info = getattr(b, "card_info", None) or {}
+        if not info:
+            return
+        theme = self.theme
+        k = size[0] / max(1, b.ref_rect.w)          # reference px -> baked px
+        pad = int(CARD_BADGE_PAD * k)
+        badge_h = int(CARD_BADGE_H * k)
+        font = theme.get_font_role("body", CARD_BADGE_TEXT, sm)
+        # Badges sit on a photograph, not on the theme surface: a dark plate
+        # and light text on every theme (kids' light row colour made "6/14"
+        # white on white).
+        plate_col = CARD_BADGE_PLATE
+        text_col = CARD_BADGE_TEXT_COL
+        star_on = theme.accent() if MenuTheme.contrast(theme.accent(), CARD_BADGE_PLATE[:3])             >= CARD_STAR_MIN_CONTRAST else CARD_STAR_GOLD
+        star_off = theme.color3("text_locked")
+
+        def plate(w: int) -> pygame.Surface:
+            surf = pygame.Surface((w, badge_h), pygame.SRCALPHA)
+            pygame.draw.rect(surf, plate_col, (0, 0, w, badge_h), border_radius=badge_h // 2)
+            return surf
+
+        if "stars" in info:
+            stars, max_stars = int(info["stars"]), int(info.get("max_stars", 3))
+            r = badge_h * 0.32
+            if max_stars <= 3:
+                # One glyph per star, filled or hollow.
+                step = r * 2.3
+                w = int(pad * 2 + step * max_stars)
+                badge = plate(w)
+                for i in range(max_stars):
+                    cx = pad + step * (i + 0.5)
+                    pts = self._star_points(cx, badge_h / 2, r)
+                    pygame.draw.polygon(badge, star_on if i < stars else star_off, pts)
+            else:
+                # Level total: one star and "n/max".
+                label = font.render(f"{stars}/{max_stars}", True, text_col)
+                w = int(pad * 3 + r * 2 + label.get_width())
+                badge = plate(w)
+                pygame.draw.polygon(badge, star_on, self._star_points(pad + r, badge_h / 2, r))
+                badge.blit(label, label.get_rect(midleft=(int(pad * 2 + r * 2), badge_h // 2)))
+            base.blit(badge, (size[0] - badge.get_width() - pad, pad))
+
+        if "progress" in info:
+            label = font.render(str(info["progress"]), True, text_col)
+            badge = plate(label.get_width() + pad * 2)
+            badge.blit(label, label.get_rect(center=(badge.get_width() // 2, badge_h // 2)))
+            base.blit(badge, (pad, pad))
+
+        hint = info.get("hint")
+        if hint and is_locked:
+            name_font = theme.get_font(getattr(b, "caption_size", None)
+                                       or theme.font_size_scene(), sm)
+            hint_font = theme.get_font_role("body", CARD_HINT_TEXT, sm)
+            text = theme.fit_text(hint_font, hint, size[0] - pad * 2)
+            # Lighter than the locked name: it is the one line that tells the
+            # player what to do, grey on a darkened photo was barely there.
+            hint_col = theme.lerp_color(theme.caption_text(False), theme.caption_text(True),
+                                        CARD_HINT_DIM)[:3]
+            surf = hint_font.render(text, True, hint_col)
+            bottom = size[1] - int(CARD_NAME_BOTTOM * k) - name_font.get_height() - int(4 * k)
+            base.blit(surf, surf.get_rect(midbottom=(size[0] // 2, bottom)))
+
+    def _uniform_captions(self, cards: list, size: tuple[int, int]) -> None:
+        """Give every card of the list one caption size: the largest that fits
+        the longest name, never below the readable floor (longer names are
+        then ellipsized). Shrinking each name on its own printed "Villa Rosa"
+        twice as large as "Sotterranei Villa Rosa" on the same page.
+        """
+        theme, sm = self.theme, self.scaling_manager
+        base = theme.font_size_scene()
+        sizes = []
+        for b in cards:
+            font = theme.get_auto_font(b.text, base, size[0] - 32, sm)
+            sizes.append(font.get_height())
+        target = min(sizes) if sizes else 0
+        chosen = base
+        for ref in range(max(base, MIN_READABLE_REF), MIN_READABLE_REF - 1, -1):
+            if theme.get_font(ref, sm).get_height() <= target:
+                chosen = ref
+                break
+        for b in cards:
+            b.caption_size = chosen
+
+    def _layout_cards(self, cards: list, size: tuple[int, int], focus: int) -> None:
+        """Place cards on pages that are always shown whole.
+
+        The free carousel let cards run off both screen edges, zoomed the centred
+        one over its neighbours, and could only be scrolled with a mouse wheel:
+        on a phone the scenes past the edge were out of reach. A page is a grid
+        of as many whole cards as fit between the two arrows and inside the card
+        area (at most CARD_MAX_ROWS rows); page p sits p screens to the right,
+        so turning a page is a scroll of exactly one screen. Every row of a page
+        is centred on its own, and a page that needs one row only uses one.
+        """
+        w, h = size
+        avail_w = 1280 - 2 * (SAFE_X + PAGER_ARROW + PAGER_ARROW_GAP)
+        area_top, area_bottom = self._card_area()
+        cols = max(1, int((avail_w + CARD_GAP) // (w + CARD_GAP)))
+        max_rows = max(1, min(CARD_MAX_ROWS,
+                              int((area_bottom - area_top + CARD_GAP) // (h + CARD_GAP))))
+        n = len(cards)
+        rows = max(1, min(max_rows, -(-n // cols)))
+        per_page = cols * rows
+        pages = max(1, -(-n // per_page))
+        # One page per SCREEN, not per 16:9 box: on a 20:9 phone the box leaves
+        # side bands where the neighbouring pages would peek in.
+        sm = self.scaling_manager
+        stride = max(1280.0, sm.screen_w / (sm.scale or 1.0))
+        self._page_stride = stride
+        grid_h = rows * h + (rows - 1) * CARD_GAP
+        top = area_top + (area_bottom - area_top - grid_h) / 2
+        for i, b in enumerate(cards):
+            page, k = divmod(i, per_page)
+            row, col = divmod(k, cols)
+            on_page = min(per_page, n - page * per_page)
+            in_row = min(cols, on_page - row * cols)
+            row_w = in_row * w + (in_row - 1) * CARD_GAP
+            x = page * stride + (1280 - row_w) / 2 + col * (w + CARD_GAP)
+            y = top + row * (h + CARD_GAP)
+            b.ref_rect = pygame.Rect(int(round(x)), int(round(y)), w, h)
+            self.buttons.append(b)
+        self._per_page = per_page
+        self._pages = pages
+        self._cards_bottom = top + grid_h
+        self._pager_btns = []
+        if pages > 1:
+            icon = self.theme.get_icon("goto_main")
+            cy = top + grid_h / 2
+            for action, x in (("page_prev", SAFE_X),
+                              ("page_next", 1280 - SAFE_X - PAGER_ARROW)):
+                arrow = MenuButton("", action, x, int(cy - PAGER_ARROW / 2),
+                                   PAGER_ARROW, PAGER_ARROW)
+                arrow.fixed = True
+                arrow.page_action = action
+                if icon is not None:
+                    if action == "page_prev":
+                        arrow.icon_surf = icon
+                    else:
+                        arrow.icon_surf = pygame.transform.flip(icon, True, False)
+                self._pager_btns.append(arrow)
+                self.buttons.append(arrow)
+        self._set_page(min(pages - 1, max(0, focus // per_page)), instant=True)
+
+    def _set_page(self, page: int, instant: bool = False) -> None:
+        self._page = page
+        stride = getattr(self, "_page_stride", 1280.0)
+        self.max_scroll_x = (self._pages - 1) * stride
+        self.target_scroll_x = page * stride
+        if instant:
+            self.scroll_x = self.target_scroll_x
+        for arrow in getattr(self, "_pager_btns", []):
+            if arrow.page_action == "page_prev":
+                at_end = page == 0
+            else:
+                at_end = page >= self._pages - 1
+            # At the end the arrow stays, dimmed: a control that vanishes moves
+            # the eye; "none" draws it locked and answers with the blocked sound.
+            arrow.action = "none" if at_end else arrow.page_action
+
+    def turn_page(self, delta: int) -> bool:
+        """Show the next/previous page of cards. False when there is none."""
+        if self.state not in CARD_STATES:
+            return False
+        page = getattr(self, "_page", 0)
+        new = max(0, min(getattr(self, "_pages", 1) - 1, page + delta))
+        if new == page:
+            return False
+        self._set_page(new)
+        return True
+
+    def _draw_page_dots(self, screen: pygame.Surface, sm) -> None:
+        """One dot per page under the cards, the current one in the accent."""
+        pages = getattr(self, "_pages", 1)
+        if self.state not in CARD_STATES or pages < 2:
+            return
+        theme = self.theme
+        r = max(2, sm.scale_value(PAGER_DOT / 2))
+        step = sm.scale_value(PAGER_DOT + PAGER_DOT_GAP)
+        y = self.ref_y_to_screen(self._cards_bottom + PAGER_DOTS_GAP)
+        x0 = screen.get_width() // 2 - (pages - 1) * step // 2
+        accent = theme.accent_on(theme.scrim_color())
+        dim = theme.color3("text_locked")
+        for i in range(pages):
+            active = i == self._page
+            pygame.draw.circle(screen, accent if active else dim, (x0 + i * step, y),
+                               r + (1 if active else 0))
+
+    def _space_icon_row(self) -> None:
+        """Lay the icon row out on slots as wide as the button OR its caption.
+
+        The row used a fixed gap between buttons, so two long captions under
+        neighbouring icons ("SETTINGS" and "MAIN MENU", longer still in German)
+        ran into each other. Each slot now takes the wider of the two, and the
+        row is centred again.
+        """
+        row = [b for b in self.buttons if not self._is_fixed(b) and not b.image]
+        if len(row) < 2:
+            return
+        sm = self.scaling_manager
+        scale = sm.scale or 1.0
+        widths = [float(b.ref_rect.w) * ICON_PLATE_RATIO for b in row]
+        if self._has_icon_labels():
+            size = int(self.theme.layout("icon_label_size", ICON_LABEL_SIZE))
+            font = self.theme.get_font_role("body", size, sm)
+            spacing = sm.scale_value(2)
+            for i, b in enumerate(row):
+                text = (b.text or "").strip().upper()
+                if text:
+                    cap = (font.size(text)[0] + spacing * (len(text) - 1)) / scale
+                    widths[i] = max(widths[i], cap)
+        total = sum(widths) + ICON_ROW_GAP * (len(row) - 1)
+        x = (1280 - total) / 2
+        for b, w in zip(row, widths):
+            b.ref_rect.x = int(round(x + w / 2 - b.ref_rect.w / 2))
+            x += w + ICON_ROW_GAP
 
     @staticmethod
     def _pretty_name(raw: str) -> str:
@@ -576,10 +1016,11 @@ class MenuSystem:
 
         view = self.theme.get_view(self.state)
         if view:
+            # A declared view replaces the built-in buttons only: spacing, the
+            # skin's arrange() and the scroll range below apply to it as well
+            # (they were skipped by an early return).
             self._build_from_view(view, has_save)
-            return
-
-        if self.state == "main":
+        elif self.state == "main":
             if has_save:
                 labels_actions = [
                     (self.lang.get("btn_continue", "Continua"), "goto_levels"),
@@ -612,123 +1053,41 @@ class MenuSystem:
             # floating over the background. The message used to be built as a
             # locked button, which is why it rendered in the disabled colour.
             cx = self.theme.btn_center_x()
-            card = pygame.Rect(int(cx - DIALOG_W / 2), DIALOG_Y, DIALOG_W, DIALOG_H)
+            confirm = self.lang.get("btn_confirm_new_game", "Start a new game")
+            cancel = self.lang.get("btn_cancel", "Cancel")
+            # Both buttons take the width of the longer label, so the two words
+            # print at one size (the confirm label used to be shrunk to fit a
+            # fixed 268 px box while Cancel stayed large). The card grows with
+            # them, up to the safe area.
+            sm = self.scaling_manager
+            font = self.theme.get_font(self.theme.font_size_btn(), sm)
+            text_w = max(font.size(t)[0] for t in (confirm, cancel)) / (sm.scale or 1.0)
+            bw = max(DIALOG_BTN_W, text_w + 2 * DIALOG_BTN_PAD)
+            card_w = min(1280 - 2 * SAFE_X,
+                         max(DIALOG_W, 2 * bw + DIALOG_BTN_GAP + 2 * DIALOG_PAD))
+            bw = min(bw, (card_w - 2 * DIALOG_PAD - DIALOG_BTN_GAP) / 2)
+            card = pygame.Rect(int(cx - card_w / 2), DIALOG_Y, int(card_w), DIALOG_H)
             self._dialog_rect = card
             self._dialog_text = self.lang.get(
                 "msg_confirm_new_game",
                 "Starting a new game erases your progress. Continue?")
 
             y = card.bottom - DIALOG_BTN_H - DIALOG_PAD
-            gap = 24
+            gap = DIALOG_BTN_GAP
             self.buttons = [
-                MenuButton(self.lang.get("btn_confirm_new_game", "Start a new game"),
-                           "do_new_game", card.centerx - DIALOG_BTN_W - gap / 2, y,
-                           DIALOG_BTN_W, DIALOG_BTN_H),
-                MenuButton(self.lang.get("btn_cancel", "Cancel"),
-                           "goto_main", card.centerx + gap / 2, y,
-                           DIALOG_BTN_W, DIALOG_BTN_H),
+                MenuButton(confirm, "do_new_game", card.centerx - bw - gap / 2, y,
+                           bw, DIALOG_BTN_H),
+                MenuButton(cancel, "goto_main", card.centerx + gap / 2, y,
+                           bw, DIALOG_BTN_H),
             ]
             self.buttons.append(self._back_btn("main"))
 
         elif self.state == "levels":
-            levels_path = get_resource_path("games", self.game_id, "levels")
-            
-            unlocked_lvls: list[str] = []
-            if self.save_manager:
-                unlocked_lvls = self.save_manager.get_progress("unlocked_levels", [])
-
-            if levels_path.exists():
-                lvl_dirs = sorted([d for d in levels_path.iterdir() if d.is_dir()])
-                
-                # Layout Premium per Livelli: Card ampie e leggibili
-                bw, bh = 640, 160
-                total = len(lvl_dirs)
-                focus_idx = 0
-                
-                for i, ld in enumerate(lvl_dirs):
-                    level_id = ld.name
-                    level_name = level_id
-                    
-                    cfg_p = ld / "level_config.json"
-                    preview: pygame.Surface | None = None
-                    
-                    if cfg_p.exists():
-                        try:
-                            with open(cfg_p, "r", encoding="utf-8") as f:
-                                cfg = json.load(f)
-                            nk = cfg.get("name_key")
-                            if nk: level_name = self.lang.get(nk, level_id)
-                            
-                            # Tenta di caricare anteprima dalla prima scena per la Level Card
-                            scenes = cfg.get("scenes", [])
-                            if scenes:
-                                first_scene_id = scenes[0].get("id")
-                                raw = self._load_preview_raw(ld / first_scene_id)
-                                if raw is not None:
-                                    preview = pygame.transform.smoothscale(raw, (bw, bh))
-                        except Exception: pass
-
-                    is_unlocked = level_id in unlocked_lvls
-                    if is_unlocked: focus_idx = i
-
-                    # The card shows the name and nothing else: the lock state
-                    # is drawn as a badge, it is not spelled into the label
-                    # ("- WELCOME_TO_MALONNO - (LOCKED)" used to reach players).
-                    display_text = self._pretty_name(level_name)
-                    btn_action = f"goto_scenes:{level_id}" if is_unlocked else "none"
-                    
-                    btn = self._std_btn(display_text, btn_action, i, total, override_w=bw, override_h=bh, image=preview)
-                    self.buttons.append(btn)
-                
-                # Salva per focus finale
-                self._last_focus_data = (focus_idx, total, bw, 60)
-
+            self._build_level_cards()
             self.buttons.append(self._back_btn("main"))
 
         elif self.state == "scenes":
-            if self.selected_level:
-                lvl_path = get_resource_path(
-                    "games", self.game_id, "levels", self.selected_level
-                )
-                cfg_p = lvl_path / "level_config.json"
-                if cfg_p.exists():
-                    try:
-                        with open(cfg_p, "r", encoding="utf-8") as f:
-                            cfg = json.load(f)
-                        scenes = cfg.get("scenes", [])
-                        
-                        y_start = 140
-                        thumb_w = self.theme.layout("scene_thumb_w", 320)
-                        thumb_h = self.theme.layout("scene_thumb_h", 180)
-                        
-                        # In modalità icons_only usiamo carosello orizzontale uniforme
-                        if self.theme.is_icons_only():
-                            focus_idx = 0
-                            total_s = len(scenes)
-                            for i, s in enumerate(scenes):
-                                scene_id = s.get("id")
-                                is_unlocked = True
-                                if self.save_manager:
-                                    is_unlocked = self.save_manager.is_scene_unlocked(self.selected_level, i)
-                                if is_unlocked: focus_idx = i
-                                
-                                preview = self._load_scene_preview(lvl_path, scene_id, thumb_w, thumb_h, is_unlocked)
-                                name = self._pretty_name(self.lang.get(f"{scene_id}_name", scene_id))
-                                btn_action = f"play_scene:{self.selected_level}:{scene_id}" if is_unlocked else "none"
-                                
-                                self.buttons.append(self._std_btn(name, btn_action, i, total_s, 
-                                                                 override_w=thumb_w, override_h=thumb_h, image=preview))
-                            
-                            self._last_focus_data = (focus_idx, total_s, thumb_w, 60)
-                        else:
-                            # Grid standard per temi non-icons
-                            cols = self.theme.layout("scene_grid_cols", 3)
-                            # ... (rest of grid logic remains same)
-                    except Exception as e:
-                        self.logger.error(
-                            "MenuSystem: Errore caricamento scene per %s: %s", self.selected_level, e
-                        )
-
+            self._build_scene_cards()
             self.buttons.append(self._back_btn("levels"))
 
         elif self.state == "settings":
@@ -809,6 +1168,9 @@ class MenuSystem:
             for i, (lbl, act) in enumerate(labels_actions):
                 self.buttons.append(self._std_btn(lbl, act, i, total, primary=(i == 0)))
 
+        if self.state in ("main", "pause"):
+            self._space_icon_row()
+
         # The skin may recompose the layout (kids arc, horror sparse) before the
         # scroll/focus computation. It only acts on vertical offsets.
         skin_call(self.skin, "arrange", self)
@@ -827,6 +1189,8 @@ class MenuSystem:
                 if all_items:
                     last_y = max(i.ref_rect.bottom for i in all_items)
                     self.max_scroll_y = max(0, last_y + 100 - 720)
+            elif self.state in CARD_STATES:
+                pass  # set by _layout_cards / _set_page
             else:
                 # Scroll Orizzontale
                 if scrollable_b:
@@ -959,9 +1323,15 @@ class MenuSystem:
         if not is_fixed:
             rect.x -= self.scroll_x
             rect.y -= self.scroll_y
+            if self.state == "settings":
+                # What scrolled under the header is not drawn, so it must not
+                # be clickable either.
+                rect = rect.clip(self._settings_viewport_ref())
+                if not rect.w or not rect.h:
+                    return pygame.Rect(0, 0, 0, 0)
             
         # 3. Coerenza con Zoom Carosello (Solo per stati carosello e bottoni non fissi)
-        if not is_slider and self.state in ("main", "levels", "scenes", "pause") and not is_fixed:
+        if not is_slider and self.state in CAROUSEL_STATES and not is_fixed:
             # Calcolo basato sul centro dello schermo (1280/2 = 640)
             dist_center = abs(rect.centerx - 640)
             zoom = 1.0 + max(0, (1.0 - dist_center / 640)) * self.skin.carousel_zoom
@@ -1083,8 +1453,13 @@ class MenuSystem:
         skin_call(self.skin, "draw_title", self, screen)
         self._draw_title_rule(screen, sm)
         self._draw_state_subtitle(screen, sm)
-        if self.state == "settings":
+        list_clip = self._settings_viewport(sm, sw, sh) if self.state == "settings" else None
+        if list_clip is not None:
+            screen.set_clip(list_clip)
+            self._probe_clip = list_clip
             self._draw_group_headers(screen, sm)
+            screen.set_clip(None)
+            self._probe_clip = None
 
         # The confirmation card is painted before the buttons on it.
         if self.state == "confirm_new":
@@ -1096,6 +1471,12 @@ class MenuSystem:
 
             # Chrome pinned to a corner never scrolls with the carousel.
             is_fixed = self._is_fixed(b)
+            # A settings ROW; the back button of that page is chrome and draws
+            # as a button (it was being painted as a list row, without a plate).
+            as_row = self.state == "settings" and not is_fixed
+            if list_clip is not None:
+                screen.set_clip(None if is_fixed else list_clip)
+                self._probe_clip = None if is_fixed else list_clip
             if not is_fixed:
                 rect.x -= int(sm.scale_value(self.scroll_x))
                 rect.y -= int(sm.scale_value(self.scroll_y))
@@ -1104,7 +1485,7 @@ class MenuSystem:
             if rect.right < 0 or rect.left > sw: continue
 
             # Effetto Carosello Premium: Zoom al centro (Solo per stati carosello, non Settings)
-            is_carousel = self.state in ("main", "levels", "scenes", "pause")
+            is_carousel = self.state in CAROUSEL_STATES
             dist_center = abs(rect.centerx - sw / 2)
             max_dist = sw / 2
             zoom_factor = 1.0
@@ -1136,7 +1517,7 @@ class MenuSystem:
             # behind every settings row framed it a second time, and only the
             # toggle rows (which are buttons) got it, so half the list looked
             # different from the other half.
-            if self.state != "settings":
+            if not as_row:
                 skin_call(self.skin, "behind_button", self, screen, b, draw_rect, is_locked)
 
             if b.image:
@@ -1180,6 +1561,8 @@ class MenuSystem:
                             base.blit(badge, badge.get_rect(
                                 center=(size[0] // 2, int(size[1] * 0.42))))
 
+                    self._bake_card_info(base, b, size, is_locked, sm)
+
                     radius = theme.border_radius()
                     pygame.draw.rect(base, theme.color3("scene_border_normal"),
                                      (0, 0, size[0], size[1]), width=2, border_radius=radius)
@@ -1198,19 +1581,26 @@ class MenuSystem:
                         # per-pixel-alpha delle surface di testo OGNI frame era il costo
                         # residuo del menu scena su GPU mobile (~12ms). Bakandola, per
                         # frame resta un SOLO blit opaco. Hover-color trascurabile su touch.
-                        nf = theme.get_font(theme.font_size_scene(), sm)
+                        # Same font, fit and distance from the bottom as the
+                        # live desktop label (it used to overflow long names).
+                        nf = theme.get_font(getattr(b, "caption_size", None)
+                                            or theme.font_size_scene(), sm)
+                        k = size[0] / max(1, b.ref_rect.w)
+                        name = theme.fit_text(nf, b.text, size[0] - int(CARD_TEXT_PAD * 2 * k))
                         ncol = theme.caption_text(is_locked)
-                        cx = size[0] // 2
+                        anchor = (size[0] // 2, size[1] - int(CARD_NAME_BOTTOM * k))
                         if theme.has_text_shadow():
                             sc = theme._effects.get("text_shadow_color", [0, 0, 0, 120])
-                            shs = nf.render(b.text, True, (sc[0], sc[1], sc[2]))
-                            sr = shs.get_rect(midbottom=(cx, size[1] - 14)); sr.x += 1; sr.y += 1
-                            base.blit(shs, sr)
-                        nsurf = nf.render(b.text, True, ncol)
-                        base.blit(nsurf, nsurf.get_rect(midbottom=(cx, size[1] - 14)))
+                            shs = nf.render(name, True, (sc[0], sc[1], sc[2]))
+                            sr = shs.get_rect(midbottom=anchor)
+                            base.blit(shs, sr.move(1, 1))
+                        nsurf = nf.render(name, True, ncol)
+                        base.blit(nsurf, nsurf.get_rect(midbottom=anchor))
                     b._scaled_img = base
                     b._scaled_img_size = size
-                screen.blit(b._scaled_img, b._scaled_img.get_rect(center=draw_rect.center))
+                card_box = b._scaled_img.get_rect(center=draw_rect.center)
+                screen.blit(b._scaled_img, card_box)
+                self.probe("card", card_box, b.action)
                 if b.hovered:
                     pygame.draw.rect(screen, theme.color3("scene_border_hover"), draw_rect,
                                      width=2, border_radius=theme.border_radius())
@@ -1222,19 +1612,22 @@ class MenuSystem:
                         screen.blit(ico_scaled, ico_scaled.get_rect(center=draw_rect.center))
                     else:
                         label_rect = draw_rect.copy()
-                        label_rect.height -= sm.scale_value(10)
-                        font = theme.get_auto_font(b.text, theme.font_size_scene(),
-                                                   b.ref_rect.w - 32, sm)
+                        label_rect.height -= sm.scale_value(CARD_NAME_BOTTOM)
+                        font = theme.get_font(getattr(b, "caption_size", None)
+                                              or theme.font_size_scene(), sm)
                         # The caption sits on the gradient baked into the card,
                         # not on the theme surface: it takes a colour picked for
                         # that, or a dark-text theme prints black on black.
                         col = theme.caption_text(is_locked)
-                        shadow = theme.render_cached(font, b.text, (6, 6, 10))
-                        label = theme.render_cached(font, b.text, col)
+                        text = theme.fit_text(font, b.text,
+                                              draw_rect.w - sm.scale_value(CARD_TEXT_PAD * 2))
+                        shadow = theme.render_cached(font, text, (6, 6, 10))
+                        label = theme.render_cached(font, text, col)
                         pos = label.get_rect(midbottom=(label_rect.centerx,
                                                         label_rect.bottom))
                         screen.blit(shadow, (pos.x + 1, pos.y + 1))
                         screen.blit(label, pos)
+                        self.probe("text", pos, b.action)
                 elif b.icon_surf:
                     # Android: card con icona (caso raro) -> blit icona dal vivo.
                     ico_scaled = self._scale_icon_cached(b, draw_rect, sm)
@@ -1243,7 +1636,7 @@ class MenuSystem:
                 # Bottone Standard/Icona. In the settings list the row surface
                 # IS the plate: drawing the themed button background under it
                 # framed every toggle row twice (visible on kids).
-                if self.state != "settings":
+                if not as_row:
                     theme.draw_btn_bg(screen, draw_rect, b.hovered, is_locked,
                                       hover_t=b.hover_time)
                 
@@ -1254,8 +1647,8 @@ class MenuSystem:
                     pygame.draw.circle(r_surf, (255, 255, 255, int(b.ripple_time * 100)), b.ripple_pos, r_rad)
                     screen.blit(r_surf, draw_rect, special_flags=pygame.BLEND_RGBA_ADD)
 
-                if b.icon_surf or self.state == "settings":
-                    if self.state == "settings":
+                if b.icon_surf or as_row:
+                    if as_row:
                         self._draw_settings_row(screen, b, draw_rect, sm)
                     else:
                         ico_scaled, _glow, _shadow = self._icon_fx(b, draw_rect, sm)
@@ -1367,9 +1760,14 @@ class MenuSystem:
                                 _chip.blit(ico_scaled, (0, 0))
                                 b._op_icon = _chip.convert()
                                 b._op_icon_key = okey
-                            screen.blit(b._op_icon, b._op_icon.get_rect(center=draw_rect.center))
+                            icon_box = b._op_icon.get_rect(center=draw_rect.center)
+                            screen.blit(b._op_icon, icon_box)
                         else:
-                            screen.blit(ico_scaled, ico_scaled.get_rect(center=draw_rect.center))
+                            icon_box = ico_scaled.get_rect(center=draw_rect.center)
+                            screen.blit(ico_scaled, icon_box)
+                        self.probe("icon", icon_box, b.action)
+                        self.probe("chrome" if self._is_fixed(b) else "button",
+                                   draw_rect, b.action)
 
                         if self._has_icon_labels() and self.state in ("main", "pause"):
                             self._draw_icon_label(screen, b, draw_rect, sm)
@@ -1379,7 +1777,7 @@ class MenuSystem:
                     tt_text = getattr(b, "tooltip_text", b.text)
                     show_tt = False
                     if b.hovered:
-                        if self.state == "settings":
+                        if as_row:
                             # In the settings list the tooltip belongs to the
                             # icon/label column, not to the control on the right.
                             icon_area_w = sm.scale_value(SETTINGS_LABEL_X)
@@ -1396,20 +1794,28 @@ class MenuSystem:
                     
                     if show_tt:
                         anchor = draw_rect.copy()
-                        if self.state != "settings":
+                        if not as_row:
                             bottom = self._caption_bottom(b, draw_rect, sm)
                             anchor.height = max(anchor.height, bottom - anchor.top
                                                 + sm.scale_value(FOCUS_BAR_GAP + FOCUS_BAR_H))
                         tooltip_queue.append((tt_text, anchor, b.hover_time))
                 else:
-                    if self.state == "confirm_new":
-                        self._draw_dialog_button(screen, draw_rect,
-                                                 b.action == "do_new_game",
-                                                 b.hover_time, sm)
+                    if self.state == "confirm_new" and not is_fixed:
+                        self._draw_dialog_button(screen, b, draw_rect,
+                                                 b.action == "do_new_game", sm)
+                        continue
                     font = theme.get_auto_font(b.text, theme.font_size_btn(), b.ref_rect.w, sm)
                     theme.draw_text(screen, b.text, font, draw_rect, b.hovered, is_locked, anchor="center", hover_t=b.hover_time)
+                    self.probe("button", draw_rect, b.action)
+                    tw, th = font.size(b.text)
+                    self.probe("text", pygame.Rect(0, 0, tw, th).move(
+                        draw_rect.centerx - tw // 2, draw_rect.centery - th // 2), b.action)
 
         # ââ 3. Render Slider Professionali (Senza pannello/box grigio come richiesto)
+        if list_clip is not None:
+            screen.set_clip(list_clip)
+            self._probe_clip = list_clip
+
         if self.state == "settings" and self.theme.fx("settings_panel", False):
             # Pannello dinamico (disabilitato di default per Malonno)
             n_items = len(self.buttons) - 1
@@ -1480,11 +1886,16 @@ class MenuSystem:
                 tooltip_queue.append((f"{tip_text}: {int(s.value * 100)}%",
                                       row if row is not None else track, 1.0))
 
+        if list_clip is not None:
+            screen.set_clip(None)
+            self._probe_clip = None
+
         # --- EFFETTO LENTE D'INGRANDIMENTO (Mystery HUD) ---
         # Posizionata qui per ingrandire anche i bottoni e le voci di menu.
         # Su Android (touch) NON va mostrata: seguirebbe il punto di tocco
         # lasciando un cerchio fisso a schermo (nessun puntatore deve comparire).
         # Framing: the carousel edges fade out, the build line sits in the corner.
+        self._draw_page_dots(screen, sm)
         self._draw_edge_fade(screen, sw, sh)
         self._draw_footer(screen, sm)
 
@@ -1572,9 +1983,35 @@ class MenuSystem:
         surf = theme.render_spaced(font, text.upper(), theme.color3("text_normal"),
                                    sm.scale_value(3)).copy()
         surf.set_alpha(170)
-        y = sm.scale_value(int(self._state_title_y() + self._state_title_size() * 1.12
-                               + TITLE_RULE_GAP + 18))
-        screen.blit(surf, surf.get_rect(midtop=(screen.get_width() // 2, y)))
+        y = self.ref_y_to_screen(int(self._state_title_y() + self._state_title_size() * 1.12
+                                     + TITLE_RULE_GAP + SUBTITLE_GAP))
+        box = surf.get_rect(midtop=(screen.get_width() // 2, y))
+        screen.blit(surf, box)
+        self.probe("text", box, "subtitle")
+
+    def probe(self, kind: str, rect, owner: str = "") -> None:
+        """Record a painted box for the layout checks (no-op in the game).
+
+        Public to the skins. Kinds: `text` (anything the player reads), `icon`
+        (a glyph inside its button), `button`, `card`, `row`, `chrome`.
+        """
+        if self.layout_probe is None:
+            return
+        box = pygame.Rect(rect)
+        if self._probe_clip is not None and kind != "chrome":
+            box = box.clip(self._probe_clip)
+            if not box.w or not box.h:
+                return
+        self.layout_probe.append((kind, box, owner))
+
+    def ref_y_to_screen(self, ref_y: float) -> int:
+        """Screen y of a reference y, letterbox offset included.
+
+        Public to the skins. scale_value() alone drops the offset, which on a
+        4:3 screen put the titles 96 px above the content and the icon captions
+        inside the icons.
+        """
+        return self.scaling_manager.ref_to_screen(0, ref_y)[1]
 
     def _state_title_size(self) -> int:
         """Reference font size of the current title.
@@ -1618,10 +2055,11 @@ class MenuSystem:
 
         title_surf, shadow_surf = self._title_cache
         tx = (screen.get_width() - title_surf.get_width()) // 2
-        ty = sm.scale_value(self._state_title_y())
+        ty = self.ref_y_to_screen(self._state_title_y())
         off = max(2, sm.scale_value(3))
         screen.blit(shadow_surf, (tx + off, ty + off))
         screen.blit(title_surf, (tx, ty))
+        self.probe("text", title_surf.get_rect(topleft=(tx, ty)), "title")
 
     def _draw_icon_label(self, screen: pygame.Surface, b: "MenuButton",
                          draw_rect: pygame.Rect, sm) -> None:
@@ -1662,6 +2100,7 @@ class MenuSystem:
         if b.hover_time > 0.01:
             hover.set_alpha(int(255 * min(1.0, b.hover_time)))
             screen.blit(hover, pos)
+        self.probe("text", pos, b.action)
 
     # ── Settings list ────────────────────────────────────────
 
@@ -1739,6 +2178,7 @@ class MenuSystem:
                        sm) -> None:
         """Blit the composed row and, on hover, its highlight."""
         screen.blit(self._row_surface(item, rect, icon, label, sm), rect.topleft)
+        self.probe("row", rect, getattr(item, "action", ""))
         if hover_t > 0.01:
             plate = self._row_hover_plate((rect.w, rect.h))
             plate.set_alpha(int(255 * min(1.0, hover_t)))
@@ -1771,8 +2211,11 @@ class MenuSystem:
                                    SETTINGS_VALUE_W - 24, sm)
         col = theme.lerp_color(theme.color3("text_normal"),
                                theme.color3("text_hover"), b.hover_time)
-        val = theme.render_cached(font, b.text, col)
-        screen.blit(val, val.get_rect(center=pill.center))
+        text = theme.fit_text(font, b.text, pill.w - sm.scale_value(CARD_TEXT_PAD))
+        val = theme.render_cached(font, text, col)
+        box = val.get_rect(center=pill.center)
+        screen.blit(val, box)
+        self.probe("text", box, b.action)
 
     def _icon_label_baseline(self, sm) -> int:
         """Shared top edge of the captions under the carousel icons.
@@ -1784,9 +2227,10 @@ class MenuSystem:
         """
         size = float(self.theme.icon_btn_size())
         size *= float(self.theme.layout("primary_scale", PRIMARY_SCALE))
-        half = size * (1.0 + max(0.0, self.skin.carousel_zoom)) / 2.0
+        zoom = max(0.0, self.skin.carousel_zoom) if self.state in CAROUSEL_STATES else 0.0
+        half = size * (1.0 + zoom) / 2.0
         gap = int(self.theme.layout("icon_label_gap", ICON_LABEL_GAP))
-        return sm.scale_value(self._row_center_y() + half + gap)
+        return self.ref_y_to_screen(self._row_center_y() + half + gap)
 
     @staticmethod
     def _wrap_text(text: str, font, max_w: int) -> list[str]:
@@ -1828,36 +2272,52 @@ class MenuSystem:
         text = getattr(self, "_dialog_text", "")
         if not text:
             return
-        font = theme.get_font_role("body", theme.font_size_label() + 6, sm)
+        # Never smaller than the labels of its own buttons read (it used to be).
+        size = max(theme.font_size_label() + 6, DIALOG_TEXT_SIZE)
+        font = theme.get_font_role("body", size, sm)
         lines = self._wrap_text(text, font, card.w - sm.scale_value(DIALOG_PAD * 2))
         line_h = font.get_height() + sm.scale_value(6)
         top = card.y + sm.scale_value(DIALOG_PAD + 14)
         for i, line in enumerate(lines):
             surf = theme.render_cached(font, line, theme.color3("text_normal"))
-            screen.blit(surf, surf.get_rect(midtop=(card.centerx, top + i * line_h)))
+            box = surf.get_rect(midtop=(card.centerx, top + i * line_h))
+            screen.blit(surf, box)
+            self.probe("text", box, "dialog")
 
-    def _draw_dialog_button(self, screen: pygame.Surface, rect: pygame.Rect,
-                            primary: bool, hover_t: float, sm) -> None:
-        """Plate under a dialog button.
+    def _draw_dialog_button(self, screen: pygame.Surface, b: "MenuButton",
+                            rect: pygame.Rect, destructive: bool, sm) -> None:
+        """Plate and label of a dialog button.
 
         Most themes set `no_btn_bg` because their buttons are icons; on a
-        dialog that leaves the two labels floating on the card with nothing to
-        click, so the plate is drawn here regardless.
+        dialog that leaves the labels floating on the card, so the plate is
+        drawn here regardless. The action that erases the save is marked as
+        such (danger fill); the way out is the neutral plate in the theme
+        accent. Labels share one size, fitted with an ellipsis if needed.
         """
         theme = self.theme
+        hover_t = b.hover_time
         radius = max(6, sm.scale_value(12))
         accent = theme.accent()
-        fill = theme.row_value_bg()
-        if primary:
-            # The confirming button takes the theme accent (`slider_fill` is the
-            # only saturated colour every theme defines), so the destructive
-            # choice is not the same grey as the way out of the dialog.
-            base = theme.color3("slider_fill")
-            fill = tuple(theme.lerp_color(base, theme.color3("text_hover"),
-                                          0.18 * hover_t)[:3])
+        if destructive:
+            fill = theme.lerp_color(DIALOG_DANGER, (235, 90, 80), 0.35 * hover_t)[:3]
+            border = fill
+            text_col = (250, 246, 242)
+        else:
+            fill = theme.row_value_bg()
+            border = accent
+            text_col = theme.lerp_color(theme.color3("text_normal"),
+                                        theme.color3("text_hover"), hover_t)[:3]
         pygame.draw.rect(screen, fill, rect, border_radius=radius)
-        width = max(1, sm.scale_value(2 if primary else 1))
-        pygame.draw.rect(screen, accent, rect, width=width, border_radius=radius)
+        width = max(1, sm.scale_value(2 if hover_t > 0.01 else 1))
+        pygame.draw.rect(screen, border, rect, width=width, border_radius=radius)
+        self.probe("button", rect, b.action)
+
+        font = theme.get_font(theme.font_size_btn(), sm)
+        text = theme.fit_text(font, b.text, rect.w - sm.scale_value(DIALOG_BTN_PAD))
+        label = theme.render_cached(font, text, text_col)
+        box = label.get_rect(center=rect.center)
+        screen.blit(label, box)
+        self.probe("text", box, b.action)
 
     # ── Header, focus and framing ────────────────────────────────
 
@@ -1870,7 +2330,7 @@ class MenuSystem:
         """
         if not self._state_title_text():
             return
-        top = sm.scale_value(max(0, self._state_title_y() - 34))
+        top = self.ref_y_to_screen(max(0, self._state_title_y() - 34))
         height = sm.scale_value(self._state_title_size() + 96)
         raw = self.theme.color("background_overlay")
         tint = (raw[0], raw[1], raw[2])
@@ -1919,8 +2379,8 @@ class MenuSystem:
         theme = self.theme
         width = sm.scale_value(TITLE_RULE_W)
         height = max(1, sm.scale_value(TITLE_RULE_H))
-        y = sm.scale_value(int(self._state_title_y() + self._state_title_size() * 1.12
-                               + TITLE_RULE_GAP))
+        y = self.ref_y_to_screen(int(self._state_title_y() + self._state_title_size() * 1.12
+                                     + TITLE_RULE_GAP))
         rect = pygame.Rect(0, 0, width, height)
         rect.midtop = (screen.get_width() // 2, y)
         accent = theme.accent_on(theme.scrim_color())
@@ -1963,8 +2423,8 @@ class MenuSystem:
         The next card peeking in is intentional; a card sliced by the screen
         edge is not, and the difference is entirely in this gradient.
         """
-        if self.max_scroll_x <= 0:
-            return
+        if self.max_scroll_x <= 0 or self.state in CARD_STATES:
+            return  # card pages show whole cards only: nothing peeks in
         # Only the side that actually has more content behind it: fading the
         # left edge while the first card sits against it would just dim the card.
         left_on = self.scroll_x > 4
@@ -2004,8 +2464,22 @@ class MenuSystem:
         font = theme.get_font_role("body", FOOTER_SIZE, sm)
         surf = theme.render_cached(font, text, theme.color3("text_normal")).copy()
         surf.set_alpha(FOOTER_ALPHA)
-        screen.blit(surf, surf.get_rect(bottomleft=(sm.scale_value(SAFE_X),
-                                                    sm.scale_value(720 - SAFE_BOTTOM))))
+        # Corner chrome: anchored to the screen corner, not to the 16:9 box (on
+        # 4:3 the line floated 96 px above the bottom edge).
+        box = surf.get_rect(bottomleft=(sm.scale_value(SAFE_X),
+                                        screen.get_height() - sm.scale_value(SAFE_BOTTOM)))
+        screen.blit(surf, box)
+        self.probe("text", box, "footer")
+
+    @staticmethod
+    def _settings_viewport_ref() -> pygame.Rect:
+        """Scrolling area of the settings list, in reference coordinates."""
+        return pygame.Rect(0, SETTINGS_VIEWPORT_TOP, 1280, 720 - SETTINGS_VIEWPORT_TOP)
+
+    def _settings_viewport(self, sm, sw: int, sh: int) -> pygame.Rect:
+        """Screen clip of the settings list: full width, from under the header."""
+        top = sm.scale_rect(0, SETTINGS_VIEWPORT_TOP, 1, 1).y
+        return pygame.Rect(0, top, sw, max(0, sh - top))
 
     def _draw_group_headers(self, screen: pygame.Surface, sm) -> None:
         """Section headers of the settings list."""
@@ -2015,13 +2489,18 @@ class MenuSystem:
         theme = self.theme
         font = theme.get_font_role("body", SETTINGS_GROUP_SIZE, sm)
         accent = theme.accent_on(theme.scrim_color())
-        left = sm.scale_value((1280 - SETTINGS_ROW_W) / 2 + 6)
+        left_ref = (1280 - SETTINGS_ROW_W) / 2 + 6
         for text, ref_y in groups:
-            y = sm.scale_value(ref_y) - int(sm.scale_value(self.scroll_y))
+            # scale_rect carries the letterbox offset: scale_value alone put the
+            # headers off the rows' left edge on any screen that is not 16:9.
+            anchor = sm.scale_rect(left_ref, ref_y, 1, 1)
+            left = anchor.x
+            y = anchor.y - int(sm.scale_value(self.scroll_y))
             if y < -sm.scale_value(SETTINGS_GROUP_H) or y > screen.get_height():
                 continue
             surf = theme.render_spaced(font, text.upper(), accent, sm.scale_value(3))
             screen.blit(surf, (left, y))
+            self.probe("text", surf.get_rect(topleft=(left, y)), "group:" + text)
 
     def _draw_tooltip(self, screen: pygame.Surface, text: str, rect: pygame.Rect, sm, t: float):
         """Disegna un tooltip professionale che segue il mouse con effetto pop-in elastico."""
@@ -2155,6 +2634,10 @@ class MenuSystem:
                 rect = sm.scale_rect(b.ref_rect.x, b.ref_rect.y, b.ref_rect.w, b.ref_rect.h)
                 b.ripple_pos = (mouse_x - rect.x, mouse_y - rect.y)
                 b.ripple_time = 1.0
+                if b.action in ("page_prev", "page_next"):
+                    # Handled here: the core only hears that something was pressed.
+                    self.turn_page(-1 if b.action == "page_prev" else 1)
+                    return "page_turn"
                 return b.action
 
         for s in self.sliders:
@@ -2170,6 +2653,9 @@ class MenuSystem:
         
         if self.state == "settings":
             self.target_scroll_y = max(0, min(self.max_scroll_y, self.target_scroll_y - dy * scroll_amount))
+        elif self.state in CARD_STATES:
+            if dy:
+                self.turn_page(-1 if dy > 0 else 1)
         else:
             self.target_scroll_x = max(0, min(self.max_scroll_x, self.target_scroll_x - dy * scroll_amount))
 

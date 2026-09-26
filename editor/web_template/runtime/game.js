@@ -52,7 +52,13 @@ class Game {
     setInterval(() => {
       if (this.state !== "SCENE") return;
       this.timeLeft -= 0.2;
-      if (this.timeLeft <= 0) { this.timeLeft = 0; this._completeScene(); }
+      if (this.timeLeft <= 0) {
+        this.timeLeft = 0;
+        // Parity with engine.level_manager (timer_behavior): only "fail" loses
+        // the scene on time; "complete" (default) lets the clock run out and
+        // just drops the time bonus to zero.
+        if (this.level && this.level.timer_behavior === "fail") this._completeScene();
+      }
       this.invalidate();
     }, 200);
   }
@@ -398,7 +404,11 @@ class Game {
       sceneIdx,
     };
     // Autosave: tiene il migliore e sblocca scena/livello successivi
-    this.save = Save.record(this.manifest.game_id, this.manifest, this.level.id, sceneIdx, this.sceneDef.id, finalScore, stars);
+    // Parity with engine.campaign.Campaign.record_result: a lost scene stores
+    // nothing and unlocks nothing (it used to unlock the next scene on time-out).
+    if (allFound) {
+      this.save = Save.record(this.manifest.game_id, this.manifest, this.level.id, sceneIdx, this.sceneDef.id, finalScore, stars);
+    }
     this._resultsTs = performance.now();
     this._confetti = stars >= 2 ? this._makeConfetti() : [];
     this.audio.stopMusic();

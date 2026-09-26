@@ -208,6 +208,28 @@ resolves the accent through `MenuTheme.accent()`, the web through
 `Theme.accent()/accent2()` in `runtime/core.js`, and both skip a colour with no
 hue rather than painting the chrome black.
 
+## L. Campaign: order, timer, what a lost scene records
+
+Rules live in `engine/campaign.py` (docstring). Shared today:
+
+| ENGINE | WEB |
+|---|---|
+| Scene order: `order`, ties by position (`campaign.ordered_scene_ids`, used by `level_manager.start_level`) | `web_exporter` sorts by `order` |
+| `timer_behavior: "complete"` (default): time never loses a scene, the bonus just reaches 0 | `game.js` countdown stops at 0 without ending the scene |
+| `timer_behavior: "fail"`: SCENE_FAILED when elapsed reaches `time_limit` | `game.js` ends the scene at 0 |
+| A lost scene records nothing and unlocks nothing (`Campaign.record_result`) | `_doFinish` calls `Save.record` only when every goal is found |
+
+Known divergences, to close when the core adopts `Campaign` (see
+`docs/engine/MENU_UX_PLAN.md`, Campaign):
+
+- Level order: Python unlock chain follows `game_config.levels`, the Python menu and
+  the web export sort level folders alphabetically.
+- A level's scenes are clickable in the Python menu without checking that the level
+  is unlocked (`Campaign.is_scene_unlocked` checks it; the web already does).
+- Results: the web offers Retry and Next; Python has a single Continue.
+- With `"complete"` Python keeps counting the elapsed time past the limit, the web
+  caps it at the limit (display only; the bonus is 0 in both).
+
 ## Checklist when you change the engine
 
 1. Does the change touch a line in this document? If so, update the corresponding WEB side.

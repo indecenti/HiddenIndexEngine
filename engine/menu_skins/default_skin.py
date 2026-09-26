@@ -102,6 +102,7 @@ class DefaultSkin(MenuSkin):
         ht = as_float(getattr(b, "hover_time", 0.0), 0.0)
         pad = int(min(draw_rect.w, draw_rect.h) * 0.10)
         chip = draw_rect.inflate(pad * 2, pad * 2)
+        ms.probe("button", chip, b.action)
         rad = max(14, int(min(chip.w, chip.h) * 0.30))
         if _ANDROID:
             # Android: OPAQUE chip (one filled draw.rect + border). The blurred

@@ -129,6 +129,7 @@ class MysterySkin(DefaultSkin):
 
         surf, shadow = cached_title(self, key, _build)
         tx = (screen.get_width() - surf.get_width()) // 2
-        ty = sm.scale_value(ms._state_title_y())
+        ty = ms.ref_y_to_screen(ms._state_title_y())
         screen.blit(shadow, (tx + 2, ty + 2))
         screen.blit(surf, (tx, ty))
+        ms.probe("text", surf.get_rect(topleft=(tx, ty)), "title")
