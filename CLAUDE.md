@@ -27,7 +27,7 @@ the catalog, tags and languages, and launch the builds.
 | `games/<id>/` | Games: `game_config.json`, `objects_catalog.json`, `levels/<level>/<scene>/scene.json`, `strings/`. |
 | `tools/` | Development utilities (catalog audit, tag normalization, preview). |
 | `tools/hie_mcp_server.py` | **Project MCP server** (headless render, scene validation, catalog search). |
-| `.claude/skills/` | Project skills (build-apk, run-game, add-asset, validate-scene). |
+| `.claude/skills/` | Project skills (build-apk, run-game, add-asset, generate-assets, validate-scene). |
 | `scripts/` | Shell scripts for Android builds (WSL). |
 | `docs/` | Documentation organized by area (see `docs/README.md`). |
 | `scratch/` | Throwaway scripts and temporary PNGs. NOT production code. |
@@ -111,7 +111,7 @@ the strings it needs (objects, HUD, menus) so the game can be shipped standalone
 - **MCP** (`tools/hie_mcp_server.py`): registered in `.mcp.json`. Exposes `render_scene`,
   `render_asset` (headless PNG through the engine), `validate_scene`, `search_catalog`,
   `check_missing_assets`, `list_games`, `build_status`. Reloads when the client restarts.
-- **Skills** (`.claude/skills/`): `build-apk`, `run-game`, `add-asset`, `validate-scene`.
+- **Skills** (`.claude/skills/`): `build-apk`, `run-game`, `add-asset`, `generate-assets` (Qwen-Image 2.1 via local ComfyUI), `validate-scene`.
 
 ## Status and next steps
 
