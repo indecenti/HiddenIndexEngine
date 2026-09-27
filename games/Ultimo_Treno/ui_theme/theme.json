@@ -1,0 +1,94 @@
+{
+  "id": "mystery",
+  "display_name": "The Detective",
+  "category": "desktop",
+
+  "colors": {
+    "background_overlay":   [ 16,  10,   5, 215],
+    "btn_normal":           [ 42,  30,  14,   0],
+    "btn_hover":            [ 65,  46,  18,   0],
+    "btn_locked":           [ 26,  22,  18,   0],
+    "btn_border_normal":    [115,  88,  42,   0],
+    "btn_border_hover":     [255, 140,   0,   0],
+    "btn_border_locked":    [ 55,  45,  32,   0],
+    "text_normal":          [205, 182, 132],
+    "text_hover":           [255, 225, 165],
+    "text_locked":          [156, 142, 116],
+    "icon_color":           [210, 186, 134],
+    "slider_bg":            [ 28,  20,   8],
+    "row_bg":               [ 30,  22,  12, 210],
+    "slider_fill":          [145, 105,  40],
+    "slider_handle":        [215, 185, 132],
+    "scene_border_normal":  [105,  82,  36],
+    "scene_border_hover":   [185, 145,  72],
+    "scene_overlay_hover":  [ 28,  18,   4, 195],
+    "scene_overlay_normal": [ 16,  10,   3, 115],
+    "lock_text":            [145,  85,  35],
+    "btn_glow_color":       [255, 100,   0]
+  },
+
+  "layout": {
+    "btn_border_radius":    8,
+    "btn_width":            140,
+    "btn_height":           140,
+    "btn_center_x":         640,
+    "btn_y_step":           160,
+    "btn_border_width":     0,
+    "icons_only":           true,
+    "icon_btn_size":        140,
+    "no_btn_bg":            true,
+    "slider_height":        24,
+    "scene_grid_cols":      3,
+    "scene_thumb_w":        320,
+    "scene_thumb_h":        180,
+    "title_font_size":      44
+  },
+
+  "font": {
+    "family":               null,
+    "size_btn":             28,
+    "size_label":           20,
+    "size_scene":           22,
+    "size_lock":            36,
+    "bold":                 false
+  },
+
+  "effects": {
+    "btn_shadow":           true,
+    "btn_shadow_offset":    [2, 3],
+    "btn_shadow_color":     [6, 4, 0, 180],
+    "btn_glow":             true,
+    "glow_type":            "round",
+    "text_shadow":          true,
+    "text_shadow_offset":   [1, 1],
+    "text_shadow_color":    [0, 0, 0, 175],
+    "pulse_hover":          true,
+    "pulse_scale":          1.07,
+    "sepia_overlay":        true,
+    "sepia_alpha":          22
+  },
+
+  "layout_profile": { "type": "carousel" },
+
+  "motion": {
+    "carousel_zoom":   0.20,
+    "float_amp":       2.0,
+    "magnetic":        false,
+    "hover":           { "scale": 1.05, "speed": 6.0 },
+    "reduced_motion":  { "disable": ["dust", "vignette", "particles"] }
+  },
+
+  "background": { "mode": "noir", "vignette": 0.72, "dust_color": [185, 150, 92] },
+
+  "particles": { "type": "dust", "density": 22, "color": [185, 150, 92] },
+
+  "typography": {
+    "display": { "family": ["Special Elite", "Georgia", "serif"], "file": "fonts/SpecialElite-Regular.ttf", "bold": false, "spacing": 2 },
+    "title":   { "family": ["Special Elite", "Georgia", "serif"], "file": "fonts/SpecialElite-Regular.ttf", "bold": false, "spacing": 2 },
+    "body":    { "family": ["Special Elite", "Georgia", "serif"], "file": "fonts/SpecialElite-Regular.ttf", "bold": false }
+  },
+
+  "decor": { "vignette": 0.72, "magnifier": true },
+
+  "audio_feel": { "hover": "hover", "click": "click" }
+}

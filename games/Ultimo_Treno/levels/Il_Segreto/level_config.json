@@ -1,0 +1,32 @@
+{
+  "id": "Il_Segreto",
+  "name_key": "Il_Segreto_name",
+  "difficulty": "normal",
+  "timer_behavior": "complete",
+  "scenes": [
+    {
+      "id": "signal_box",
+      "order": 1,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "engine_shed",
+      "order": 2,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "mine_tunnel",
+      "order": 3,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "hidden_workshop",
+      "order": 4,
+      "time_limit": 120,
+      "transition_out": "fade"
+    }
+  ]
+}

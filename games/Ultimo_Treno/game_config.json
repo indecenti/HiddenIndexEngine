@@ -1,0 +1,18 @@
+{
+  "id": "Ultimo_Treno",
+  "game_id": "Ultimo_Treno",
+  "title_key": "game_title",
+  "version": "1.0",
+  "ui_theme": "mystery",
+  "category": "desktop",
+  "levels": [
+    "La_Partenza",
+    "Il_Viaggio",
+    "Valdoria",
+    "Il_Segreto"
+  ],
+  "menu": {
+    "background": "levels/La_Partenza/station_hall/background.png",
+    "music": []
+  }
+}

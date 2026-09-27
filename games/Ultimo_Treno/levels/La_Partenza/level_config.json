@@ -1,0 +1,32 @@
+{
+  "id": "La_Partenza",
+  "name_key": "La_Partenza_name",
+  "difficulty": "normal",
+  "timer_behavior": "complete",
+  "scenes": [
+    {
+      "id": "station_hall",
+      "order": 1,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "ticket_office",
+      "order": 2,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "luggage_room",
+      "order": 3,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "night_platform",
+      "order": 4,
+      "time_limit": 120,
+      "transition_out": "fade"
+    }
+  ]
+}

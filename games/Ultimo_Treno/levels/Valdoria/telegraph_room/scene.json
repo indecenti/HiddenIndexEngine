@@ -1,0 +1,12 @@
+{
+  "id": "telegraph_room",
+  "background": "background.png",
+  "background_scale": 1.0,
+  "objects": [],
+  "effects": [],
+  "music": [],
+  "name_key": "telegraph_room_name",
+  "objects_to_show": 12,
+  "auto_random_finds": false,
+  "flashlight": false
+}

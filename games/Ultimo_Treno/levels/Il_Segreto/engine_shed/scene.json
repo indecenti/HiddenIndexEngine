@@ -1,0 +1,12 @@
+{
+  "id": "engine_shed",
+  "background": "background.png",
+  "background_scale": 1.0,
+  "objects": [],
+  "effects": [],
+  "music": [],
+  "name_key": "engine_shed_name",
+  "objects_to_show": 12,
+  "auto_random_finds": false,
+  "flashlight": false
+}

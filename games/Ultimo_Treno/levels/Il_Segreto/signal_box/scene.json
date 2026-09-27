@@ -1,0 +1,12 @@
+{
+  "id": "signal_box",
+  "background": "background.png",
+  "background_scale": 1.0,
+  "objects": [],
+  "effects": [],
+  "music": [],
+  "name_key": "signal_box_name",
+  "objects_to_show": 12,
+  "auto_random_finds": false,
+  "flashlight": false
+}

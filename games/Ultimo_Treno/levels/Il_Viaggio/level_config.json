@@ -1,0 +1,32 @@
+{
+  "id": "Il_Viaggio",
+  "name_key": "Il_Viaggio_name",
+  "difficulty": "normal",
+  "timer_behavior": "complete",
+  "scenes": [
+    {
+      "id": "first_class_compartment",
+      "order": 1,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "dining_car",
+      "order": 2,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "sleeping_car",
+      "order": 3,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "locomotive_cab",
+      "order": 4,
+      "time_limit": 120,
+      "transition_out": "fade"
+    }
+  ]
+}

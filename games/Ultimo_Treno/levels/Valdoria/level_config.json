@@ -1,0 +1,32 @@
+{
+  "id": "Valdoria",
+  "name_key": "Valdoria_name",
+  "difficulty": "normal",
+  "timer_behavior": "complete",
+  "scenes": [
+    {
+      "id": "village_station",
+      "order": 1,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "waiting_room",
+      "order": 2,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "stationmaster_office",
+      "order": 3,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "telegraph_room",
+      "order": 4,
+      "time_limit": 120,
+      "transition_out": "fade"
+    }
+  ]
+}
