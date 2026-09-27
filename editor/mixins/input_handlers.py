@@ -531,9 +531,7 @@ class InputHandlersMixin:
         if self._active_menu:
             root_r = self._menu_bounds.get(self._active_menu)
             if root_r:
-                from editor.constants import MENU_W
-                items = self._get_menu_items(self._active_menu)
-                drop_r = pygame.Rect(root_r.x, TOP_BAR_H, MENU_W, len(items) * 26)
+                drop_r = self._menu_dropdown_rect(self._active_menu)
                 if not _in_rect((mx, my_raw), drop_r):
                     self._active_menu = None
                 else:
@@ -2107,8 +2105,7 @@ class InputHandlersMixin:
             items = self._get_menu_items(self._active_menu)
 
             ITEM_H = 26
-            from editor.constants import MENU_W
-            drop_r = pygame.Rect(root_r.x, TOP_BAR_H, MENU_W, len(items) * ITEM_H)
+            drop_r = self._menu_dropdown_rect(self._active_menu)
 
             if _in_rect((mx, my), drop_r):
                 idx = (my - TOP_BAR_H) // ITEM_H
@@ -2142,6 +2139,18 @@ class InputHandlersMixin:
             self.running = False
 
         # EDIT
+        elif cmd == "view_panels": self._toggle_panels()
+        elif cmd == "view_layers":
+            if not self.panels_visible:
+                self._toggle_panels()
+            self._toggle_layers_tab()
+        elif cmd == "view_overlay": self._toggle_overlay()
+        elif cmd == "view_grid": self._toggle_grid()
+        elif cmd == "view_icons": self._toggle_icons()
+        elif cmd == "view_fit": self._fit_canvas()
+        elif cmd == "view_preview": self._preview_toggle()
+        elif cmd == "view_fullscreen": self._toggle_fullscreen()
+        elif cmd == "view_shortcuts": self._shortcuts_toggle()
         elif cmd == "edit_undo": self._undo()
         elif cmd == "edit_redo": self._redo()
         elif cmd == "edit_cut":  self._cut_sel()

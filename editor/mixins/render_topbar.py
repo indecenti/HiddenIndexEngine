@@ -9,6 +9,7 @@ from pathlib import Path
 import pygame
 
 from editor.constants import (
+    TAB_LAYERS,
     TOP_BAR_H, STATUS_H, MENU_W, STATUS_BTN_MIN_W, STATUS_BTN_GAP,
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC, STATUS,
     TXT, TXT_DIM, TXT_HI, OK_C, PANEL, BG
@@ -24,6 +25,10 @@ STATUS_MSG_MIN_W = 160
 MENU_START_X = 10
 MENU_PAD_X = 16
 TITLE_GAP = 20
+MENU_ITEM_H = 26
+MENU_ITEM_PAD = 30   # label inset (10) plus room on the right
+MENU_CHECK = ""   # prefix of a checked View item (drawn as a dot)
+MENU_CHECK_W = 16
 
 
 class RenderTopbarMixin:
@@ -43,12 +48,14 @@ class RenderTopbarMixin:
         # Etichette localizzate per i menu principali
         menu_file = self.lang_manager.get("menu_file", "File")
         menu_edit = self.lang_manager.get("menu_edit", "Edit")
+        menu_view = self.lang_manager.get("menu_view", "View")
         menu_lang = self.lang_manager.get("menu_language", "Language")
 
         # Etichette visualizzate (gli ID interni restano costanti in inglese)
         menu_display_names = {
             "File": menu_file,
             "Edit": menu_edit,
+            "View": menu_view,
             "Lang": menu_lang
         }
 
@@ -92,6 +99,17 @@ class RenderTopbarMixin:
         
         _draw_text(self.screen, title_str, "sm", (120, 120, 140), title_x, 7, w - title_x - 100)
 
+    def _menu_dropdown_rect(self, menu_name) -> pygame.Rect:
+        """Dropdown of a top menu: as wide as its longest item (never below MENU_W),
+        shared by the renderer and the click handler (Rule 2 of EDITOR_UI.md)."""
+        root_r = self._menu_bounds[menu_name]
+        items = self._get_menu_items(menu_name)
+        widest = max((_text_wh(it[0].replace(MENU_CHECK, ""), "sm")[0] for it in items if it),
+                     default=0)
+        extra = MENU_CHECK_W if menu_name == "View" else 0
+        width = max(MENU_W, widest + MENU_ITEM_PAD + extra)
+        return pygame.Rect(root_r.x, TOP_BAR_H, width, len(items) * MENU_ITEM_H)
+
     def _get_menu_items(self, menu_name):
         """Restituisce la lista di (label, cmd) per il menu specificato."""
         if menu_name == "File":
@@ -123,6 +141,31 @@ class RenderTopbarMixin:
                 None,
                 (self._TR("menu_lang_modal", "Translation editor..."), "edit_lang_modal"),
             ]
+        elif menu_name == "View":
+            # A leading "" marks a checked item: the renderer draws the dot in
+            # its own column, so checked and unchecked labels line up.
+            def mark(on: bool, label: str) -> str:
+                return (MENU_CHECK if on else "") + label
+            return [
+                (mark(getattr(self, "panels_visible", True),
+                      self._TR("menu_view_panels", "Side panels")) + " (Ctrl+H)", "view_panels"),
+                (mark(getattr(self, "r_tab", None) == TAB_LAYERS,
+                      self._TR("menu_view_layers", "Layers panel")) + " (L)", "view_layers"),
+                None,
+                (mark(getattr(self, "show_overlay", False),
+                      self._TR("menu_view_overlay", "Hit areas")) + " (O)", "view_overlay"),
+                (mark(getattr(self, "show_grid", False),
+                      self._TR("menu_view_grid", "Grid")) + " (G)", "view_grid"),
+                (mark(getattr(self, "show_icons", False),
+                      self._TR("menu_view_icons", "Object icons")) + " (I)", "view_icons"),
+                None,
+                (self._TR("menu_view_fit", "Fit scene") + " (F)", "view_fit"),
+                (self._TR("menu_view_preview", "Preview as in game") + " (F5)", "view_preview"),
+                (mark(getattr(self, "fullscreen", False),
+                      self._TR("menu_view_fullscreen", "Fullscreen")) + " (F11)", "view_fullscreen"),
+                None,
+                (self._TR("menu_view_shortcuts", "Keyboard shortcuts") + " (F1)", "view_shortcuts"),
+            ]
         elif menu_name == "Lang":
             items = []
             for lang in self.LANGS:
@@ -142,9 +185,8 @@ class RenderTopbarMixin:
         if not items: return
 
         # Calcolo dimensioni
-        ITEM_H = 26
-        drop_h = len(items) * ITEM_H
-        drop_r = pygame.Rect(root_r.x, TOP_BAR_H, MENU_W, drop_h)
+        ITEM_H = MENU_ITEM_H
+        drop_r = self._menu_dropdown_rect(menu_name)
         
         # Background shadow
         _rect(self.screen, (10, 10, 15), (drop_r.x+3, drop_r.y+3, drop_r.w, drop_r.h), radius=4)
@@ -167,7 +209,15 @@ class RenderTopbarMixin:
                 _rect(self.screen, ACCENT, item_r, radius=3)
             
             color = TXT_HI if is_hov else TXT
-            _draw_text(self.screen, label, "sm", color, item_r.x + 10, item_r.y + 4)
+            text_x = item_r.x + 10
+            if menu_name == "View":
+                # Check column, then every label at the same x.
+                if label.startswith(MENU_CHECK):
+                    label = label[len(MENU_CHECK):]
+                    pygame.draw.circle(self.screen, ACCENT if not is_hov else TXT_HI,
+                                       (text_x + MENU_CHECK_W // 2 - 2, item_r.centery), 3)
+                text_x += MENU_CHECK_W
+            _draw_text(self.screen, label, "sm", color, text_x, item_r.y + 4)
             curr_y += ITEM_H
 
     # ─────────────────────────────────────────────────────────────────────────
