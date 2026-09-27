@@ -3111,22 +3111,6 @@
       "style": "real"
     },
     {
-      "id": "alpine_hat",
-      "label_key": "obj_alpine_hat",
-      "icon": "objects/alpine_hat.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "abbigliamento",
-        "cappello",
-        "medio",
-        "militare"
-      ],
-      "style": "real"
-    },
-    {
       "id": "wool_mittens",
       "label_key": "obj_wool_mittens",
       "icon": "objects/wool_mittens.png",
