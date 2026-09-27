@@ -23026,6 +23026,3002 @@
         "stoffa"
       ],
       "style": "real"
+    },
+    {
+      "id": "salad_bowl_wood",
+      "label_key": "obj_salad_bowl_wood",
+      "icon": "objects/salad_bowl_wood.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "stock_pot_steel",
+      "label_key": "obj_stock_pot_steel",
+      "icon": "objects/stock_pot_steel.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "medio",
+        "metallo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "tea_kettle_red",
+      "label_key": "obj_tea_kettle_red",
+      "icon": "objects/tea_kettle_red.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "medio",
+        "metallo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "wine_bottle_red",
+      "label_key": "obj_wine_bottle_red",
+      "icon": "objects/wine_bottle_red.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "bevanda",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "beer_bottle_brown",
+      "label_key": "obj_beer_bottle_brown",
+      "icon": "objects/beer_bottle_brown.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "bevanda",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "champagne_flute",
+      "label_key": "obj_champagne_flute",
+      "icon": "objects/champagne_flute.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "bevanda",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "tumbler_glass",
+      "label_key": "obj_tumbler_glass",
+      "icon": "objects/tumbler_glass.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "bevanda",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "cheese_board_knife",
+      "label_key": "obj_cheese_board_knife",
+      "icon": "objects/cheese_board_knife.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "bread_knife",
+      "label_key": "obj_bread_knife",
+      "icon": "objects/bread_knife.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "medio",
+        "metallo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "garlic_press",
+      "label_key": "obj_garlic_press",
+      "icon": "objects/garlic_press.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "can_opener",
+      "label_key": "obj_can_opener",
+      "icon": "objects/can_opener.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "kitchen_timer_egg",
+      "label_key": "obj_kitchen_timer_egg",
+      "icon": "objects/kitchen_timer_egg.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "honey_dipper",
+      "label_key": "obj_honey_dipper",
+      "icon": "objects/honey_dipper.png",
+      "default_detection": "rect",
+      "default_width": 12,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "legno",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "sugar_jar_glass",
+      "label_key": "obj_sugar_jar_glass",
+      "icon": "objects/sugar_jar_glass.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "spice_jars_rack",
+      "label_key": "obj_spice_jars_rack",
+      "icon": "objects/spice_jars_rack.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "legno",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "pizza_cutter",
+      "label_key": "obj_pizza_cutter",
+      "icon": "objects/pizza_cutter.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "ice_cream_scoop",
+      "label_key": "obj_ice_cream_scoop",
+      "icon": "objects/ice_cream_scoop.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "baking_tray",
+      "label_key": "obj_baking_tray",
+      "icon": "objects/baking_tray.png",
+      "default_detection": "rect",
+      "default_width": 65,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "medio",
+        "metallo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "muffin_tin",
+      "label_key": "obj_muffin_tin",
+      "icon": "objects/muffin_tin.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "medio",
+        "metallo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "thermos_modern",
+      "label_key": "obj_thermos_modern",
+      "icon": "objects/thermos_modern.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "bevanda",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "paper_coffee_cup",
+      "label_key": "obj_paper_coffee_cup",
+      "icon": "objects/paper_coffee_cup.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "bevanda",
+        "carta",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "drinking_straws",
+      "label_key": "obj_drinking_straws",
+      "icon": "objects/drinking_straws.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "bevanda",
+        "carta",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "napkin_holder",
+      "label_key": "obj_napkin_holder",
+      "icon": "objects/napkin_holder.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "toothpick_holder",
+      "label_key": "obj_toothpick_holder",
+      "icon": "objects/toothpick_holder.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "legno",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "olive_bowl",
+      "label_key": "obj_olive_bowl",
+      "icon": "objects/olive_bowl.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "ceramica",
+        "cibo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "croissant",
+      "label_key": "obj_croissant",
+      "icon": "objects/croissant.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "pretzel",
+      "label_key": "obj_pretzel",
+      "icon": "objects/pretzel.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "cupcake",
+      "label_key": "obj_cupcake",
+      "icon": "objects/cupcake.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "orange_fruit",
+      "label_key": "obj_orange_fruit",
+      "icon": "objects/orange_fruit.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "pomegranate",
+      "label_key": "obj_pomegranate",
+      "icon": "objects/pomegranate.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "corn_cob",
+      "label_key": "obj_corn_cob",
+      "icon": "objects/corn_cob.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "carrot_bunch",
+      "label_key": "obj_carrot_bunch",
+      "icon": "objects/carrot_bunch.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "egg_carton",
+      "label_key": "obj_egg_carton",
+      "icon": "objects/egg_carton.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "cibo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "cereal_bowl",
+      "label_key": "obj_cereal_bowl",
+      "icon": "objects/cereal_bowl.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "ceramica",
+        "cibo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "sushi_plate",
+      "label_key": "obj_sushi_plate",
+      "icon": "objects/sushi_plate.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "ceramica",
+        "cibo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "chopsticks_pair",
+      "label_key": "obj_chopsticks_pair",
+      "icon": "objects/chopsticks_pair.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 10,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "legno",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "teapot_cast_iron",
+      "label_key": "obj_teapot_cast_iron",
+      "icon": "objects/teapot_cast_iron.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "bevanda",
+        "cucina",
+        "ferro",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "floor_vase_ceramic",
+      "label_key": "obj_floor_vase_ceramic",
+      "icon": "objects/floor_vase_ceramic.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "arredamento",
+        "ceramica",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "picture_frame_blank",
+      "label_key": "obj_picture_frame_blank",
+      "icon": "objects/picture_frame_blank.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "arredamento",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "wall_clock_modern",
+      "label_key": "obj_wall_clock_modern",
+      "icon": "objects/wall_clock_modern.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "arredamento",
+        "medio",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "door_mat",
+      "label_key": "obj_door_mat",
+      "icon": "objects/door_mat.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "arredamento",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "coat_hook_modern",
+      "label_key": "obj_coat_hook_modern",
+      "icon": "objects/coat_hook_modern.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "arredamento",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "storage_basket_woven",
+      "label_key": "obj_storage_basket_woven",
+      "icon": "objects/storage_basket_woven.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "arredamento",
+        "contenitore",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "laundry_basket",
+      "label_key": "obj_laundry_basket",
+      "icon": "objects/laundry_basket.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "contenitore",
+        "medio",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "clothes_pegs",
+      "label_key": "obj_clothes_pegs",
+      "icon": "objects/clothes_pegs.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "iron_modern",
+      "label_key": "obj_iron_modern",
+      "icon": "objects/iron_modern.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "plastica",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "light_switch_modern",
+      "label_key": "obj_light_switch_modern",
+      "icon": "objects/light_switch_modern.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "smoke_detector",
+      "label_key": "obj_smoke_detector",
+      "icon": "objects/smoke_detector.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "sicurezza"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "door_key_modern",
+      "label_key": "obj_door_key_modern",
+      "icon": "objects/door_key_modern.png",
+      "default_detection": "rect",
+      "default_width": 12,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "chiave",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "padlock_brass_new",
+      "label_key": "obj_padlock_brass_new",
+      "icon": "objects/padlock_brass_new.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "ottone",
+        "piccolo",
+        "sicurezza"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "wind_chime",
+      "label_key": "obj_wind_chime",
+      "icon": "objects/wind_chime.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "decorazione",
+        "medio",
+        "metallo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "dream_catcher",
+      "label_key": "obj_dream_catcher",
+      "icon": "objects/dream_catcher.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "decorazione",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "figurine_cat",
+      "label_key": "obj_figurine_cat",
+      "icon": "objects/figurine_cat.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "ceramica",
+        "decorazione",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "wooden_elephant",
+      "label_key": "obj_wooden_elephant",
+      "icon": "objects/wooden_elephant.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "decorazione",
+        "legno",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "incense_holder",
+      "label_key": "obj_incense_holder",
+      "icon": "objects/incense_holder.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "decorazione",
+        "legno",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "essential_oil_bottle",
+      "label_key": "obj_essential_oil_bottle",
+      "icon": "objects/essential_oil_bottle.png",
+      "default_detection": "rect",
+      "default_width": 12,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "bellezza",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "bonsai_tree",
+      "label_key": "obj_bonsai_tree",
+      "icon": "objects/bonsai_tree.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "ceramica",
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "succulent_pot_trio",
+      "label_key": "obj_succulent_pot_trio",
+      "icon": "objects/succulent_pot_trio.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "ceramica",
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "garden_gloves",
+      "label_key": "obj_garden_gloves",
+      "icon": "objects/garden_gloves.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "piccolo",
+        "stoffa"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "bird_feeder",
+      "label_key": "obj_bird_feeder",
+      "icon": "objects/bird_feeder.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "medio",
+        "natura"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "flower_bouquet",
+      "label_key": "obj_flower_bouquet",
+      "icon": "objects/flower_bouquet.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "sunflower",
+      "label_key": "obj_sunflower",
+      "icon": "objects/sunflower.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "desk_lamp_led",
+      "label_key": "obj_desk_lamp_led",
+      "icon": "objects/desk_lamp_led.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "luce",
+        "medio",
+        "metallo",
+        "ufficio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "laptop_closed",
+      "label_key": "obj_laptop_closed",
+      "icon": "objects/laptop_closed.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 10,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "metallo",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "tablet_blank",
+      "label_key": "obj_tablet_blank",
+      "icon": "objects/tablet_blank.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "phone_charger",
+      "label_key": "obj_phone_charger",
+      "icon": "objects/phone_charger.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "usb_stick",
+      "label_key": "obj_usb_stick",
+      "icon": "objects/usb_stick.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "external_hard_drive",
+      "label_key": "obj_external_hard_drive",
+      "icon": "objects/external_hard_drive.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "gaming_controller_black",
+      "label_key": "obj_gaming_controller_black",
+      "icon": "objects/gaming_controller_black.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "gioco",
+        "piccolo",
+        "plastica",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "action_camera",
+      "label_key": "obj_action_camera",
+      "icon": "objects/action_camera.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "dslr_camera",
+      "label_key": "obj_dslr_camera",
+      "icon": "objects/dslr_camera.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "foto",
+        "medio",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "camera_lens",
+      "label_key": "obj_camera_lens",
+      "icon": "objects/camera_lens.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "foto",
+        "piccolo",
+        "tecnologia",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "bluetooth_speaker",
+      "label_key": "obj_bluetooth_speaker",
+      "icon": "objects/bluetooth_speaker.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "musica",
+        "piccolo",
+        "plastica",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "headphones_over_ear",
+      "label_key": "obj_headphones_over_ear",
+      "icon": "objects/headphones_over_ear.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "musica",
+        "plastica",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "microphone_desk",
+      "label_key": "obj_microphone_desk",
+      "icon": "objects/microphone_desk.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "metallo",
+        "musica",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "electric_toothbrush",
+      "label_key": "obj_electric_toothbrush",
+      "icon": "objects/electric_toothbrush.png",
+      "default_detection": "rect",
+      "default_width": 10,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "bagno",
+        "piccolo",
+        "plastica",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "hair_clipper",
+      "label_key": "obj_hair_clipper",
+      "icon": "objects/hair_clipper.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "bellezza",
+        "piccolo",
+        "plastica",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "calculator_scientific",
+      "label_key": "obj_calculator_scientific",
+      "icon": "objects/calculator_scientific.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "studio",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "globe_desk_modern",
+      "label_key": "obj_globe_desk_modern",
+      "icon": "objects/globe_desk_modern.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "metallo",
+        "studio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "pencil_sharpener",
+      "label_key": "obj_pencil_sharpener",
+      "icon": "objects/pencil_sharpener.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 10,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "studio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "eraser_pink",
+      "label_key": "obj_eraser_pink",
+      "icon": "objects/eraser_pink.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 10,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "studio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "colored_pencils",
+      "label_key": "obj_colored_pencils",
+      "icon": "objects/colored_pencils.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "arte",
+        "legno",
+        "piccolo",
+        "studio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "watercolor_box",
+      "label_key": "obj_watercolor_box",
+      "icon": "objects/watercolor_box.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "arte",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "sketchbook",
+      "label_key": "obj_sketchbook",
+      "icon": "objects/sketchbook.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "arte",
+        "carta",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "envelope_brown",
+      "label_key": "obj_envelope_brown",
+      "icon": "objects/envelope_brown.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "piccolo",
+        "ufficio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "cardboard_box_small",
+      "label_key": "obj_cardboard_box_small",
+      "icon": "objects/cardboard_box_small.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "contenitore",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "bubble_wrap_roll",
+      "label_key": "obj_bubble_wrap_roll",
+      "icon": "objects/bubble_wrap_roll.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "packing_tape_roll",
+      "label_key": "obj_packing_tape_roll",
+      "icon": "objects/packing_tape_roll.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "ufficio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "hole_punch_modern",
+      "label_key": "obj_hole_punch_modern",
+      "icon": "objects/hole_punch_modern.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "ufficio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "clipboard",
+      "label_key": "obj_clipboard",
+      "icon": "objects/clipboard.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "legno",
+        "medio",
+        "ufficio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "rubber_bands",
+      "label_key": "obj_rubber_bands",
+      "icon": "objects/rubber_bands.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "ufficio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "pushpins_box",
+      "label_key": "obj_pushpins_box",
+      "icon": "objects/pushpins_box.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "ufficio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "name_badge_blank",
+      "label_key": "obj_name_badge_blank",
+      "icon": "objects/name_badge_blank.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "ufficio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "id_lanyard",
+      "label_key": "obj_id_lanyard",
+      "icon": "objects/id_lanyard.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "stoffa",
+        "ufficio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "allen_keys",
+      "label_key": "obj_allen_keys",
+      "icon": "objects/allen_keys.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "cordless_drill",
+      "label_key": "obj_cordless_drill",
+      "icon": "objects/cordless_drill.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "medio",
+        "plastica",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "duct_tape_grey",
+      "label_key": "obj_duct_tape_grey",
+      "icon": "objects/duct_tape_grey.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "work_gloves",
+      "label_key": "obj_work_gloves",
+      "icon": "objects/work_gloves.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "cuoio",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "safety_goggles",
+      "label_key": "obj_safety_goggles",
+      "icon": "objects/safety_goggles.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "sicurezza"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "hard_hat_yellow",
+      "label_key": "obj_hard_hat_yellow",
+      "icon": "objects/hard_hat_yellow.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "plastica",
+        "sicurezza"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "fire_blanket",
+      "label_key": "obj_fire_blanket",
+      "icon": "objects/fire_blanket.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "sicurezza",
+        "stoffa"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "jerry_can",
+      "label_key": "obj_jerry_can",
+      "icon": "objects/jerry_can.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "auto",
+        "contenitore",
+        "medio",
+        "metallo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "car_keys",
+      "label_key": "obj_car_keys",
+      "icon": "objects/car_keys.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "auto",
+        "chiave",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "jumper_cables",
+      "label_key": "obj_jumper_cables",
+      "icon": "objects/jumper_cables.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "auto",
+        "medio",
+        "metallo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "tire_valve_caps",
+      "label_key": "obj_tire_valve_caps",
+      "icon": "objects/tire_valve_caps.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "auto",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "bike_helmet",
+      "label_key": "obj_bike_helmet",
+      "icon": "objects/bike_helmet.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "plastica",
+        "sicurezza",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "bike_lock_chain",
+      "label_key": "obj_bike_lock_chain",
+      "icon": "objects/bike_lock_chain.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "sicurezza",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "soccer_ball",
+      "label_key": "obj_soccer_ball",
+      "icon": "objects/soccer_ball.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "volleyball",
+      "label_key": "obj_volleyball",
+      "icon": "objects/volleyball.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "golf_ball_tee",
+      "label_key": "obj_golf_ball_tee",
+      "icon": "objects/golf_ball_tee.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "ping_pong_ball",
+      "label_key": "obj_ping_pong_ball",
+      "icon": "objects/ping_pong_ball.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "medal_gold_sport",
+      "label_key": "obj_medal_gold_sport",
+      "icon": "objects/medal_gold_sport.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "trophy_cup",
+      "label_key": "obj_trophy_cup",
+      "icon": "objects/trophy_cup.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "resistance_band",
+      "label_key": "obj_resistance_band",
+      "icon": "objects/resistance_band.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "kettlebell",
+      "label_key": "obj_kettlebell",
+      "icon": "objects/kettlebell.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "ferro",
+        "piccolo",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "yoga_mat_rolled",
+      "label_key": "obj_yoga_mat_rolled",
+      "icon": "objects/yoga_mat_rolled.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "plastica",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "fishing_lure",
+      "label_key": "obj_fishing_lure",
+      "icon": "objects/fishing_lure.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "compass_orienteering",
+      "label_key": "obj_compass_orienteering",
+      "icon": "objects/compass_orienteering.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "viaggio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "lantern_led",
+      "label_key": "obj_lantern_led",
+      "icon": "objects/lantern_led.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "luce",
+        "piccolo",
+        "plastica",
+        "viaggio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "marshmallow_stick",
+      "label_key": "obj_marshmallow_stick",
+      "icon": "objects/marshmallow_stick.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "piccolo",
+        "viaggio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "beach_towel_rolled",
+      "label_key": "obj_beach_towel_rolled",
+      "icon": "objects/beach_towel_rolled.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "stoffa",
+        "viaggio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "sunscreen_bottle",
+      "label_key": "obj_sunscreen_bottle",
+      "icon": "objects/sunscreen_bottle.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "bellezza",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "straw_hat",
+      "label_key": "obj_straw_hat",
+      "icon": "objects/straw_hat.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "cappello",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "sand_bucket_toy",
+      "label_key": "obj_sand_bucket_toy",
+      "icon": "objects/sand_bucket_toy.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "inflatable_ring",
+      "label_key": "obj_inflatable_ring",
+      "icon": "objects/inflatable_ring.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "medio",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "passport_holder",
+      "label_key": "obj_passport_holder",
+      "icon": "objects/passport_holder.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "cuoio",
+        "piccolo",
+        "viaggio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "suitcase_hardshell",
+      "label_key": "obj_suitcase_hardshell",
+      "icon": "objects/suitcase_hardshell.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "plastica",
+        "viaggio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "travel_adapter",
+      "label_key": "obj_travel_adapter",
+      "icon": "objects/travel_adapter.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica",
+        "tecnologia",
+        "viaggio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "sneakers_white",
+      "label_key": "obj_sneakers_white",
+      "icon": "objects/sneakers_white.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "high_heels_black",
+      "label_key": "obj_high_heels_black",
+      "icon": "objects/high_heels_black.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "cuoio",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "leather_boots_brown",
+      "label_key": "obj_leather_boots_brown",
+      "icon": "objects/leather_boots_brown.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "cuoio",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "wool_beanie",
+      "label_key": "obj_wool_beanie",
+      "icon": "objects/wool_beanie.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "cappello",
+        "piccolo",
+        "stoffa"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "denim_jacket_folded",
+      "label_key": "obj_denim_jacket_folded",
+      "icon": "objects/denim_jacket_folded.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "medio",
+        "stoffa"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "t_shirt_folded",
+      "label_key": "obj_t_shirt_folded",
+      "icon": "objects/t_shirt_folded.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "piccolo",
+        "stoffa"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "clutch_evening",
+      "label_key": "obj_clutch_evening",
+      "icon": "objects/clutch_evening.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "accessorio",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "hair_clip",
+      "label_key": "obj_hair_clip",
+      "icon": "objects/hair_clip.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "bellezza",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "lip_balm",
+      "label_key": "obj_lip_balm",
+      "icon": "objects/lip_balm.png",
+      "default_detection": "rect",
+      "default_width": 10,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "bellezza",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "nail_polish",
+      "label_key": "obj_nail_polish",
+      "icon": "objects/nail_polish.png",
+      "default_detection": "rect",
+      "default_width": 12,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "bellezza",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "makeup_brush_set",
+      "label_key": "obj_makeup_brush_set",
+      "icon": "objects/makeup_brush_set.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "bellezza",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "earrings_pearl",
+      "label_key": "obj_earrings_pearl",
+      "icon": "objects/earrings_pearl.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "accessorio",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "bracelet_gold",
+      "label_key": "obj_bracelet_gold",
+      "icon": "objects/bracelet_gold.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "accessorio",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "ring_diamond",
+      "label_key": "obj_ring_diamond",
+      "icon": "objects/ring_diamond.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "accessorio",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "rubik_cube",
+      "label_key": "obj_rubik_cube",
+      "icon": "objects/rubik_cube.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "gioco",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "toy_dinosaur",
+      "label_key": "obj_toy_dinosaur",
+      "icon": "objects/toy_dinosaur.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "building_bricks",
+      "label_key": "obj_building_bricks",
+      "icon": "objects/building_bricks.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "marble_single_blue",
+      "label_key": "obj_marble_single_blue",
+      "icon": "objects/marble_single_blue.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "toy_airplane",
+      "label_key": "obj_toy_airplane",
+      "icon": "objects/toy_airplane.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "play_cards_deck",
+      "label_key": "obj_play_cards_deck",
+      "icon": "objects/play_cards_deck.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "gioco",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "poker_chips",
+      "label_key": "obj_poker_chips",
+      "icon": "objects/poker_chips.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "gioco",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "guitar_pick",
+      "label_key": "obj_guitar_pick",
+      "icon": "objects/guitar_pick.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "musica",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "drumsticks",
+      "label_key": "obj_drumsticks",
+      "icon": "objects/drumsticks.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "musica",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "violin_bow",
+      "label_key": "obj_violin_bow",
+      "icon": "objects/violin_bow.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 10,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "medio",
+        "musica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "sheet_music_stand",
+      "label_key": "obj_sheet_music_stand",
+      "icon": "objects/sheet_music_stand.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "metallo",
+        "musica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "vinyl_record_sleeve",
+      "label_key": "obj_vinyl_record_sleeve",
+      "icon": "objects/vinyl_record_sleeve.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "musica",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "magnifier_modern",
+      "label_key": "obj_magnifier_modern",
+      "icon": "objects/magnifier_modern.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "studio",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "petri_dish",
+      "label_key": "obj_petri_dish",
+      "icon": "objects/petri_dish.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "studio",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "beaker_glass",
+      "label_key": "obj_beaker_glass",
+      "icon": "objects/beaker_glass.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "studio",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "fossil_ammonite",
+      "label_key": "obj_fossil_ammonite",
+      "icon": "objects/fossil_ammonite.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "piccolo",
+        "studio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "geode_amethyst",
+      "label_key": "obj_geode_amethyst",
+      "icon": "objects/geode_amethyst.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "meteorite_rock",
+      "label_key": "obj_meteorite_rock",
+      "icon": "objects/meteorite_rock.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "butterfly_blue",
+      "label_key": "obj_butterfly_blue",
+      "icon": "objects/butterfly_blue.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "beetle_specimen",
+      "label_key": "obj_beetle_specimen",
+      "icon": "objects/beetle_specimen.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "peacock_feather",
+      "label_key": "obj_peacock_feather",
+      "icon": "objects/peacock_feather.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "pine_branch_snow",
+      "label_key": "obj_pine_branch_snow",
+      "icon": "objects/pine_branch_snow.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "coral_red",
+      "label_key": "obj_coral_red",
+      "icon": "objects/coral_red.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "puzzle_box_wooden",
+      "label_key": "obj_puzzle_box_wooden",
+      "icon": "objects/puzzle_box_wooden.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "gioco",
+        "legno",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "time_capsule_tin",
+      "label_key": "obj_time_capsule_tin",
+      "icon": "objects/time_capsule_tin.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "contenitore",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "treasure_map_rolled",
+      "label_key": "obj_treasure_map_rolled",
+      "icon": "objects/treasure_map_rolled.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "carta",
+        "piccolo",
+        "viaggio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "skeleton_hand_model",
+      "label_key": "obj_skeleton_hand_model",
+      "icon": "objects/skeleton_hand_model.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "horror",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "gargoyle_small",
+      "label_key": "obj_gargoyle_small",
+      "icon": "objects/gargoyle_small.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "decorazione",
+        "horror",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "black_cat_statue",
+      "label_key": "obj_black_cat_statue",
+      "icon": "objects/black_cat_statue.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "ceramica",
+        "decorazione",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "measuring_jug",
+      "label_key": "obj_measuring_jug",
+      "icon": "objects/measuring_jug.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "salad_spinner",
+      "label_key": "obj_salad_spinner",
+      "icon": "objects/salad_spinner.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "medio",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "rice_cooker",
+      "label_key": "obj_rice_cooker",
+      "icon": "objects/rice_cooker.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "medio",
+        "plastica",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "blender_glass",
+      "label_key": "obj_blender_glass",
+      "icon": "objects/blender_glass.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "medio",
+        "tecnologia",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "waffle_plate",
+      "label_key": "obj_waffle_plate",
+      "icon": "objects/waffle_plate.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "ceramica",
+        "cibo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "pancake_stack",
+      "label_key": "obj_pancake_stack",
+      "icon": "objects/pancake_stack.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "ceramica",
+        "cibo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "burger",
+      "label_key": "obj_burger",
+      "icon": "objects/burger.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "taco",
+      "label_key": "obj_taco",
+      "icon": "objects/taco.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "candy_wrapped",
+      "label_key": "obj_candy_wrapped",
+      "icon": "objects/candy_wrapped.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "macarons",
+      "label_key": "obj_macarons",
+      "icon": "objects/macarons.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "peanut_jar",
+      "label_key": "obj_peanut_jar",
+      "icon": "objects/peanut_jar.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "avocado_half",
+      "label_key": "obj_avocado_half",
+      "icon": "objects/avocado_half.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "mushroom_button_pile",
+      "label_key": "obj_mushroom_button_pile",
+      "icon": "objects/mushroom_button_pile.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "natura",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "baby_bottle",
+      "label_key": "obj_baby_bottle",
+      "icon": "objects/baby_bottle.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "pacifier",
+      "label_key": "obj_pacifier",
+      "icon": "objects/pacifier.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "baby_rattle",
+      "label_key": "obj_baby_rattle",
+      "icon": "objects/baby_rattle.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "legno",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "dog_collar",
+      "label_key": "obj_dog_collar",
+      "icon": "objects/dog_collar.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "accessorio",
+        "cuoio",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "pet_bowl",
+      "label_key": "obj_pet_bowl",
+      "icon": "objects/pet_bowl.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "dog_bone_toy",
+      "label_key": "obj_dog_bone_toy",
+      "icon": "objects/dog_bone_toy.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "cat_toy_mouse",
+      "label_key": "obj_cat_toy_mouse",
+      "icon": "objects/cat_toy_mouse.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 15,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "piccolo",
+        "stoffa"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "fish_bowl",
+      "label_key": "obj_fish_bowl",
+      "icon": "objects/fish_bowl.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "arredamento",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "hamster_wheel",
+      "label_key": "obj_hamster_wheel",
+      "icon": "objects/hamster_wheel.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "plastica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "horse_brush",
+      "label_key": "obj_horse_brush",
+      "icon": "objects/horse_brush.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "legno",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "chalkboard_sign",
+      "label_key": "obj_chalkboard_sign",
+      "icon": "objects/chalkboard_sign.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "arredamento",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "neon_sign_heart",
+      "label_key": "obj_neon_sign_heart",
+      "icon": "objects/neon_sign_heart.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "decorazione",
+        "luce",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "string_lights",
+      "label_key": "obj_string_lights",
+      "icon": "objects/string_lights.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "decorazione",
+        "luce",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "gift_box_red",
+      "label_key": "obj_gift_box_red",
+      "icon": "objects/gift_box_red.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "decorazione",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "party_hat",
+      "label_key": "obj_party_hat",
+      "icon": "objects/party_hat.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "decorazione",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "confetti_popper",
+      "label_key": "obj_confetti_popper",
+      "icon": "objects/confetti_popper.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "decorazione",
+        "piccolo"
+      ],
+      "style": "real"
     }
   ]
 }
