@@ -3849,21 +3849,6 @@
       "style": "real"
     },
     {
-      "id": "rusty_chain",
-      "label_key": "obj_rusty_chain",
-      "icon": "objects/rusty_chain.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "ferro",
-        "horror",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
       "id": "small_wooden_barrel",
       "label_key": "obj_small_wooden_barrel",
       "icon": "objects/small_wooden_barrel.png",
@@ -3877,22 +3862,6 @@
         "ferro",
         "legno",
         "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "glass_milk_bottle",
-      "label_key": "obj_glass_milk_bottle",
-      "icon": "objects/glass_milk_bottle.png",
-      "default_detection": "rect",
-      "default_width": 20,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "bevanda",
-        "piccolo",
-        "vetro",
-        "vintage"
       ],
       "style": "real"
     },
