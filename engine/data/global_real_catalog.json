@@ -4601,7 +4601,8 @@
         "piccolo",
         "vetro"
       ],
-      "style": "real"
+      "style": "real",
+      "shape": "rect"
     },
     {
       "id": "creature_claw",
@@ -5314,7 +5315,8 @@
         "plastica",
         "ufficio"
       ],
-      "style": "real"
+      "style": "real",
+      "shape": "rect"
     },
     {
       "id": "dried_sage",

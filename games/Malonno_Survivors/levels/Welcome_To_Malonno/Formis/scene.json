@@ -1532,9 +1532,12 @@
       "x": 1763,
       "y": 432,
       "radius": 209,
-      "intensity": 0.13,
+      "intensity": 0.2,
       "layer": "effects",
-      "layer_z": 100
+      "layer_z": 100,
+      "pulse_period": 0.05,
+      "phase": 0.85,
+      "pulse_min": 0.0
     },
     {
       "effect_id": "flies_swarm",
@@ -1556,8 +1559,8 @@
     {
       "effect_id": "bubble_tip",
       "type": "bubble_tip",
-      "x": 1377,
-      "y": 1201,
+      "x": 1442,
+      "y": 1165,
       "radius": 150,
       "color": [
         152,
@@ -1582,8 +1585,8 @@
     {
       "effect_id": "bubble_tip",
       "type": "bubble_tip",
-      "x": 438,
-      "y": 713,
+      "x": 451,
+      "y": 624,
       "radius": 150,
       "color": [
         152,
@@ -1607,11 +1610,11 @@
     }
   ],
   "objects_to_show": 17,
-  "auto_random_finds": true,
+  "auto_random_finds": false,
   "num_random_finds": 14,
   "flashlight": false,
   "flashlight_radius": 171,
-  "random_layer_selection": true,
+  "random_layer_selection": false,
   "layer_locked": {
     "objects_low": false,
     "objects_mid": false,

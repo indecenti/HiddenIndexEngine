@@ -5,48 +5,352 @@
   "objects": [
     {
       "catalog_id": "creature_claw",
-      "x": 2058,
-      "y": 1383,
+      "x": 3616,
+      "y": 2042,
       "detection_type": "circle",
       "layer": "objects_mid",
       "is_goal": true,
       "hint_delay": 30,
-      "radius": 329,
-      "width": 658,
-      "height": 658
-    },
-    {
-      "catalog_id": "eyeball_jar",
-      "x": 441,
-      "y": 233,
-      "detection_type": "rect",
-      "layer": "objects_mid",
-      "is_goal": true,
-      "hint_delay": 25,
-      "width": 131,
-      "height": 104
+      "radius": 79.5,
+      "width": 146,
+      "height": 172
     },
     {
       "catalog_id": "hourglass",
-      "x": 393,
-      "y": 1837,
+      "x": 3521,
+      "y": 74,
       "detection_type": "rect",
       "layer": "objects_mid",
       "is_goal": true,
       "hint_delay": 40,
-      "width": 248,
-      "height": 207
+      "width": 101,
+      "height": 182
     },
     {
       "catalog_id": "tarot_cards",
-      "x": 1051,
-      "y": 1306,
+      "x": 618,
+      "y": 1357,
       "detection_type": "rect",
       "layer": "objects_mid",
       "is_goal": true,
       "hint_delay": 30,
-      "width": 348,
-      "height": 338
+      "width": 163,
+      "height": 145,
+      "alpha": 138
+    },
+    {
+      "catalog_id": "ammo_box",
+      "x": 653,
+      "y": 1940,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 195,
+      "height": 175,
+      "color_filter": [
+        134,
+        161,
+        134
+      ]
+    },
+    {
+      "catalog_id": "badger",
+      "x": 2619,
+      "y": 1873,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "radius": 86.5,
+      "width": 199,
+      "height": 147,
+      "alpha": 208,
+      "color_filter": [
+        144,
+        160,
+        176
+      ]
+    },
+    {
+      "catalog_id": "binoculars",
+      "x": 1529,
+      "y": 1478,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 69,
+      "height": 65,
+      "color_filter": [
+        144,
+        160,
+        176
+      ],
+      "alpha": 213
+    },
+    {
+      "catalog_id": "black_coral",
+      "x": 2650,
+      "y": 1502,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 185,
+      "height": 185
+    },
+    {
+      "catalog_id": "bowler_hat",
+      "x": 2682,
+      "y": 226,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 246,
+      "height": 168,
+      "rotation": 46.4
+    },
+    {
+      "catalog_id": "brass_bullet",
+      "x": 331,
+      "y": 1088,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 20,
+      "radius": 78.0,
+      "width": 254,
+      "height": 58,
+      "rotation": 89.4,
+      "alpha": 233,
+      "color_filter": [
+        144,
+        160,
+        176
+      ]
+    },
+    {
+      "catalog_id": "camping_chair",
+      "x": 848,
+      "y": 1776,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 292,
+      "height": 367
+    },
+    {
+      "catalog_id": "chef_knife",
+      "x": 3028,
+      "y": 1936,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 182,
+      "height": 179,
+      "rotation": 315.1
+    },
+    {
+      "catalog_id": "chicken_foot",
+      "x": 532,
+      "y": 1924,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "radius": 86.5,
+      "width": 119,
+      "height": 227,
+      "rotation": 141.6,
+      "alpha": 236,
+      "color_filter": [
+        208,
+        218,
+        229
+      ]
+    },
+    {
+      "catalog_id": "dusty_wine",
+      "x": 2863,
+      "y": 1594,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 56,
+      "height": 176,
+      "alpha": 193
+    },
+    {
+      "catalog_id": "electric_guitar_alt",
+      "x": 1189,
+      "y": 1900,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 340,
+      "height": 222,
+      "color_filter": [
+        144,
+        160,
+        176
+      ]
+    },
+    {
+      "catalog_id": "gladiator_poster",
+      "x": 3572,
+      "y": 784,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 247,
+      "height": 453,
+      "corners": [
+        [
+          13,
+          66
+        ],
+        [
+          -9,
+          44
+        ],
+        [
+          -3,
+          41
+        ],
+        [
+          19,
+          -1
+        ]
+      ],
+      "alpha": 121,
+      "color_filter": [
+        144,
+        160,
+        176
+      ]
+    },
+    {
+      "catalog_id": "it_bicycle_graziella",
+      "x": 2136,
+      "y": 1291,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "width": 169,
+      "height": 169,
+      "color_filter": [
+        144,
+        160,
+        176
+      ],
+      "alpha": 237,
+      "rotation": 357.7
+    },
+    {
+      "catalog_id": "little_bat",
+      "x": 2220,
+      "y": 911,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 114,
+      "height": 74,
+      "alpha": 226,
+      "color_filter": [
+        131,
+        168,
+        187
+      ]
+    },
+    {
+      "catalog_id": "magician_wand",
+      "x": 3522,
+      "y": 291,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 201,
+      "height": 206,
+      "rotation": 45.3,
+      "alpha": 175
+    },
+    {
+      "catalog_id": "pirate_symbol",
+      "x": 1895,
+      "y": 1052,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 96,
+      "height": 72,
+      "alpha": 157
+    },
+    {
+      "catalog_id": "poison_mushroom",
+      "x": 2982,
+      "y": 1711,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "radius": 47.0,
+      "width": 88,
+      "height": 100,
+      "alpha": 143
+    },
+    {
+      "catalog_id": "ritual_candle",
+      "x": 2859,
+      "y": 1119,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 73,
+      "height": 108,
+      "alpha": 133
+    },
+    {
+      "catalog_id": "runed_skull",
+      "x": 1461,
+      "y": 1320,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "radius": 68.0,
+      "width": 106,
+      "height": 166,
+      "color_filter": [
+        64,
+        96,
+        112
+      ],
+      "alpha": 118
+    },
+    {
+      "catalog_id": "teddy_bear",
+      "x": 1400,
+      "y": 1732,
+      "detection_type": "circle",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "radius": 61.5,
+      "width": 110,
+      "height": 136,
+      "alpha": 188
     }
   ],
   "music": [
@@ -82,8 +386,8 @@
     {
       "effect_id": "bubble_tip",
       "type": "bubble_tip",
-      "x": 1887,
-      "y": 1932,
+      "x": 2017,
+      "y": 1730,
       "radius": 150,
       "color": [
         152,
@@ -104,6 +408,59 @@
         241,
         241
       ]
+    },
+    {
+      "effect_id": "chimney_smoke",
+      "type": "smoke",
+      "x": 2385,
+      "y": 855,
+      "radius": 35.6,
+      "color": [
+        100,
+        100,
+        105
+      ],
+      "intensity": 0.13,
+      "pulse_period": 0.16,
+      "pulse_min": 2.26,
+      "layer": "effects",
+      "layer_z": 100,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "effect_id": "chimney_smoke",
+      "type": "smoke",
+      "x": 1985,
+      "y": 661,
+      "radius": 63.82,
+      "color": [
+        100,
+        100,
+        105
+      ],
+      "intensity": 0.16,
+      "pulse_period": 0.2,
+      "pulse_min": 1.47,
+      "layer": "effects",
+      "layer_z": 100
+    },
+    {
+      "effect_id": "chimney_smoke",
+      "type": "smoke",
+      "x": 1262,
+      "y": 879,
+      "radius": 28.8,
+      "color": [
+        100,
+        100,
+        105
+      ],
+      "intensity": 0.25,
+      "pulse_period": 0.28,
+      "pulse_min": 2.22,
+      "layer": "effects",
+      "layer_z": 100
     }
   ],
   "auto_random_finds": true,
