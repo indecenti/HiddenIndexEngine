@@ -416,6 +416,7 @@
   "ih_max_size": "Taille max atteinte ({0}px) - évite les artefacts",
   "ih_minigame_trigger_removed": "Déclencheur de mini-jeu supprimé",
   "ih_need_number": "Erreur : saisissez un nombre",
+  "ih_panels_hidden": "Panneaux latéraux masqués - Ctrl+H pour les afficher",
   "ih_place_cluster": "Placer un cluster (4 objets aléatoires)",
   "ih_place_effect": "Placer l'effet : {0}",
   "ih_place_effect_layer": "Placer l'effet : {0} (calque activé)",

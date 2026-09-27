@@ -416,6 +416,7 @@
   "ih_max_size": "Tamaño máximo alcanzado ({0}px) - evita artefactos",
   "ih_minigame_trigger_removed": "Disparador de minijuego eliminado",
   "ih_need_number": "Error: introduce un número",
+  "ih_panels_hidden": "Paneles laterales ocultos - Ctrl+H para mostrarlos",
   "ih_place_cluster": "Colocar cluster (4 objetos aleatorios)",
   "ih_place_effect": "Colocar efecto: {0}",
   "ih_place_effect_layer": "Colocar efecto: {0} (capa activada)",

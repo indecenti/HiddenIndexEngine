@@ -63,6 +63,10 @@ class ViewportMixin:
         self.panels_visible = not self.panels_visible
         self._update_layout()
         self._mark_dirty()
+        if not self.panels_visible:
+            # Say how to get them back: hidden panels looked like a crash.
+            self._status(self._TR("ih_panels_hidden",
+                                  "Side panels hidden - Ctrl+H to show them"), ACCENT, 4)
 
     def _toggle_layers_tab(self) -> None:
         """Swap the right panel between the layers and the properties."""

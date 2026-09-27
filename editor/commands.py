@@ -137,7 +137,7 @@ COMMANDS: Tuple[Command, ...] = (
     Command("zoom_out", "view", "Zoom out", "-", ("call", "_zoom_out")),
     Command("ui_scale_up", "view", "Larger interface", "Ctrl+Plus"),
     Command("ui_scale_down", "view", "Smaller interface", "Ctrl+Minus"),
-    Command("toggle_panels", "view", "Hide the side panels", "H",
+    Command("toggle_panels", "view", "Hide the side panels", "Ctrl+H",
             ("call", "_toggle_panels")),
     Command("toggle_layers_tab", "view", "Layers / properties panel", "L",
             ("call", "_toggle_layers_tab")),

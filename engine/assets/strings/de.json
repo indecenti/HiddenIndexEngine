@@ -416,6 +416,7 @@
   "ih_max_size": "Maximalgröße erreicht ({0}px) - vermeidet Artefakte",
   "ih_minigame_trigger_removed": "Minispiel-Trigger entfernt",
   "ih_need_number": "Fehler: Zahl eingeben",
+  "ih_panels_hidden": "Seitenleisten ausgeblendet - Strg+H zum Anzeigen",
   "ih_place_cluster": "Cluster platzieren (4 zufällige Objekte)",
   "ih_place_effect": "Effekt platzieren: {0}",
   "ih_place_effect_layer": "Effekt platzieren: {0} (Ebene aktiviert)",

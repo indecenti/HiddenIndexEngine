@@ -416,6 +416,7 @@
   "ih_max_size": "Max size reached ({0}px) - avoids artifacts",
   "ih_minigame_trigger_removed": "Minigame trigger removed",
   "ih_need_number": "Error: enter a number",
+  "ih_panels_hidden": "Side panels hidden - Ctrl+H to show them",
   "ih_place_cluster": "Place cluster (4 random objects)",
   "ih_place_effect": "Place effect: {0}",
   "ih_place_effect_layer": "Place effect: {0} (layer enabled)",

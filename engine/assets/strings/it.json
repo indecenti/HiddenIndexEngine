@@ -416,6 +416,7 @@
   "ih_max_size": "Dimensione max raggiunta ({0}px) - evita artefatti",
   "ih_minigame_trigger_removed": "Trigger minigioco rimosso",
   "ih_need_number": "Errore: inserire un numero",
+  "ih_panels_hidden": "Pannelli laterali nascosti - Ctrl+H per mostrarli",
   "ih_place_cluster": "Piazza cluster (4 oggetti random)",
   "ih_place_effect": "Piazza effetto: {0}",
   "ih_place_effect_layer": "Piazza effetto: {0} (layer attivato)",

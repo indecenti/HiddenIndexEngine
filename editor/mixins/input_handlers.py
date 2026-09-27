@@ -167,6 +167,12 @@ class InputHandlersMixin:
             if ev.key == pygame.K_g:
                 self._toggle_obj_snap(); return
 
+            # Ctrl+H = hide / show the side panels. Plain H used to do it when
+            # nothing was selected and flip the object when something was: one
+            # click on empty canvas and the next H made both panels vanish.
+            if ev.key == pygame.K_h:
+                self._toggle_panels(); return
+
             # Ctrl+PageUp / Ctrl+PageDown = previous / next scene of the campaign
             if ev.key == pygame.K_PAGEUP and self.state == STATE_MAIN:
                 self._open_prev_scene(); return
@@ -336,10 +342,6 @@ class InputHandlersMixin:
                     self._mark_dirty()
                     return
 
-            if ev.key == pygame.K_h:
-                self.panels_visible = not self.panels_visible
-                self._update_layout()
-                return
 
             if ev.key == pygame.K_F11:
                 self.fullscreen = not self.fullscreen
