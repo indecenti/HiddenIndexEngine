@@ -195,8 +195,18 @@ def cut_out(src: Path, dest: Path) -> tuple[int, int]:
     return out.size
 
 
+GLOBAL = "--global" in sys.argv   # engine catalog, shared by every game
+if GLOBAL:
+    # PNG in engine/assets/objects/, entry in engine/data/global_real_catalog.json,
+    # names in engine/assets/strings/ (the engine files are kept sorted).
+    GAME = ROOT / "engine" / "assets"
+    CAT_PATH = ROOT / "engine" / "data" / "global_real_catalog.json"
+else:
+    CAT_PATH = GAME / "objects_catalog.json"
+
+
 def main(ids: list[str]) -> None:
-    cat_path = GAME / "objects_catalog.json"
+    cat_path = CAT_PATH
     catalog = json.loads(cat_path.read_text(encoding="utf-8"))
     existing = {o["id"] for o in catalog["objects"]}
     added = []
@@ -229,6 +239,8 @@ def main(ids: list[str]) -> None:
         table = json.loads(p.read_text(encoding="utf-8"))
         for obj_id, names in added:
             table.setdefault(f"obj_{obj_id}", names[i])
+        if GLOBAL:
+            table = dict(sorted(table.items()))
         assert safe_write_json(p, table)
         with open(p, "a", encoding="utf-8") as fh:
             fh.write("\n")

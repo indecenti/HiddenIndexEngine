@@ -12,7 +12,7 @@ BACKS = [(40, 44, 52), (225, 225, 225), (170, 60, 50)]
 sheet = Image.new("RGB", (CELL * len(ids), CELL * len(BACKS) + 24), (20, 20, 24))
 draw = ImageDraw.Draw(sheet)
 for i, obj_id in enumerate(ids):
-    im = Image.open(next(p for p in (ROOT / "games").glob(f"*/objects/{obj_id}.png")))
+    im = Image.open(next(p for p in [*(ROOT / "games").glob(f"*/objects/{obj_id}.png"), ROOT / "engine" / "assets" / "objects" / f"{obj_id}.png"] if p.exists()))
     for row, back in enumerate(BACKS):
         cell = Image.new("RGBA", (CELL, CELL), (*back, 255))
         cell.alpha_composite(im, ((CELL - im.width) // 2, (CELL - im.height) // 2))

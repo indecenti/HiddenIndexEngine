@@ -43,7 +43,9 @@ and catalog registration. First batch: 113 objects for Malonno_Survivors
    despill, contact-shadow removal, crop, longest side 260 px (like the existing objects),
    PNG in `games/<game>/objects/`, entry in `objects_catalog.json` (`style: real`), names
    `obj_<id>` in the five game language files, all through `safe_write_json`.
-   Never overwrites an existing id or PNG.
+   Never overwrites an existing id or PNG. `--global` registers in the engine catalog
+   (`engine/data/global_real_catalog.json`, PNG in `engine/assets/objects/`) for objects
+   meant for any game; otherwise `--game=<id>` (default Malonno_Survivors).
 5. **Review**: `python .claude/skills/generate-assets/scripts/contact_sheet.py <ids>` ->
    `scratch/gen_assets/_sheet.png` on dark / light / red backdrops. Check holes (inside
    rings), glass, semi-transparent parts, shape vs description. List the misses and
