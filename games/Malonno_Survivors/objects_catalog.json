@@ -3897,22 +3897,6 @@
       "style": "real"
     },
     {
-      "id": "wooden_birdhouse",
-      "label_key": "obj_wooden_birdhouse",
-      "icon": "objects/wooden_birdhouse.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 50,
-      "default_hint_delay": 30,
-      "tags": [
-        "legno",
-        "medio",
-        "natura",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
       "id": "flour_sieve",
       "label_key": "obj_flour_sieve",
       "icon": "objects/flour_sieve.png",
