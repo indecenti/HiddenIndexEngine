@@ -80,6 +80,10 @@ Native 1920x1088 at 35 steps (~2-3 min), then soft blur + Lanczos 2x + unsharp.
 
 ## Rules
 
+- **Objects are generic, always.** Ids, names and prompts describe the object, never
+  a character, place or plot of a story ("opened telegram", not "Augusto's telegram";
+  no readable messages or names on it). Every object must be reusable in any game.
+
 - No new dependencies. No emoji. Assets are data of the game: the PNG and the catalog
   entries are committed only when the user asks (the game folder often has the user's own
   uncommitted work - stage only the new ids).

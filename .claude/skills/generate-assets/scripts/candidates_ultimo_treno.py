@@ -7,7 +7,7 @@ existing catalogs are dropped by the check in the skill, then the first 200 kept
 
 _RAW = [
     # station hall / ticket office
-    ("railway_ticket_1928", "small old cardboard railway ticket punched with a hole, 1920s", (30, 20), ["carta", "viaggio", "antico", "piccolo"], ["Railway Ticket", "Biglietto del Treno", "Fahrkarte", "Billete de Tren", "Billet de Train"]),
+    ("railway_ticket_old", "small old cardboard railway ticket punched with a hole, 1920s", (30, 20), ["carta", "viaggio", "antico", "piccolo"], ["Railway Ticket", "Biglietto del Treno", "Fahrkarte", "Billete de Tren", "Billet de Train"]),
     ("ticket_punch", "antique steel conductor ticket punch pliers", (35, 45), ["metallo", "attrezzo", "viaggio", "antico", "piccolo"], ["Ticket Punch", "Obliteratrice", "Fahrkartenzange", "Perforadora de Billetes", "Poinçonneuse"]),
     ("ticket_dating_press", "antique cast iron railway ticket dating press", (45, 45), ["ferro", "ufficio", "viaggio", "antico", "medio"], ["Ticket Dater", "Datario per Biglietti", "Fahrkartendatierer", "Fechador de Billetes", "Composteur"]),
     ("ticket_rack", "small old wooden rack of cardboard railway tickets", (45, 35), ["legno", "carta", "viaggio", "antico", "medio"], ["Ticket Rack", "Portabiglietti", "Fahrkartenständer", "Tarjetero", "Porte-billets"]),
@@ -70,7 +70,7 @@ _RAW = [
     ("napkin_ring", "old silver napkin ring with a white linen napkin", (35, 25), ["argento", "stoffa", "cucina", "vintage", "piccolo"], ["Napkin Ring", "Portatovagliolo", "Serviettenring", "Servilletero", "Rond de Serviette"]),
     ("wine_glass_crystal", "old cut crystal wine glass, empty", (20, 45), ["vetro", "bevanda", "vintage", "piccolo"], ["Crystal Glass", "Bicchiere di Cristallo", "Kristallglas", "Copa de Cristal", "Verre en Cristal"]),
     ("champagne_bucket", "old silver champagne ice bucket", (40, 45), ["argento", "bevanda", "bar", "vintage", "medio"], ["Champagne Bucket", "Secchiello per Champagne", "Sektkühler", "Cubitera", "Seau à Champagne"]),
-    ("menu_card_1928", "old folded dining car menu card, elegant, blank looking", (35, 45), ["carta", "cucina", "vintage", "piccolo"], ["Menu Card", "Menù del Vagone", "Speisekarte", "Carta del Menú", "Carte du Menu"]),
+    ("dining_menu_card", "old folded dining car menu card, elegant, blank looking", (35, 45), ["carta", "cucina", "vintage", "piccolo"], ["Menu Card", "Menù del Vagone", "Speisekarte", "Carta del Menú", "Carte du Menu"]),
     ("sugar_bowl_silver", "old silver sugar bowl with a lid and tongs", (35, 35), ["argento", "cucina", "antico", "piccolo"], ["Sugar Bowl", "Zuccheriera", "Zuckerdose", "Azucarero", "Sucrier"]),
     ("salt_pepper_shakers", "pair of old silver salt and pepper shakers", (30, 30), ["argento", "cucina", "vintage", "piccolo"], ["Salt and Pepper", "Sale e Pepe", "Salz und Pfeffer", "Salero y Pimentero", "Salière et Poivrière"]),
     ("breadbasket_linen", "small wicker bread basket with a linen cloth and rolls", (45, 30), ["legno", "cibo", "cucina", "medio"], ["Bread Basket", "Cestino del Pane", "Brotkorb", "Panera", "Corbeille à Pain"]),
@@ -148,7 +148,7 @@ _RAW = [
     ("framed_photo_small", "small old silver photo frame with a sepia photo", (30, 40), ["argento", "foto", "arredamento", "vintage", "piccolo"], ["Framed Photo", "Foto Incorniciata", "Gerahmtes Foto", "Foto Enmarcada", "Photo Encadrée"]),
     ("medal_railway_service", "old railway long service medal with ribbon", (25, 40), ["metallo", "decorazione", "viaggio", "antico", "piccolo"], ["Service Medal", "Medaglia di Servizio", "Dienstmedaille", "Medalla de Servicio", "Médaille de Service"]),
     ("tobacco_pouch", "old leather tobacco pouch", (35, 25), ["cuoio", "accessorio", "vintage", "piccolo"], ["Tobacco Pouch", "Borsa del Tabacco", "Tabaksbeutel", "Petaca de Tabaco", "Blague à Tabac"]),
-    ("wall_calendar_1918", "old paper wall calendar hanging on a nail, faded", (35, 50), ["carta", "ufficio", "antico", "medio"], ["Wall Calendar", "Calendario da Muro", "Wandkalender", "Calendario de Pared", "Calendrier Mural"]),
+    ("wall_calendar_old", "old paper wall calendar hanging on a nail, faded", (35, 50), ["carta", "ufficio", "antico", "medio"], ["Wall Calendar", "Calendario da Muro", "Wandkalender", "Calendario de Pared", "Calendrier Mural"]),
     # signal box / engine shed
     ("signal_lever_handle", "old iron railway signal lever handle, detached", (20, 60), ["ferro", "viaggio", "antico", "medio"], ["Lever Handle", "Leva di Scambio", "Hebelgriff", "Palanca de Señal", "Levier d'Aiguillage"]),
     ("signal_box_key", "large old iron signal box key with a tag", (20, 50), ["ferro", "chiave", "viaggio", "antico", "piccolo"], ["Signal Box Key", "Chiave della Cabina", "Stellwerksschlüssel", "Llave de la Cabina", "Clé du Poste"]),

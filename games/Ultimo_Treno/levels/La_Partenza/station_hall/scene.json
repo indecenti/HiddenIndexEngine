@@ -2,11 +2,43 @@
   "id": "station_hall",
   "background": "background.png",
   "background_scale": 1.0,
-  "objects": [],
+  "objects": [
+    {
+      "catalog_id": "actionman_toy",
+      "x": 495,
+      "y": 1070,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 58,
+      "height": 135
+    },
+    {
+      "catalog_id": "aged_cheese",
+      "x": 298,
+      "y": 1121,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 117,
+      "height": 101,
+      "rotation": 350.8
+    }
+  ],
   "effects": [],
   "music": [],
   "name_key": "station_hall_name",
   "objects_to_show": 12,
   "auto_random_finds": false,
-  "flashlight": false
+  "flashlight": false,
+  "flashlight_radius": 150.0,
+  "layer_locked": {
+    "objects_low": false,
+    "objects_mid": false,
+    "objects_high": false,
+    "overlay": false,
+    "effects": false
+  }
 }
