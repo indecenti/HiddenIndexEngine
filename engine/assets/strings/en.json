@@ -6222,5 +6222,17 @@
   "undo_reset_tint": "Reset tint",
   "undo_reset_transforms": "Reset transforms",
   "vhs_tape": "VHS Tape",
-  "walkman": "Walkman"
+  "walkman": "Walkman",
+  "tag_cabina": "Cabin",
+  "tag_deposito": "Storeroom",
+  "tag_galleria": "Tunnel",
+  "tag_laboratorio": "Workshop",
+  "tag_locomotiva": "Locomotive",
+  "tag_miniera": "Mine",
+  "tag_neve": "Snow",
+  "tag_rimessa": "Shed",
+  "tag_ristorante": "Restaurant",
+  "tag_sala_d_attesa": "Waiting Room",
+  "tag_telegrafo": "Telegraph",
+  "tag_vagone": "Carriage"
 }

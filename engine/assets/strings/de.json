@@ -6063,5 +6063,17 @@
   "undo_reset_tint": "Tönung zurücksetzen",
   "undo_reset_transforms": "Transformationen zurücksetzen",
   "vhs_tape": "VHS-Kassette",
-  "walkman": "Walkman"
+  "walkman": "Walkman",
+  "tag_cabina": "Kabine",
+  "tag_deposito": "Lager",
+  "tag_galleria": "Stollen",
+  "tag_laboratorio": "Werkstatt",
+  "tag_locomotiva": "Lokomotive",
+  "tag_miniera": "Bergwerk",
+  "tag_neve": "Schnee",
+  "tag_rimessa": "Schuppen",
+  "tag_ristorante": "Restaurant",
+  "tag_sala_d_attesa": "Wartesaal",
+  "tag_telegrafo": "Telegraf",
+  "tag_vagone": "Waggon"
 }

@@ -6079,5 +6079,17 @@
   "undo_reset_tint": "Réinitialiser la teinte",
   "undo_reset_transforms": "Réinitialiser les transformations",
   "vhs_tape": "Cassette VHS",
-  "walkman": "Walkman"
+  "walkman": "Walkman",
+  "tag_cabina": "Cabine",
+  "tag_deposito": "Dépôt",
+  "tag_galleria": "Galerie",
+  "tag_laboratorio": "Atelier",
+  "tag_locomotiva": "Locomotive",
+  "tag_miniera": "Mine",
+  "tag_neve": "Neige",
+  "tag_rimessa": "Remise",
+  "tag_ristorante": "Restaurant",
+  "tag_sala_d_attesa": "Salle d'Attente",
+  "tag_telegrafo": "Télégraphe",
+  "tag_vagone": "Wagon"
 }

@@ -6237,5 +6237,17 @@
   "undo_reset_tint": "Reset tint",
   "undo_reset_transforms": "Reset trasformazioni",
   "vhs_tape": "Videocassetta VHS",
-  "walkman": "Walkman"
+  "walkman": "Walkman",
+  "tag_cabina": "Cabina",
+  "tag_deposito": "Deposito",
+  "tag_galleria": "Galleria",
+  "tag_laboratorio": "Laboratorio",
+  "tag_locomotiva": "Locomotiva",
+  "tag_miniera": "Miniera",
+  "tag_neve": "Neve",
+  "tag_rimessa": "Rimessa",
+  "tag_ristorante": "Ristorante",
+  "tag_sala_d_attesa": "Sala d'Attesa",
+  "tag_telegrafo": "Telegrafo",
+  "tag_vagone": "Vagone"
 }
