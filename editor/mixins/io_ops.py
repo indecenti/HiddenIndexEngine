@@ -748,9 +748,15 @@ class IoOpsMixin:
                 with open(game_cat_path, "r", encoding="utf-8") as f:
                     game_cat = json.load(f)
                 before = len(game_cat.get("objects", []))
+                # Same rule as the PNG cleanup above: only a harvested copy (its icon
+                # also exists in the engine, so it can be harvested again) may go.
+                # An entry whose icon lives only in the game folder is game-owned
+                # content (generated or imported for this game) and is kept even
+                # when no scene uses it yet - pruning it wiped Ultimo_Treno's catalog.
                 game_cat["objects"] = [
                     o for o in game_cat.get("objects", [])
                     if o.get("id") in used_catalog_ids
+                    or not self._icon_in_engine(o.get("icon", ""), engine_assets_p)
                 ]
                 if len(game_cat["objects"]) < before:
                     if _save_json(game_cat_path, game_cat):
@@ -845,6 +851,16 @@ class IoOpsMixin:
             logging.error("[EDITOR] !!! SAVE FAILED (Disk error?) !!!")
             self._status(self._TR("io_disk_error", "DISK ERROR"), ERR_C, 5)
 
+    @staticmethod
+    def _icon_in_engine(icon: str, engine_assets_p: Path) -> bool:
+        """True when a catalog icon also exists under engine/assets (recoverable copy)."""
+        if not icon:
+            return False
+        name = Path(icon).name
+        return (engine_assets_p / icon).exists() or any(
+            (engine_assets_p / sub / name).exists()
+            for sub in ("objects", "objects_lineart", "objects_cartoon"))
+
     def _audit_translations(self, data: dict):
         """
         Audita e sincronizza i file lingua del gioco ad ogni salvataggio.
@@ -875,6 +891,14 @@ class IoOpsMixin:
             "label_music_volume", "label_sfx_volume", "label_master_volume",
             "mg_title", "mg_description", "pause_title", "mission_complete"
         }
+
+        # Names of the game catalog entries are kept too: after the orphan cleanup the
+        # local catalog holds only used or game-owned objects, and a game-owned object
+        # not placed yet must not lose its translated name.
+        local_cat = _load_json(self.game_path / "objects_catalog.json")
+        for entry in (local_cat.get("objects", []) if isinstance(local_cat, dict) else []):
+            if entry.get("id"):
+                needed_obj_keys.add(entry.get("label_key") or f"obj_{entry['id']}")
 
         current_scene_json = (self.scene_path / "scene.json").resolve() if self.scene_path else None
 
