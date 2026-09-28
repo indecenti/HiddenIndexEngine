@@ -1472,6 +1472,54 @@
     "vari": {
       "it": "Vari",
       "cat": "Generale"
+    },
+    "cabina": {
+      "it": "Cabina",
+      "cat": "Generale"
+    },
+    "deposito": {
+      "it": "Deposito",
+      "cat": "Generale"
+    },
+    "galleria": {
+      "it": "Galleria",
+      "cat": "Generale"
+    },
+    "laboratorio": {
+      "it": "Laboratorio",
+      "cat": "Generale"
+    },
+    "locomotiva": {
+      "it": "Locomotiva",
+      "cat": "Generale"
+    },
+    "miniera": {
+      "it": "Miniera",
+      "cat": "Generale"
+    },
+    "neve": {
+      "it": "Neve",
+      "cat": "Generale"
+    },
+    "rimessa": {
+      "it": "Rimessa",
+      "cat": "Generale"
+    },
+    "ristorante": {
+      "it": "Ristorante",
+      "cat": "Generale"
+    },
+    "sala_d_attesa": {
+      "it": "Sala_d_attesa",
+      "cat": "Generale"
+    },
+    "telegrafo": {
+      "it": "Telegrafo",
+      "cat": "Generale"
+    },
+    "vagone": {
+      "it": "Vagone",
+      "cat": "Generale"
     }
   }
 }
