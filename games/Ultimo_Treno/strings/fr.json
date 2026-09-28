@@ -80,7 +80,7 @@
   "obj_bottle_opener_iron": "Décapsuleur",
   "obj_sugar_cube_box": "Sucre en Morceaux",
   "obj_tea_tin_caddy": "Boîte à Thé",
-  "obj_egg_timer_sand": "Sablier de Cuisine",
+  "obj_egg_timer_sand": "",
   "obj_kitchen_scale_weights": "Balance de Cuisine",
   "obj_pastry_cutters": "Emporte-pièces",
   "obj_gas_lamp_mantle": "Lampe à Gaz",
@@ -169,5 +169,6 @@
   "obj_fishing_reel": "Moulinet",
   "obj_fishing_creel": "Panier de Pêche",
   "obj_bicycle_pump_old": "Pompe à Vélo",
-  "obj_bicycle_lamp_carbide": "Phare de Vélo"
+  "obj_bicycle_lamp_carbide": "Phare de Vélo",
+  "obj_80s_lamp": "Lampe des années 80"
 }

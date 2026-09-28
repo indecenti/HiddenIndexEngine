@@ -2,11 +2,53 @@
   "id": "sleeping_car",
   "background": "background.png",
   "background_scale": 1.0,
-  "objects": [],
+  "objects": [
+    {
+      "catalog_id": "80s_lamp",
+      "x": 2783,
+      "y": 1257,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 40,
+      "width": 277,
+      "height": 421
+    },
+    {
+      "catalog_id": "actionman_toy",
+      "x": 2183,
+      "y": 983,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 35,
+      "width": 102,
+      "height": 194
+    },
+    {
+      "catalog_id": "crank_telephone_wall",
+      "x": 1883,
+      "y": 420,
+      "detection_type": "rect",
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 30,
+      "width": 180,
+      "height": 318
+    }
+  ],
   "effects": [],
   "music": [],
   "name_key": "sleeping_car_name",
   "objects_to_show": 12,
   "auto_random_finds": false,
-  "flashlight": false
+  "flashlight": false,
+  "flashlight_radius": 150.0,
+  "layer_locked": {
+    "objects_low": false,
+    "objects_mid": false,
+    "objects_high": false,
+    "overlay": false,
+    "effects": false
+  }
 }

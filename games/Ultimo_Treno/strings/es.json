@@ -80,7 +80,7 @@
   "obj_bottle_opener_iron": "Abrebotellas",
   "obj_sugar_cube_box": "Terrones de Azúcar",
   "obj_tea_tin_caddy": "Lata de Té",
-  "obj_egg_timer_sand": "Reloj de Huevos",
+  "obj_egg_timer_sand": "",
   "obj_kitchen_scale_weights": "Balanza de Cocina",
   "obj_pastry_cutters": "Cortadores de Galletas",
   "obj_gas_lamp_mantle": "Lámpara de Gas",
@@ -169,5 +169,6 @@
   "obj_fishing_reel": "Carrete de Pesca",
   "obj_fishing_creel": "Cesta de Pesca",
   "obj_bicycle_pump_old": "Bomba de Bicicleta",
-  "obj_bicycle_lamp_carbide": "Farol de Bicicleta"
+  "obj_bicycle_lamp_carbide": "Farol de Bicicleta",
+  "obj_80s_lamp": "Lámpara de los 80"
 }

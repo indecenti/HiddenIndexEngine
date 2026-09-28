@@ -2065,6 +2065,22 @@
         "vintage"
       ],
       "style": "real"
+    },
+    {
+      "id": "80s_lamp",
+      "label_key": "obj_80s_lamp",
+      "icon": "objects/obj_80s_lamp.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 75,
+      "default_hint_delay": 40,
+      "tags": [
+        "luce",
+        "arredamento",
+        "retro",
+        "medio"
+      ],
+      "style": "real"
     }
   ]
 }

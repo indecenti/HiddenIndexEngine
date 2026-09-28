@@ -80,7 +80,7 @@
   "obj_bottle_opener_iron": "Bottle Opener",
   "obj_sugar_cube_box": "Sugar Cubes",
   "obj_tea_tin_caddy": "Tea Caddy",
-  "obj_egg_timer_sand": "Egg Timer",
+  "obj_egg_timer_sand": "",
   "obj_kitchen_scale_weights": "Kitchen Balance",
   "obj_pastry_cutters": "Pastry Cutters",
   "obj_gas_lamp_mantle": "Gas Lamp",
@@ -169,5 +169,6 @@
   "obj_fishing_reel": "Fishing Reel",
   "obj_fishing_creel": "Fishing Creel",
   "obj_bicycle_pump_old": "Bicycle Pump",
-  "obj_bicycle_lamp_carbide": "Bicycle Lamp"
+  "obj_bicycle_lamp_carbide": "Bicycle Lamp",
+  "obj_80s_lamp": "80s Lamp"
 }

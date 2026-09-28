@@ -80,7 +80,7 @@
   "obj_bottle_opener_iron": "Flaschenöffner",
   "obj_sugar_cube_box": "Würfelzucker",
   "obj_tea_tin_caddy": "Teedose",
-  "obj_egg_timer_sand": "Eieruhr",
+  "obj_egg_timer_sand": "",
   "obj_kitchen_scale_weights": "Küchenwaage",
   "obj_pastry_cutters": "Ausstechformen",
   "obj_gas_lamp_mantle": "Gaslampe",
@@ -169,5 +169,6 @@
   "obj_fishing_reel": "Angelrolle",
   "obj_fishing_creel": "Fischkorb",
   "obj_bicycle_pump_old": "Fahrradpumpe",
-  "obj_bicycle_lamp_carbide": "Fahrradlampe"
+  "obj_bicycle_lamp_carbide": "Fahrradlampe",
+  "obj_80s_lamp": "80er-Jahre-Lampe"
 }
