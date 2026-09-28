@@ -1,6 +1,22 @@
 {
   "objects": [
     {
+      "id": "abacus_wooden",
+      "label_key": "obj_abacus_wooden",
+      "icon": "objects/abacus_wooden.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "medio",
+        "studio",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
       "id": "abyssal_crystal",
       "label_key": "obj_abyssal_crystal",
       "icon": "objects/abyssal_crystal.png",
@@ -47,6 +63,23 @@
         "plastica",
         "tecnologia"
       ]
+    },
+    {
+      "id": "alpenstock",
+      "label_key": "obj_alpenstock",
+      "icon": "objects/alpenstock.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 90,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "attrezzatura",
+        "grande",
+        "legno",
+        "montagna"
+      ],
+      "style": "real"
     },
     {
       "id": "ammo_box",
@@ -110,6 +143,23 @@
         "vetro",
         "vintage"
       ]
+    },
+    {
+      "id": "bayonet",
+      "label_key": "obj_bayonet",
+      "icon": "objects/bayonet.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "arma",
+        "medio",
+        "metallo",
+        "militare"
+      ],
+      "style": "real"
     },
     {
       "id": "binoculars",
@@ -192,6 +242,23 @@
       "style": "real"
     },
     {
+      "id": "brass_bed_warmer",
+      "label_key": "obj_brass_bed_warmer",
+      "icon": "objects/brass_bed_warmer.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 80,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "arredamento",
+        "grande",
+        "legno",
+        "ottone"
+      ],
+      "style": "real"
+    },
+    {
       "id": "brass_bullet",
       "label_key": "obj_brass_bullet",
       "icon": "objects/brass_bullet.png",
@@ -203,6 +270,71 @@
         "metallo",
         "piccolo",
         "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "brass_door_bell",
+      "label_key": "obj_brass_door_bell",
+      "icon": "objects/brass_door_bell.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "arredamento",
+        "medio",
+        "ottone"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "brass_door_knocker",
+      "label_key": "obj_brass_door_knocker",
+      "icon": "objects/brass_door_knocker.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "decorazione",
+        "medio",
+        "metallo",
+        "ottone"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "brass_scale_weights",
+      "label_key": "obj_brass_scale_weights",
+      "icon": "objects/brass_scale_weights.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "bilancia",
+        "medio",
+        "ottone"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "brown_medicine_vial",
+      "label_key": "obj_brown_medicine_vial",
+      "icon": "objects/brown_medicine_vial.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "medicina",
+        "piccolo",
+        "vetro",
+        "vintage"
       ],
       "style": "real"
     },
@@ -220,6 +352,38 @@
       ]
     },
     {
+      "id": "butter_churn",
+      "label_key": "obj_butter_churn",
+      "icon": "objects/butter_churn.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 80,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "cucina",
+        "grande",
+        "legno"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "butter_mold",
+      "label_key": "obj_butter_mold",
+      "icon": "objects/butter_mold.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "cucina",
+        "legno",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
       "id": "camping_chair",
       "label_key": "obj_camping_chair",
       "icon": "objects/camping_chair.png",
@@ -232,6 +396,70 @@
         "arredamento",
         "metallo",
         "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "candle_snuffer",
+      "label_key": "obj_candle_snuffer",
+      "icon": "objects/candle_snuffer.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "luce",
+        "ottone",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "carbide_lamp",
+      "label_key": "obj_carbide_lamp",
+      "icon": "objects/carbide_lamp.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "luce",
+        "medio",
+        "ottone",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "cartridge_belt",
+      "label_key": "obj_cartridge_belt",
+      "icon": "objects/cartridge_belt.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "cuoio",
+        "medio",
+        "militare",
+        "ottone",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "carved_wooden_spoon",
+      "label_key": "obj_carved_wooden_spoon",
+      "icon": "objects/carved_wooden_spoon.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "legno",
+        "piccolo"
       ],
       "style": "real"
     },
@@ -253,6 +481,39 @@
       ]
     },
     {
+      "id": "censer",
+      "label_key": "obj_censer",
+      "icon": "objects/censer.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "medio",
+        "ottone",
+        "religione"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "ceramic_wine_jug",
+      "label_key": "obj_ceramic_wine_jug",
+      "icon": "objects/ceramic_wine_jug.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "bar",
+        "bevanda",
+        "ceramica",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
       "id": "chainsaw_engine",
       "label_key": "obj_chainsaw_engine",
       "icon": "objects/chainsaw_engine.png",
@@ -267,6 +528,22 @@
         "metallo",
         "pericolo"
       ]
+    },
+    {
+      "id": "chamber_pot",
+      "label_key": "obj_chamber_pot",
+      "icon": "objects/chamber_pot.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "bagno",
+        "medio",
+        "metallo",
+        "vintage"
+      ],
+      "style": "real"
     },
     {
       "id": "chef_knife",
@@ -285,6 +562,22 @@
       ]
     },
     {
+      "id": "chestnut_roasting_pan",
+      "label_key": "obj_chestnut_roasting_pan",
+      "icon": "objects/chestnut_roasting_pan.png",
+      "default_detection": "rect",
+      "default_width": 75,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "cucina",
+        "ferro",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
       "id": "chicken_foot",
       "label_key": "obj_chicken_foot",
       "icon": "objects/chicken_foot.png",
@@ -301,6 +594,56 @@
       ]
     },
     {
+      "id": "church_bell_small",
+      "label_key": "obj_church_bell_small",
+      "icon": "objects/church_bell_small.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "medio",
+        "metallo",
+        "religione"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "cigar_box",
+      "label_key": "obj_cigar_box",
+      "icon": "objects/cigar_box.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "contenitore",
+        "legno",
+        "medio",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "cigarette_case",
+      "label_key": "obj_cigarette_case",
+      "icon": "objects/cigarette_case.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "accessorio",
+        "argento",
+        "metallo",
+        "piccolo",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
       "id": "coat_rack",
       "label_key": "obj_coat_rack",
       "icon": "objects/coat_rack.png",
@@ -313,6 +656,23 @@
         "legno",
         "grande"
       ]
+    },
+    {
+      "id": "coffee_grinder_manual",
+      "label_key": "obj_coffee_grinder_manual",
+      "icon": "objects/coffee_grinder_manual.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "cucina",
+        "legno",
+        "medio",
+        "metallo"
+      ],
+      "style": "real"
     },
     {
       "id": "console_pin",
@@ -331,6 +691,59 @@
       ]
     },
     {
+      "id": "corkscrew_antique",
+      "label_key": "obj_corkscrew_antique",
+      "icon": "objects/corkscrew_antique.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "bar",
+        "legno",
+        "metallo",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "cowbell",
+      "label_key": "obj_cowbell",
+      "icon": "objects/cowbell.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "cuoio",
+        "medio",
+        "montagna",
+        "ottone"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "crampons",
+      "label_key": "obj_crampons",
+      "icon": "objects/crampons.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 45,
+      "default_hint_delay": 35,
+      "tags": [
+        "attrezzatura",
+        "cuoio",
+        "medio",
+        "metallo",
+        "montagna",
+        "sport",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
       "id": "creature_claw",
       "label_key": "obj_creature_claw",
       "icon": "objects/creature_claw.png",
@@ -343,6 +756,70 @@
         "natura",
         "piccolo"
       ]
+    },
+    {
+      "id": "crosscut_saw",
+      "label_key": "obj_crosscut_saw",
+      "icon": "objects/crosscut_saw.png",
+      "default_detection": "rect",
+      "default_width": 90,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "attrezzo",
+        "grande",
+        "legno",
+        "metallo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "deer_antler",
+      "label_key": "obj_deer_antler",
+      "icon": "objects/deer_antler.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "natura",
+        "osso"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "dog_tags",
+      "label_key": "obj_dog_tags",
+      "icon": "objects/dog_tags.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "militare",
+        "piccolo",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "door_hinge_rusty",
+      "label_key": "obj_door_hinge_rusty",
+      "icon": "objects/door_hinge_rusty.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "arredamento",
+        "ferro",
+        "medio"
+      ],
+      "style": "real"
     },
     {
       "id": "dried_fish",
@@ -375,6 +852,22 @@
         "occulto",
         "piccolo"
       ]
+    },
+    {
+      "id": "duck_decoy",
+      "label_key": "obj_duck_decoy",
+      "icon": "objects/duck_decoy.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "decorazione",
+        "legno",
+        "medio",
+        "vintage"
+      ],
+      "style": "real"
     },
     {
       "id": "dustpan",
@@ -441,6 +934,56 @@
       "style": "real"
     },
     {
+      "id": "embroidery_hoop",
+      "label_key": "obj_embroidery_hoop",
+      "icon": "objects/embroidery_hoop.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "arte",
+        "legno",
+        "medio",
+        "stoffa"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "enamel_coffee_pot",
+      "label_key": "obj_enamel_coffee_pot",
+      "icon": "objects/enamel_coffee_pot.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "bevanda",
+        "cucina",
+        "medio",
+        "metallo",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "enamel_mug",
+      "label_key": "obj_enamel_mug",
+      "icon": "objects/enamel_mug.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "bevanda",
+        "cucina",
+        "metallo",
+        "piccolo",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
       "id": "error_floppy",
       "label_key": "obj_error_floppy",
       "icon": "objects/error_floppy.png",
@@ -471,6 +1014,39 @@
         "medio",
         "studio"
       ]
+    },
+    {
+      "id": "field_telephone",
+      "label_key": "obj_field_telephone",
+      "icon": "objects/field_telephone.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "legno",
+        "medio",
+        "militare",
+        "tecnologia"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "fireplace_tongs",
+      "label_key": "obj_fireplace_tongs",
+      "icon": "objects/fireplace_tongs.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 75,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "arredamento",
+        "ferro",
+        "medio"
+      ],
+      "style": "real"
     },
     {
       "id": "flag_ecuador",
@@ -540,6 +1116,71 @@
         "tecnologia",
         "vintage"
       ]
+    },
+    {
+      "id": "flour_sieve",
+      "label_key": "obj_flour_sieve",
+      "icon": "objects/flour_sieve.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "cucina",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "folded_old_map",
+      "label_key": "obj_folded_old_map",
+      "icon": "objects/folded_old_map.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "medio",
+        "viaggio",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "folding_hand_fan",
+      "label_key": "obj_folding_hand_fan",
+      "icon": "objects/folding_hand_fan.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "accessorio",
+        "antico",
+        "carta",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "folding_ruler",
+      "label_key": "obj_folding_ruler",
+      "icon": "objects/folding_ruler.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 20,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "legno",
+        "medio",
+        "vintage"
+      ],
+      "style": "real"
     },
     {
       "id": "forrestgump_poster",
@@ -671,6 +1312,21 @@
       ]
     },
     {
+      "id": "garlic_braid",
+      "label_key": "obj_garlic_braid",
+      "icon": "objects/garlic_braid.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "cucina",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
       "id": "gladiator_poster",
       "label_key": "obj_gladiator_poster",
       "icon": "objects/gladiator_poster.png",
@@ -732,6 +1388,23 @@
       ]
     },
     {
+      "id": "grave_lantern",
+      "label_key": "obj_grave_lantern",
+      "icon": "objects/grave_lantern.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "horror",
+        "luce",
+        "metallo",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
       "id": "hammer",
       "label_key": "obj_hammer",
       "icon": "objects/hammer.png",
@@ -749,6 +1422,57 @@
       ]
     },
     {
+      "id": "hand_drill_brace",
+      "label_key": "obj_hand_drill_brace",
+      "icon": "objects/hand_drill_brace.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "attrezzo",
+        "ferro",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "hand_mirror_brass",
+      "label_key": "obj_hand_mirror_brass",
+      "icon": "objects/hand_mirror_brass.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "bellezza",
+        "medio",
+        "ottone",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "hand_sickle",
+      "label_key": "obj_hand_sickle",
+      "icon": "objects/hand_sickle.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "attrezzo",
+        "legno",
+        "medio",
+        "metallo"
+      ],
+      "style": "real"
+    },
+    {
       "id": "harmonica",
       "label_key": "obj_harmonica",
       "icon": "objects/harmonica.png",
@@ -762,6 +1486,23 @@
         "piccolo",
         "tradizione"
       ]
+    },
+    {
+      "id": "hatchet_old",
+      "label_key": "obj_hatchet_old",
+      "icon": "objects/hatchet_old.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "attrezzo",
+        "ferro",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
     },
     {
       "id": "highlighter_yellow",
@@ -778,6 +1519,39 @@
       ]
     },
     {
+      "id": "hip_flask",
+      "label_key": "obj_hip_flask",
+      "icon": "objects/hip_flask.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "bevanda",
+        "contenitore",
+        "medio",
+        "metallo",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "holy_water_font",
+      "label_key": "obj_holy_water_font",
+      "icon": "objects/holy_water_font.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "ceramica",
+        "piccolo",
+        "religione"
+      ],
+      "style": "real"
+    },
+    {
       "id": "honey_jar",
       "label_key": "obj_honey_jar",
       "icon": "objects/honey_jar.png",
@@ -790,6 +1564,37 @@
         "dolce",
         "piccolo"
       ]
+    },
+    {
+      "id": "horseshoe_rusty",
+      "label_key": "obj_horseshoe_rusty",
+      "icon": "objects/horseshoe_rusty.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "ferro",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "hot_water_bottle",
+      "label_key": "obj_hot_water_bottle",
+      "icon": "objects/hot_water_bottle.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "bagno",
+        "medio",
+        "plastica",
+        "vintage"
+      ],
+      "style": "real"
     },
     {
       "id": "hourglass",
@@ -821,6 +1626,22 @@
       ]
     },
     {
+      "id": "hunting_horn",
+      "label_key": "obj_hunting_horn",
+      "icon": "objects/hunting_horn.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "cuoio",
+        "medio",
+        "ottone"
+      ],
+      "style": "real"
+    },
+    {
       "id": "inkwell_quill",
       "label_key": "obj_inkwell_quill",
       "icon": "objects/inkwell_quill.png",
@@ -835,6 +1656,69 @@
         "studio",
         "vintage"
       ]
+    },
+    {
+      "id": "iron_candlestick",
+      "label_key": "obj_iron_candlestick",
+      "icon": "objects/iron_candlestick.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "ferro",
+        "luce",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "iron_door_handle",
+      "label_key": "obj_iron_door_handle",
+      "icon": "objects/iron_door_handle.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "arredamento",
+        "ferro",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "iron_kettle",
+      "label_key": "obj_iron_kettle",
+      "icon": "objects/iron_kettle.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "cucina",
+        "ferro",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "iron_wedge",
+      "label_key": "obj_iron_wedge",
+      "icon": "objects/iron_wedge.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "ferro",
+        "piccolo"
+      ],
+      "style": "real"
     },
     {
       "id": "it_bicycle_graziella",
@@ -886,6 +1770,22 @@
       ]
     },
     {
+      "id": "lace_doily",
+      "label_key": "obj_lace_doily",
+      "icon": "objects/lace_doily.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "arredamento",
+        "medio",
+        "stoffa",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
       "id": "ladle",
       "label_key": "obj_ladle",
       "icon": "objects/ladle.png",
@@ -926,6 +1826,38 @@
         "piccolo",
         "tecnologia"
       ]
+    },
+    {
+      "id": "leather_satchel",
+      "label_key": "obj_leather_satchel",
+      "icon": "objects/leather_satchel.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "cuoio",
+        "medio",
+        "studio",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "letter_opener",
+      "label_key": "obj_letter_opener",
+      "icon": "objects/letter_opener.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 12,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "medio",
+        "ottone",
+        "ufficio"
+      ],
+      "style": "real"
     },
     {
       "id": "light_bulb",
@@ -990,6 +1922,22 @@
       "style": "real"
     },
     {
+      "id": "mandolin",
+      "label_key": "obj_mandolin",
+      "icon": "objects/mandolin.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 85,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "grande",
+        "legno",
+        "musica"
+      ],
+      "style": "real"
+    },
+    {
       "id": "marble_bust",
       "label_key": "obj_marble_bust",
       "icon": "objects/marble_bust.png",
@@ -1003,6 +1951,23 @@
         "pietra",
         "vintage"
       ]
+    },
+    {
+      "id": "marbles_bag",
+      "label_key": "obj_marbles_bag",
+      "icon": "objects/marbles_bag.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "piccolo",
+        "stoffa",
+        "vetro",
+        "vintage"
+      ],
+      "style": "real"
     },
     {
       "id": "marquee_asteroids",
@@ -1036,6 +2001,23 @@
       ]
     },
     {
+      "id": "mess_tin",
+      "label_key": "obj_mess_tin",
+      "icon": "objects/mess_tin.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "cucina",
+        "medio",
+        "metallo",
+        "militare",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
       "id": "metal_flashlight",
       "label_key": "obj_metal_flashlight",
       "icon": "objects/metal_flashlight.png",
@@ -1048,6 +2030,39 @@
         "medio",
         "metallo"
       ]
+    },
+    {
+      "id": "milk_churn",
+      "label_key": "obj_milk_churn",
+      "icon": "objects/milk_churn.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "contenitore",
+        "cucina",
+        "medio",
+        "metallo",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "milking_stool",
+      "label_key": "obj_milking_stool",
+      "icon": "objects/milking_stool.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "arredamento",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
     },
     {
       "id": "modern_drone_iso",
@@ -1081,6 +2096,23 @@
       ]
     },
     {
+      "id": "mortar_pestle_brass",
+      "label_key": "obj_mortar_pestle_brass",
+      "icon": "objects/mortar_pestle_brass.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "cucina",
+        "medicina",
+        "medio",
+        "ottone"
+      ],
+      "style": "real"
+    },
+    {
       "id": "mummified_hand",
       "label_key": "obj_mummified_hand",
       "icon": "objects/mummified_hand.png",
@@ -1093,6 +2125,69 @@
         "decorazione",
         "horror",
         "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "mushroom_basket",
+      "label_key": "obj_mushroom_basket",
+      "icon": "objects/mushroom_basket.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "music_box",
+      "label_key": "obj_music_box",
+      "icon": "objects/music_box.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "legno",
+        "medio",
+        "musica"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "nails_jar",
+      "label_key": "obj_nails_jar",
+      "icon": "objects/nails_jar.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "ferro",
+        "piccolo",
+        "vetro"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "napoletane_cards",
+      "label_key": "obj_napoletane_cards",
+      "icon": "objects/napoletane_cards.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "gioco",
+        "medio",
+        "vintage"
       ],
       "style": "real"
     },
@@ -1163,6 +2258,38 @@
       ]
     },
     {
+      "id": "ocarina",
+      "label_key": "obj_ocarina",
+      "icon": "objects/ocarina.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "ceramica",
+        "musica",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "oil_can_small",
+      "label_key": "obj_oil_can_small",
+      "icon": "objects/oil_can_small.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "medio",
+        "metallo",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
       "id": "oil_canister",
       "label_key": "obj_oil_canister",
       "icon": "objects/oil_canister.png",
@@ -1176,6 +2303,23 @@
         "medio",
         "pericolo"
       ]
+    },
+    {
+      "id": "old_postcard",
+      "label_key": "obj_old_postcard",
+      "icon": "objects/old_postcard.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 38,
+      "default_hint_delay": 30,
+      "tags": [
+        "carta",
+        "foto",
+        "medio",
+        "viaggio",
+        "vintage"
+      ],
+      "style": "real"
     },
     {
       "id": "old_syringe",
@@ -1288,6 +2432,37 @@
       ]
     },
     {
+      "id": "pewter_goblet",
+      "label_key": "obj_pewter_goblet",
+      "icon": "objects/pewter_goblet.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "bevanda",
+        "medio",
+        "metallo"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "pin_cushion",
+      "label_key": "obj_pin_cushion",
+      "icon": "objects/pin_cushion.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "metallo",
+        "piccolo",
+        "stoffa"
+      ],
+      "style": "real"
+    },
+    {
       "id": "pirate_symbol",
       "label_key": "obj_pirate_symbol",
       "icon": "objects/pirate_symbol.png",
@@ -1317,6 +2492,23 @@
         "officina",
         "piccolo"
       ]
+    },
+    {
+      "id": "pocket_knife",
+      "label_key": "obj_pocket_knife",
+      "icon": "objects/pocket_knife.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 18,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "legno",
+        "medio",
+        "metallo",
+        "vintage"
+      ],
+      "style": "real"
     },
     {
       "id": "poison_bottle",
@@ -1365,6 +2557,23 @@
       ]
     },
     {
+      "id": "postal_scale",
+      "label_key": "obj_postal_scale",
+      "icon": "objects/postal_scale.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "bilancia",
+        "medio",
+        "ottone",
+        "ufficio"
+      ],
+      "style": "real"
+    },
+    {
       "id": "pow_sign",
       "label_key": "obj_pow_sign",
       "icon": "objects/pow_sign.png",
@@ -1380,6 +2589,23 @@
       ]
     },
     {
+      "id": "prayer_book",
+      "label_key": "obj_prayer_book",
+      "icon": "objects/prayer_book.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "carta",
+        "cuoio",
+        "medio",
+        "religione"
+      ],
+      "style": "real"
+    },
+    {
       "id": "rabbit",
       "label_key": "obj_rabbit",
       "icon": "objects/rabbit.png",
@@ -1391,6 +2617,23 @@
         "natura",
         "piccolo"
       ]
+    },
+    {
+      "id": "rag_doll",
+      "label_key": "obj_rag_doll",
+      "icon": "objects/rag_doll.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "horror",
+        "medio",
+        "stoffa",
+        "vintage"
+      ],
+      "style": "real"
     },
     {
       "id": "ritual_candle",
@@ -1439,6 +2682,23 @@
       ]
     },
     {
+      "id": "rosary",
+      "label_key": "obj_rosary",
+      "icon": "objects/rosary.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "accessorio",
+        "legno",
+        "medio",
+        "religione",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
       "id": "rotten_apple",
       "label_key": "obj_rotten_apple",
       "icon": "objects/rotten_apple.png",
@@ -1483,6 +2743,71 @@
       "style": "real"
     },
     {
+      "id": "rustic_bread_loaf",
+      "label_key": "obj_rustic_bread_loaf",
+      "icon": "objects/rustic_bread_loaf.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "cibo",
+        "cucina",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "rusty_padlock",
+      "label_key": "obj_rusty_padlock",
+      "icon": "objects/rusty_padlock.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 38,
+      "default_hint_delay": 25,
+      "tags": [
+        "antico",
+        "ferro",
+        "metallo",
+        "piccolo",
+        "sicurezza"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "saint_statuette",
+      "label_key": "obj_saint_statuette",
+      "icon": "objects/saint_statuette.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "ceramica",
+        "medio",
+        "religione"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "salt_cellar_wooden",
+      "label_key": "obj_salt_cellar_wooden",
+      "icon": "objects/salt_cellar_wooden.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "contenitore",
+        "cucina",
+        "legno",
+        "piccolo"
+      ],
+      "style": "real"
+    },
+    {
       "id": "sawed_off_shotgun",
       "label_key": "obj_sawed_off_shotgun",
       "icon": "objects/sawed_off_shotgun.png",
@@ -1498,6 +2823,22 @@
         "piccolo",
         "tecnologia"
       ]
+    },
+    {
+      "id": "school_slate",
+      "label_key": "obj_school_slate",
+      "icon": "objects/school_slate.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "legno",
+        "medio",
+        "studio"
+      ],
+      "style": "real"
     },
     {
       "id": "screwdriver",
@@ -1531,6 +2872,22 @@
       ]
     },
     {
+      "id": "sepia_portrait_photo",
+      "label_key": "obj_sepia_portrait_photo",
+      "icon": "objects/sepia_portrait_photo.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "carta",
+        "foto",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
       "id": "severed_finger",
       "label_key": "obj_severed_finger",
       "icon": "objects/severed_finger.png",
@@ -1544,6 +2901,38 @@
         "pelle",
         "piccolo"
       ]
+    },
+    {
+      "id": "shaving_brush",
+      "label_key": "obj_shaving_brush",
+      "icon": "objects/shaving_brush.png",
+      "default_detection": "rect",
+      "default_width": 20,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "bagno",
+        "bellezza",
+        "piccolo",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "sheep_shears",
+      "label_key": "obj_sheep_shears",
+      "icon": "objects/sheep_shears.png",
+      "default_detection": "rect",
+      "default_width": 25,
+      "default_height": 60,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "attrezzo",
+        "ferro",
+        "medio"
+      ],
+      "style": "real"
     },
     {
       "id": "silk_tie",
@@ -1608,6 +2997,23 @@
       ]
     },
     {
+      "id": "small_wooden_barrel",
+      "label_key": "obj_small_wooden_barrel",
+      "icon": "objects/small_wooden_barrel.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "bar",
+        "contenitore",
+        "ferro",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
       "id": "smoking_pipe",
       "label_key": "obj_smoking_pipe",
       "icon": "objects/smoking_pipe.png",
@@ -1623,6 +3029,22 @@
         "pipa",
         "vintage"
       ]
+    },
+    {
+      "id": "snuff_box",
+      "label_key": "obj_snuff_box",
+      "icon": "objects/snuff_box.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "argento",
+        "contenitore",
+        "piccolo"
+      ],
+      "style": "real"
     },
     {
       "id": "spatula",
@@ -1742,6 +3164,23 @@
         "piccolo",
         "studio"
       ]
+    },
+    {
+      "id": "straw_wine_flask",
+      "label_key": "obj_straw_wine_flask",
+      "icon": "objects/straw_wine_flask.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "bar",
+        "bevanda",
+        "medio",
+        "vetro",
+        "vintage"
+      ],
+      "style": "real"
     },
     {
       "id": "stylus_pen",
@@ -1915,6 +3354,22 @@
       ]
     },
     {
+      "id": "tobacco_tin",
+      "label_key": "obj_tobacco_tin",
+      "icon": "objects/tobacco_tin.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 30,
+      "default_hint_delay": 30,
+      "tags": [
+        "contenitore",
+        "medio",
+        "metallo",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
       "id": "toothpaste_tube",
       "label_key": "obj_toothpaste_tube",
       "icon": "objects/toothpaste_tube.png",
@@ -2053,170 +3508,6 @@
       "style": "real"
     },
     {
-      "id": "voodoo_doll",
-      "label_key": "obj_voodoo_doll",
-      "icon": "objects/voodoo_doll.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 65,
-      "default_hint_delay": 30,
-      "tags": [
-        "giocattolo",
-        "horror",
-        "occulto",
-        "piccolo",
-        "stoffa",
-        "vintage"
-      ]
-    },
-    {
-      "id": "walkman",
-      "label_key": "walkman",
-      "icon": "objects/walkman.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 70,
-      "default_hint_delay": 30,
-      "tags": [
-        "elettronica",
-        "musica",
-        "piccolo",
-        "plastica",
-        "retro",
-        "tecnologia"
-      ]
-    },
-    {
-      "id": "watering_can",
-      "label_key": "obj_watering_can",
-      "icon": "objects/watering_can.png",
-      "default_detection": "circle",
-      "default_radius": 50,
-      "default_hint_delay": 40,
-      "tags": [
-        "abbigliamento",
-        "cibo",
-        "giardino",
-        "grande",
-        "metallo"
-      ]
-    },
-    {
-      "id": "wooden_train",
-      "label_key": "obj_wooden_train",
-      "icon": "objects/wooden_train.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "giocattolo",
-        "legno",
-        "piccolo",
-        "vintage"
-      ]
-    },
-    {
-      "id": "worn_pencil",
-      "label_key": "obj_worn_pencil",
-      "icon": "objects/worn_pencil.png",
-      "default_detection": "rect",
-      "default_width": 8,
-      "default_height": 65,
-      "default_hint_delay": 25,
-      "tags": [
-        "arte",
-        "legno",
-        "piccolo",
-        "ufficio"
-      ]
-    },
-    {
-      "id": "rosary",
-      "label_key": "obj_rosary",
-      "icon": "objects/rosary.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 55,
-      "default_hint_delay": 30,
-      "tags": [
-        "accessorio",
-        "legno",
-        "medio",
-        "religione",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "old_postcard",
-      "label_key": "obj_old_postcard",
-      "icon": "objects/old_postcard.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 38,
-      "default_hint_delay": 30,
-      "tags": [
-        "carta",
-        "foto",
-        "medio",
-        "viaggio",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "hip_flask",
-      "label_key": "obj_hip_flask",
-      "icon": "objects/hip_flask.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "bevanda",
-        "contenitore",
-        "medio",
-        "metallo",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "cowbell",
-      "label_key": "obj_cowbell",
-      "icon": "objects/cowbell.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 55,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "cuoio",
-        "medio",
-        "montagna",
-        "ottone"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "rusty_padlock",
-      "label_key": "obj_rusty_padlock",
-      "icon": "objects/rusty_padlock.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 38,
-      "default_hint_delay": 25,
-      "tags": [
-        "antico",
-        "ferro",
-        "metallo",
-        "piccolo",
-        "sicurezza"
-      ],
-      "style": "real"
-    },
-    {
       "id": "vintage_thermos",
       "label_key": "obj_vintage_thermos",
       "icon": "objects/vintage_thermos.png",
@@ -2235,1127 +3526,21 @@
       "style": "real"
     },
     {
-      "id": "wooden_crucifix",
-      "label_key": "obj_wooden_crucifix",
-      "icon": "objects/wooden_crucifix.png",
+      "id": "voodoo_doll",
+      "label_key": "obj_voodoo_doll",
+      "icon": "objects/voodoo_doll.png",
       "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 50,
+      "default_width": 45,
+      "default_height": 65,
       "default_hint_delay": 30,
       "tags": [
-        "antico",
+        "giocattolo",
         "horror",
-        "legno",
-        "medio",
-        "religione"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "war_medal",
-      "label_key": "obj_war_medal",
-      "icon": "objects/war_medal.png",
-      "default_detection": "rect",
-      "default_width": 22,
-      "default_height": 40,
-      "default_hint_delay": 25,
-      "tags": [
-        "decorazione",
-        "metallo",
-        "militare",
+        "occulto",
         "piccolo",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "crampons",
-      "label_key": "obj_crampons",
-      "icon": "objects/crampons.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 45,
-      "default_hint_delay": 35,
-      "tags": [
-        "attrezzatura",
-        "cuoio",
-        "medio",
-        "metallo",
-        "montagna",
-        "sport",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "brass_door_knocker",
-      "label_key": "obj_brass_door_knocker",
-      "icon": "objects/brass_door_knocker.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 55,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "decorazione",
-        "medio",
-        "metallo",
-        "ottone"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "wire_spectacles",
-      "label_key": "obj_wire_spectacles",
-      "icon": "objects/wire_spectacles.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 25,
-      "default_hint_delay": 35,
-      "tags": [
-        "accessorio",
-        "medio",
-        "metallo",
-        "vetro",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "hand_sickle",
-      "label_key": "obj_hand_sickle",
-      "icon": "objects/hand_sickle.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "attrezzo",
-        "legno",
-        "medio",
-        "metallo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "tobacco_tin",
-      "label_key": "obj_tobacco_tin",
-      "icon": "objects/tobacco_tin.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 30,
-      "default_hint_delay": 30,
-      "tags": [
-        "contenitore",
-        "medio",
-        "metallo",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "milk_churn",
-      "label_key": "obj_milk_churn",
-      "icon": "objects/milk_churn.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 65,
-      "default_hint_delay": 30,
-      "tags": [
-        "contenitore",
-        "cucina",
-        "medio",
-        "metallo",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "wooden_milk_pail",
-      "label_key": "obj_wooden_milk_pail",
-      "icon": "objects/wooden_milk_pail.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 50,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "contenitore",
-        "cucina",
-        "legno",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "enamel_coffee_pot",
-      "label_key": "obj_enamel_coffee_pot",
-      "icon": "objects/enamel_coffee_pot.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 50,
-      "default_hint_delay": 30,
-      "tags": [
-        "bevanda",
-        "cucina",
-        "medio",
-        "metallo",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "coffee_grinder_manual",
-      "label_key": "obj_coffee_grinder_manual",
-      "icon": "objects/coffee_grinder_manual.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 50,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "cucina",
-        "legno",
-        "medio",
-        "metallo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "salt_cellar_wooden",
-      "label_key": "obj_salt_cellar_wooden",
-      "icon": "objects/salt_cellar_wooden.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 35,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "contenitore",
-        "cucina",
-        "legno",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "rustic_bread_loaf",
-      "label_key": "obj_rustic_bread_loaf",
-      "icon": "objects/rustic_bread_loaf.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "cibo",
-        "cucina",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "garlic_braid",
-      "label_key": "obj_garlic_braid",
-      "icon": "objects/garlic_braid.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 70,
-      "default_hint_delay": 30,
-      "tags": [
-        "cibo",
-        "cucina",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "straw_wine_flask",
-      "label_key": "obj_straw_wine_flask",
-      "icon": "objects/straw_wine_flask.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 65,
-      "default_hint_delay": 30,
-      "tags": [
-        "bar",
-        "bevanda",
-        "medio",
-        "vetro",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "ceramic_wine_jug",
-      "label_key": "obj_ceramic_wine_jug",
-      "icon": "objects/ceramic_wine_jug.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 50,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "bar",
-        "bevanda",
-        "ceramica",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "pewter_goblet",
-      "label_key": "obj_pewter_goblet",
-      "icon": "objects/pewter_goblet.png",
-      "default_detection": "rect",
-      "default_width": 25,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "bevanda",
-        "medio",
-        "metallo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "carved_wooden_spoon",
-      "label_key": "obj_carved_wooden_spoon",
-      "icon": "objects/carved_wooden_spoon.png",
-      "default_detection": "rect",
-      "default_width": 15,
-      "default_height": 60,
-      "default_hint_delay": 30,
-      "tags": [
-        "cucina",
-        "legno",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "butter_mold",
-      "label_key": "obj_butter_mold",
-      "icon": "objects/butter_mold.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "cucina",
-        "legno",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "chestnut_roasting_pan",
-      "label_key": "obj_chestnut_roasting_pan",
-      "icon": "objects/chestnut_roasting_pan.png",
-      "default_detection": "rect",
-      "default_width": 75,
-      "default_height": 35,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "cucina",
-        "ferro",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "corkscrew_antique",
-      "label_key": "obj_corkscrew_antique",
-      "icon": "objects/corkscrew_antique.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "bar",
-        "legno",
-        "metallo",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "iron_candlestick",
-      "label_key": "obj_iron_candlestick",
-      "icon": "objects/iron_candlestick.png",
-      "default_detection": "rect",
-      "default_width": 25,
-      "default_height": 55,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "ferro",
-        "luce",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "brass_bed_warmer",
-      "label_key": "obj_brass_bed_warmer",
-      "icon": "objects/brass_bed_warmer.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 80,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "arredamento",
-        "grande",
-        "legno",
-        "ottone"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "washboard",
-      "label_key": "obj_washboard",
-      "icon": "objects/washboard.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 65,
-      "default_hint_delay": 30,
-      "tags": [
-        "bagno",
-        "legno",
-        "medio",
-        "metallo",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "wooden_thread_spool",
-      "label_key": "obj_wooden_thread_spool",
-      "icon": "objects/wooden_thread_spool.png",
-      "default_detection": "rect",
-      "default_width": 20,
-      "default_height": 25,
-      "default_hint_delay": 30,
-      "tags": [
-        "legno",
-        "piccolo",
-        "stoffa"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "pin_cushion",
-      "label_key": "obj_pin_cushion",
-      "icon": "objects/pin_cushion.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 25,
-      "default_hint_delay": 30,
-      "tags": [
-        "metallo",
-        "piccolo",
-        "stoffa"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "wool_ball_needles",
-      "label_key": "obj_wool_ball_needles",
-      "icon": "objects/wool_ball_needles.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 35,
-      "default_hint_delay": 30,
-      "tags": [
-        "medio",
-        "stoffa"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "chamber_pot",
-      "label_key": "obj_chamber_pot",
-      "icon": "objects/chamber_pot.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 35,
-      "default_hint_delay": 30,
-      "tags": [
-        "bagno",
-        "medio",
-        "metallo",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "hot_water_bottle",
-      "label_key": "obj_hot_water_bottle",
-      "icon": "objects/hot_water_bottle.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 50,
-      "default_hint_delay": 30,
-      "tags": [
-        "bagno",
-        "medio",
-        "plastica",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "lace_doily",
-      "label_key": "obj_lace_doily",
-      "icon": "objects/lace_doily.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "arredamento",
-        "medio",
         "stoffa",
         "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "embroidery_hoop",
-      "label_key": "obj_embroidery_hoop",
-      "icon": "objects/embroidery_hoop.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "arte",
-        "legno",
-        "medio",
-        "stoffa"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "hand_mirror_brass",
-      "label_key": "obj_hand_mirror_brass",
-      "icon": "objects/hand_mirror_brass.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 55,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "bellezza",
-        "medio",
-        "ottone",
-        "vetro"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "folding_hand_fan",
-      "label_key": "obj_folding_hand_fan",
-      "icon": "objects/folding_hand_fan.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 35,
-      "default_hint_delay": 30,
-      "tags": [
-        "accessorio",
-        "antico",
-        "carta",
-        "legno",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "shaving_brush",
-      "label_key": "obj_shaving_brush",
-      "icon": "objects/shaving_brush.png",
-      "default_detection": "rect",
-      "default_width": 20,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "bagno",
-        "bellezza",
-        "piccolo",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "door_hinge_rusty",
-      "label_key": "obj_door_hinge_rusty",
-      "icon": "objects/door_hinge_rusty.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 30,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "arredamento",
-        "ferro",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "iron_door_handle",
-      "label_key": "obj_iron_door_handle",
-      "icon": "objects/iron_door_handle.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "arredamento",
-        "ferro",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "brass_door_bell",
-      "label_key": "obj_brass_door_bell",
-      "icon": "objects/brass_door_bell.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "arredamento",
-        "medio",
-        "ottone"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "sheep_shears",
-      "label_key": "obj_sheep_shears",
-      "icon": "objects/sheep_shears.png",
-      "default_detection": "rect",
-      "default_width": 25,
-      "default_height": 60,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "attrezzo",
-        "ferro",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "milking_stool",
-      "label_key": "obj_milking_stool",
-      "icon": "objects/milking_stool.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "arredamento",
-        "legno",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "horseshoe_rusty",
-      "label_key": "obj_horseshoe_rusty",
-      "icon": "objects/horseshoe_rusty.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 35,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "ferro",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "crosscut_saw",
-      "label_key": "obj_crosscut_saw",
-      "icon": "objects/crosscut_saw.png",
-      "default_detection": "rect",
-      "default_width": 90,
-      "default_height": 25,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "attrezzo",
-        "grande",
-        "legno",
-        "metallo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "wooden_mallet",
-      "label_key": "obj_wooden_mallet",
-      "icon": "objects/wooden_mallet.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 55,
-      "default_hint_delay": 30,
-      "tags": [
-        "attrezzo",
-        "legno",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "hand_drill_brace",
-      "label_key": "obj_hand_drill_brace",
-      "icon": "objects/hand_drill_brace.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "attrezzo",
-        "ferro",
-        "legno",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "folding_ruler",
-      "label_key": "obj_folding_ruler",
-      "icon": "objects/folding_ruler.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 20,
-      "default_hint_delay": 30,
-      "tags": [
-        "attrezzo",
-        "legno",
-        "medio",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "oil_can_small",
-      "label_key": "obj_oil_can_small",
-      "icon": "objects/oil_can_small.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "attrezzo",
-        "medio",
-        "metallo",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "nails_jar",
-      "label_key": "obj_nails_jar",
-      "icon": "objects/nails_jar.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "attrezzo",
-        "ferro",
-        "piccolo",
-        "vetro"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "hatchet_old",
-      "label_key": "obj_hatchet_old",
-      "icon": "objects/hatchet_old.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 60,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "attrezzo",
-        "ferro",
-        "legno",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "iron_wedge",
-      "label_key": "obj_iron_wedge",
-      "icon": "objects/iron_wedge.png",
-      "default_detection": "rect",
-      "default_width": 25,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "attrezzo",
-        "ferro",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "butter_churn",
-      "label_key": "obj_butter_churn",
-      "icon": "objects/butter_churn.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 80,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "cucina",
-        "grande",
-        "legno"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "mushroom_basket",
-      "label_key": "obj_mushroom_basket",
-      "icon": "objects/mushroom_basket.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "cibo",
-        "legno",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "deer_antler",
-      "label_key": "obj_deer_antler",
-      "icon": "objects/deer_antler.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 55,
-      "default_hint_delay": 30,
-      "tags": [
-        "medio",
-        "natura",
-        "osso"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "hunting_horn",
-      "label_key": "obj_hunting_horn",
-      "icon": "objects/hunting_horn.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "cuoio",
-        "medio",
-        "ottone"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "duck_decoy",
-      "label_key": "obj_duck_decoy",
-      "icon": "objects/duck_decoy.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 30,
-      "default_hint_delay": 30,
-      "tags": [
-        "decorazione",
-        "legno",
-        "medio",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "cartridge_belt",
-      "label_key": "obj_cartridge_belt",
-      "icon": "objects/cartridge_belt.png",
-      "default_detection": "rect",
-      "default_width": 70,
-      "default_height": 25,
-      "default_hint_delay": 30,
-      "tags": [
-        "cuoio",
-        "medio",
-        "militare",
-        "ottone",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "wool_mittens",
-      "label_key": "obj_wool_mittens",
-      "icon": "objects/wool_mittens.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "abbigliamento",
-        "medio",
-        "stoffa"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "wooden_snowshoes",
-      "label_key": "obj_wooden_snowshoes",
-      "icon": "objects/wooden_snowshoes.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 80,
-      "default_hint_delay": 30,
-      "tags": [
-        "cuoio",
-        "grande",
-        "legno",
-        "montagna",
-        "sport"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "wooden_sled",
-      "label_key": "obj_wooden_sled",
-      "icon": "objects/wooden_sled.png",
-      "default_detection": "rect",
-      "default_width": 80,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "ferro",
-        "grande",
-        "legno",
-        "montagna",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "alpenstock",
-      "label_key": "obj_alpenstock",
-      "icon": "objects/alpenstock.png",
-      "default_detection": "rect",
-      "default_width": 15,
-      "default_height": 90,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "attrezzatura",
-        "grande",
-        "legno",
-        "montagna"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "wooden_skis",
-      "label_key": "obj_wooden_skis",
-      "icon": "objects/wooden_skis.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 95,
-      "default_hint_delay": 30,
-      "tags": [
-        "grande",
-        "legno",
-        "montagna",
-        "sport",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "carbide_lamp",
-      "label_key": "obj_carbide_lamp",
-      "icon": "objects/carbide_lamp.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "luce",
-        "medio",
-        "ottone",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "mess_tin",
-      "label_key": "obj_mess_tin",
-      "icon": "objects/mess_tin.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 35,
-      "default_hint_delay": 30,
-      "tags": [
-        "cucina",
-        "medio",
-        "metallo",
-        "militare",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "ww1_helmet",
-      "label_key": "obj_ww1_helmet",
-      "icon": "objects/ww1_helmet.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "medio",
-        "metallo",
-        "militare"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "bayonet",
-      "label_key": "obj_bayonet",
-      "icon": "objects/bayonet.png",
-      "default_detection": "rect",
-      "default_width": 15,
-      "default_height": 75,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "arma",
-        "medio",
-        "metallo",
-        "militare"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "field_telephone",
-      "label_key": "obj_field_telephone",
-      "icon": "objects/field_telephone.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "legno",
-        "medio",
-        "militare",
-        "tecnologia"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "folded_old_map",
-      "label_key": "obj_folded_old_map",
-      "icon": "objects/folded_old_map.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "carta",
-        "medio",
-        "viaggio",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "dog_tags",
-      "label_key": "obj_dog_tags",
-      "icon": "objects/dog_tags.png",
-      "default_detection": "rect",
-      "default_width": 25,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "metallo",
-        "militare",
-        "piccolo",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "prayer_book",
-      "label_key": "obj_prayer_book",
-      "icon": "objects/prayer_book.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "carta",
-        "cuoio",
-        "medio",
-        "religione"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "holy_water_font",
-      "label_key": "obj_holy_water_font",
-      "icon": "objects/holy_water_font.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "ceramica",
-        "piccolo",
-        "religione"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "censer",
-      "label_key": "obj_censer",
-      "icon": "objects/censer.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 65,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "medio",
-        "ottone",
-        "religione"
-      ],
-      "style": "real"
+      ]
     },
     {
       "id": "votive_heart",
@@ -3370,302 +3555,6 @@
         "metallo",
         "piccolo",
         "religione"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "saint_statuette",
-      "label_key": "obj_saint_statuette",
-      "icon": "objects/saint_statuette.png",
-      "default_detection": "rect",
-      "default_width": 25,
-      "default_height": 60,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "ceramica",
-        "medio",
-        "religione"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "grave_lantern",
-      "label_key": "obj_grave_lantern",
-      "icon": "objects/grave_lantern.png",
-      "default_detection": "rect",
-      "default_width": 25,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "horror",
-        "luce",
-        "metallo",
-        "piccolo",
-        "vetro"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "church_bell_small",
-      "label_key": "obj_church_bell_small",
-      "icon": "objects/church_bell_small.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "medio",
-        "metallo",
-        "religione"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "sepia_portrait_photo",
-      "label_key": "obj_sepia_portrait_photo",
-      "icon": "objects/sepia_portrait_photo.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 55,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "carta",
-        "foto",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "wax_seal_stamp",
-      "label_key": "obj_wax_seal_stamp",
-      "icon": "objects/wax_seal_stamp.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "legno",
-        "ottone",
-        "piccolo",
-        "ufficio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "letter_opener",
-      "label_key": "obj_letter_opener",
-      "icon": "objects/letter_opener.png",
-      "default_detection": "rect",
-      "default_width": 60,
-      "default_height": 12,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "medio",
-        "ottone",
-        "ufficio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "postal_scale",
-      "label_key": "obj_postal_scale",
-      "icon": "objects/postal_scale.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "bilancia",
-        "medio",
-        "ottone",
-        "ufficio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "school_slate",
-      "label_key": "obj_school_slate",
-      "icon": "objects/school_slate.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "legno",
-        "medio",
-        "studio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "abacus_wooden",
-      "label_key": "obj_abacus_wooden",
-      "icon": "objects/abacus_wooden.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "legno",
-        "medio",
-        "studio",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "leather_satchel",
-      "label_key": "obj_leather_satchel",
-      "icon": "objects/leather_satchel.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "cuoio",
-        "medio",
-        "studio",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "rag_doll",
-      "label_key": "obj_rag_doll",
-      "icon": "objects/rag_doll.png",
-      "default_detection": "rect",
-      "default_width": 35,
-      "default_height": 60,
-      "default_hint_delay": 30,
-      "tags": [
-        "giocattolo",
-        "horror",
-        "medio",
-        "stoffa",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "marbles_bag",
-      "label_key": "obj_marbles_bag",
-      "icon": "objects/marbles_bag.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 35,
-      "default_hint_delay": 30,
-      "tags": [
-        "giocattolo",
-        "piccolo",
-        "stoffa",
-        "vetro",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "music_box",
-      "label_key": "obj_music_box",
-      "icon": "objects/music_box.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "legno",
-        "medio",
-        "musica"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "napoletane_cards",
-      "label_key": "obj_napoletane_cards",
-      "icon": "objects/napoletane_cards.png",
-      "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 40,
-      "default_hint_delay": 30,
-      "tags": [
-        "carta",
-        "gioco",
-        "medio",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "cigarette_case",
-      "label_key": "obj_cigarette_case",
-      "icon": "objects/cigarette_case.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 30,
-      "default_hint_delay": 30,
-      "tags": [
-        "accessorio",
-        "argento",
-        "metallo",
-        "piccolo",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "cigar_box",
-      "label_key": "obj_cigar_box",
-      "icon": "objects/cigar_box.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 30,
-      "default_hint_delay": 30,
-      "tags": [
-        "carta",
-        "contenitore",
-        "legno",
-        "medio",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "snuff_box",
-      "label_key": "obj_snuff_box",
-      "icon": "objects/snuff_box.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 25,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "argento",
-        "contenitore",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "pocket_knife",
-      "label_key": "obj_pocket_knife",
-      "icon": "objects/pocket_knife.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 18,
-      "default_hint_delay": 30,
-      "tags": [
-        "attrezzo",
-        "legno",
-        "medio",
-        "metallo",
-        "vintage"
       ],
       "style": "real"
     },
@@ -3687,99 +3576,101 @@
       "style": "real"
     },
     {
-      "id": "mortar_pestle_brass",
-      "label_key": "obj_mortar_pestle_brass",
-      "icon": "objects/mortar_pestle_brass.png",
+      "id": "walkman",
+      "label_key": "walkman",
+      "icon": "objects/walkman.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 70,
+      "default_hint_delay": 30,
+      "tags": [
+        "elettronica",
+        "musica",
+        "piccolo",
+        "plastica",
+        "retro",
+        "tecnologia"
+      ]
+    },
+    {
+      "id": "war_medal",
+      "label_key": "obj_war_medal",
+      "icon": "objects/war_medal.png",
+      "default_detection": "rect",
+      "default_width": 22,
+      "default_height": 40,
+      "default_hint_delay": 25,
+      "tags": [
+        "decorazione",
+        "metallo",
+        "militare",
+        "piccolo",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "washboard",
+      "label_key": "obj_washboard",
+      "icon": "objects/washboard.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 65,
+      "default_hint_delay": 30,
+      "tags": [
+        "bagno",
+        "legno",
+        "medio",
+        "metallo",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "watering_can",
+      "label_key": "obj_watering_can",
+      "icon": "objects/watering_can.png",
+      "default_detection": "circle",
+      "default_radius": 50,
+      "default_hint_delay": 40,
+      "tags": [
+        "abbigliamento",
+        "cibo",
+        "giardino",
+        "grande",
+        "metallo"
+      ]
+    },
+    {
+      "id": "wax_seal_stamp",
+      "label_key": "obj_wax_seal_stamp",
+      "icon": "objects/wax_seal_stamp.png",
       "default_detection": "rect",
       "default_width": 40,
       "default_height": 40,
       "default_hint_delay": 30,
       "tags": [
         "antico",
-        "cucina",
-        "medicina",
-        "medio",
-        "ottone"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "brown_medicine_vial",
-      "label_key": "obj_brown_medicine_vial",
-      "icon": "objects/brown_medicine_vial.png",
-      "default_detection": "rect",
-      "default_width": 15,
-      "default_height": 35,
-      "default_hint_delay": 30,
-      "tags": [
-        "medicina",
-        "piccolo",
-        "vetro",
-        "vintage"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "wooden_clogs",
-      "label_key": "obj_wooden_clogs",
-      "icon": "objects/wooden_clogs.png",
-      "default_detection": "rect",
-      "default_width": 55,
-      "default_height": 35,
-      "default_hint_delay": 30,
-      "tags": [
-        "abbigliamento",
-        "antico",
         "legno",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "brass_scale_weights",
-      "label_key": "obj_brass_scale_weights",
-      "icon": "objects/brass_scale_weights.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 35,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "bilancia",
-        "medio",
-        "ottone"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "iron_kettle",
-      "label_key": "obj_iron_kettle",
-      "icon": "objects/iron_kettle.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 45,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "cucina",
-        "ferro",
-        "medio"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "enamel_mug",
-      "label_key": "obj_enamel_mug",
-      "icon": "objects/enamel_mug.png",
-      "default_detection": "rect",
-      "default_width": 30,
-      "default_height": 30,
-      "default_hint_delay": 30,
-      "tags": [
-        "bevanda",
-        "cucina",
-        "metallo",
+        "ottone",
         "piccolo",
+        "ufficio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "wire_spectacles",
+      "label_key": "obj_wire_spectacles",
+      "icon": "objects/wire_spectacles.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 25,
+      "default_hint_delay": 35,
+      "tags": [
+        "accessorio",
+        "medio",
+        "metallo",
+        "vetro",
         "vintage"
       ],
       "style": "real"
@@ -3801,80 +3692,64 @@
       "style": "real"
     },
     {
-      "id": "candle_snuffer",
-      "label_key": "obj_candle_snuffer",
-      "icon": "objects/candle_snuffer.png",
+      "id": "wooden_clogs",
+      "label_key": "obj_wooden_clogs",
+      "icon": "objects/wooden_clogs.png",
       "default_detection": "rect",
-      "default_width": 20,
-      "default_height": 55,
+      "default_width": 55,
+      "default_height": 35,
       "default_hint_delay": 30,
       "tags": [
+        "abbigliamento",
         "antico",
-        "luce",
-        "ottone",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "ocarina",
-      "label_key": "obj_ocarina",
-      "icon": "objects/ocarina.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 30,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "ceramica",
-        "musica",
-        "piccolo"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "mandolin",
-      "label_key": "obj_mandolin",
-      "icon": "objects/mandolin.png",
-      "default_detection": "rect",
-      "default_width": 40,
-      "default_height": 85,
-      "default_hint_delay": 30,
-      "tags": [
-        "antico",
-        "grande",
-        "legno",
-        "musica"
-      ],
-      "style": "real"
-    },
-    {
-      "id": "small_wooden_barrel",
-      "label_key": "obj_small_wooden_barrel",
-      "icon": "objects/small_wooden_barrel.png",
-      "default_detection": "rect",
-      "default_width": 45,
-      "default_height": 50,
-      "default_hint_delay": 30,
-      "tags": [
-        "bar",
-        "contenitore",
-        "ferro",
         "legno",
         "medio"
       ],
       "style": "real"
     },
     {
-      "id": "flour_sieve",
-      "label_key": "obj_flour_sieve",
-      "icon": "objects/flour_sieve.png",
+      "id": "wooden_crucifix",
+      "label_key": "obj_wooden_crucifix",
+      "icon": "objects/wooden_crucifix.png",
       "default_detection": "rect",
-      "default_width": 50,
-      "default_height": 30,
+      "default_width": 30,
+      "default_height": 50,
       "default_hint_delay": 30,
       "tags": [
         "antico",
+        "horror",
+        "legno",
+        "medio",
+        "religione"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "wooden_mallet",
+      "label_key": "obj_wooden_mallet",
+      "icon": "objects/wooden_mallet.png",
+      "default_detection": "rect",
+      "default_width": 35,
+      "default_height": 55,
+      "default_hint_delay": 30,
+      "tags": [
+        "attrezzo",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "wooden_milk_pail",
+      "label_key": "obj_wooden_milk_pail",
+      "icon": "objects/wooden_milk_pail.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "contenitore",
         "cucina",
         "legno",
         "medio"
@@ -3882,18 +3757,143 @@
       "style": "real"
     },
     {
-      "id": "fireplace_tongs",
-      "label_key": "obj_fireplace_tongs",
-      "icon": "objects/fireplace_tongs.png",
+      "id": "wooden_skis",
+      "label_key": "obj_wooden_skis",
+      "icon": "objects/wooden_skis.png",
+      "default_detection": "rect",
+      "default_width": 30,
+      "default_height": 95,
+      "default_hint_delay": 30,
+      "tags": [
+        "grande",
+        "legno",
+        "montagna",
+        "sport",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "wooden_sled",
+      "label_key": "obj_wooden_sled",
+      "icon": "objects/wooden_sled.png",
+      "default_detection": "rect",
+      "default_width": 80,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "ferro",
+        "grande",
+        "legno",
+        "montagna",
+        "vintage"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "wooden_snowshoes",
+      "label_key": "obj_wooden_snowshoes",
+      "icon": "objects/wooden_snowshoes.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 80,
+      "default_hint_delay": 30,
+      "tags": [
+        "cuoio",
+        "grande",
+        "legno",
+        "montagna",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "wooden_thread_spool",
+      "label_key": "obj_wooden_thread_spool",
+      "icon": "objects/wooden_thread_spool.png",
       "default_detection": "rect",
       "default_width": 20,
-      "default_height": 75,
+      "default_height": 25,
+      "default_hint_delay": 30,
+      "tags": [
+        "legno",
+        "piccolo",
+        "stoffa"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "wooden_train",
+      "label_key": "obj_wooden_train",
+      "icon": "objects/wooden_train.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "legno",
+        "piccolo",
+        "vintage"
+      ]
+    },
+    {
+      "id": "wool_ball_needles",
+      "label_key": "obj_wool_ball_needles",
+      "icon": "objects/wool_ball_needles.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "medio",
+        "stoffa"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "wool_mittens",
+      "label_key": "obj_wool_mittens",
+      "icon": "objects/wool_mittens.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "abbigliamento",
+        "medio",
+        "stoffa"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "worn_pencil",
+      "label_key": "obj_worn_pencil",
+      "icon": "objects/worn_pencil.png",
+      "default_detection": "rect",
+      "default_width": 8,
+      "default_height": 65,
+      "default_hint_delay": 25,
+      "tags": [
+        "arte",
+        "legno",
+        "piccolo",
+        "ufficio"
+      ]
+    },
+    {
+      "id": "ww1_helmet",
+      "label_key": "obj_ww1_helmet",
+      "icon": "objects/ww1_helmet.png",
+      "default_detection": "rect",
+      "default_width": 55,
+      "default_height": 40,
       "default_hint_delay": 30,
       "tags": [
         "antico",
-        "arredamento",
-        "ferro",
-        "medio"
+        "medio",
+        "metallo",
+        "militare"
       ],
       "style": "real"
     }
