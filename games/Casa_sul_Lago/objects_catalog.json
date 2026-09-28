@@ -1,3 +1,78 @@
 {
-  "objects": []
+  "objects": [
+    {
+      "id": "bowling_pin",
+      "label_key": "obj_bowling_pin",
+      "icon": "objects/bowling_pin.png",
+      "default_detection": "rect",
+      "default_width": 15,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "piccolo",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "dartboard_v2",
+      "label_key": "obj_dartboard_v2",
+      "icon": "objects/dartboard_v2.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "gioco",
+        "medio",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "rocking_horse_small",
+      "label_key": "obj_rocking_horse_small",
+      "icon": "objects/rocking_horse_small.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "legno",
+        "medio"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "roller_skates",
+      "label_key": "obj_roller_skates",
+      "icon": "objects/roller_skates.png",
+      "default_detection": "rect",
+      "default_width": 45,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "cuoio",
+        "piccolo",
+        "sport"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "stuffed_elephant",
+      "label_key": "obj_stuffed_elephant",
+      "icon": "objects/stuffed_elephant.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "giocattolo",
+        "piccolo",
+        "stoffa"
+      ],
+      "style": "real"
+    }
+  ]
 }

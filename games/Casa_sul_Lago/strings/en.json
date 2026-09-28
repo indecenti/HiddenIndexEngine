@@ -19,5 +19,10 @@
   "lighthouse_room_name": "Lighthouse Room",
   "island_chapel_name": "Island Chapel",
   "grotto_cave_name": "Hidden Grotto",
-  "lantern_room_name": "Lantern Room"
+  "lantern_room_name": "Lantern Room",
+  "obj_bowling_pin": "",
+  "obj_dartboard_v2": "",
+  "obj_rocking_horse_small": "",
+  "obj_stuffed_elephant": "",
+  "obj_roller_skates": ""
 }

@@ -19,5 +19,10 @@
   "lighthouse_room_name": "Chambre du Phare",
   "island_chapel_name": "Chapelle de l'Île",
   "grotto_cave_name": "Grotte Cachée",
-  "lantern_room_name": "Salle de la Lanterne"
+  "lantern_room_name": "Salle de la Lanterne",
+  "obj_bowling_pin": "",
+  "obj_dartboard_v2": "",
+  "obj_rocking_horse_small": "",
+  "obj_stuffed_elephant": "",
+  "obj_roller_skates": ""
 }

@@ -19,5 +19,10 @@
   "lighthouse_room_name": "Stanza del Faro",
   "island_chapel_name": "Cappella dell'Isola",
   "grotto_cave_name": "Grotta Nascosta",
-  "lantern_room_name": "Lanterna del Faro"
+  "lantern_room_name": "Lanterna del Faro",
+  "obj_bowling_pin": "",
+  "obj_dartboard_v2": "",
+  "obj_rocking_horse_small": "",
+  "obj_stuffed_elephant": "",
+  "obj_roller_skates": ""
 }

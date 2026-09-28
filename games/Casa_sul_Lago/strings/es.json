@@ -19,5 +19,10 @@
   "lighthouse_room_name": "Cuarto del Faro",
   "island_chapel_name": "Capilla de la Isla",
   "grotto_cave_name": "Gruta Oculta",
-  "lantern_room_name": "Linterna del Faro"
+  "lantern_room_name": "Linterna del Faro",
+  "obj_bowling_pin": "",
+  "obj_dartboard_v2": "",
+  "obj_rocking_horse_small": "",
+  "obj_stuffed_elephant": "",
+  "obj_roller_skates": ""
 }
