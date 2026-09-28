@@ -1,0 +1,32 @@
+{
+  "id": "L_Isola",
+  "name_key": "L_Isola_name",
+  "difficulty": "normal",
+  "timer_behavior": "complete",
+  "scenes": [
+    {
+      "id": "lighthouse_room",
+      "order": 1,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "island_chapel",
+      "order": 2,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "grotto_cave",
+      "order": 3,
+      "time_limit": 120,
+      "transition_out": "fade"
+    },
+    {
+      "id": "lantern_room",
+      "order": 4,
+      "time_limit": 120,
+      "transition_out": "fade"
+    }
+  ]
+}

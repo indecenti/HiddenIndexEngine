@@ -4,7 +4,7 @@ Native render GEN_W x GEN_H at BG_STEPS, then in PIL: light gaussian blur, Lancz
 2x, unsharp mask, centre crop to exactly 16:9. No model upscaler: 4x-UltraSharp
 re-creates a fine grid pattern on dark smooth surfaces (checked at 100%), even from
 a softened input. Output: scratch/gen_assets/backgrounds/<name>.png
-Usage: python generate_background.py <name> "<scene description>" [seed] [--painted] [--hq]
+Usage: python generate_background.py <name> "<scene description>" [seed] [--painted | --hog] [--hq]
 """
 import json
 import sys
@@ -42,6 +42,19 @@ STYLE_PAINTED = ("{what}. Classic hidden object game background, semi-realistic 
                  "brass and fabric, balanced warm lighting with readable mid tones, "
                  "cinematic wide view, bare walls with no pictures, no frames, "
                  "no posters, no people, no readable text, no watermark, no logo")
+# Hidden object photographic variant (--hog): the same photographic rendering as the
+# library objects (real style) - no painted finish - but staged like a premium hidden
+# object scene: a clear focal point, depth layers, warm practical lights, rich but
+# tidy set dressing and many free surfaces at different heights.
+STYLE_HOG = ("{what}. Premium hidden object game scene, photorealistic cinematic "
+             "interior photography style, real materials with natural texture (aged wood, "
+             "brass, stone, fabric, glass), rich warm practical lighting from lamps and "
+             "windows with gentle falloff into soft shadows, inviting mysterious mood, "
+             "clear focal point and three depth layers, tidy set dressing with free "
+             "surfaces at different heights - tables, shelves, counters, window sills, "
+             "floor - left mostly empty so objects can be placed later, crisp fine detail, "
+             "wide angle eye level view, balanced exposure with readable mid tones, bare "
+             "walls with no posters, no people, no readable text, no watermark, no logo")
 NEGATIVE = ("people, characters, clutter, crowded, chaotic, too many details, piles of objects, many posters, signs, billboards, wall covered in pictures, "
             "readable text, watermark, logo, blurry, frame, border")
 BG_STEPS = 35          # more than the 25 of the objects: backgrounds live on detail
@@ -66,10 +79,11 @@ def graph(prompt: str, seed: int, hq: bool = False) -> dict:
 def main() -> None:
     painted = "--painted" in sys.argv
     hq = "--hq" in sys.argv
-    args = [a for a in sys.argv[1:] if a not in ("--painted", "--hq")]
+    hog = "--hog" in sys.argv
+    args = [a for a in sys.argv[1:] if a not in ("--painted", "--hq", "--hog")]
     name, what = args[0], args[1]
     seed = int(args[2]) if len(args) > 2 else 2026
-    style = STYLE_PAINTED if painted else STYLE
+    style = STYLE_PAINTED if painted else STYLE_HOG if hog else STYLE
     OUT.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     pid = gen.post("/prompt", {"prompt": graph(style.format(what=what), seed, hq)})["prompt_id"]

@@ -1,0 +1,18 @@
+{
+  "id": "Casa_sul_Lago",
+  "game_id": "Casa_sul_Lago",
+  "title_key": "game_title",
+  "version": "1.0",
+  "ui_theme": "mystery",
+  "category": "desktop",
+  "levels": [
+    "L_Arrivo",
+    "Il_Paese",
+    "Il_Lago",
+    "L_Isola"
+  ],
+  "menu": {
+    "background": "levels/L_Arrivo/villa_entrance_hall/background.png",
+    "music": []
+  }
+}

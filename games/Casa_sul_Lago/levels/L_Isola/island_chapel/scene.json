@@ -1,0 +1,12 @@
+{
+  "id": "island_chapel",
+  "background": "background.png",
+  "background_scale": 1.0,
+  "objects": [],
+  "effects": [],
+  "music": [],
+  "name_key": "island_chapel_name",
+  "objects_to_show": 12,
+  "auto_random_finds": false,
+  "flashlight": false
+}
