@@ -142,18 +142,30 @@ def _get_scene_thumbnail(scene_path: Path, size: tuple[int, int]) -> Optional[An
     Recupera una Surface di anteprima per la scena con persistenza su disco.
     """
     import pygame
+    # The key includes the background's mtime and size: replacing background.png
+    # (regenerated art) must produce a new thumbnail, not the stale cached one.
+    try:
+        sd = _load_scene_data(scene_path)
+        bg_file = sd.get("background", "")
+        if not bg_file:
+            return None
+        full_path = scene_path / bg_file
+        st = full_path.stat()
+    except (OSError, ValueError):
+        return None
     path_str = str(scene_path.resolve())
-    t_hash = hashlib.md5(f"{path_str}_{size[0]}x{size[1]}".encode()).hexdigest()
-    
-    # 1. Cache in RAM (Velocissima)
+    t_hash = hashlib.md5(
+        f"{path_str}_{size[0]}x{size[1]}_{st.st_mtime_ns}_{st.st_size}".encode()).hexdigest()
+
+    # 1. RAM cache
     if t_hash in _THUMB_CACHE:
         return _THUMB_CACHE[t_hash]
-        
-    # 2. Cache su DISCO (Persistente)
+
+    # 2. Disk cache (persistent)
     thumb_dir = _CACHE_DIR / "thumbs"
     thumb_dir.mkdir(parents=True, exist_ok=True)
     cache_path = thumb_dir / f"{t_hash}.png"
-    
+
     if cache_path.exists():
         try:
             surf = pygame.image.load(str(cache_path)).convert_alpha()
@@ -161,15 +173,8 @@ def _get_scene_thumbnail(scene_path: Path, size: tuple[int, int]) -> Optional[An
             return surf
         except Exception: pass
 
-    # 3. Generazione (Lenta, solo la prima volta)
+    # 3. Generation (slow, first time only)
     try:
-        sd = _load_scene_data(scene_path)
-        bg_file = sd.get("background", "")
-        if not bg_file: return None
-        
-        full_path = scene_path / bg_file
-        if not full_path.exists(): return None
-        
         raw = pygame.image.load(str(full_path)).convert()
         tw, th = size
         iw, ih = raw.get_size()
