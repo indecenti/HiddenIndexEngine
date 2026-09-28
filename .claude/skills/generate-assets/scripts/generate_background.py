@@ -4,7 +4,7 @@ Native render GEN_W x GEN_H at BG_STEPS, then in PIL: light gaussian blur, Lancz
 2x, unsharp mask, centre crop to exactly 16:9. No model upscaler: 4x-UltraSharp
 re-creates a fine grid pattern on dark smooth surfaces (checked at 100%), even from
 a softened input. Output: scratch/gen_assets/backgrounds/<name>.png
-Usage: python generate_background.py <name> "<scene description>" [seed]
+Usage: python generate_background.py <name> "<scene description>" [seed] [--painted] [--hq]
 """
 import json
 import sys
@@ -29,27 +29,50 @@ STYLE = ("{what}. Hidden object game background, photorealistic, calm uncluttere
          "restrained detail, soft atmospheric lighting, cinematic wide view, sharp focus, "
          "at most one small faded poster, bare walls otherwise, no people, no readable text, "
          "no watermark, no logo")
+# Painted variant: classic hidden object art - hand painted, slightly stylised, rich
+# warm colour - but with the same material rendering and soft light as the library
+# objects, so they do not look pasted on.
+STYLE_PAINTED = ("{what}. Classic hidden object game background, semi-realistic "
+                 "digital art: realistic shapes, materials and lighting with a light painted "
+                 "finish and subtle brush texture, polished and clean like a premium hidden "
+                 "object game, rich warm colours, soft glow from lamps, cosy mysterious "
+                 "atmosphere, calm composition with a few large elements and free surfaces - "
+                 "tables, shelves, counters and floor left mostly empty so objects can be "
+                 "placed later - finely detailed, crisp high resolution rendering of wood grain, "
+                 "brass and fabric, balanced warm lighting with readable mid tones, "
+                 "cinematic wide view, bare walls with no pictures, no frames, "
+                 "no posters, no people, no readable text, no watermark, no logo")
 NEGATIVE = ("people, characters, clutter, crowded, chaotic, too many details, piles of objects, many posters, signs, billboards, wall covered in pictures, "
             "readable text, watermark, logo, blurry, frame, border")
 BG_STEPS = 35          # more than the 25 of the objects: backgrounds live on detail
 SOFTEN = 0.5           # gaussian radius before the 2x resize (kills the model's grid)
 SHARPEN = dict(radius=2.2, percent=70, threshold=2)
+# --hq: maximum quality. Larger native render (less upscale, more real detail) and
+# more sampling steps; the upscale factor drops from 2x to 1.5x.
+HQ_W, HQ_H = 2560, 1440
+HQ_STEPS = 50
+HQ_SHARPEN = dict(radius=1.6, percent=60, threshold=2)
 
 
-def graph(prompt: str, seed: int) -> dict:
+def graph(prompt: str, seed: int, hq: bool = False) -> dict:
     g = gen.graph(prompt, seed, "hie_bg")
-    g["474"]["inputs"].update({"width": GEN_W, "height": GEN_H})
+    w, h = (HQ_W, HQ_H) if hq else (GEN_W, GEN_H)
+    g["474"]["inputs"].update({"width": w, "height": h})
     g["471"]["inputs"]["negative_prompt"] = NEGATIVE
-    g["476"]["inputs"]["steps"] = BG_STEPS
+    g["476"]["inputs"]["steps"] = HQ_STEPS if hq else BG_STEPS
     return g
 
 
 def main() -> None:
-    name, what = sys.argv[1], sys.argv[2]
-    seed = int(sys.argv[3]) if len(sys.argv) > 3 else 2026
+    painted = "--painted" in sys.argv
+    hq = "--hq" in sys.argv
+    args = [a for a in sys.argv[1:] if a not in ("--painted", "--hq")]
+    name, what = args[0], args[1]
+    seed = int(args[2]) if len(args) > 2 else 2026
+    style = STYLE_PAINTED if painted else STYLE
     OUT.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
-    pid = gen.post("/prompt", {"prompt": graph(STYLE.format(what=what), seed)})["prompt_id"]
+    pid = gen.post("/prompt", {"prompt": graph(style.format(what=what), seed, hq)})["prompt_id"]
     while True:
         hist = json.loads(gen.get(f"/history/{pid}"))
         if pid in hist:
@@ -70,7 +93,8 @@ def main() -> None:
     dest.replace(native)
     im = Image.open(native).convert("RGB").filter(ImageFilter.GaussianBlur(SOFTEN))
     h2 = round(OUT_W * im.height / im.width)
-    im = im.resize((OUT_W, h2), Image.LANCZOS).filter(ImageFilter.UnsharpMask(**SHARPEN))
+    im = im.resize((OUT_W, h2), Image.LANCZOS).filter(
+        ImageFilter.UnsharpMask(**(HQ_SHARPEN if hq else SHARPEN)))
     top = (h2 - OUT_H) // 2
     im.crop((0, top, OUT_W, top + OUT_H)).save(dest)
     print(f"{dest} {OUT_W}x{OUT_H} in {time.time() - t0:.0f}s")

@@ -274,5 +274,144 @@
       "notte",
       "costiero"
     ]
+  },
+  "rail_station_hall.png": {
+    "tags": [
+      "interno",
+      "notte",
+      "stazione",
+      "vintage",
+      "città"
+    ]
+  },
+  "rail_ticket_office.png": {
+    "tags": [
+      "interno",
+      "stazione",
+      "ufficio",
+      "vintage"
+    ]
+  },
+  "rail_luggage_room.png": {
+    "tags": [
+      "interno",
+      "stazione",
+      "deposito",
+      "vintage"
+    ]
+  },
+  "rail_night_platform.png": {
+    "tags": [
+      "esterno",
+      "notte",
+      "stazione",
+      "treno",
+      "vintage"
+    ]
+  },
+  "rail_first_class_compartment.png": {
+    "tags": [
+      "interno",
+      "treno",
+      "vagone",
+      "vintage",
+      "montagna"
+    ]
+  },
+  "rail_dining_car.png": {
+    "tags": [
+      "interno",
+      "treno",
+      "vagone",
+      "ristorante",
+      "vintage"
+    ]
+  },
+  "rail_sleeping_car.png": {
+    "tags": [
+      "interno",
+      "notte",
+      "treno",
+      "vagone",
+      "vintage"
+    ]
+  },
+  "rail_locomotive_cab.png": {
+    "tags": [
+      "interno",
+      "treno",
+      "locomotiva",
+      "vintage",
+      "montagna"
+    ]
+  },
+  "rail_village_station.png": {
+    "tags": [
+      "esterno",
+      "stazione",
+      "montagna",
+      "neve",
+      "villaggio"
+    ]
+  },
+  "rail_waiting_room.png": {
+    "tags": [
+      "interno",
+      "stazione",
+      "sala d'attesa",
+      "neve",
+      "vintage"
+    ]
+  },
+  "rail_stationmaster_office.png": {
+    "tags": [
+      "interno",
+      "stazione",
+      "ufficio",
+      "vintage"
+    ]
+  },
+  "rail_telegraph_room.png": {
+    "tags": [
+      "interno",
+      "stazione",
+      "telegrafo",
+      "vintage"
+    ]
+  },
+  "rail_signal_box.png": {
+    "tags": [
+      "interno",
+      "stazione",
+      "cabina",
+      "neve",
+      "vintage"
+    ]
+  },
+  "rail_engine_shed.png": {
+    "tags": [
+      "interno",
+      "treno",
+      "rimessa",
+      "officina",
+      "vintage"
+    ]
+  },
+  "rail_mine_tunnel.png": {
+    "tags": [
+      "interno",
+      "miniera",
+      "galleria",
+      "horror"
+    ]
+  },
+  "rail_hidden_workshop.png": {
+    "tags": [
+      "interno",
+      "cantina",
+      "officina",
+      "laboratorio",
+      "vintage"
+    ]
   }
 }
