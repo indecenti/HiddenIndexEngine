@@ -4,7 +4,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-ROOT = Path(r"G:\HIE git")
+ROOT = Path(__file__).resolve().parents[4]  # repo root, wherever it is checked out
 ids = sys.argv[1:]
 CELL = 290
 PAD = 15

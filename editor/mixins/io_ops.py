@@ -467,6 +467,10 @@ class IoOpsMixin:
         # Reset stato scatter (BG analysis cache invalida per nuova scena)
         if hasattr(self, "_scatter_reset"):
             self._scatter_reset()
+        if hasattr(self, "_place_reset"):
+            self._place_reset()
+        if hasattr(self, "_surfaces_reset"):
+            self._surfaces_reset()
         self.undo_stack.clear()
         self.redo_stack.clear()
         self.scene_dirty  = False

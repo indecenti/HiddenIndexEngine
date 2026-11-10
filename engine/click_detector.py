@@ -62,9 +62,9 @@ class ClickDetector:
             if obj.found:
                 continue
             
-            # Un oggetto è cliccabile se è un obiettivo DA TROVARE 
-            # OPPURE se ha un minigioco associato.
-            is_clickable = obj.is_goal or getattr(obj, "minigame_trigger", None) is not None
+            # Clickable: a goal still to find, an object with a minigame, or a
+            # collectible (never a goal, see docs/engine/STORY_AND_REPLAY.md).
+            is_clickable = self._is_clickable(obj)
             
             if not is_clickable:
                 continue
@@ -84,7 +84,7 @@ class ClickDetector:
                 for obj in objects:
                     if obj.found:
                         continue
-                    is_clickable = obj.is_goal or getattr(obj, "minigame_trigger", None) is not None
+                    is_clickable = self._is_clickable(obj)
                     if not is_clickable or obj.layer == "overlay":
                         continue
                     d = self._edge_distance(obj, scene_x, scene_y)
@@ -105,6 +105,11 @@ class ClickDetector:
         log.debug("Click (%.1f, %.1f) -> '%s' (z=%d)", scene_x, scene_y,
                   hit.instance_id, hit.layer_z)
         return hit
+
+    @staticmethod
+    def _is_clickable(obj: SceneObject) -> bool:
+        return (obj.is_goal or getattr(obj, "minigame_trigger", None) is not None
+                or bool(getattr(obj, "collectible", False)))
 
     def _edge_distance(self, obj: SceneObject, sx: float, sy: float) -> float:
         """Distanza (in scena/bg-space) dal punto al bordo della hit area dell'oggetto.

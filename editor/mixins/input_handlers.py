@@ -15,6 +15,7 @@ from editor.constants import (
     TOP_BAR_H, STATUS_H,
     MIN_EDITOR_WIDTH, MIN_EDITOR_HEIGHT, WIN_W, WIN_H,
     MODE_SELECT, MODE_CIRCLE, MODE_RECT, MODE_EFFECT_PLACE, MODE_SCATTER,
+    MODE_SURFACES,
     STATE_GAME_SELECT, STATE_MAIN,
     TAB_TREE, TAB_CATALOG, TAB_EFFECTS, TAB_OUTLINE, TAB_LAYERS, TAB_PROPS,
     ACCENT, OK_C, ERR_C, WARN_C, TXT_DIM, FX_C,
@@ -220,6 +221,10 @@ class InputHandlersMixin:
             return
 
         if not ctrl:
+            # Surfaces mode first: Esc, Delete and the arrows act on the
+            # selected surface, not on the (deselected) objects.
+            if self.mode == MODE_SURFACES and self._surfaces_key(ev):
+                return
             if ev.key == pygame.K_F5:
                 self._preview_toggle(); return
             if ev.key == pygame.K_HOME:
@@ -247,6 +252,8 @@ class InputHandlersMixin:
                 self.sel_effect_idx = None; self._editing_prop = None
                 self._status(self._TR("ih_place_cluster", "Place cluster (4 random objects)"), ACCENT, 2)
                 self._mark_dirty(); return
+            if ev.key == pygame.K_5:
+                self._surfaces_toggle_mode(); return
             if ev.key == pygame.K_3:
                 if self.effects_catalog_sel:
                     self.mode = MODE_EFFECT_PLACE; self._cancel_rect()
@@ -420,6 +427,12 @@ class InputHandlersMixin:
         if not self._editing_prop or not self._prop_buf:
             self._editing_prop = None; return
         owner, idx, key = self._editing_prop
+        if owner == 'surface':
+            # Surfaces have their own undo and file (SurfacesModeMixin).
+            self._surface_prop_commit(idx, key, self._prop_buf)
+            self._editing_prop = None
+            self._prop_buf = ""
+            return
         try:
             val = float(self._prop_buf) if ('.' in self._prop_buf) else int(self._prop_buf)
             self._push_undo()
@@ -629,6 +642,9 @@ class InputHandlersMixin:
                     and getattr(self, "_scatter_drag", None) is not None):
                 self._scatter_preview_drag_end()
                 return
+            if getattr(self, "_surf_drag", None) is not None:
+                self._surfaces_lup(mx, my_raw)
+                return
             if getattr(self, "_dragging_effect_idx", None) is not None:
                 self._drag_active = False
                 self._dragging_effect_idx = None
@@ -656,6 +672,14 @@ class InputHandlersMixin:
                     self._scatter_preview_motion(mx, my_raw)
                     return
                 self._scatter_preview_drag_end()
+
+        # Surfaces mode: drawing or dragging a surface with the left button;
+        # a release lost outside the window ends the drag here.
+        if getattr(self, "_surf_drag", None) is not None:
+            if pygame.mouse.get_pressed(num_buttons=3)[0]:
+                self._surfaces_motion(mx, my_raw)
+                return
+            self._surfaces_lup(mx, my_raw)
 
         # --- LOGICA RESIZE INTERATTIVO ---
         from editor.constants import PANEL_MIN_W, PANEL_MAX_W
@@ -909,6 +933,10 @@ class InputHandlersMixin:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE]:
             self._start_pan(mx, my_raw); return
+
+        if self.mode == MODE_SURFACES:
+            self._surfaces_ldown(mx, my_raw)
+            return
 
         if self.mode == MODE_EFFECT_PLACE:
             self._place_effect(mx, my_raw)
@@ -1545,6 +1573,10 @@ class InputHandlersMixin:
             return
 
     def _props_click(self, rx, my):
+        # Surfaces mode: the panel shows the selected surface.
+        if self.mode == MODE_SURFACES and self.scene_path:
+            self._surface_props_click(rx, my)
+            return
         # Se c'è un effetto selezionato, gestiamo i suoi click
         if getattr(self, "sel_effect_idx", None) is not None:
             self._effects_props_click(rx, my)
@@ -2151,6 +2183,9 @@ class InputHandlersMixin:
         elif cmd == "view_preview": self._preview_toggle()
         elif cmd == "view_fullscreen": self._toggle_fullscreen()
         elif cmd == "view_shortcuts": self._shortcuts_toggle()
+        elif cmd == "view_surfaces": self._surfaces_toggle_mode()
+        elif cmd == "edit_place_surfaces": self._place_open_dialog()
+        elif cmd == "edit_legacy_scatter": self._scatter_open()
         elif cmd == "edit_undo": self._undo()
         elif cmd == "edit_redo": self._redo()
         elif cmd == "edit_cut":  self._cut_sel()

@@ -67,6 +67,8 @@ class ModalRouterMixin:
                    "_r_recovery_modal", "_ml_recovery"),
         ModalLayer("stats", "_stats_modal",
                    "_r_stats_modal", "_ml_stats"),
+        ModalLayer("place", "_place_modal_open",
+                   "_r_place_modal", "_ml_place"),
         ModalLayer("scatter", "_scatter_modal_open",
                    "_r_scatter_modal", "_ml_scatter"),
         ModalLayer("auditor", "_auditor_active",
@@ -205,6 +207,11 @@ class ModalRouterMixin:
             mx, my = pygame.mouse.get_pos()
             return bool(self._scatter_modal_wheel(mx, my, ev.y))
         return False
+
+    def _ml_place(self, ev) -> bool:
+        """Place on surfaces: the dialog takes everything, the result bar lets
+        the canvas pan and zoom under the preview."""
+        return bool(self._place_event(ev))
 
     def _ml_auditor(self, ev) -> bool:
         """The auditor answers what it knows and absorbs the rest."""

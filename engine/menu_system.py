@@ -36,6 +36,8 @@ CARD_ROW_CENTER_Y = 412    # centre of the level/scene cards      (card_row_cent
 ICON_LABEL_GAP = 14        # icon bottom -> caption top
 ICON_LABEL_SIZE = 22       # caption size under an icon button
 ICON_ROW_GAP = 44          # between two slots of the icon row (main/pause)
+# Pause menu entry of the story layer journal (docs/engine/STORY_AND_REPLAY.md).
+JOURNAL_ACTION = "open_journal"
 # Card pages (levels, scenes).
 CARD_SCENE_W, CARD_SCENE_H = 320, 180   # default scene card (themes: scene_thumb_w/h)
 CARD_LEVEL_SCALE = 1.4     # a level card is this much wider than a scene card
@@ -246,6 +248,9 @@ class MenuSystem:
         self.music_volume = 1.0
         self.sfx_volume = 1.0
         self.vibration_enabled = True
+        # The pause menu offers the journal only when the game has a story layer
+        # (clues or collectibles); set by the core before it opens the pause.
+        self.journal_available = False
 
         self.buttons: list[MenuButton] = []
         self.sliders: list[MenuSlider] = []
@@ -944,8 +949,8 @@ class MenuSystem:
 
     def _build_from_view(self, view: dict, has_save: bool) -> None:
         """Costruisce bottoni e slider a partire dalla configurazione dichiarativa JSON."""
-        buttons_cfg = view.get("buttons", [])
-        
+        buttons_cfg = self._with_journal_entry(view.get("buttons", []))
+
         # Filtra i bottoni (es. `requires_save`)
         filtered_btns = []
         for b in buttons_cfg:
@@ -1008,6 +1013,24 @@ class MenuSystem:
                 s_val = self.music_volume if "music" in act else self.sfx_volume
                 rx = cx - override_w / 2
                 self.sliders.append(MenuSlider(lbl, act, rx, cy, override_w, override_h, s_val))
+
+    def _with_journal_entry(self, buttons_cfg: list) -> list:
+        """The pause view with the journal entry of the story layer.
+
+        A theme view does not have to know about the journal: on the pause menu
+        the entry is added before "quit to menu" when the game has a story layer,
+        and dropped when it has none.
+        """
+        if self.state != "pause":
+            return buttons_cfg
+        rest = [b for b in buttons_cfg if b.get("action") != JOURNAL_ACTION]
+        if not self.journal_available:
+            return rest
+        entry = next((b for b in buttons_cfg if b.get("action") == JOURNAL_ACTION),
+                     {"text_key": "pause_journal", "action": JOURNAL_ACTION})
+        at = next((i for i, b in enumerate(rest) if b.get("action") == "quit_to_main"),
+                  len(rest))
+        return rest[:at] + [entry] + rest[at:]
 
     def build_buttons(self, has_save: bool = False) -> None:
         """Ricalcola bottoni e slider in base allo stato corrente del menu."""
@@ -1162,8 +1185,10 @@ class MenuSystem:
             labels_actions = [
                 (self.lang.get("btn_resume", "Riprendi"), "resume_game"),
                 (self.lang.get("btn_settings", "Impostazioni"), "goto_settings"),
-                (self.lang.get("btn_quit_to_main", "Menu"), "quit_to_main"),
             ]
+            if self.journal_available:
+                labels_actions.append((self.lang.get("pause_journal", "Journal"), JOURNAL_ACTION))
+            labels_actions.append((self.lang.get("btn_quit_to_main", "Menu"), "quit_to_main"))
             total = len(labels_actions)
             for i, (lbl, act) in enumerate(labels_actions):
                 self.buttons.append(self._std_btn(lbl, act, i, total, primary=(i == 0)))

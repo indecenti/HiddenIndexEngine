@@ -11,7 +11,7 @@ from pathlib import Path
 
 from PIL import Image
 
-ROOT = Path(r"G:\HIE git")
+ROOT = Path(__file__).resolve().parents[4]  # repo root, wherever it is checked out
 sys.path.insert(0, str(ROOT))
 from engine.utils import safe_write_json  # noqa: E402
 

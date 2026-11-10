@@ -3,5 +3,18 @@
   "background": "background.png",
   "background_scale": 1.0,
   "objects": [],
-  "effects": []
+  "effects": [],
+  "story": {
+    "intro": [
+      "Caserma_Pompieri_intro_1"
+    ],
+    "outro": [
+      "Caserma_Pompieri_outro_1"
+    ],
+    "chapter_key": "ch3_title"
+  },
+  "name_key": "Caserma_Pompieri_name",
+  "music": [
+    "Indecenti - L'Alba.mp3"
+  ]
 }

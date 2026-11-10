@@ -3,5 +3,20 @@
   "background": "background.png",
   "background_scale": 1.0,
   "objects": [],
-  "effects": []
+  "effects": [],
+  "story": {
+    "intro": [
+      "Cimitero_Montagna_intro_1"
+    ],
+    "outro": [
+      "Cimitero_Montagna_outro_1",
+      "Cimitero_Montagna_outro_2",
+      "Cimitero_Montagna_outro_3",
+      "Cimitero_Montagna_outro_4"
+    ]
+  },
+  "name_key": "Cimitero_Montagna_name",
+  "music": [
+    "Indecenti - L'Alba.mp3"
+  ]
 }

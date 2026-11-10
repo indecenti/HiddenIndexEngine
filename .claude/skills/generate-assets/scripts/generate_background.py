@@ -4,7 +4,7 @@ Native render GEN_W x GEN_H at BG_STEPS, then in PIL: light gaussian blur, Lancz
 2x, unsharp mask, centre crop to exactly 16:9. No model upscaler: 4x-UltraSharp
 re-creates a fine grid pattern on dark smooth surfaces (checked at 100%), even from
 a softened input. Output: scratch/gen_assets/backgrounds/<name>.png
-Usage: python generate_background.py <name> "<scene description>" [seed] [--painted | --hog] [--hq]
+Usage: python generate_background.py <name> "<scene description>" [seed] [--painted | --hog | --dark] [--hq]
 """
 import json
 import sys
@@ -55,6 +55,18 @@ STYLE_HOG = ("{what}. Premium hidden object game scene, photorealistic cinematic
              "floor - left mostly empty so objects can be placed later, crisp fine detail, "
              "wide angle eye level view, balanced exposure with readable mid tones, bare "
              "walls with no posters, no people, no readable text, no watermark, no logo")
+# Dark variant (--dark): the night look of Malonno_Survivors - semi-realistic digital
+# painting, cold blue and teal moonlight with mist, one or two warm practical lights,
+# abandoned alpine village. Same free-surface staging as the other styles.
+STYLE_DARK = ("{what}. Premium hidden object game background, hand-painted digital "
+              "illustration with visible soft brushwork and rich painterly detail, like a "
+              "classic hidden object adventure game, abandoned Italian alpine village at "
+              "night, teal and blue moonlight with soft mist, several warm amber lamps and "
+              "candles lighting the main surfaces, readable mid tones everywhere and nothing "
+              "lost in black, clear focal point and three depth layers, close eye level view "
+              "filled with furniture and free surfaces at different heights - tables, "
+              "shelves, counters, benches, crates, window sills - with the floor visible near "
+              "the furniture, no people, no readable text, no watermark, no logo")
 NEGATIVE = ("people, characters, clutter, crowded, chaotic, too many details, piles of objects, many posters, signs, billboards, wall covered in pictures, "
             "readable text, watermark, logo, blurry, frame, border")
 BG_STEPS = 35          # more than the 25 of the objects: backgrounds live on detail
@@ -80,10 +92,12 @@ def main() -> None:
     painted = "--painted" in sys.argv
     hq = "--hq" in sys.argv
     hog = "--hog" in sys.argv
-    args = [a for a in sys.argv[1:] if a not in ("--painted", "--hq", "--hog")]
+    dark = "--dark" in sys.argv
+    args = [a for a in sys.argv[1:] if a not in ("--painted", "--hq", "--hog", "--dark")]
     name, what = args[0], args[1]
     seed = int(args[2]) if len(args) > 2 else 2026
-    style = STYLE_PAINTED if painted else STYLE_HOG if hog else STYLE
+    style = (STYLE_PAINTED if painted else STYLE_HOG if hog else STYLE_DARK if dark
+             else STYLE)
     OUT.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     pid = gen.post("/prompt", {"prompt": graph(style.format(what=what), seed, hq)})["prompt_id"]

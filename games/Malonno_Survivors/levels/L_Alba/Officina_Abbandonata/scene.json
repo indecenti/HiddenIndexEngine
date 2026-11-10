@@ -3,5 +3,17 @@
   "background": "background.png",
   "background_scale": 1.0,
   "objects": [],
-  "effects": []
+  "effects": [],
+  "story": {
+    "intro": [
+      "Officina_Abbandonata_intro_1"
+    ],
+    "outro": [
+      "Officina_Abbandonata_outro_1"
+    ]
+  },
+  "name_key": "Officina_Abbandonata_name",
+  "music": [
+    "Indecenti - L'Alba.mp3"
+  ]
 }

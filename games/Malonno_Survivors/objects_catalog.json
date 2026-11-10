@@ -3896,6 +3896,70 @@
         "militare"
       ],
       "style": "real"
+    },
+    {
+      "id": "carved_stone_fragment_a",
+      "label_key": "obj_carved_stone_fragment_a",
+      "icon": "objects/carved_stone_fragment_a.png",
+      "default_detection": "rect",
+      "default_width": 60,
+      "default_height": 45,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "arte",
+        "piccolo",
+        "pietra"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "carved_stone_fragment_b",
+      "label_key": "obj_carved_stone_fragment_b",
+      "icon": "objects/carved_stone_fragment_b.png",
+      "default_detection": "rect",
+      "default_width": 70,
+      "default_height": 50,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "arte",
+        "medio",
+        "pietra"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "carved_stone_fragment_c",
+      "label_key": "obj_carved_stone_fragment_c",
+      "icon": "objects/carved_stone_fragment_c.png",
+      "default_detection": "rect",
+      "default_width": 50,
+      "default_height": 40,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "arte",
+        "piccolo",
+        "pietra"
+      ],
+      "style": "real"
+    },
+    {
+      "id": "rose_carved_pebble",
+      "label_key": "obj_rose_carved_pebble",
+      "icon": "objects/rose_carved_pebble.png",
+      "default_detection": "rect",
+      "default_width": 40,
+      "default_height": 35,
+      "default_hint_delay": 30,
+      "tags": [
+        "antico",
+        "arte",
+        "piccolo",
+        "pietra"
+      ],
+      "style": "real"
     }
   ]
 }

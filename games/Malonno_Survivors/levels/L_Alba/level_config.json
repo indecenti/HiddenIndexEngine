@@ -1,0 +1,38 @@
+{
+  "id": "L_Alba",
+  "name_key": "L_Alba_name",
+  "difficulty": "hard",
+  "timer_behavior": "complete",
+  "scenes": [
+    {
+      "id": "Caserma_Pompieri",
+      "order": 1,
+      "time_limit": 300,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Officina_Abbandonata",
+      "order": 2,
+      "time_limit": 300,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Stazione_Abbandonata",
+      "order": 3,
+      "time_limit": 300,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Chiesa_Abbandonata",
+      "order": 4,
+      "time_limit": 300,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Cimitero_Montagna",
+      "order": 5,
+      "time_limit": 300,
+      "transition_out": "fade"
+    }
+  ]
+}

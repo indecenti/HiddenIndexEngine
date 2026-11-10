@@ -1,0 +1,96 @@
+{
+ "surfaces": [
+  {
+   "p": [
+    1485,
+    1545,
+    1715,
+    1531
+   ],
+   "h": 46,
+   "kind": "ledge",
+   "max": 1
+  },
+  {
+   "p": [
+    1305,
+    1597,
+    1395,
+    1597
+   ],
+   "h": 47,
+   "kind": "ledge",
+   "max": 1
+  },
+  {
+   "p": [
+    1892,
+    1496,
+    2072,
+    1485
+   ],
+   "h": 36,
+   "kind": "ledge",
+   "max": 1
+  },
+  {
+   "p": [
+    1540,
+    1600,
+    1680,
+    1795
+   ],
+   "h": [
+    44,
+    58
+   ],
+   "kind": "area",
+   "max": 2
+  },
+  {
+   "p": [
+    1740,
+    1610,
+    2000,
+    1680
+   ],
+   "h": [
+    36,
+    40
+   ],
+   "kind": "area",
+   "max": 1
+  },
+  {
+   "p": [
+    2660,
+    1600,
+    2950,
+    1828
+   ],
+   "h": [
+    44,
+    62
+   ],
+   "kind": "area",
+   "max": 2
+  }
+ ],
+ "pool": [
+  "crampons",
+  "sheep_shears",
+  "hammer",
+  "enamel_coffee_pot",
+  "vintage_thermos",
+  "watering_can",
+  "metal_canteen",
+  "milk_churn",
+  "wooden_snowshoes",
+  "crosscut_saw",
+  "iron_wedge",
+  "garden_shears"
+ ],
+ "count": 7,
+ "goals": 5,
+ "seed": 6
+}

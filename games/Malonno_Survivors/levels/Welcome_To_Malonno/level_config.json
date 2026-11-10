@@ -1,91 +1,37 @@
 {
   "id": "Welcome_To_Malonno",
   "name_key": "Welcome_To_Malonno_name",
-  "difficulty": "normal",
+  "difficulty": "hard",
   "timer_behavior": "complete",
   "scenes": [
     {
-      "id": "Welcome",
+      "id": "Brescia_Edolo",
       "order": 1,
-      "time_limit": 120,
+      "time_limit": 300,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Welcome",
+      "order": 2,
+      "time_limit": 300,
       "transition_out": "fade"
     },
     {
       "id": "Formis",
-      "order": 2,
-      "time_limit": 120,
-      "transition_out": "fade"
-    },
-    {
-      "id": "Brescia_Edolo",
       "order": 3,
-      "time_limit": 120,
+      "time_limit": 300,
       "transition_out": "fade"
     },
     {
       "id": "Pizza_King",
       "order": 4,
-      "time_limit": 120,
-      "transition_out": "fade"
-    },
-    {
-      "id": "Villa_Rosa",
-      "order": 5,
-      "time_limit": 120,
-      "transition_out": "fade"
-    },
-    {
-      "id": "Sotterranei_Villa_Rosa",
-      "order": 6,
-      "time_limit": 120,
-      "transition_out": "fade"
-    },
-    {
-      "id": "Albergo_Lobby",
-      "order": 7,
-      "time_limit": 120,
-      "transition_out": "fade"
-    },
-    {
-      "id": "Caserma_Pompieri",
-      "order": 8,
-      "time_limit": 120,
-      "transition_out": "fade"
-    },
-    {
-      "id": "Chiesa_Abbandonata",
-      "order": 9,
-      "time_limit": 120,
-      "transition_out": "fade"
-    },
-    {
-      "id": "Cimitero_Montagna",
-      "order": 10,
-      "time_limit": 120,
-      "transition_out": "fade"
-    },
-    {
-      "id": "Infermeria_Alpina",
-      "order": 11,
-      "time_limit": 120,
+      "time_limit": 300,
       "transition_out": "fade"
     },
     {
       "id": "Municipio_Abbandonato",
-      "order": 12,
-      "time_limit": 120,
-      "transition_out": "fade"
-    },
-    {
-      "id": "Officina_Abbandonata",
-      "order": 13,
-      "time_limit": 120,
-      "transition_out": "fade"
-    },
-    {
-      "id": "Stazione_Abbandonata",
-      "order": 14,
-      "time_limit": 120,
+      "order": 5,
+      "time_limit": 300,
       "transition_out": "fade"
     }
   ]

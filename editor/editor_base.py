@@ -98,6 +98,8 @@ from editor.mixins.tag_modal import TagModalMixin
 from editor.mixins.icon_modal import IconModalMixin
 from editor.mixins.auditor    import AuditorMixin
 from editor.mixins.scatter_modal import ScatterModalMixin
+from editor.mixins.surfaces_mode import SurfacesModeMixin
+from editor.mixins.place_modal import PlaceModalMixin
 from editor.mixins.scene_stats import SceneStatsMixin
 from editor.mixins.presets import PresetsMixin
 from editor.mixins.batch_import import BatchImportMixin
@@ -136,6 +138,8 @@ class LevelEditor(
     IconModalMixin,
     AuditorMixin,
     ScatterModalMixin,
+    SurfacesModeMixin,
+    PlaceModalMixin,
     SceneStatsMixin,
     PresetsMixin,
     BatchImportMixin,
@@ -441,6 +445,8 @@ class LevelEditor(
         self._init_extra_data(initial_game)
         self._icon_modal_init()
         self._scatter_modal_init()
+        self._surfaces_init_state()
+        self._place_init_state()
         # Pre-carica il modello IA in background (se l'utente lo ha scelto e disponibile)
         self._scatter_preload_async()
         self._load_bubble_presets()
@@ -657,6 +663,13 @@ class LevelEditor(
         if self.status_until:            # the message expires on its own
             return True
         if getattr(self, "_scatter_busy", False):
+            return True
+        if getattr(self, "_place_busy", False):
+            return True
+        # The support map worker: until its result is in (it is collected by
+        # the surfaces overlay, the idle heartbeat covers the mode being off).
+        if (getattr(self, "_surf_support_busy", False)
+                and getattr(self, "_surf_support_result", None) is None):
             return True
         if getattr(self, "_img_editor_busy", False):
             return True

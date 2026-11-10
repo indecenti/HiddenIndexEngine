@@ -653,13 +653,14 @@ class MenuTheme:
             "toggle_res": "resolution",
             "toggle_fs": "fullscreen",
             "toggle_vibration": "vibration",
-            "quit_to_main": "back"
+            "quit_to_main": "back",
+            "open_journal": "journal"
         }
         # Fallback for the icons added with the generated sets: a theme whose
         # folder predates them (or a game with a harvested older copy) keeps
         # working with the icon the action used to share.
         legacy_fallback = {"sfx": "audio", "resolution": "fullscreen",
-                           "vibration": "settings"}
+                           "vibration": "settings", "journal": "levels"}
         key = map_alias.get(base_action, base_action)
         icon = self._icons.get(key)
         if icon is None:

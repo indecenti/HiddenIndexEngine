@@ -23,6 +23,8 @@ def engine_rules() -> dict:
     from engine.scaling_manager import REF_W, REF_H
     from engine.hint_system import HintSystem
     from engine.level_manager import RewardTracker
+    from engine import story as ST
+    from engine import object_shadow as OS
 
     # HintSystem.__init__ non usa i suoi argomenti se non per memorizzarli:
     # istanziarlo con None/None e' sicuro e ci da' i valori reali delle costanti.
@@ -52,4 +54,10 @@ def engine_rules() -> dict:
         "hint_max_uses": int(hs.max_hints_before_disable),
         # Soglia 3 stelle (engine/level_manager._calc_stars: bonus_ratio >= 0.66)
         "bonus_ratio_3star": 0.66,
+        # Story and replay layer (engine/story.py, docs/engine/STORY_AND_REPLAY.md)
+        "story_chars_per_s": float(ST.STORY_CHARS_PER_S),
+        "collectible_points": int(ST.COLLECTIBLE_POINTS),
+        # Contact shadow (engine/object_shadow.py)
+        "shadow_aspect": float(OS.SHADOW_ASPECT),
+        "shadow_falloff": float(OS.SHADOW_FALLOFF),
     }

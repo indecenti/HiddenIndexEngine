@@ -3,5 +3,17 @@
   "background": "background.png",
   "background_scale": 1.0,
   "objects": [],
-  "effects": []
+  "effects": [],
+  "story": {
+    "intro": [
+      "Infermeria_Alpina_intro_1"
+    ],
+    "outro": [
+      "Infermeria_Alpina_outro_1"
+    ]
+  },
+  "name_key": "Infermeria_Alpina_name",
+  "music": [
+    "Indecenti - Villa Rosa.mp3"
+  ]
 }

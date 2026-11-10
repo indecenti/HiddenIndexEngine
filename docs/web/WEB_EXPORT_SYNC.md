@@ -228,13 +228,33 @@ Rules live in `engine/campaign.py` (docstring). Shared today:
 Known divergences, to close when the core adopts `Campaign` (see
 `docs/engine/MENU_UX_PLAN.md`, Campaign):
 
-- Level order: Python unlock chain follows `game_config.levels`, the Python menu and
-  the web export sort level folders alphabetically.
+- Level order: Python unlock chain follows `game_config.levels`, the Python menu
+  sorts level folders alphabetically (the web export follows the campaign order).
 - A level's scenes are clickable in the Python menu without checking that the level
   is unlocked (`Campaign.is_scene_unlocked` checks it; the web already does).
 - Results: the web offers Retry and Next; Python has a single Continue.
 - With `"complete"` Python keeps counting the elapsed time past the limit, the web
   caps it at the limit (display only; the bonus is 0 in both).
+
+## M. Story and replay layer (`engine/story.py`)
+
+Contract: `docs/engine/STORY_AND_REPLAY.md`.
+
+| ENGINE | WEB |
+|---|---|
+| `story.resolve_alt_spot` (base or one of `alt_spots`, uniform, before random layer and goal rotation; fields `ALT_SPOT_FIELDS`) | `core.js::resolveAltSpot` + `ALT_SPOT_FIELDS`, called first in `game.js::_buildSceneObjects` |
+| Clue (`clue_key`) always a goal: a fixed goal in rotation, like `always_show` | `_buildSceneObjects`: `fixed` includes `o.clue_key` |
+| Collectible never a goal, out of the rotation pools, clickable | `_buildSceneObjects` + `_onPointer` candidates + `_findCollectible` |
+| `STORY_CHARS_PER_S`, `COLLECTIBLE_POINTS` | `manifest.rules.story_chars_per_s`, `collectible_points` (`RULES_DEFAULTS` fallback, checked by `test_runtime_defaults_match_engine`) |
+| Story cards: intro before the start bubbles, outro after the end bubbles and before results; timer paused | `game.js::_showStory` (state `STORY`; the countdown runs only in `SCENE`), `_storyPages`, `_renderStory` |
+| Clue card on find, scene completes after it | `_onPointer` -> `_showStory([...], finish)` |
+| Save `clues` / `collectibles` (`save_manager.record_clue`, `record_collectible`) | `Save.recordClue`, `Save.recordCollectible` (localStorage) |
+| Journal: `story.build_journal` in campaign order | `game.js::_journalData`, `_renderJournal` (state `JOURNAL`), opened from pause (canvas and DOM skin), level select (DOM skin) and the J key |
+| Scene `story` and `name_key`, object `clue_key`/`collectible`/`alt_spots`, game `story` | exported by `web_exporter` (`_story_dict`, `_build_alt_spots`, `manifest.story`) |
+| Contact shadow `object_shadow.draw_shadow` (object `shadow` {dy, w, a}, also in an alt spot): unrotated soft ellipse at (centre x, centre y + dy*scale), width w*scale, height x `SHADOW_ASPECT`, alpha a*(1-d)^`SHADOW_FALLOFF` x object alpha, drawn just before the icon, not for found/hidden objects | `core.js::drawObjectShadow`, called by `drawObject` before the icon; `manifest.rules.shadow_aspect` / `shadow_falloff` (`RULES_DEFAULTS`); exported validated by `web_exporter._build_object` / `_build_alt_spots` (`object_shadow.parse_shadow`). Checked by `test_contact_shadow_geometry_matches_between_runtimes` and `test_alt_spot_fields_match_between_runtimes` |
+
+The exporter now walks the levels in campaign order (`campaign.ordered_level_ids`), which
+closes the level-order divergence listed in section L.
 
 ## Checklist when you change the engine
 

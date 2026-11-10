@@ -56,7 +56,10 @@ renderer stores the rects on the editor and the input handler reads them back:
 | Project edit (dashboard) | `_gs_edit_dialog_rect()` for the box, `self._gs_modal_layout` for every section; `_gs_edit_column_fit()` compresses the column when the dialog is short |
 | Asset studio | `_img_editor_get_modal_rect()`, called by the renderer as well as the click handler |
 | Scene outline | `_outline_hitboxes`, `_outline_list_top()`, `_outline_row_h()` |
-| Auto-scatter | `_scatter_hitboxes` |
+| Auto-scatter (legacy) | `_scatter_hitboxes` |
+| Surfaces sub-toolbar | `_surfaces_bar_layout()` (shared by draw and click) |
+| Surfaces properties | `self._surface_props_hitboxes` (panel virtual space, like the props panel) |
+| Place on surfaces | `_place_dialog_layout()` / `_place_bar_layout()`, published as `self._place_hitboxes` |
 | Scene / object / effect properties | `self._scene_props_hitboxes`, `self._obj_props_hitboxes`, `self._fx_props_hitboxes` |
 
 `editor.mixins.input_handlers.EMPTY_RECT` stands in for a button the current
@@ -98,8 +101,9 @@ geometry: it measures every label, groups the tools and the view toggles
 `_r_toolbar()` and `_toolbar_click()` iterate it, so a button can never be drawn
 somewhere it cannot be clicked.
 
-Tooltips follow the item id (`tip_mode_*`, `tip_toggle_*`); the one command that
-is not a mode, auto-scatter, is mapped in `_TOOLBAR_TIP_KEYS`.
+Tooltips follow the item id (`tip_mode_*`, `tip_toggle_*`); the two commands
+that are not modes, Place on surfaces and the legacy scatter, are mapped in
+`_TOOLBAR_TIP_KEYS`.
 
 Constants: `TOOLBAR_*` in `editor/constants.py`.
 
@@ -156,6 +160,60 @@ Adding a feature means adding a row to `COMMANDS` and its five translations: it
 then appears in the panel and in the palette by itself.
 
 The status bar shows the pointer to both (`tb_shortcuts_hint`), not a list.
+
+## Placement surfaces and "Place on surfaces"
+
+Hidden objects are placed by `tools/place_on_surfaces.py` (skill
+`.claude/skills/place-objects`): they rest on surfaces marked by hand, at real
+size, lit like their spot. The editor draws those surfaces and runs the tool.
+
+**Surfaces mode** (`5`, toolbar *Surfaces*, View menu; `SurfacesModeMixin` in
+`editor/mixins/surfaces_mode.py`):
+
+- drag draws a resting line (stored left to right), Shift+drag or the *Area*
+  sub-mode draws an area; click selects, handles move an end or a corner, the
+  body moves the whole surface, arrows nudge it (Shift: 10 px), Del deletes,
+  Esc deselects and then leaves the mode;
+- every surface shows its size gizmo, a vertical tick as tall as a 20 cm object
+  standing there (`h` times the scene's `h_mul`), as in the tool preview; the
+  HUD band and the frame margin, where nothing is placed, are shaded red;
+- *Support map* overlays, in green, where an area can hold an object (Metric3D
+  normals, computed once per background on the CPU in a worker thread, cached
+  by the tool in `.editor_cache/geometry/`);
+- the properties panel edits the kind, `h` (or far / near for an area), the
+  snap flag, the optional `max` and the scene's `h_mul`.
+
+Edits are written to `<scene>/surfaces.json` at once with `safe_write_json`
+(keys the editor does not edit, such as `light`, are kept) and are undoable
+with the scene's undo stack: `HistoryMixin._history_capture()` carries the
+document in each snapshot under a key that never reaches `scene_data`. A
+surfaces edit does not mark the scene dirty.
+
+**Place on surfaces** (toolbar, Edit menu, palette; `PlaceModalMixin` in
+`editor/mixins/place_modal.py`, worker in `editor/core/surfaces.py`): a dialog
+for the pool (the scene's entry of `games/<id>/placement_plan.json`, or the
+catalog filtered by the legacy scatter's style and tag, both limited to
+`engine/data/real_sizes_cm.json`), count, goals, alternative spots, seed, clue,
+collectible and whether the current objects are replaced (the tool's
+behaviour) or kept and avoided. `Placer.plan_scene` runs in a thread with
+progress and cancel; the result is shown as ghosts on the canvas (the objects
+it would replace are hidden), each alternative spot can be viewed, *Audit*
+opens the tool's audit sheet in a scrollable modal, and *Apply* rewrites the
+scene's objects exactly as the command line tool does (`auto_random_finds`,
+`num_random_finds = goals`) in one undo step. The canvas still pans and zooms
+under the result bar.
+
+The tool is imported as a library (`editor.core.surfaces.import_placer()`),
+which restores `CUDA_VISIBLE_DEVICES` after the import, and is driven through
+two optional hooks that leave its command line behaviour unchanged:
+`plan_scene(..., progress=None)` and `Background.load_support(...,
+model_factory=None)`. The editor runs without them too (no progress, the
+tool's own model choice).
+
+The old colour/edge auto-scatter stays available as *Legacy scatter*: it
+places floating, oversized or obvious objects and is kept for comparison only.
+
+Verified by `pytest tests/test_editor_surfaces.py`.
 
 ## Catalog rows
 

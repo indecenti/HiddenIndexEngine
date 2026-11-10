@@ -36,7 +36,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Optional, TYPE_CHECKING, Tuple
+from typing import Callable, Optional, TYPE_CHECKING, Tuple
 
 import pygame
 
@@ -261,6 +261,15 @@ class LevelManager:
         # Stato Bubble Tips
         self._end_bubbles_triggered = False
 
+        # Optional hold on scene completion (story layer: the outro cards play
+        # after the end_scene bubbles and before SCENE_COMPLETE). Called when the
+        # scene would complete; returning True postpones the event to a later frame.
+        self._completion_hold: Optional[Callable[[], bool]] = None
+
+    def set_completion_hold(self, hold: Optional[Callable[[], bool]]) -> None:
+        """Registers the callback that may postpone SCENE_COMPLETE (None clears it)."""
+        self._completion_hold = hold
+
     def is_any_bubble_visible(self) -> bool:
         """Ritorna True se c'è almeno un fumetto attivo che blocca il gioco."""
         if not self._scene_data: return False
@@ -430,6 +439,8 @@ class LevelManager:
             
             # Se tutte le bubble (comprese quelle appena attivate) sono chiuse, procedi
             if not self.is_any_bubble_visible():
+                if self._completion_hold is not None and self._completion_hold():
+                    return
                 self._emit_scene_complete(failed=False)
             return
 

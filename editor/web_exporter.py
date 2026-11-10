@@ -27,6 +27,9 @@ from pathlib import Path
 from typing import Callable
 
 from engine.utils import get_logger
+from engine import story as story_layer
+from engine.object_shadow import parse_shadow
+from engine.campaign import ordered_level_ids
 
 logger = get_logger(__name__)
 
@@ -219,7 +222,49 @@ def _build_object(raw: dict, instance_id: str, catalog) -> dict:
         "corners": raw.get("corners", DEFAULT_CORNERS),
         "scale": float(raw.get("scale", 1.0)),
         "minigame_trigger": raw.get("minigame_trigger"),
+        # Story and replay layer (docs/engine/STORY_AND_REPLAY.md, sync section M)
+        "clue_key": raw["clue_key"] if story_layer.is_clue(raw) else "",
+        "collectible": story_layer.is_collectible(raw),
+        "alt_spots": _build_alt_spots(raw.get("alt_spots")),
+        # Contact shadow (engine/object_shadow.py): validated {dy, w, a} or null.
+        "shadow": parse_shadow(raw.get("shadow")),
     }
+
+
+def _build_alt_spots(raw_spots) -> list[dict]:
+    """Alternative spots with only the fields engine.story.resolve_alt_spot applies."""
+    if not isinstance(raw_spots, list):
+        return []
+    out = []
+    for spot in raw_spots:
+        if not isinstance(spot, dict) or "x" not in spot or "y" not in spot:
+            continue
+        clean: dict = {}
+        for key in story_layer.ALT_SPOT_FIELDS:
+            if key not in spot:
+                continue
+            val = spot[key]
+            if key in ("x", "y", "rotation", "scale"):
+                val = float(val)
+            elif key in ("flip_x", "flip_y"):
+                val = _to_bool(val)
+            elif key == "alpha":
+                val = int(val)
+            elif key == "color_filter":
+                val = list(val)
+            elif key == "shadow":
+                val = parse_shadow(val)
+                if val is None:
+                    continue
+            clean[key] = val
+        out.append(clean)
+    return out
+
+
+def _story_dict(raw) -> dict:
+    block = story_layer.parse_story(raw)
+    return {"chapter_key": block.chapter_key, "intro": list(block.intro),
+            "outro": list(block.outro)}
 
 
 _VIDEO_EXT = (".mp4", ".mov", ".mkv", ".webm")
@@ -756,7 +801,10 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
 
     levels_out = []
     levels_dir = game_path / "levels"
-    level_dirs = sorted(p for p in levels_dir.iterdir() if p.is_dir()) if levels_dir.exists() else []
+    found_dirs = {p.name: p for p in levels_dir.iterdir() if p.is_dir()} if levels_dir.exists() else {}
+    # Campaign order (engine.campaign): game_config `levels` first, then the rest by name.
+    level_dirs = [found_dirs[name] for name in
+                  ordered_level_ids(game_config.get("levels", []), sorted(found_dirs))]
 
     # Pre-pass: risolve le scene di ogni livello PRIMA del loop pesante, cosi'
     # il totale scene e' noto e la progress bar per-scena e' determinata.
@@ -935,6 +983,8 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
                 "random_layer_selection": _to_bool(sdata.get("random_layer_selection", False)),
                 "auto_random_finds": _to_bool(sdata.get("auto_random_finds", False)),
                 "num_random_finds": (int(sdata["num_random_finds"]) if sdata.get("num_random_finds") is not None else None),
+                "name_key": sdata.get("name_key", sid),
+                "story": _story_dict(sdata.get("story")),
                 "objects": objs,
             })
 
@@ -1010,6 +1060,7 @@ def export_web_game(game_id: str, output_dir: Path, base: Path | None = None,
         "minigames": minigames,
         "minigame_strings": mg_strings,
         "levels": levels_out,
+        "story": story_layer.game_story_config(game_config),
     }
     manifest["fonts"] = _export_fonts(base, game_id, manifest["theme"], assets_dir)
 

@@ -1,0 +1,142 @@
+{
+ "surfaces": [
+  {
+   "p": [
+    1690,
+    1472,
+    2230,
+    1444
+   ],
+   "h": 58,
+   "kind": "sill",
+   "max": 4,
+   "poses": [
+    "stand",
+    "lie"
+   ]
+  },
+  {
+   "p": [
+    2725,
+    1384,
+    3000,
+    1379
+   ],
+   "h": 48,
+   "kind": "sill",
+   "snap": false,
+   "max": 2,
+   "poses": [
+    "stand",
+    "lie"
+   ]
+  },
+  {
+   "p": [
+    3005,
+    1414,
+    3300,
+    1422
+   ],
+   "h": 47,
+   "kind": "table",
+   "max": 2,
+   "poses": [
+    "stand",
+    "lie"
+   ]
+  },
+  {
+   "p": [
+    2340,
+    1585,
+    2720,
+    1800
+   ],
+   "h": [
+    54,
+    84
+   ],
+   "kind": "area",
+   "max": 5
+  },
+  {
+   "p": [
+    2720,
+    1545,
+    3100,
+    1720
+   ],
+   "h": [
+    48,
+    72
+   ],
+   "kind": "area",
+   "max": 3
+  },
+  {
+   "p": [
+    3100,
+    1600,
+    3700,
+    1720
+   ],
+   "h": [
+    46,
+    64
+   ],
+   "kind": "area",
+   "max": 4
+  },
+  {
+   "p": [
+    3505,
+    1597,
+    3655,
+    1600
+   ],
+   "h": 46,
+   "kind": "ledge",
+   "snap": false,
+   "max": 1,
+   "poses": [
+    "stand",
+    "lie"
+   ]
+  }
+ ],
+ "count": 16,
+ "pool": [
+  "ceramic_wine_jug",
+  "rolling_pin",
+  "enamel_coffee_pot",
+  "straw_wine_flask",
+  "aged_cheese",
+  "butter_mold",
+  "chestnut_roasting_pan",
+  "coffee_grinder_manual",
+  "dusty_wine",
+  "flour_sieve",
+  "iron_kettle",
+  "mortar_pestle_brass",
+  "rustic_bread_loaf",
+  "salt_cellar_wooden",
+  "small_wooden_barrel",
+  "wooden_milk_pail",
+  "hip_flask",
+  "hourglass",
+  "it_seltzer_siphon",
+  "mess_tin",
+  "mushroom_basket",
+  "pewter_goblet",
+  "vintage_thermos",
+  "chef_knife",
+  "kitchen_scale",
+  "poison_bottle",
+  "seltzer_siphon",
+  "spatula"
+ ],
+ "h_mul": 1.0,
+ "minigames": [],
+ "seed": 44
+}

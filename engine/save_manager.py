@@ -34,7 +34,11 @@ class SaveManager:
             "unlocked_levels": [],       # array di IDs livelli sbloccati
             "unlocked_scenes": {},       # dict: level_id -> max_unlocked_index
             "achievements": [],          # lista ids degli achievement già bloccati
-            "temp_level_score": 0        # Punteggio intermedio durante sessione
+            "temp_level_score": 0,       # Punteggio intermedio durante sessione
+            # Story layer (docs/engine/STORY_AND_REPLAY.md): clues found
+            # (scene_id -> clue_key) and the scenes whose collectible was found.
+            "clues": {},
+            "collectibles": []
         }
 
     def load(self) -> None:
@@ -140,6 +144,45 @@ class SaveManager:
             stars_map[scene_id] = stars
 
         self.save()
+
+    # -- story layer -----------------------------------------------------------
+
+    def get_clues(self) -> dict[str, str]:
+        """Clues found so far: scene_id -> clue_key (empty for old saves)."""
+        raw = self.data.get("clues")
+        if not isinstance(raw, dict):
+            return {}
+        return {str(k): str(v) for k, v in raw.items() if isinstance(v, str) and v}
+
+    def get_collectibles(self) -> list[str]:
+        """Scene ids whose collectible has been found (empty for old saves)."""
+        raw = self.data.get("collectibles")
+        if not isinstance(raw, list):
+            return []
+        return [str(s) for s in raw if isinstance(s, str) and s]
+
+    def record_clue(self, scene_id: str, clue_key: str) -> None:
+        """Records the clue of a scene; writes only when something changed."""
+        if not scene_id or not clue_key:
+            return
+        clues = self.get_clues()
+        if clues.get(scene_id) == clue_key:
+            return
+        clues[scene_id] = clue_key
+        self.data["clues"] = clues
+        self.save()
+
+    def record_collectible(self, scene_id: str) -> bool:
+        """Records the collectible of a scene. True only on the first find."""
+        if not scene_id:
+            return False
+        found = self.get_collectibles()
+        if scene_id in found:
+            return False
+        found.append(scene_id)
+        self.data["collectibles"] = found
+        self.save()
+        return True
 
     def reset_progress(self) -> None:
         """Cancella tutti i progressi e riporta il gioco allo stato iniziale."""

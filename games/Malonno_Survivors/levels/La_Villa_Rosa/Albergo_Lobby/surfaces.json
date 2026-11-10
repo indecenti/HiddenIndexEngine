@@ -1,0 +1,33 @@
+{
+ "surfaces": [
+  {"p": [1400, 995, 1690, 1046], "h": [285, 295], "kind": "area", "max": 2},
+  {"p": [2445, 1005, 2600, 1090], "h": [295, 305], "kind": "area", "max": 1},
+  {"p": [1760, 922, 2280, 922], "h": 200, "kind": "shelf", "max": 2},
+  {"p": [2420, 922, 2600, 922], "h": 200, "kind": "shelf", "max": 1},
+  {"p": [470, 1565, 960, 1690], "h": [185, 195], "kind": "area", "max": 3},
+  {"p": [560, 1490, 1000, 1560], "h": [155, 165], "kind": "area", "max": 2},
+  {"p": [950, 1560, 1700, 1830], "h": [185, 215], "kind": "area", "poses": ["lie", "flat"], "max": 4},
+  {"p": [1700, 1690, 2750, 1830], "h": [205, 220], "kind": "area", "poses": ["lie", "flat"], "max": 3},
+  {"p": [480, 1700, 1000, 1830], "h": [205, 220], "kind": "area", "poses": ["lie", "flat"], "max": 2},
+  {"p": [3150, 1430, 3700, 1830], "h": [165, 215], "kind": "area", "max": 5},
+  {"p": [3390, 1280, 3620, 1395], "h": [110, 125], "kind": "area", "max": 2},
+  {"p": [150, 1730, 520, 1825], "h": [220, 230], "kind": "area", "poses": ["lie", "flat"], "max": 1}
+ ],
+ "pool": ["ancient_key", "skeleton_key_rusty", "counter_bell", "fountain_pen", "inkwell_quill",
+          "letter_opener", "faded_letter", "envelope_brown", "old_postcard", "folded_old_map",
+          "sepia_portrait_photo", "wax_seal_stamp", "pocket_watch_tarnished", "hourglass",
+          "ornate_hourglass", "iron_candlestick", "candelabra_silver", "candle_snuffer",
+          "smoking_pipe", "cigar_box", "cigarette_case", "tobacco_tin", "matchbox_vintage",
+          "hand_mirror_brass", "folding_hand_fan", "rosary", "prayer_book", "old_book",
+          "bankers_lamp", "table_lamp", "carbide_lamp", "iron_lantern_old", "railway_lantern",
+          "leather_satchel", "umbrella_closed", "napoletane_cards", "postal_scale",
+          "shaving_brush", "snuff_box", "silver_locket", "music_box", "pewter_goblet",
+          "hip_flask", "brass_compass", "stained_papers", "wooden_clogs", "brass_door_knocker",
+          "keyhole_plate", "iron_door_handle", "ritual_candle", "ornate_candelabra",
+          "worn_pencil", "grappa_bottle", "dusty_wine", "medicine_bottle", "bow_tie",
+          "perfume_bottle_vintage", "lit_candle"],
+ "count": 36,
+ "goals": 15,
+ "seed": 186,
+ "h_mul": 1.0
+}

@@ -14,6 +14,9 @@ import numpy as np
 
 from engine.utils import get_resource_path, get_logger
 from engine.json_validator import load_and_validate
+from engine import story
+from engine.object_shadow import parse_shadow
+from engine.story import StoryBlock
 
 log = get_logger(__name__)
 
@@ -48,6 +51,12 @@ class SceneObject:
     corners: list[list[int]] = field(default_factory=lambda: [[0,0], [0,0], [0,0], [0,0]])
     scale: float = 1.0
     minigame_trigger: Optional[dict] = None
+    # Story layer (docs/engine/STORY_AND_REPLAY.md): a clue object is always a goal,
+    # a collectible never is (it is clickable but stays out of the object list).
+    clue_key: str = ""
+    collectible: bool = False
+    # Contact shadow {dy, w, a} (engine/object_shadow.py), None when the object has none.
+    shadow: Optional[dict] = None
 
     icon_surface: Optional[pygame.Surface] = field(default=None, repr=False)
     mask_surface: Optional[pygame.Surface] = field(default=None, repr=False)
@@ -117,13 +126,21 @@ class SceneLoader:
         # Logica Random Layer Mode (NEW)
         # Se attiva, carichiamo solo uno dei tre layer principali, scelto a random.
         rand_layer_active = _to_bool(data.get("random_layer_selection", False))
-        raw_objs = data["objects"]
+        # Alternative spots first: every object takes its base placement or one of
+        # its `alt_spots` (which may also move it to another layer), so the layer
+        # filter and the goal rotation below work on the placement of this run.
+        raw_objs = [story.resolve_alt_spot(o) for o in data["objects"] if isinstance(o, dict)]
         if rand_layer_active:
             import random
             chosen_layer = random.choice(["objects_low", "objects_mid", "objects_high"])
             log.info(f"[LOADER] Random Layer Mode ATTIVA. Scelto layer: {chosen_layer}")
-            # Filtra solo gli oggetti appartenenti ai layer 'intercambiabili', mantiene sempre l'overlay o altri layer fissi
-            raw_objs = [o for o in raw_objs if o.get("layer", "objects_mid") == chosen_layer or not o.get("layer", "").startswith("objects_")]
+            # Keeps the objects of the chosen interchangeable layer and every fixed
+            # layer (overlay, custom). Clue objects and collectibles are always kept:
+            # the scene's clue must be findable on every run.
+            raw_objs = [o for o in raw_objs
+                        if o.get("layer", "objects_mid") == chosen_layer
+                        or not o.get("layer", "").startswith("objects_")
+                        or story.is_clue(o) or story.is_collectible(o)]
 
         objs = self._select_objects(raw_objs, len(raw_objs), scene_dir)
         
@@ -164,15 +181,20 @@ class SceneLoader:
             import random
             log.info(f"[LOADER] Rotazione automatica: seleziono {num_goals} obiettivi.")
             
-            # Step 1: Resettiamo tutti gli oggetti (nessuno è goal inizialmente)
+            # Step 1: no object is a goal to begin with.
             for o in objs: o.is_goal = False
-            
-            # Step 2: Identifichiamo i fissi e i variabili
-            fixed = [o for o in objs if o.always_show]
-            pool  = [o for o in objs if not o.always_show]
-            
-            # Step 3: I fissi sono sempre goal (entro il limite num_goals)
-            final_goals = fixed[:num_goals]
+
+            # Step 2: fixed and rotating objects. Clue objects count as always_show
+            # and come first, so they are goals even when num_goals is smaller than
+            # the fixed set; collectibles are never goals and stay out of both pools.
+            clues = [o for o in objs if o.clue_key and not o.collectible]
+            fixed = [o for o in objs
+                     if o.always_show and not o.clue_key and not o.collectible]
+            pool  = [o for o in objs
+                     if not o.always_show and not o.clue_key and not o.collectible]
+
+            # Step 3: every clue, then the fixed ones within the num_goals limit.
+            final_goals = clues + fixed[:max(0, num_goals - len(clues))]
             for o in final_goals: o.is_goal = True
             
             # Step 4: Peschiamo il rimanente dal pool casualmente
@@ -201,7 +223,8 @@ class SceneLoader:
             music=data.get("music", []),
             effects=effects,
             flashlight=_to_bool(data.get("flashlight", False)),
-            flashlight_radius=float(data.get("flashlight_radius", 150.0))
+            flashlight_radius=float(data.get("flashlight_radius", 150.0)),
+            story=story.parse_story(data.get("story"))
         )
 
     def _select_objects(self, raw_list: list, count: int, scene_dir: str) -> List[SceneObject]:
@@ -254,6 +277,16 @@ class SceneLoader:
                 else:
                     log.warning(f"Asset icona mancante: {icon_path} (cercato in local e engine)")
             
+            # Story layer: a collectible is never a goal, a clue object always is.
+            clue_key = raw["clue_key"] if story.is_clue(raw) else ""
+            collectible = story.is_collectible(raw)
+            if collectible:
+                is_goal = False
+            elif clue_key:
+                is_goal = True
+            else:
+                is_goal = _to_bool(raw.get("is_goal", True))
+
             # Per-object layer_z override: se presente nel JSON, ha precedenza sul
             # default del layer. Permette ordinamento intra-layer dall'editor.
             _raw_lz = raw.get("layer_z")
@@ -268,7 +301,7 @@ class SceneLoader:
                 width=float(raw.get("width", 0)), height=float(raw.get("height", 0)),
                 layer=raw.get("layer", "objects_mid"),
                 layer_z=_resolved_lz,
-                is_goal=_to_bool(raw.get("is_goal", True)),
+                is_goal=is_goal,
                 always_show=_to_bool(raw.get("always_show", False)),
                 rotation=float(raw.get("rotation", 0.0)),
                 flip_x=_to_bool(raw.get("flip_x", False)), 
@@ -280,6 +313,9 @@ class SceneLoader:
                 corners=raw.get("corners", [[0,0], [0,0], [0,0], [0,0]]),
                 scale=float(raw.get("scale", 1.0)),
                 minigame_trigger=raw.get("minigame_trigger"),
+                clue_key=clue_key,
+                collectible=collectible,
+                shadow=parse_shadow(raw.get("shadow")),
                 icon_surface=icon_surf
             )
             result.append(obj)
@@ -290,6 +326,11 @@ class SceneLoader:
         # Ordinamento critico per Z-index affinché il rendering in-game sia corretto
         result.sort(key=lambda o: o.layer_z)
         return result
+
+    def label_key_for(self, catalog_id: str) -> str:
+        """The i18n label key of a catalog entry (the id itself when unknown)."""
+        entry = self._catalog.get(catalog_id)
+        return str(entry.get("label_key", catalog_id)) if entry else catalog_id
 
 @dataclass
 class SceneData:
@@ -305,3 +346,4 @@ class SceneData:
     effects: list = field(default_factory=list)
     flashlight: bool = False
     flashlight_radius: float = 150.0
+    story: StoryBlock = field(default_factory=StoryBlock)

@@ -3,5 +3,18 @@
   "background": "background.png",
   "background_scale": 1.0,
   "objects": [],
-  "effects": []
+  "effects": [],
+  "story": {
+    "intro": [
+      "Albergo_Lobby_intro_1"
+    ],
+    "outro": [
+      "Albergo_Lobby_outro_1"
+    ],
+    "chapter_key": "ch2_title"
+  },
+  "name_key": "Albergo_Lobby_name",
+  "music": [
+    "Indecenti - Villa Rosa.mp3"
+  ]
 }

@@ -1,0 +1,124 @@
+{
+ "surfaces": [
+  {
+   "p": [
+    612,
+    291,
+    762,
+    291
+   ],
+   "h": 20,
+   "kind": "shelf",
+   "max": 2
+  },
+  {
+   "p": [
+    612,
+    345,
+    768,
+    345
+   ],
+   "h": 20,
+   "kind": "shelf",
+   "max": 2
+  },
+  {
+   "p": [
+    982,
+    357,
+    1115,
+    357
+   ],
+   "h": 20,
+   "kind": "sill",
+   "max": 1
+  },
+  {
+   "p": [
+    708,
+    689,
+    782,
+    687
+   ],
+   "h": 21,
+   "kind": "table",
+   "max": 1
+  },
+  {
+   "p": [
+    180,
+    716,
+    320,
+    720
+   ],
+   "h": 22,
+   "kind": "floor",
+   "snap": false,
+   "max": 1
+  },
+  {
+   "p": [
+    300,
+    742,
+    590,
+    785
+   ],
+   "h": [
+    24,
+    30
+   ],
+   "kind": "area",
+   "max": 2
+  },
+  {
+   "p": [
+    90,
+    770,
+    250,
+    900
+   ],
+   "h": [
+    32,
+    48
+   ],
+   "kind": "area",
+   "max": 2
+  }
+ ],
+ "count": 8,
+ "goals": 6,
+ "pool": [
+  "watering_can",
+  "trowel",
+  "rusty_padlock",
+  "cowbell",
+  "horseshoe_rusty",
+  "sheep_shears",
+  "hand_sickle",
+  "hatchet_old",
+  "wooden_clogs",
+  "wooden_milk_pail",
+  "milking_stool",
+  "flour_sieve",
+  "iron_kettle",
+  "coffee_grinder_manual",
+  "iron_candlestick",
+  "carbide_lamp",
+  "butter_churn",
+  "ceramic_wine_jug",
+  "mortar_pestle_brass",
+  "salt_cellar_wooden",
+  "bankers_lamp",
+  "table_lamp",
+  "field_telephone",
+  "hunting_horn",
+  "censer",
+  "fireplace_tongs",
+  "candle_snuffer",
+  "church_bell_small",
+  "ornate_candelabra",
+  "mandolin",
+  "duck_decoy"
+ ],
+ "seed": 8
+}

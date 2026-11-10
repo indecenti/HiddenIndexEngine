@@ -9,7 +9,7 @@ from pathlib import Path
 import pygame
 
 from editor.constants import (
-    TAB_LAYERS,
+    TAB_LAYERS, MODE_SURFACES,
     TOP_BAR_H, STATUS_H, MENU_W, STATUS_BTN_MIN_W, STATUS_BTN_GAP,
     ACCENT, BORDER, BTN, BTN_HO, BTN_AC, STATUS,
     TXT, TXT_DIM, TXT_HI, OK_C, PANEL, BG
@@ -139,6 +139,11 @@ class RenderTopbarMixin:
                 (self._TR("menu_preset_save", "Save group..."), "edit_preset_save"),
                 (self._TR("menu_preset_insert", "Insert group..."), "edit_preset_insert"),
                 None,
+                (self._TR("menu_place_surfaces", "Place on surfaces..."),
+                 "edit_place_surfaces"),
+                (self._TR("menu_legacy_scatter", "Legacy colour scatter..."),
+                 "edit_legacy_scatter"),
+                None,
                 (self._TR("menu_lang_modal", "Translation editor..."), "edit_lang_modal"),
             ]
         elif menu_name == "View":
@@ -158,6 +163,9 @@ class RenderTopbarMixin:
                       self._TR("menu_view_grid", "Grid")) + " (G)", "view_grid"),
                 (mark(getattr(self, "show_icons", False),
                       self._TR("menu_view_icons", "Object icons")) + " (I)", "view_icons"),
+                (mark(getattr(self, "mode", None) == MODE_SURFACES,
+                      self._TR("menu_view_surfaces", "Placement surfaces")) + " (5)",
+                 "view_surfaces"),
                 None,
                 (self._TR("menu_view_fit", "Fit scene") + " (F)", "view_fit"),
                 (self._TR("menu_view_preview", "Preview as in game") + " (F5)", "view_preview"),

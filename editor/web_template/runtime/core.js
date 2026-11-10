@@ -285,7 +285,40 @@ function drawImageQuad(ctx, img, P) {
   _texTriangle(ctx, img, [0, 0], [W, H], [0, H], P[0], P[2], P[3]);
 }
 
-function drawObject(ctx, sm, obj, img) {
+// Contact shadow (parity: engine/object_shadow.py). A soft, never rotated ellipse
+// centred at (object centre x, object centre y + dy*scale), width w*scale, height
+// w*scale*shadow_aspect; alpha at normalized distance d is a*(1-d)^shadow_falloff,
+// times the object's own alpha. Drawn by drawObject just before the icon.
+const SHADOW_GRADIENT_STOPS = 8;
+function drawObjectShadow(ctx, sm, obj, rules) {
+  const sh = obj.shadow;
+  if (!sh || !(sh.w > 0) || !(sh.a > 0)) return;
+  const r = rules || RULES_DEFAULTS;
+  const aspect = r.shadow_aspect, falloff = r.shadow_falloff;
+  const g = objCenterAndSize(obj);
+  const scale = obj.scale || 1.0;
+  const [sx, sy] = sm.bgToScreen(g.cx, g.cy + (sh.dy || 0) * scale);
+  const rx = sh.w * scale * sm.bgDisplayScale / 2;
+  if (rx < 0.5) return;
+  const objAlpha = obj.alpha == null ? 255 : obj.alpha;
+  const a0 = (Math.min(255, sh.a) / 255) * (objAlpha / 255);
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.scale(1, aspect);
+  const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+  for (let i = 0; i <= SHADOW_GRADIENT_STOPS; i++) {
+    const t = i / SHADOW_GRADIENT_STOPS;
+    grad.addColorStop(t, `rgba(0,0,0,${(a0 * Math.pow(1 - t, falloff)).toFixed(4)})`);
+  }
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(0, 0, rx, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawObject(ctx, sm, obj, img, rules) {
+  drawObjectShadow(ctx, sm, obj, rules);
   const drawable = processedIcon(img, obj);
 
   // Caso warp: mappa l'icona sul quadrilatero deformato (corners+flip+rotazione),
@@ -596,6 +629,10 @@ const RULES_DEFAULTS = {
   hint_max_uses: 3,
   ref_w: 1280,
   ref_h: 720,
+  story_chars_per_s: 40,
+  collectible_points: 250,
+  shadow_aspect: 0.22,
+  shadow_falloff: 1.6,
 };
 
 const HINT_GLOW_MS = 3000;           // durata glow hint manuale (solo estetica)
@@ -679,6 +716,23 @@ class Theme {
 // Save — persistenza progressi in localStorage (per gioco).
 // Replica engine/save_manager.py: scores/stars/unlocked_scenes/unlocked_levels.
 // ──────────────────────────────────────────────────────────────────────────
+// Story and replay layer: alternative spots (parity: engine/story.py resolve_alt_spot).
+// The object takes its base placement or one of its alt_spots, uniformly at random.
+const ALT_SPOT_FIELDS = ["x", "y", "rotation", "scale", "flip_x", "flip_y", "alpha",
+                         "color_filter", "layer", "shadow"];
+function resolveAltSpot(raw) {
+  const obj = Object.assign({}, raw);
+  delete obj.alt_spots;
+  const spots = (raw.alt_spots || []).filter(sp => sp && sp.x != null && sp.y != null);
+  if (!spots.length) return obj;
+  const pick = Math.floor(Math.random() * (spots.length + 1));
+  if (pick === 0) return obj;
+  for (const k of ALT_SPOT_FIELDS) {
+    if (spots[pick - 1][k] != null) obj[k] = spots[pick - 1][k];
+  }
+  return obj;
+}
+
 const Save = {
   _key(gameId) { return "hie_save_" + gameId; },
   load(gameId) {
@@ -686,7 +740,24 @@ const Save = {
       const raw = localStorage.getItem(this._key(gameId));
       if (raw) return JSON.parse(raw);
     } catch (e) {}
-    return { scores: {}, stars: {}, unlocked_scenes: {}, unlocked_levels: [] };
+    return { scores: {}, stars: {}, unlocked_scenes: {}, unlocked_levels: [], clues: {}, collectibles: [] };
+  },
+  // Story layer (parity: engine/save_manager.py record_clue / record_collectible).
+  recordClue(gameId, sceneId, clueKey) {
+    const data = this.load(gameId);
+    data.clues = data.clues || {};
+    data.clues[sceneId] = clueKey;
+    this.save(gameId, data);
+    return data;
+  },
+  // True only on the first find of the scene's collectible.
+  recordCollectible(gameId, sceneId) {
+    const data = this.load(gameId);
+    data.collectibles = data.collectibles || [];
+    if (data.collectibles.includes(sceneId)) return false;
+    data.collectibles.push(sceneId);
+    this.save(gameId, data);
+    return true;
   },
   save(gameId, data) {
     try { localStorage.setItem(this._key(gameId), JSON.stringify(data)); } catch (e) {}

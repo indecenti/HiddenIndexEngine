@@ -25,7 +25,7 @@ var _BASE_CSS = "\
 #menu-root .menu-title{margin:6px 0;text-align:center;font-family:var(--font-title,Georgia,serif);font-weight:500;letter-spacing:.5px;color:var(--text,#eaf0fa);font-size:34px}\
 #menu-root .menu-title.big{font-size:52px}\
 #menu-root .gear-btn{position:absolute;top:14px;right:16px;width:42px;height:42px;border-radius:50%;border:1px solid var(--card-border,#33405a);background:rgba(0,0,0,.3);color:var(--accent,#5aa0eb);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}\
-#menu-root .gear-btn svg{width:22px;height:22px;fill:currentColor}\
+#menu-root .gear-btn svg{width:22px;height:22px;fill:currentColor}#menu-root .journal-btn{position:absolute;top:14px;right:68px;height:42px;padding:0 18px;border-radius:21px;border:1px solid var(--card-border,#33405a);background:rgba(0,0,0,.3);color:var(--accent,#5aa0eb);cursor:pointer;font:600 15px var(--font-body,system-ui,sans-serif);letter-spacing:.04em}#menu-root .journal-btn:hover{background:rgba(255,255,255,.08)}\
 #menu-root .start-screen{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;cursor:pointer;padding:24px}\
 #menu-root .start-prompt{color:var(--accent,#5aa0eb);font-size:20px;animation:promptPulse 1.4s ease-in-out infinite}\
 @keyframes promptPulse{0%,100%{opacity:.5}50%{opacity:1}}\
@@ -266,6 +266,17 @@ class MenuSkinWeb {
     gear.innerHTML = _SVG_GEAR;
     gear.addEventListener("click", function () { g.audio.sfx("click"); g._openSettings(); });
     wrap.appendChild(gear);
+    // Journal (story layer): only for games whose scenes carry clues or collectibles.
+    var hasStory = (m.levels || []).some(function (l) {
+      return (l.scenes || []).some(function (sc) {
+        return (sc.objects || []).some(function (o) { return o.clue_key || o.collectible; });
+      });
+    });
+    if (hasStory) {
+      var jb = this.el("button", "journal-btn", g.t("journal_title", "Journal"));
+      jb.addEventListener("click", function () { self.hide(); g._openJournal(); });
+      wrap.appendChild(jb);
+    }
     wrap.appendChild(this.el("h1", "menu-title", this.gameTitle()));
     wrap.appendChild(this.el("div", "ls-sub", g.t("menu_select_scene", "Seleziona una scena")));
     (m.levels || []).forEach(function (lvl) {
@@ -294,7 +305,9 @@ class MenuSkinWeb {
         var meta = self.el("div", "card-meta");
         meta.appendChild(self.el("div", "scene-name",
           self.prettyName(g.t(sc.id + "_name", sc.id))));
-        var n = (sc.objects || []).filter(function (o) { return o.is_goal; }).length;
+        var n = sc.auto_random_finds && sc.num_random_finds
+          ? sc.num_random_finds
+          : (sc.objects || []).filter(function (o) { return o.is_goal || o.clue_key; }).length;
         meta.appendChild(self.el("div", "scene-count", n + " " + g.t("menu_objects", "oggetti")));
         card.appendChild(meta);
         if (locked) { var lb = self.el("div", "lock-badge"); lb.innerHTML = _SVG_LOCK; card.appendChild(lb); }
@@ -427,6 +440,7 @@ class MenuSkinWeb {
       return b;
     };
     btns.appendChild(mk(g.t("btn_resume", "Riprendi"), true, function () { g.state = "SCENE"; g.invalidate(); }));
+    btns.appendChild(mk(g.t("pause_journal", "Diario"), false, function () { self.hide(); g._openJournal(); }));
     btns.appendChild(mk(g.t("settings_title", "Impostazioni"), false, function () { g._openSettings(); }));
     btns.appendChild(mk(g.t("btn_restart", "Ricomincia"), false, function () { self.hide(); g.startScene(g.level, g.sceneDef); }));
     btns.appendChild(mk(g.t("btn_quit_to_main", "Menu"), false, function () { g.state = "LEVEL_SELECT"; g.audio.playMusic(g.manifest.menu_music); g.invalidate(); }));

@@ -20,6 +20,11 @@ from engine.scaling_manager import ScalingManager
 from engine.save_manager import SaveManager
 from engine.transition_manager import TransitionManager, TransitionType
 from engine.level_manager import SCENE_COMPLETE, LEVEL_COMPLETE, SCENE_FAILED
+from engine import story as story_rules
+from engine.object_shadow import draw_shadow
+from engine.story_overlay import (KIND_CLUE, KIND_STORY, CardOverlay, CardPage,
+                                  CollectibleToast, JournalOverlay, JournalRow, JournalView,
+                                  safe_format)
 
 try:
     import ctypes
@@ -46,6 +51,12 @@ MENU_SCRIM_ALPHA_MAIN = 96
 MENU_SCRIM_ALPHA_LIST = 172
 # Smallest px size the hint panel may shrink a label to.
 HUD_LABEL_MIN_SIZE = 9
+# Typing sound of story and clue cards: one click every N characters, at this volume
+# (same rhythm as the bubble tips).
+STORY_TYPE_SOUND_EVERY = 2
+STORY_TYPE_SOUND_VOL = 0.10
+SFX_CLICK = "engine/assets/sounds/click_Low.wav"
+SFX_FOUND = "engine/assets/sounds/bling1.mp3"
 
 class EngineState:
     """Stati principali della state machine di sistema."""
@@ -343,6 +354,8 @@ class EngineCore:
 
         from engine.minigame_manager import MinigameManager
         self.minigame_manager = MinigameManager(self.screen, self.scaling_manager, self.audio, self.lang)
+
+        self._init_story_layer()
 
         self._current_scene_objects = []
         self._current_scene_effects = []
@@ -692,6 +705,10 @@ class EngineCore:
                     self.effects.shake_screen(duration=0.8, intensity=8.0)
                     return
 
+            if getattr(hit, "collectible", False):
+                self._on_collectible_found(hit)
+                return
+
             if hit.is_goal:
                 # Registra il ritrovamento per QUALSIASI obiettivo valido non ancora
                 # trovato, anche se fuori dalla finestra visibile della HUD
@@ -714,6 +731,10 @@ class EngineCore:
                     self.audio.play_sfx("engine/assets/sounds/bling1.mp3")
                     self.effects.spawn_found_effect(cx, cy)
                     haptics.found()
+                if getattr(hit, "clue_key", ""):
+                    # The clue card pauses the scene: when this was the last goal the
+                    # scene completes only after the card is closed.
+                    self._open_clue_card(hit)
         else:
             self.audio.play_sfx("engine/assets/sounds/error4.mp3")
             haptics.miss()
@@ -746,7 +767,8 @@ class EngineCore:
         self._pinch_last_centroid = centroid
 
     def _handle_finger_down(self, event) -> None:
-        if self.state != EngineState.SCENE:
+        # Called through the class: the gesture tests bind this handler to a stub.
+        if self.state != EngineState.SCENE or EngineCore._story_overlay_open(self):
             return
         self._touch_points[self._finger_id(event)] = self._finger_xy(event)
         if len(self._touch_points) >= 2:
@@ -889,7 +911,9 @@ class EngineCore:
                     self._handle_android_resize(event.w, event.h)
 
             elif event.type == pygame.MOUSEWHEEL:
-                if self.state in [EngineState.MENU, EngineState.PAUSE]:
+                if self._journal.is_open:
+                    self._journal.handle_wheel(event.y)
+                elif self.state in [EngineState.MENU, EngineState.PAUSE]:
                     self.menu_system.handle_scroll(event.y)
 
             # Gesti multitouch in scena (pinch-to-zoom + pan). Gli eventi mouse
@@ -911,6 +935,15 @@ class EngineCore:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: # Left click
                     self.hud.on_mouse_activity()
+                    # Story layer overlays take every click while open: nothing
+                    # reaches the scene or the pause menu underneath.
+                    if self._journal.is_open:
+                        self._journal.handle_down(event.pos)
+                        continue
+                    if self.state == EngineState.SCENE and self._story_cards.is_open:
+                        self._story_cards.handle_click(event.pos)
+                        self.audio.play_sfx(SFX_CLICK)
+                        continue
                     if self.state in [EngineState.MENU, EngineState.PAUSE]:
                         action = self.menu_system.process_click(event.pos[0], event.pos[1])
                         if action and action != "none":
@@ -944,9 +977,12 @@ class EngineCore:
                                         TransitionType.FADE_TO_BLACK, 
                                         on_midpoint=self._resume_from_save
                                     )
+                            elif action == "open_journal":
+                                self._open_journal()
                             elif action == "quit_to_main":
                                 # Stop musica e ritorno al menu
                                 self.audio.stop_music(fade_ms=500)
+                                self._story_reset()
                                 self._switch_to_menu()
                             elif action == "toggle_lang":
                                 av_langs = self.lang.available_languages
@@ -1014,7 +1050,9 @@ class EngineCore:
                                 continue  # gesto multitouch in corso: ignora il mouse emulato
                             # I bubble modali hanno la priorità (anche sul coachmark).
                             is_visible = self.level_manager.is_any_bubble_visible()
-                            is_pending_intro = self._scene_intro_timer > 0 and self.level_manager.has_start_scene_bubbles()
+                            is_pending_intro = self._scene_intro_timer > 0 and (
+                                self.level_manager.has_start_scene_bubbles()
+                                or self._story_intro_pending)
                             if is_visible or is_pending_intro:
                                 if is_visible:
                                     for fx in self._current_scene_effects:
@@ -1042,7 +1080,9 @@ class EngineCore:
                         # ── Desktop (mouse): azione immediata sul DOWN ──
                         # --- GESTIONE BUBBLE TIPS ---
                         is_visible = self.level_manager.is_any_bubble_visible()
-                        is_pending_intro = self._scene_intro_timer > 0 and self.level_manager.has_start_scene_bubbles()
+                        is_pending_intro = self._scene_intro_timer > 0 and (
+                            self.level_manager.has_start_scene_bubbles()
+                            or self._story_intro_pending)
                         if is_visible or is_pending_intro:
                             if is_visible:
                                 clicked_any = False
@@ -1080,6 +1120,8 @@ class EngineCore:
                             self.transition_manager.start_transition(TransitionType.FADE_TO_BLACK, on_midpoint=self._advance_scene)
             
             elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1 and self._journal.is_open:
+                    self._journal.handle_up(event.pos)
                 # Android, scena: al rilascio distinguiamo SWIPE (cassetto HUD), PAN e
                 # gesto da TAP. Solo un tap pulito instrada su hint/maniglia/pausa o
                 # click oggetto; gesti e pan non generano MAI find/penalità/toggle.
@@ -1116,6 +1158,9 @@ class EngineCore:
                         
             elif event.type == pygame.MOUSEMOTION:
                 self.hud.on_mouse_activity()
+                if self._journal.is_open:
+                    self._journal.handle_motion(event.pos,
+                                                bool(event.buttons and event.buttons[0]))
                 # Drag a una dita mentre si è ingranditi -> pan della scena (no tap,
                 # no penalità). Solo touch/Android e solo con zoom attivo, così a
                 # zoom 1.0 lo swipe del cassetto HUD resta invariato.
@@ -1181,6 +1226,19 @@ class EngineCore:
                 self.transition_manager.start_transition(TransitionType.FADE_TO_BLACK, on_midpoint=self._switch_to_results)
                     
             elif event.type == pygame.KEYDOWN:
+                # Story layer: the journal takes the keys while open (Esc/J close
+                # it); a card goes on with Enter/Space and lets Esc open the pause.
+                if self._journal.is_open:
+                    self._journal.handle_key(event.key)
+                    continue
+                if self.state == EngineState.SCENE and self._story_cards.is_open:
+                    if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
+                        self._story_cards.advance()
+                        self.audio.play_sfx(SFX_CLICK)
+                        continue
+                    if event.key not in (pygame.K_ESCAPE, pygame.K_AC_BACK):
+                        continue
+
                 # Se è visibile una bubble, blocchiamo OGNI input da tastiera
                 if self.level_manager.is_any_bubble_visible():
                     continue
@@ -1222,6 +1280,12 @@ class EngineCore:
                     else:
                         self.audio.play_sfx("engine/assets/sounds/error4.mp3")
                         self.logger.warning("Tasto H: Nessun hint disponibile!")
+
+                elif event.key == pygame.K_j and self.state == EngineState.SCENE:
+                    # Tasto J: journal of the story layer (pauses the scene).
+                    if self._journal_has_content():
+                        self.audio.play_sfx(SFX_CLICK)
+                        self._open_journal()
 
                 elif event.key == pygame.K_t and self.state == EngineState.SCENE:
                     # Tasto T: Mostra quale oggetto cercare (indicatore animato)
@@ -1320,10 +1384,13 @@ class EngineCore:
         elif self.state == EngineState.SCENE:
             self.effects.update(dt)
             self.fx_renderer.update(dt) # Sincronizzazione tempo per jittering e vibrazioni
+            # Story layer: while a card or the journal is open the scene is paused
+            # (no timer, no completion, no hints, no intro zoom).
+            story_paused = self._update_story_layer(dt)
 
             # Onboarding coachmark: auto-dismiss dopo qualche secondo (oltre al
             # dismiss sulla prima interazione).
-            if self._coach_active:
+            if self._coach_active and not story_paused:
                 self._coach_timer += dt
                 if self._coach_timer > 7.0:
                     self._dismiss_coach()
@@ -1355,7 +1422,8 @@ class EngineCore:
                 else:
                     update_effect_state(fx, dt)
                     
-            self.level_manager.update(dt)
+            if not story_paused:
+                self.level_manager.update(dt)
 
             # Cache mouse position per il frame (evita multiple get_pos() calls)
             mouse_pos = pygame.mouse.get_pos()
@@ -1363,7 +1431,8 @@ class EngineCore:
 
             # Aggiorna sistema hint (auto-hint + glow)
             # layer_hint_intensity è cachato in self._cached_layer_intensity
-            self.hint.update(dt, self._current_scene_objects, self._cached_layer_intensity)
+            if not story_paused:
+                self.hint.update(dt, self._current_scene_objects, self._cached_layer_intensity)
 
             # Aggiorna hint indicator animation
             if self._hint_indicator_target_obj:
@@ -1373,15 +1442,17 @@ class EngineCore:
                     self._hint_indicator_timer = 0.0
 
             # --- Gestione Intro Zoom ---
-            if self._scene_intro_timer > 0:
+            if story_paused:
+                pass
+            elif self._scene_intro_timer > 0:
                 self._scene_intro_timer -= dt
                 if self._scene_intro_timer <= 0:
                     self._scene_intro_timer = 0
-                    # Attiva i fumetti di inizio scena quando lo zoom finisce
-                    for fx in self._current_scene_effects:
-                        if fx.type == "bubble_tip" and getattr(fx, "trigger", "") == "start_scene":
-                            fx._visible = True
-                            self.logger.info(f"Intro finita: attivato fumetto {fx.effect_id}")
+                    # Intro story cards first, then the start_scene bubble tips.
+                    self._on_intro_zoom_finished()
+            elif self._story_intro_pending:
+                # Scene entered without the intro zoom (resume): cards right away.
+                self._on_intro_zoom_finished()
 
             if self._spam_lock_timer > 0:
                 self._spam_lock_timer -= dt
@@ -1461,6 +1532,7 @@ class EngineCore:
         self.hud.setup(self._current_scene_objects, self.level_manager.time_elapsed)
         self._play_scene_music(scene_data)
         self.state = EngineState.SCENE
+        self._story_scene_started()
 
     def _switch_to_menu(self) -> None:
         """Sincronizza core e menu_system verso lo stato principale."""
@@ -1559,6 +1631,7 @@ class EngineCore:
             self._play_scene_music(next_scene)
             self.state = EngineState.SCENE
             self._scene_intro_timer = self._scene_intro_dur  # Avvia intro zoom
+            self._story_scene_started()
             self.logger.info("Avanzato alla scena successiva.")
         else:
             self._switch_to_menu()
@@ -1613,6 +1686,7 @@ class EngineCore:
         self._play_scene_music(scene_data)
         self.state = EngineState.SCENE
         self._scene_intro_timer = self._scene_intro_dur  # Avvia intro zoom
+        self._story_scene_started()
         self.logger.info(f"Livello '{level_id}' avviato con successo.")
 
     def _start_test_scene(self) -> None:
@@ -2267,6 +2341,16 @@ class EngineCore:
 
                 # Dimensione icona a schermo: hit-area in bg-space → pixel, applicando obj.scale
                 obj_scale = getattr(obj, "scale", 1.0)
+
+                # Contact shadow under the object (engine/object_shadow.py): same centre
+                # and screen shake as the icon, never rotated, drawn before it.
+                _shadow = getattr(obj, "shadow", None)
+                if _shadow:
+                    _warped = (any(c[0] != 0 or c[1] != 0 for c in obj.corners)
+                               and obj.rotation == 0)
+                    _shk = (0, 0) if _warped else self.effects.shake_offset
+                    draw_shadow(self.screen, _shadow, (sx + _shk[0], sy + _shk[1]),
+                                sm._bg_display_scale * scenic_factor, obj_scale, obj.alpha)
                 icon_w = max(1, int(hit_w_bg * sm._bg_display_scale * scenic_factor * obj_scale))
                 icon_h = max(1, int(hit_h_bg * sm._bg_display_scale * scenic_factor * obj_scale))
 
@@ -2467,7 +2551,8 @@ class EngineCore:
 
             # Onboarding coachmark (solo Android, una tantum). Non sovrapporlo a un
             # bubble intro modale: in quel caso resta attivo ma non disegnato.
-            if self._coach_active and not self.level_manager.is_any_bubble_visible():
+            if (self._coach_active and not self.level_manager.is_any_bubble_visible()
+                    and not self._story_overlay_open()):
                 self._draw_coachmark()
 
             # Overlay Lockdown per Anti-Spam
@@ -2476,7 +2561,12 @@ class EngineCore:
                 alpha = int(abs(math.sin(pygame.time.get_ticks() * 0.01)) * 40 + 20)
                 lock_surf.fill((200, 0, 0, alpha))
                 self.screen.blit(lock_surf, (0, 0))
-            
+
+            # Story layer, always on top of the scene and its HUD.
+            self._toast.draw(self.screen)
+            self._story_cards.draw(self.screen)
+            self._journal.draw(self.screen)
+
         elif self.state == EngineState.PAUSE:
             # Pausa: oscuramento TOTALE per evitare "cheating" (vedere la scena a tempo fermo).
             # Un SINGOLO fill opaco col colore gia' combinato (prima: fill (10,10,15) + overlay
@@ -2486,6 +2576,7 @@ class EngineCore:
 
             # Il menu system disegna i bottoni (Riprendi, Impostazioni, Esci) sopra l'oscuramento
             self.menu_system.draw(self.screen)
+            self._journal.draw(self.screen)
             
         elif self.state == EngineState.RESULTS:
             # Sfondo scuro per la schermata di risultati
@@ -2633,15 +2724,206 @@ class EngineCore:
             # Se ha fallito, sparisce comunque (consumato) ma con un feedback più neutro
             self.audio.play_sfx("engine/assets/sounds/bling1.mp3")
 
+    # ── Story layer (docs/engine/STORY_AND_REPLAY.md) ───────────────────────
+
+    def _init_story_layer(self) -> None:
+        """Story cards, clue cards, collectible toast and journal of the scenes."""
+        theme = self.menu_system.theme
+        self._story_cfg = story_rules.game_story_config(self.game_config)
+        self._story_cards = CardOverlay(self.scaling_manager, theme, self._is_android)
+        self._journal = JournalOverlay(self.scaling_manager, theme, self._is_android)
+        self._toast = CollectibleToast(self.scaling_manager, theme, self._is_android)
+        self._story_intro_pending = False   # intro cards still to show in this scene
+        self._story_outro_done = False      # outro cards already shown in this scene
+        self._story_type_acc = 0            # characters typed since the last click sound
+        self._story_scene_cache: Optional[list] = None
+        self.level_manager.set_completion_hold(self._story_completion_hold)
+
+    def _story_overlay_open(self) -> bool:
+        """True while a story/clue card or the journal pauses the scene.
+
+        Tolerant of a core whose story layer is not initialised (the gesture tests
+        bind the touch handlers to a bare stub)."""
+        cards = getattr(self, "_story_cards", None)
+        journal = getattr(self, "_journal", None)
+        return bool((cards is not None and cards.is_open)
+                    or (journal is not None and journal.is_open))
+
+    def _story_reset(self) -> None:
+        """Drops every story overlay without running callbacks (scene left)."""
+        self._story_cards.reset()
+        self._journal.close()
+        self._story_intro_pending = False
+
+    def _current_story(self) -> story_rules.StoryBlock:
+        return getattr(self._current_scene_data, "story", None) or story_rules.StoryBlock()
+
+    def _story_scene_id(self) -> str:
+        return str(getattr(self._current_scene_data, "id", "") or "")
+
+    def _story_scene_started(self) -> None:
+        """Called when a scene becomes the current one: arms its intro and outro."""
+        self._story_reset()
+        self._story_outro_done = False
+        self._story_type_acc = 0
+        self._story_intro_pending = bool(self._current_story().intro)
+
+    def _update_story_layer(self, dt: float) -> bool:
+        """Advances the overlays; returns True when the scene must stay paused."""
+        self._toast.update(dt)
+        if self._story_cards.is_open:
+            typed = self._story_cards.update(dt)
+            if typed > 0:
+                self._story_type_acc += typed
+                if self._story_type_acc >= STORY_TYPE_SOUND_EVERY:
+                    self._story_type_acc %= STORY_TYPE_SOUND_EVERY
+                    self.audio.play_sfx(SFX_CLICK, vol=STORY_TYPE_SOUND_VOL)
+        return self._story_overlay_open()
+
+    def _story_pages(self, keys: tuple, chapter_key: str = "") -> list:
+        """Localized story pages; the chapter heading goes on the first page only."""
+        chapter = self.lang.get(chapter_key, "") if chapter_key else ""
+        return [CardPage(body=self.lang.get(key, key), heading=chapter if i == 0 else "")
+                for i, key in enumerate(keys)]
+
+    def _open_story_cards(self, pages: list, on_close=None) -> bool:
+        self._story_cards.continue_label = self.lang.get("story_continue", "Continue")
+        self._story_type_acc = 0
+        return self._story_cards.open(pages, KIND_STORY, on_close=on_close)
+
+    def _on_intro_zoom_finished(self) -> None:
+        """End of the intro zoom: intro story cards first, then start_scene bubbles."""
+        if self._story_intro_pending:
+            self._story_intro_pending = False
+            story = self._current_story()
+            pages = self._story_pages(story.intro, story.chapter_key)
+            if self._open_story_cards(pages, on_close=self._show_start_bubbles):
+                return
+        self._show_start_bubbles()
+
+    def _show_start_bubbles(self) -> None:
+        for fx in self._current_scene_effects:
+            if fx.type == "bubble_tip" and getattr(fx, "trigger", "") == "start_scene":
+                fx._visible = True
+                self.logger.info(f"Intro finita: attivato fumetto {getattr(fx, 'effect_id', '')}")
+
+    def _story_completion_hold(self) -> bool:
+        """LevelManager hook, called when the scene would complete (end_scene bubbles
+        closed): the outro cards play first, SCENE_COMPLETE follows once they close."""
+        if self._story_overlay_open():
+            return True
+        if self._story_outro_done:
+            return False
+        self._story_outro_done = True
+        return self._open_story_cards(self._story_pages(self._current_story().outro))
+
+    def _open_clue_card(self, obj) -> None:
+        """Clue card of a found clue object, recorded in the save for the journal."""
+        self.save_manager.record_clue(self._story_scene_id(), obj.clue_key)
+        page = CardPage(body=self.lang.get(obj.clue_key, obj.clue_key),
+                        heading=self.lang.get("clue_found", "Clue found"),
+                        title=self.lang.get(obj.label_key, obj.label_key),
+                        icon=obj.icon_surface)
+        self._story_cards.continue_label = self.lang.get("story_continue", "Continue")
+        self._story_type_acc = 0
+        self._story_cards.open([page], KIND_CLUE)
+
+    def _on_collectible_found(self, obj) -> None:
+        """A collectible: points and popup on the first find of the scene only."""
+        obj.found = True
+        if obj.detection_type == "rect":
+            cx, cy = obj.x + obj.width / 2, obj.y + obj.height / 2
+        else:
+            cx, cy = obj.x, obj.y
+        self.effects.spawn_found_effect(cx, cy)
+        self.audio.play_sfx(SFX_FOUND)
+        haptics.found()
+        if not self.save_manager.record_collectible(self._story_scene_id()):
+            self.logger.info("Collectible found again in '%s': no points", self._story_scene_id())
+            return
+        self.level_manager.add_score(story_rules.COLLECTIBLE_POINTS)
+        name_key = self._story_cfg["collectible_name_key"]
+        name = self.lang.get(name_key, name_key)
+        text = safe_format(self.lang.get("collectible_found", "{name} found!"), name=name)
+        self._toast.show(text, f"+{story_rules.COLLECTIBLE_POINTS}")
+        self.logger.info("Collectible found in '%s': +%d", self._story_scene_id(),
+                         story_rules.COLLECTIBLE_POINTS)
+
+    def _story_scenes(self) -> list:
+        """(level_id, scene_id, scene_json) of every scene in campaign order (cached)."""
+        if self._story_scene_cache is None:
+            import json
+            from engine.campaign import Campaign
+            camp = Campaign(self.game_id, None, self.game_config)
+            scenes = []
+            for level_id in camp.levels():
+                for scene_id in camp.scenes(level_id):
+                    path = get_resource_path("games", self.game_id, "levels", level_id,
+                                             scene_id, "scene.json")
+                    try:
+                        with open(path, "r", encoding="utf-8") as fh:
+                            data = json.load(fh)
+                    except (OSError, ValueError) as exc:
+                        self.logger.warning("Journal: scene '%s' unreadable: %s", scene_id, exc)
+                        data = {}
+                    scenes.append((level_id, scene_id, data if isinstance(data, dict) else {}))
+            self._story_scene_cache = scenes
+        return self._story_scene_cache
+
+    def _journal_has_content(self) -> bool:
+        """True when some scene of the game has a clue or a collectible."""
+        for _lv, _sid, data in self._story_scenes():
+            for obj in data.get("objects", []):
+                if isinstance(obj, dict) and (story_rules.is_clue(obj)
+                                              or story_rules.is_collectible(obj)):
+                    return True
+        return False
+
+    def _build_journal_view(self) -> JournalView:
+        journal = story_rules.build_journal(self._story_scenes(), self.save_manager.get_clues(),
+                                            self.save_manager.get_collectibles())
+        rows = []
+        for entry in journal.entries:
+            scene_name = self.menu_system._pretty_name(
+                self.lang.get(entry.scene_name_key, entry.scene_id))
+            obj_key = self.scene_loader.label_key_for(entry.clue_object_id)
+            rows.append(JournalRow(scene_name=scene_name,
+                                   object_name=self.lang.get(obj_key, obj_key),
+                                   clue_text=self.lang.get(entry.clue_key, entry.clue_key),
+                                   unlocked=entry.unlocked))
+        footer = ""
+        if journal.collectibles_total > 0:
+            name_key = self._story_cfg["collectible_name_key"]
+            footer = safe_format(self.lang.get("journal_collectibles", "{name}: {found}/{total}"),
+                                 name=self.lang.get(name_key, name_key),
+                                 found=journal.collectibles_found,
+                                 total=journal.collectibles_total)
+        epi_title = epi_text = ""
+        if journal.epilogue_unlocked and self._story_cfg["epilogue_key"]:
+            epi_text = self.lang.get(self._story_cfg["epilogue_key"], "")
+            title_key = self._story_cfg["epilogue_title_key"]
+            epi_title = self.lang.get(title_key, "") if title_key else ""
+        return JournalView(title=self.lang.get("journal_title", "Journal"), rows=rows,
+                           locked_text=self.lang.get("journal_locked", "Not discovered yet"),
+                           empty_text=self.lang.get("journal_empty", "No clues yet"),
+                           footer=footer, epilogue_title=epi_title, epilogue_text=epi_text,
+                           close_label=self.lang.get("btn_close", "Close"))
+
+    def _open_journal(self) -> None:
+        """Opens the journal (from the pause menu or the J key in a scene)."""
+        self._journal.open(self._build_journal_view())
+
     def _toggle_pause(self) -> None:
         """Gestisce il passaggio tra gioco (SCENE o MINIGAME) e MENU PAUSA."""
         if self.state in [EngineState.SCENE, EngineState.MINIGAME]:
             # Salviamo lo stato corrente per poter tornare correttamente dopo la pausa
             self._state_before_pause = self.state
+            self.menu_system.journal_available = self._journal_has_content()
             self.menu_system.change_state("pause", has_save=self._has_progress())
             self.state = EngineState.PAUSE
             self.logger.info(f"Gioco in pausa (da stato: {self._state_before_pause}).")
         elif self.state == EngineState.PAUSE:
+            self._journal.close()
             # Ripristiniamo lo stato precedente o SCENE come fallback
             self.state = getattr(self, "_state_before_pause", EngineState.SCENE)
             self.logger.info(f"Gioco ripreso (ritorno a: {self.state}).")

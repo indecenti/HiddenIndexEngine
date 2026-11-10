@@ -1,0 +1,213 @@
+{
+ "surfaces": [
+  {
+   "p": [
+    2750,
+    1880,
+    2960,
+    1990
+   ],
+   "h": [
+    175,
+    180
+   ],
+   "kind": "area",
+   "max": 1
+  },
+  {
+   "p": [
+    4140,
+    1985,
+    4320,
+    2110
+   ],
+   "h": [
+    190,
+    200
+   ],
+   "kind": "area",
+   "max": 1
+  },
+  {
+   "p": [
+    1350,
+    2000,
+    1850,
+    2280
+   ],
+   "h": [
+    128,
+    150
+   ],
+   "kind": "area",
+   "max": 5
+  },
+  {
+   "p": [
+    1680,
+    2280,
+    1850,
+    2560
+   ],
+   "h": [
+    150,
+    165
+   ],
+   "kind": "area",
+   "max": 2
+  },
+  {
+   "p": [
+    2350,
+    2150,
+    2800,
+    2300
+   ],
+   "h": [
+    140,
+    150
+   ],
+   "kind": "area",
+   "max": 2
+  },
+  {
+   "p": [
+    3300,
+    2300,
+    3560,
+    2580
+   ],
+   "h": [
+    155,
+    170
+   ],
+   "kind": "area",
+   "max": 2,
+   "poses": [
+    "lie",
+    "flat"
+   ]
+  },
+  {
+   "p": [
+    4470,
+    2050,
+    5150,
+    2200
+   ],
+   "h": [
+    130,
+    145
+   ],
+   "kind": "area",
+   "max": 3
+  },
+  {
+   "p": [
+    3720,
+    2300,
+    4080,
+    2580
+   ],
+   "h": [
+    155,
+    170
+   ],
+   "kind": "area",
+   "max": 2,
+   "poses": [
+    "lie",
+    "flat"
+   ]
+  },
+  {
+   "p": [
+    1850,
+    2480,
+    2350,
+    2590
+   ],
+   "h": [
+    165,
+    170
+   ],
+   "kind": "area",
+   "max": 2,
+   "poses": [
+    "lie",
+    "flat"
+   ]
+  },
+  {
+   "p": [
+    4470,
+    2200,
+    5150,
+    2580
+   ],
+   "h": [
+    145,
+    170
+   ],
+   "kind": "area",
+   "max": 3,
+   "poses": [
+    "lie",
+    "flat"
+   ]
+  },
+  {
+   "p": [
+    2350,
+    2300,
+    2800,
+    2580
+   ],
+   "h": [
+    150,
+    165
+   ],
+   "kind": "area",
+   "max": 3,
+   "poses": [
+    "lie",
+    "flat"
+   ]
+  }
+ ],
+ "pool": [
+  "small_wooden_barrel",
+  "dusty_wine",
+  "hatchet_old",
+  "wooden_mallet",
+  "nails_jar",
+  "sheep_shears",
+  "ceramic_wine_jug",
+  "hip_flask",
+  "straw_wine_flask",
+  "vintage_thermos",
+  "chestnut_roasting_pan",
+  "cigar_box",
+  "folding_ruler",
+  "iron_candlestick",
+  "iron_kettle",
+  "salt_cellar_wooden",
+  "wooden_milk_pail",
+  "enamel_coffee_pot",
+  "hammer",
+  "milk_churn",
+  "oil_can_small",
+  "pewter_goblet",
+  "chef_knife",
+  "kitchen_scale",
+  "screwdriver",
+  "teapot_cast_iron",
+  "trowel",
+  "it_idrolitina_tin",
+  "it_seltzer_siphon",
+  "whiskey_bottle"
+ ],
+ "count": 24,
+ "h_mul": 1.0,
+ "seed": 267
+}

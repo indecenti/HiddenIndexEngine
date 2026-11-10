@@ -1,0 +1,32 @@
+{
+  "id": "La_Villa_Rosa",
+  "name_key": "La_Villa_Rosa_name",
+  "difficulty": "hard",
+  "timer_behavior": "complete",
+  "scenes": [
+    {
+      "id": "Albergo_Lobby",
+      "order": 1,
+      "time_limit": 300,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Infermeria_Alpina",
+      "order": 2,
+      "time_limit": 300,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Villa_Rosa",
+      "order": 3,
+      "time_limit": 300,
+      "transition_out": "fade"
+    },
+    {
+      "id": "Sotterranei_Villa_Rosa",
+      "order": 4,
+      "time_limit": 300,
+      "transition_out": "fade"
+    }
+  ]
+}

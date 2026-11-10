@@ -49,6 +49,15 @@ ALLOWED_TOKENS = {
     "Fondo'", "Background'",             # inside a quoted phrase
 }
 
+# Apostrophes after a vowel that are real ones, by language: English possessives and
+# contractions ("Teresa's", "I've") and French elisions ("quelqu'un", "jusqu'au",
+# "qu'il"). A folded accent never looks like these ("SCE'NE", "RE'CENTS", "perche'").
+REAL_APOSTROPHE = {
+    "en": re.compile(r"[aeiouAEIOU]'(?:s|S|ve|re|ll|d|m|t)$"),
+    "fr": re.compile(r"^(?:[Qq]u|[Jj]usqu|[Ll]orsqu|[Pp]uisqu|[Qq]uelqu|[Pp]resqu|[Qq]uoiqu)'"
+                     r"[^\W\d_]"),
+}
+
 # The first character of a UTF-8 sequence read as cp1252 is one of these,
 # followed by a byte from the same misreading.
 MOJIBAKE = re.compile(r"[ÃÅÂ][-¿‘-„Œœ€]")
@@ -71,13 +80,17 @@ def test_there_are_language_files_to_check():
 
 @pytest.mark.parametrize("path", ALL_FILES, ids=lambda p: str(p.relative_to(ROOT)))
 def test_no_accent_is_spelled_as_an_apostrophe(path):
+    real = REAL_APOSTROPHE.get(path.stem)
     offenders = {}
     for key, value in load(path).items():
         if not isinstance(value, str):
             continue
         for token in TOKEN.findall(value):
-            if ACCENT_AS_APOSTROPHE.search(token) and token not in ALLOWED_TOKENS:
-                offenders.setdefault(key, set()).add(token)
+            if not ACCENT_AS_APOSTROPHE.search(token) or token in ALLOWED_TOKENS:
+                continue
+            if real is not None and real.search(token):
+                continue
+            offenders.setdefault(key, set()).add(token)
     assert not offenders, (
         f"{path.name} spells accents with an apostrophe: "
         + ", ".join(f"{k}={sorted(v)}" for k, v in sorted(offenders.items())[:8]))
@@ -110,30 +123,43 @@ def test_the_apostrophe_guard_can_fail():
     """A guard that never fires is not a guard."""
     assert ACCENT_AS_APOSTROPHE.search("SCE'NE")
     assert not ACCENT_AS_APOSTROPHE.search("SCÈNE")
+    # The language exceptions keep real apostrophes and nothing else.
+    assert REAL_APOSTROPHE["en"].search("Teresa's") and REAL_APOSTROPHE["en"].search("I've")
+    assert not REAL_APOSTROPHE["en"].search("SCE'NE")
+    assert not REAL_APOSTROPHE["en"].search("perche'")
+    assert REAL_APOSTROPHE["fr"].search("quelqu'un") and REAL_APOSTROPHE["fr"].search("qu'il")
+    assert not REAL_APOSTROPHE["fr"].search("SCE'NE")
+    assert not REAL_APOSTROPHE["fr"].search("RE'CENTS")
 
 
-def catalog_label_keys() -> set:
-    """Every label_key the catalogs point at."""
-    keys = set()
-    paths = list((ROOT / "engine" / "data").glob("global_*catalog.json"))
-    paths += list((ROOT / "games").glob("*/objects_catalog.json"))
-    for path in paths:
-        if "backup" in path.name:
-            continue
-        data = json.loads(path.read_text(encoding="utf-8"))
-        entries = data if isinstance(data, list) else data.get("objects", [])
-        for entry in entries if isinstance(entries, list) else []:
-            if isinstance(entry, dict) and entry.get("label_key"):
-                keys.add(entry["label_key"])
-    return keys
+def catalog_label_keys(path: Path) -> set:
+    """Every label_key one catalog points at."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    entries = data if isinstance(data, list) else data.get("objects", [])
+    return {entry["label_key"] for entry in (entries if isinstance(entries, list) else [])
+            if isinstance(entry, dict) and entry.get("label_key")}
 
 
 def test_every_name_a_catalog_uses_exists_in_english():
     """English is the only fallback, so a missing English name has nothing
     behind it: 61 objects were named in Italian and nowhere else, and the
-    editor showed the raw key for them in every other language."""
+    editor showed the raw key for them in every other language.
+
+    A global catalog is named by the engine strings; a game's own catalog may
+    also be named by that game's strings (the language manager reads them
+    first, and the game ships them)."""
     english = set(load(ENGINE_STRINGS / "en.json"))
-    missing = sorted(catalog_label_keys() - english)
+    missing = set()
+    for path in (ROOT / "engine" / "data").glob("global_*catalog.json"):
+        if "backup" not in path.name:
+            missing |= catalog_label_keys(path) - english
+    for path in (ROOT / "games").glob("*/objects_catalog.json"):
+        if "backup" in path.name:
+            continue
+        game_en = path.parent / "strings" / "en.json"
+        names = english | (set(load(game_en)) if game_en.exists() else set())
+        missing |= catalog_label_keys(path) - names
+    missing = sorted(missing)
     assert not missing, (
         f"{len(missing)} catalog objects have no English name: {missing[:8]}")
 

@@ -77,6 +77,10 @@ def _parse_rules_defaults() -> dict:
     out["hint_max_uses"] = num("hint_max_uses")
     out["ref_w"] = num("ref_w")
     out["ref_h"] = num("ref_h")
+    out["story_chars_per_s"] = num("story_chars_per_s")
+    out["collectible_points"] = num("collectible_points")
+    out["shadow_aspect"] = num("shadow_aspect")
+    out["shadow_falloff"] = num("shadow_falloff")
 
     m = re.search(r"hint_penalties:\s*\[([^\]]*)\]", block)
     out["hint_penalties"] = [int(x) for x in re.findall(r"\d+", m.group(1))] if m else None
@@ -102,7 +106,8 @@ def test_runtime_defaults_match_engine():
     js = _parse_rules_defaults()
     scalars = ["points_per_object", "bonus_time_max", "miss_time_penalty",
                "miss_point_penalty", "miss_combo_window", "bonus_ratio_3star",
-               "hint_free", "hint_cooldown", "hint_max_uses", "ref_w", "ref_h"]
+               "hint_free", "hint_cooldown", "hint_max_uses", "ref_w", "ref_h",
+               "story_chars_per_s", "collectible_points", "shadow_aspect", "shadow_falloff"]
     for k in scalars:
         assert float(eng[k]) == float(js[k]), (
             f"DRIFT su '{k}': engine={eng[k]} ma runtime.js RULES_DEFAULTS={js[k]}. "
@@ -387,3 +392,53 @@ def test_ambient_effects_match_between_runtimes():
         py_vals = list(py_vals) if isinstance(py_vals, tuple) else [py_vals]
         assert py_vals == pytest.approx(js_vals, rel=1e-9, abs=1e-9), (
             f"DRIFT {kind}{tuple(args)}: python={py_vals} js={js_vals}")
+
+
+def test_alt_spot_fields_match_between_runtimes():
+    """engine/story.py ALT_SPOT_FIELDS and core.js ALT_SPOT_FIELDS list the same keys."""
+    from engine.story import ALT_SPOT_FIELDS
+    m = re.search(r"const ALT_SPOT_FIELDS\s*=\s*\[([^\]]*)\]", _runtime_text())
+    assert m, "ALT_SPOT_FIELDS missing from the web runtime"
+    js_fields = tuple(re.findall(r'"([a-z_]+)"', m.group(1)))
+    assert js_fields == ALT_SPOT_FIELDS
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node non disponibile")
+def test_contact_shadow_geometry_matches_between_runtimes():
+    """core.js drawObjectShadow puts the ellipse where engine/object_shadow.py does:
+    centre (cx, cy + dy*scale) in bg space, width w*scale, height w*scale*aspect,
+    alpha a*(1-d)^falloff times the object alpha."""
+    from engine import object_shadow as OS
+
+    core_js = ROOT / "editor" / "web_template" / "runtime" / "core.js"
+    obj = {"detection_type": "rect", "x": 100.0, "y": 200.0, "width": 80.0, "height": 60.0,
+           "scale": 1.5, "alpha": 204, "shadow": {"dy": 30.0, "w": 90.0, "a": 160}}
+    script = (
+        "const fs=require('fs');"
+        "const src=fs.readFileSync(process.argv[1],'utf8');"
+        "const api=new Function('window','document','localStorage',"
+        "src+'; return {draw: drawObjectShadow};')({},{},{});"
+        "const calls=[];const stops=[];"
+        "const ctx={save(){},restore(){},beginPath(){},fill(){},"
+        "translate(x,y){calls.push(['t',x,y]);},scale(x,y){calls.push(['s',x,y]);},"
+        "arc(x,y,r){calls.push(['a',r]);},"
+        "createRadialGradient(){return {addColorStop(t,c){stops.push([t,c]);}};}};"
+        "const sm={bgDisplayScale:0.5,bgToScreen(x,y){return [x*0.5+10,y*0.5+20];}};"
+        "api.draw(ctx,sm,JSON.parse(process.argv[2]));"
+        "console.log(JSON.stringify({calls,stops}));"
+    )
+    proc = subprocess.run(["node", "-e", script, str(core_js), json.dumps(obj)],
+                          capture_output=True, text=True)
+    assert proc.returncode == 0, f"harness JS fallito:\n{proc.stderr}"
+    out = json.loads(proc.stdout)
+    calls = {c[0]: c[1:] for c in out["calls"]}
+    cx = obj["x"] + obj["width"] / 2
+    cy = obj["y"] + obj["height"] / 2 + obj["shadow"]["dy"] * obj["scale"]
+    assert calls["t"] == pytest.approx([cx * 0.5 + 10, cy * 0.5 + 20])
+    assert calls["s"] == pytest.approx([1.0, OS.SHADOW_ASPECT])
+    assert calls["a"][0] == pytest.approx(obj["shadow"]["w"] * obj["scale"] * 0.5 / 2)
+    a0 = obj["shadow"]["a"] / 255 * obj["alpha"] / 255
+    for t, color in out["stops"]:
+        js_alpha = float(color.rsplit(",", 1)[1].rstrip(")"))
+        py_alpha = OS.shadow_alpha(t, 255) / 255 * a0
+        assert js_alpha == pytest.approx(py_alpha, abs=1e-4)

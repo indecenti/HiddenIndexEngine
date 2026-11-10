@@ -12,7 +12,7 @@ from functools import lru_cache
 import pygame
 
 from editor.constants import (
-    TOP_BAR_H, STATUS_H,
+    TOP_BAR_H, STATUS_H, MODE_SURFACES,
     ACCENT, BORDER, BTN, BTN_AC, BTN_HO, PANEL,
     TXT, TXT_DIM, TXT_HI, OK_C, ERR_C, WARN_C, ALWAYS_C, FX_C,
     DEFAULT_LAYERS, CATALOG_VIEW_CACHE_MAX,
@@ -1001,7 +1001,11 @@ class RenderPanelsMixin:
         has_fx_sel = (getattr(self, "sel_effect_idx", None) is not None and self.sel_effect_idx < len(effects))
         has_obj_sel = (self.selected_idx is not None and self.selected_idx < len(self.scene_data.get("objects", [])))
 
-        if has_fx_sel:
+        if self.mode == MODE_SURFACES and self.scene_path:
+            # Surfaces mode: the selected surface and the scene's h_mul.
+            y = self._r_surface_props(rx0, y)
+
+        elif has_fx_sel:
             self._fx_props_hitboxes = {}
             # Pulsante "Torna alla Scena" rapido
             back_r = pygame.Rect(rx0+4, y, self.panel_r_w-8, 26)

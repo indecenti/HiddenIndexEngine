@@ -124,14 +124,32 @@ class Game {
     });
     // Tastiera: instradata al minigioco attivo
     window.addEventListener("keydown", (e) => {
+      if (this.state === "STORY" && ["Enter", " ", "Escape"].includes(e.key)) {
+        e.preventDefault(); this._advanceStory(); return;
+      }
+      if (this.state === "JOURNAL" && e.key === "Escape") { this._closeJournal(); return; }
+      if ((e.key === "j" || e.key === "J") && (this.state === "SCENE" || this.state === "JOURNAL")) {
+        if (this.state === "JOURNAL") this._closeJournal();
+        else if (!this.activeBubble) this._openJournal();
+        return;
+      }
       if (this.state === "MINIGAME" && this.minigame) {
         this.minigame.key(e, true);
         if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", " "].includes(e.key)) e.preventDefault();
       }
     });
+    this.canvas.addEventListener("wheel", (e) => this._onWheel(e), { passive: false });
     window.addEventListener("keyup", (e) => {
       if (this.state === "MINIGAME" && this.minigame) this.minigame.key(e, false);
     });
+  }
+
+  _onWheel(e) {
+    if (this.state !== "JOURNAL") return;
+    e.preventDefault();
+    this._journalScroll = Math.max(0, Math.min(this._journalMaxScroll || 0,
+      (this._journalScroll || 0) + e.deltaY));
+    this.invalidate();
   }
 
   _resize() {
@@ -189,7 +207,7 @@ class Game {
     this.popups = [];
     this.findParticles = [];
     this.shake = 0;
-    this._showBubbles((sceneDef.bubble_tips || []).filter(b => b.trigger === "start_scene"), null);
+    this._story = null;
 
     // Costruzione oggetti con selezione casuale (replica engine/scene_loader.py).
     // Avviene ad OGNI avvio scena, quindi la scena cambia ad ogni partita.
@@ -223,32 +241,44 @@ class Game {
     this.audio.playMusic(sceneDef.music);
     this._hideLoader();
     this._beginFade();
+    // Story layer: intro cards first, then the start_scene bubble tips.
+    const startBubbles = (sceneDef.bubble_tips || []).filter(b => b.trigger === "start_scene");
+    this._showStory(this._storyPages(sceneDef, "intro"), () => this._showBubbles(startBubbles, null));
     this.invalidate();
   }
 
   // Replica _load_scene_internal (random_layer_selection) + _select_objects
   // (auto_random_finds): scelta del layer e degli obiettivi casuale ad ogni avvio.
   _buildSceneObjects(sceneDef) {
-    let raw = sceneDef.objects;
+    // 0. Alternative spots (story layer): base placement or one of alt_spots.
+    let raw = sceneDef.objects.map(resolveAltSpot);
 
     // 1. Random Layer Mode: mantiene un solo layer principale a caso (+ layer non "objects_")
     if (sceneDef.random_layer_selection) {
       const chosen = ["objects_low", "objects_mid", "objects_high"][Math.floor(Math.random() * 3)];
       const filtered = raw.filter(o => {
         const ly = o.layer || "objects_mid";
-        return ly === chosen || !ly.startsWith("objects_");
+        // Story layer: the clue and the collectible survive the layer draw.
+        return ly === chosen || !ly.startsWith("objects_") || o.clue_key || o.collectible;
       });
       if (filtered.length) raw = filtered; // guardia: non svuotare la scena
     }
 
     const objs = raw.map(o => Object.assign({ found: false, _img: null }, o));
+    // Story layer: a clue is always a goal, a collectible never is.
+    objs.forEach(o => {
+      if (o.collectible) o.is_goal = false;
+      else if (o.clue_key) o.is_goal = true;
+    });
 
     // 2. Auto Random Finds: ridisegna gli obiettivi (is_goal) casualmente
     if (sceneDef.auto_random_finds) {
       const numGoals = sceneDef.num_random_finds != null ? sceneDef.num_random_finds : objs.length;
       objs.forEach(o => { o.is_goal = false; });
-      const fixed = objs.filter(o => o.always_show);
-      const pool = objs.filter(o => !o.always_show);
+      // Clue first: it stays a goal even when num_random_finds < the fixed set.
+      const fixed = objs.filter(o => !o.collectible && (o.always_show || o.clue_key))
+        .sort((a, b) => (b.clue_key ? 1 : 0) - (a.clue_key ? 1 : 0));
+      const pool = objs.filter(o => !o.collectible && !o.always_show && !o.clue_key);
       const finalGoals = fixed.slice(0, numGoals);
       finalGoals.forEach(o => { o.is_goal = true; });
       let remaining = numGoals - finalGoals.length;
@@ -306,6 +336,8 @@ class Game {
     if (this.state === "RESULTS") return this._clickResults(sx, sy);
     if (this.state === "SETTINGS") return this._clickSettings(sx, sy);
     if (this.state === "PAUSE") return this._clickPause(sx, sy);
+    if (this.state === "STORY") return this._clickStory(sx, sy);
+    if (this.state === "JOURNAL") return this._clickJournal(sx, sy);
     if (this.state === "MINIGAME") { if (this.minigame) this.minigame.pointer(sx, sy, "down"); return; }
     if (this.state !== "SCENE") return;
 
@@ -332,7 +364,7 @@ class Game {
     const [bx, by] = this.sm.screenToBg(sx, sy);
     const candidates = this.objects.filter(o =>
       !o.found &&
-      (o.is_goal || o.minigame_trigger) &&
+      (o.is_goal || o.minigame_trigger || o.collectible) &&
       o.layer !== "overlay" &&
       hitTest(o, bx, by)
     );
@@ -346,6 +378,7 @@ class Game {
         this._launchMinigame(hit.minigame_trigger.minigame_id, hit);
         return;
       }
+      if (hit.collectible) { this._findCollectible(hit, sx, sy); return; }
       hit.found = true;
       this.score += this.R.points_per_object;
       this.feedback = { x: sx, y: sy, t: performance.now(), ok: true };
@@ -355,7 +388,18 @@ class Game {
       this._awardHintProgress();
       const allFound = this.goals.every(o => o.found);
       this.audio.sfx(allFound ? "complete" : "found");
-      if (allFound) { this.shake = 16; this._completeScene(); }
+      const finish = () => { if (allFound) { this.shake = 16; this._completeScene(); } };
+      if (hit.clue_key) {
+        // Clue object: record it, show its card, complete the scene after it.
+        Save.recordClue(this.manifest.game_id, this.sceneDef.id, hit.clue_key);
+        this.save = Save.load(this.manifest.game_id);
+        this._showStory([{
+          kicker: this.t("clue_found", "Clue found"),
+          heading: this.t(hit.label_key, hit.catalog_id),
+          text: this.t(hit.clue_key, ""),
+          img: hit._img,
+        }], finish);
+      } else finish();
     } else {
       this.audio.sfx("miss");
       // Penalita' PROGRESSIVA sui miss consecutivi (parita' engine.register_miss):
@@ -381,8 +425,10 @@ class Game {
     const endBubbles = allFound
       ? (this.sceneDef.bubble_tips || []).filter(b => b.trigger === "end_scene")
       : [];
-    if (endBubbles.length) this._showBubbles(endBubbles, () => this._doFinish());
-    else this._doFinish();
+    const outro = allFound ? this._storyPages(this.sceneDef, "outro") : [];
+    const toOutro = () => this._showStory(outro, () => this._doFinish());
+    if (endBubbles.length) this._showBubbles(endBubbles, toOutro);
+    else toOutro();
   }
 
   _doFinish() {
@@ -592,6 +638,357 @@ class Game {
     return { obj: target, intensity };
   }
 
+  // ── Story and replay layer (docs/engine/STORY_AND_REPLAY.md, sync section M) ──
+
+  // Story pages of a scene: "intro" (chapter + scene name on the first page) or "outro".
+  _storyPages(sceneDef, which) {
+    const st = sceneDef.story || {};
+    const keys = st[which] || [];
+    const sceneName = this.t(sceneDef.name_key || (sceneDef.id + "_name"), sceneDef.id);
+    return keys.map((k, i) => ({
+      kicker: (which === "intro" && i === 0 && st.chapter_key) ? this.t(st.chapter_key, "") : "",
+      heading: (which === "intro" && i === 0) ? sceneName : "",
+      text: this.t(k, ""),
+    }));
+  }
+
+  // Opens a sequence of story/clue cards (state STORY: timer and scene clicks paused).
+  _showStory(pages, cb) {
+    if (!pages || !pages.length) { if (cb) cb(); return; }
+    this._story = { pages, idx: 0, ts: performance.now(), cb: cb || null, typing: true };
+    this.state = "STORY";
+    this.invalidate();
+  }
+
+  // First click completes the typing, the next one turns the page / closes.
+  _advanceStory() {
+    const st = this._story;
+    if (!st) return;
+    if (st.typing) { st.ts = -1e12; st.typing = false; this.invalidate(); return; }
+    this.audio.sfx("click");
+    st.idx++;
+    if (st.idx < st.pages.length) {
+      st.ts = performance.now(); st.typing = true; this.invalidate(); return;
+    }
+    this._story = null;
+    this.state = "SCENE";
+    this.lastFindAt = performance.now(); // reading time does not trigger the auto hint
+    if (st.cb) st.cb();
+    this.invalidate();
+  }
+
+  _clickStory() { this._advanceStory(); }
+
+  // Word wrap with paragraph breaks ("\n"); returns the lines.
+  _wrapLines(ctx, text, maxW) {
+    const out = [];
+    for (const para of String(text || "").split("\n")) {
+      let cur = "";
+      for (const w of para.split(" ")) {
+        const test = cur ? cur + " " + w : w;
+        if (ctx.measureText(test).width <= maxW || !cur) cur = test;
+        else { out.push(cur); cur = w; }
+      }
+      out.push(cur);
+    }
+    return out;
+  }
+
+  _drawIconFit(ctx, img, x, y, w, h) {
+    if (!img || !img.width) return;
+    const k = Math.min(w / img.width, h / img.height);
+    const dw = img.width * k, dh = img.height * k;
+    ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+  }
+
+  _renderStory(ctx, W, H) {
+    const st = this._story;
+    if (!st) return;
+    const page = st.pages[st.idx];
+    const s = Math.max(0.6, Math.min(W / 1280, H / 720));
+    const now = performance.now();
+    ctx.save();
+    const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.15, W / 2, H / 2, Math.max(W, H) * 0.75);
+    vg.addColorStop(0, "rgba(6,9,16,0.80)");
+    vg.addColorStop(1, "rgba(1,2,5,0.96)");
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, W, H);
+
+    const img = page.img || null;
+    const colW = Math.min(W - 64 * s, 880 * s);
+    const imgBox = img ? 180 * s : 0;
+    const gap = img ? 40 * s : 0;
+    const x0 = (W - colW) / 2;
+    const textX = x0 + imgBox + gap;
+    const textW = colW - imgBox - gap;
+    const kickPx = Math.round(15 * s), headPx = Math.round(40 * s), bodyPx = Math.round(24 * s);
+    const lh = bodyPx * 1.6;
+
+    ctx.font = `${bodyPx}px Georgia, "Times New Roman", serif`;
+    const lines = this._wrapLines(ctx, page.text, textW);
+    const total = lines.reduce((n, l) => n + l.length, 0);
+    const shown = Math.floor(((now - st.ts) / 1000) * this.R.story_chars_per_s);
+    st.typing = shown < total;
+
+    let blockH = lines.length * lh;
+    if (page.kicker) blockH += kickPx * 2.4;
+    if (page.heading) blockH += headPx * 1.7;
+    blockH = Math.max(blockH, imgBox);
+    let y = Math.max(40 * s, H / 2 - blockH / 2 - 24 * s);
+
+    if (img) {
+      const iy = y + (page.kicker ? kickPx * 2.4 : 0);
+      ctx.fillStyle = "rgba(255,255,255,0.05)";
+      this._roundRect(ctx, x0, iy, imgBox, imgBox, 14 * s); ctx.fill();
+      ctx.strokeStyle = this._withAlpha(this.theme.accent(), 0.55); ctx.lineWidth = 1.5;
+      this._roundRect(ctx, x0, iy, imgBox, imgBox, 14 * s); ctx.stroke();
+      this._drawIconFit(ctx, img, x0 + 16 * s, iy + 16 * s, imgBox - 32 * s, imgBox - 32 * s);
+    }
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    if (page.kicker) {
+      ctx.font = `600 ${kickPx}px system-ui, sans-serif`;
+      ctx.fillStyle = this.theme.accent();
+      ctx.fillText(page.kicker.toUpperCase(), textX, y);
+      y += kickPx * 2.4;
+    }
+    if (page.heading) {
+      ctx.font = `bold ${headPx}px Georgia, "Times New Roman", serif`;
+      ctx.fillStyle = this.theme.text();
+      ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 10 * s;
+      ctx.fillText(page.heading, textX, y);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = this._withAlpha(this.theme.accent(), 0.7);
+      ctx.fillRect(textX, y + headPx * 1.18, 64 * s, 2 * s);
+      y += headPx * 1.7;
+    }
+    ctx.font = `${bodyPx}px Georgia, "Times New Roman", serif`;
+    ctx.fillStyle = "rgb(226,230,238)";
+    let left = shown;
+    for (const ln of lines) {
+      if (left <= 0) break;
+      ctx.fillText(ln.slice(0, left), textX, y);
+      left -= ln.length;
+      y += lh;
+    }
+
+    // Footer: page dots + continue prompt (once the text is complete).
+    const fy = Math.min(H - 48 * s, Math.max(y, H / 2 + blockH / 2) + 40 * s);
+    if (st.pages.length > 1) {
+      for (let i = 0; i < st.pages.length; i++) {
+        ctx.fillStyle = i === st.idx ? this.theme.accent() : "rgba(255,255,255,0.25)";
+        ctx.beginPath(); ctx.arc(textX + 6 * s + i * 18 * s, fy + 10 * s, 4 * s, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    if (!st.typing) {
+      const pulse = 0.55 + 0.45 * Math.sin(now / 420);
+      ctx.textAlign = "right";
+      ctx.font = `600 ${Math.round(17 * s)}px system-ui, sans-serif`;
+      ctx.fillStyle = this._withAlpha(this.theme.accent(), pulse);
+      ctx.fillText(this.t("story_continue", "Continue") + "  >", x0 + colW, fy);
+      this.invalidate(); // keep the prompt pulsing
+    }
+    ctx.restore();
+  }
+
+  _findCollectible(hit, sx, sy) {
+    hit.found = true;
+    const cfg = this.manifest.story || {};
+    const name = this.t(cfg.collectible_name_key || "collectible_name", "");
+    const first = Save.recordCollectible(this.manifest.game_id, this.sceneDef.id);
+    this.save = Save.load(this.manifest.game_id);
+    const label = this.t("collectible_found", "{name} found!").replace("{name}", name);
+    if (first) {
+      this.score += this.R.collectible_points;
+      this._spawnPopup(sx, sy, "+" + this.R.collectible_points + "  " + label, "#ffb3d1");
+    } else {
+      this._spawnPopup(sx, sy, label, "#ffb3d1");
+    }
+    this._spawnBurst(sx, sy, "#ff9ec4");
+    this.audio.sfx("found");
+    this.invalidate();
+  }
+
+  // Journal data in campaign order (parity: engine/story.py build_journal).
+  _journalData() {
+    const m = this.manifest;
+    const data = Save.load(m.game_id);
+    const clues = data.clues || {};
+    const coll = new Set(data.collectibles || []);
+    const entries = [];
+    let total = 0, found = 0;
+    for (const lvl of m.levels) {
+      for (const sc of lvl.scenes) {
+        const objs = sc.objects || [];
+        if (objs.some(o => o.collectible)) { total++; if (coll.has(sc.id)) found++; }
+        const clue = objs.find(o => o.clue_key);
+        if (clue) entries.push({ level: lvl, scene: sc, clue, unlocked: clues[sc.id] != null });
+      }
+    }
+    return { entries, total, found };
+  }
+
+  _openJournal() {
+    this._journalFrom = this.state;
+    this._journalScroll = 0;
+    this._journalIcons = this._journalIcons || {};
+    this.state = "JOURNAL";
+    this.audio.sfx("click");
+    this.invalidate();
+  }
+
+  _closeJournal() {
+    this.state = this._journalFrom || "LEVEL_SELECT";
+    this._journalFrom = null;
+    this.invalidate();
+  }
+
+  _clickJournal(sx, sy) {
+    if (this._journalClose && this._inRect(sx, sy, this._journalClose)) {
+      this.audio.sfx("click"); this._closeJournal(); return;
+    }
+    if (this._journalPanel && !this._inRect(sx, sy, this._journalPanel)) this._closeJournal();
+  }
+
+  _journalIcon(src) {
+    if (!src) return null;
+    let im = this._journalIcons[src];
+    if (!im) {
+      im = new Image();
+      im.onload = () => { if (this.state === "JOURNAL") this.invalidate(); };
+      im.src = this.manifest._base + src;
+      this._journalIcons[src] = im;
+    }
+    return im.complete && im.naturalWidth ? im : null;
+  }
+
+  _renderJournal(ctx, W, H) {
+    const s = Math.max(0.6, Math.min(W / 1280, H / 720));
+    const jd = this._journalData();
+    const cfg = this.manifest.story || {};
+    ctx.save();
+    ctx.fillStyle = "rgba(3,5,10,0.86)";
+    ctx.fillRect(0, 0, W, H);
+    const pw = Math.min(W - 40 * s, 1000 * s), ph = H - 60 * s;
+    const px = (W - pw) / 2, py = 30 * s;
+    this._journalPanel = { x: px, y: py, w: pw, h: ph };
+    ctx.fillStyle = "rgba(18,16,14,0.97)";
+    this._roundRect(ctx, px, py, pw, ph, 18 * s); ctx.fill();
+    ctx.strokeStyle = this._withAlpha(this.theme.accent(), 0.45); ctx.lineWidth = 1.5;
+    this._roundRect(ctx, px, py, pw, ph, 18 * s); ctx.stroke();
+
+    // Header
+    const pad = 36 * s;
+    ctx.textBaseline = "top"; ctx.textAlign = "left";
+    ctx.font = `bold ${Math.round(36 * s)}px Georgia, "Times New Roman", serif`;
+    ctx.fillStyle = this.theme.text();
+    ctx.fillText(this.t("journal_title", "Journal"), px + pad, py + 26 * s);
+    const collName = this.t(cfg.collectible_name_key || "collectible_name", "");
+    if (jd.total > 0) {
+      ctx.font = `600 ${Math.round(16 * s)}px system-ui, sans-serif`;
+      ctx.fillStyle = "#ffb3d1";
+      ctx.textAlign = "right";
+      ctx.fillText(this.t("journal_collectibles", "{name}: {found}/{total}")
+        .replace("{name}", collName).replace("{found}", jd.found).replace("{total}", jd.total),
+        px + pw - pad - 120 * s, py + 38 * s);
+    }
+    // Close button
+    const cbw = 104 * s, cbh = 38 * s, cbx = px + pw - pad - cbw + 12 * s, cby = py + 26 * s;
+    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    this._roundRect(ctx, cbx, cby, cbw, cbh, 10 * s); ctx.fill();
+    ctx.strokeStyle = this.theme.cardBorder(); ctx.lineWidth = 1.2;
+    this._roundRect(ctx, cbx, cby, cbw, cbh, 10 * s); ctx.stroke();
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = `600 ${Math.round(16 * s)}px system-ui, sans-serif`;
+    ctx.fillStyle = this.theme.text();
+    ctx.fillText(this.t("btn_close", "Close"), cbx + cbw / 2, cby + cbh / 2);
+    this._journalClose = { x: cbx, y: cby, w: cbw, h: cbh };
+
+    // Scrollable content
+    const cx = px + pad, cw = pw - pad * 2;
+    const top = py + 90 * s, bottom = py + ph - 24 * s;
+    ctx.fillStyle = this._withAlpha(this.theme.accent(), 0.35);
+    ctx.fillRect(cx, top - 10 * s, cw, 1);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(px, top, pw, bottom - top); ctx.clip();
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    let y = top + 14 * s - (this._journalScroll || 0);
+    const icon = 72 * s, textX = cx + icon + 22 * s, textW = cw - icon - 22 * s;
+    const bodyPx = Math.round(18 * s), lh = bodyPx * 1.5;
+    let lastLevel = null;
+    if (!jd.entries.length) {
+      ctx.font = `italic ${bodyPx}px Georgia, serif`; ctx.fillStyle = this.theme.textDim();
+      ctx.fillText(this.t("journal_empty", "No clues yet"), cx, y); y += lh;
+    }
+    for (const e of jd.entries) {
+      if (e.level !== lastLevel) {
+        lastLevel = e.level;
+        ctx.font = `600 ${Math.round(14 * s)}px system-ui, sans-serif`;
+        ctx.fillStyle = this.theme.accent();
+        ctx.fillText(this.t(e.level.name_key || e.level.id, e.level.id).toUpperCase(), cx, y + 6 * s);
+        y += 36 * s;
+      }
+      const rowTop = y;
+      const sceneName = this.t(e.scene.name_key || (e.scene.id + "_name"), e.scene.id);
+      if (e.unlocked) {
+        const im = this._journalIcon(e.clue.icon);
+        ctx.fillStyle = "rgba(255,255,255,0.05)";
+        this._roundRect(ctx, cx, y, icon, icon, 10 * s); ctx.fill();
+        if (im) this._drawIconFit(ctx, im, cx + 8 * s, y + 8 * s, icon - 16 * s, icon - 16 * s);
+        ctx.font = `bold ${Math.round(20 * s)}px Georgia, serif`;
+        ctx.fillStyle = this.theme.text();
+        ctx.fillText(sceneName, textX, y);
+        ctx.font = `italic ${Math.round(16 * s)}px Georgia, serif`;
+        ctx.fillStyle = this._withAlpha(this.theme.accent(), 0.95);
+        ctx.fillText(this.t(e.clue.label_key, e.clue.catalog_id), textX, y + 28 * s);
+        ctx.font = `${bodyPx}px Georgia, serif`;
+        ctx.fillStyle = "rgb(214,218,226)";
+        let ty = y + 56 * s;
+        for (const ln of this._wrapLines(ctx, this.t(e.clue.clue_key, ""), textW)) {
+          ctx.fillText(ln, textX, ty); ty += lh;
+        }
+        y = Math.max(ty, rowTop + icon) + 22 * s;
+      } else {
+        ctx.fillStyle = "rgba(255,255,255,0.04)";
+        this._roundRect(ctx, cx, y, icon, icon, 10 * s); ctx.fill();
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.font = `bold ${Math.round(30 * s)}px Georgia, serif`;
+        ctx.fillStyle = "rgba(255,255,255,0.25)";
+        ctx.fillText("?", cx + icon / 2, y + icon / 2);
+        ctx.textAlign = "left"; ctx.textBaseline = "top";
+        ctx.font = `bold ${Math.round(20 * s)}px Georgia, serif`;
+        ctx.fillStyle = this.theme.textDim();
+        ctx.fillText(sceneName, textX, y + 8 * s);
+        ctx.font = `italic ${Math.round(16 * s)}px Georgia, serif`;
+        ctx.fillText(this.t("journal_locked", "Not discovered yet"), textX, y + 38 * s);
+        y += icon + 22 * s;
+      }
+    }
+    // Epilogue, once every collectible has been found.
+    if (jd.total > 0 && jd.found >= jd.total && cfg.epilogue_key) {
+      y += 10 * s;
+      ctx.fillStyle = "#ffb3d1"; ctx.fillRect(cx, y, cw, 1); y += 22 * s;
+      ctx.font = `bold ${Math.round(24 * s)}px Georgia, serif`;
+      ctx.fillText(this.t(cfg.epilogue_title_key || "", ""), cx, y); y += 40 * s;
+      ctx.font = `italic ${bodyPx}px Georgia, serif`;
+      ctx.fillStyle = "rgb(236,222,230)";
+      for (const ln of this._wrapLines(ctx, this.t(cfg.epilogue_key, ""), cw)) {
+        ctx.fillText(ln, cx, y); y += lh;
+      }
+      y += 20 * s;
+    }
+    ctx.restore();
+    const contentH = y + (this._journalScroll || 0) - top;
+    this._journalMaxScroll = Math.max(0, contentH - (bottom - top));
+    if (this._journalMaxScroll > 0) {
+      const trackH = bottom - top, thumbH = Math.max(30 * s, trackH * (trackH / contentH));
+      const ty = top + (trackH - thumbH) * ((this._journalScroll || 0) / this._journalMaxScroll);
+      ctx.fillStyle = "rgba(255,255,255,0.18)";
+      this._roundRect(ctx, px + pw - 14 * s, ty, 5 * s, thumbH, 3 * s); ctx.fill();
+    }
+    ctx.restore();
+  }
+
   _togglePause() {
     this.state = this.state === "SCENE" ? "PAUSE" : "SCENE";
     this.invalidate();
@@ -604,6 +1001,7 @@ class Game {
         this.audio.sfx("click");
         if (b.action === "resume") this.state = "SCENE";
         else if (b.action === "settings") { this._openSettings(); return; }
+        else if (b.action === "journal") { this._openJournal(); return; }
         else if (b.action === "restart") { this.startScene(this.level, this.sceneDef); return; }
         else if (b.action === "quit") {
           this.state = "LEVEL_SELECT";
@@ -667,6 +1065,8 @@ class Game {
     else if (this.state === "LEVEL_SELECT") this._renderMenu(ctx, W, H);
     else if (this.state === "SCENE") this._renderScene(ctx, W, H);
     else if (this.state === "PAUSE") { this._renderScene(ctx, W, H); this._renderPause(ctx, W, H); }
+    else if (this.state === "STORY") { this._renderScene(ctx, W, H); this._renderStory(ctx, W, H); }
+    else if (this.state === "JOURNAL") { if (this.sceneDef && this._journalFrom !== "LEVEL_SELECT") this._renderScene(ctx, W, H); else this._bgGradient(ctx, W, H); this._renderJournal(ctx, W, H); }
     else if (this.state === "RESULTS") this._renderResults(ctx, W, H);
     else if (this.state === "SETTINGS") this._renderSettings(ctx, W, H);
     else if (this.state === "MINIGAME") { if (this.minigame) this.minigame.draw(ctx, W, H); }
@@ -691,7 +1091,8 @@ class Game {
     const menuVideo = this.state === "LEVEL_SELECT" && this.manifest.menu_video;
     const findFx = inScene && ((this.findParticles && this.findParticles.length) || (this.popups && this.popups.length) || this.shake > 0);
     const fading = now < this._fadeUntil;
-    if (this.feedback || glowActive || fxActive || flashActive || bubbleTyping || resultsAnim || sceneVideo || menuVideo || findFx || fading) this.invalidate();
+    const storyTyping = this.state === "STORY" && this._story && this._story.typing;
+    if (this.feedback || glowActive || fxActive || flashActive || bubbleTyping || resultsAnim || sceneVideo || menuVideo || findFx || fading || storyTyping) this.invalidate();
   }
 
   _bgGradient(ctx, W, H) {
@@ -762,7 +1163,7 @@ class Game {
     // Oggetti non trovati (decorativi inclusi), ordine layer_z
     for (const obj of this.objects) {
       if (obj.found || !obj._img) continue;
-      drawObject(ctx, this.sm, obj, obj._img);
+      drawObject(ctx, this.sm, obj, obj._img, this.R);
     }
     const flashlightActive = !!(this.sceneDef.flashlight) && now >= this.hintFlashUntil;
 
@@ -1079,6 +1480,7 @@ class Game {
 
     const opts = [
       { action: "resume", label: this.t("btn_resume") },
+      { action: "journal", label: this.t("pause_journal", "Journal") },
       { action: "settings", label: this.t("settings_title") },
       { action: "restart", label: this.t("btn_restart") },
       { action: "quit", label: this.t("btn_quit_to_main") },

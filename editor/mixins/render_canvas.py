@@ -9,6 +9,7 @@ import pygame
 
 from editor.constants import (
     MODE_SELECT, MODE_CIRCLE, MODE_RECT, MODE_EFFECT_PLACE, MODE_SCATTER,
+    MODE_SURFACES,
     ACCENT, BORDER, CANVAS, GRID_C, SEL_C, FX_C, ERR_C,
     TXT, TXT_DIM, TXT_HI, OK_C, WARN_C, ALWAYS_C, BTN_AC, BTN_HO, STATUS, PANEL,
     HANDLE_R, REF_W, REF_H, TOP_BAR_H,
@@ -42,9 +43,11 @@ _HUD_TIPS = {
 }
 
 
-# Toolbar item -> tooltip key. Auto-scatter opens a modal rather than
-# switching mode, so it does not follow the tip_mode_* naming of the others.
-_TOOLBAR_TIP_KEYS = {"__scatter_smart__": "tip_autoscatter"}
+# Toolbar item -> tooltip key. Placing on surfaces and the legacy scatter open
+# a modal rather than switching mode, so they do not follow the tip_mode_*
+# naming of the others.
+_TOOLBAR_TIP_KEYS = {"__scatter_smart__": "tip_autoscatter",
+                     "__place_surfaces__": "tip_place_surfaces"}
 
 
 def _toolbar_tip_key(item: dict) -> str:
@@ -107,6 +110,15 @@ class RenderCanvasMixin:
         self._r_overlays_dynamic()
         self._r_effect_overlays()
 
+        # Placement surfaces: edited in their mode, shown thin under a
+        # "Place on surfaces" preview, whose ghosts are drawn on top.
+        place_preview = self._canvas_place_preview()
+        if self.mode == MODE_SURFACES or place_preview:
+            self._r_surfaces_overlay(cr, active=(self.mode == MODE_SURFACES
+                                                 and not place_preview))
+        if place_preview:
+            self._r_place_ghosts()
+
         if self._rect_placing and self.mode == MODE_RECT:
             self._r_placing_rect()
         if self._circle_placing and self.mode == MODE_CIRCLE:
@@ -148,6 +160,8 @@ class RenderCanvasMixin:
 
         if not self._preview_mode:
             self._r_toolbar(cr)
+            if self.mode == MODE_SURFACES and not place_preview:
+                self._r_surfaces_bar()
 
     # ─────────────────────────────────────────────────────────────────────────
     # ANTEPRIMA COME-IN-GIOCO
@@ -291,6 +305,16 @@ class RenderCanvasMixin:
     # OVERLAYS OGGETTI
     # ─────────────────────────────────────────────────────────────────────────
 
+    def _canvas_place_preview(self) -> bool:
+        """True while a "Place on surfaces" result is previewed on the canvas."""
+        active = getattr(self, "_place_preview_active", None)
+        return bool(active and active())
+
+    def _canvas_hides_object(self, idx: int) -> bool:
+        """True for a scene object that the previewed placement would replace."""
+        hides = getattr(self, "_place_hides_object", None)
+        return bool(hides and hides(idx))
+
     def _r_overlays_static(self, surf=None, offset=(0,0)):
         """Rendering delle icone PNG (Cacheable)."""
         target = surf if surf is not None else self.screen
@@ -311,6 +335,10 @@ class RenderCanvasMixin:
                 # Gli oggetti selezionati vengono saltati qui e disegnati nel pass dinamico
                 # per permettere il movimento fluido durante il drag senza invalidare l'intera cache.
                 if i in self.selected_indices or i == self.selected_idx:
+                    continue
+                # Under a "Place on surfaces" preview the objects the run
+                # would replace are hidden, so the ghosts read on their own.
+                if self._canvas_hides_object(i):
                     continue
 
                 obj = objs[i]
@@ -445,6 +473,7 @@ class RenderCanvasMixin:
             obj = objs[i]
             lid = obj.get("layer", "objects_mid")
             if not self.layer_vis.get(lid, True): continue
+            if self._canvas_hides_object(i): continue
 
             is_primary = (i == self.selected_idx)
             is_sel     = (i in self.selected_indices or is_primary)
@@ -993,7 +1022,11 @@ class RenderCanvasMixin:
         if getattr(self, "effects_catalog_sel", None):
             tools.append((MODE_EFFECT_PLACE, self._TR("tb_effect_btn"), None))
         tools.append((MODE_SCATTER, self._TR("tb_cluster_btn"), None))
-        # "Auto-scatter" apre un modal: e' un comando, non una mode
+        tools.append((MODE_SURFACES, self._TR("tb_surfaces_btn", "Surfaces"), None))
+        # Placing and the legacy scatter open a modal: commands, not modes.
+        # The surface placement comes first: it is the one to use.
+        tools.append(("__place_surfaces__",
+                      self._TR("tb_place_surfaces_btn", "Place on surfaces"), None))
         tools.append(("__scatter_smart__", self._TR("tb_autoscatter_btn"), None))
 
         toggles = [
@@ -1042,8 +1075,12 @@ class RenderCanvasMixin:
         for item in self._get_toolbar_layout():
             if _in_rect((mx, my_raw), item['r']):
                 if item['id'] == '__scatter_smart__':
-                    # Apre il modal di auto-scatter intelligente
+                    # The legacy colour scatter (kept for comparison)
                     self._scatter_open()
+                elif item['id'] == '__place_surfaces__':
+                    self._place_open_dialog()
+                elif item['id'] == MODE_SURFACES:
+                    self._surfaces_toggle_mode()
                 elif item['type'] == 'mode':
                     self.mode = item['id']
                     self._cancel_rect()
@@ -1051,7 +1088,8 @@ class RenderCanvasMixin:
                 elif item['id'] == 'grid':    self._toggle_grid()
                 elif item['id'] == 'icons':   self._toggle_icons()
                 return True
-        return False
+        bar_click = getattr(self, "_surfaces_bar_click", None)
+        return bool(bar_click and bar_click(mx, my_raw))
 
     def _r_toolbar(self, cr):
         mx, my_raw = pygame.mouse.get_pos()

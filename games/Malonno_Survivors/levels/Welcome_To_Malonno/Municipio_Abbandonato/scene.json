@@ -3,5 +3,18 @@
   "background": "background.png",
   "background_scale": 1.0,
   "objects": [],
-  "effects": []
+  "effects": [],
+  "story": {
+    "intro": [
+      "Municipio_Abbandonato_intro_1"
+    ],
+    "outro": [
+      "Municipio_Abbandonato_outro_1",
+      "Municipio_Abbandonato_outro_2"
+    ]
+  },
+  "name_key": "Municipio_Abbandonato_name",
+  "music": [
+    "Indecenti - Canale 9.mp3"
+  ]
 }

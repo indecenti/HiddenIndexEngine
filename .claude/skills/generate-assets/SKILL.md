@@ -62,6 +62,15 @@ Native 1920x1088 at 35 steps (~2-3 min), then soft blur + Lanczos 2x + unsharp.
 - Do NOT use 4x-UltraSharp: it creates a fine grid pattern on dark smooth surfaces
   (boiler, walls), visible at 100% zoom, even from a softened input.
 - Always check a 100% crop of a dark area before handing it over.
+- Styles: default photographic, `--hog` (premium HOG photographic), `--painted`, `--dark`
+  (night painted look of Malonno_Survivors); `--hq` renders 2560x1440 at 50 steps.
+  Scene lists per game: `scenes_<game>.py` (Malonno: `scenes_malonno.py`).
+- When another session is also rendering on ComfyUI, use the SAME unet file as its jobs
+  (e.g. `qwen-image-2.1-Q5_K_M.gguf`): alternating Q5 and Q8 jobs reloads ~20 GB of
+  weights every time and a 5-minute render takes 40.
+- Backgrounds for hidden object scenes need FREE SURFACES seen at eye level (shelves,
+  counters, sills) and some floor seen from above near walls and furniture: objects are
+  placed on them by the place-objects skill.
 - No people, no readable text; the findable objects are placed later in the editor.
 
 ## Lessons (why the scripts are the way they are)

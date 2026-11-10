@@ -1,0 +1,110 @@
+{
+ "surfaces": [
+  {
+   "p": [
+    935,
+    694,
+    1235,
+    728
+   ],
+   "h": [
+    46,
+    47
+   ],
+   "kind": "area",
+   "max": 2
+  },
+  {
+   "p": [
+    1275,
+    539,
+    1600,
+    537
+   ],
+   "h": 44,
+   "kind": "ledge",
+   "max": 1
+  },
+  {
+   "p": [
+    705,
+    792,
+    830,
+    798
+   ],
+   "h": 39,
+   "kind": "floor",
+   "snap": false,
+   "max": 1
+  },
+  {
+   "p": [
+    440,
+    880,
+    610,
+    911
+   ],
+   "h": [
+    52,
+    53
+   ],
+   "kind": "area",
+   "max": 1
+  },
+  {
+   "p": [
+    770,
+    856,
+    865,
+    911
+   ],
+   "h": [
+    50,
+    52
+   ],
+   "kind": "area",
+   "max": 1
+  },
+  {
+   "p": [
+    1725,
+    800,
+    1880,
+    905
+   ],
+   "h": [
+    46,
+    52
+   ],
+   "kind": "area",
+   "max": 2
+  }
+ ],
+ "pool": [
+  "metal_flashlight",
+  "road_map_folded",
+  "car_keys",
+  "oil_canister",
+  "binoculars",
+  "hammer",
+  "hatchet_old",
+  "pliers",
+  "pocket_knife",
+  "screwdriver",
+  "utility_knife",
+  "folded_old_map",
+  "oil_can_small",
+  "adjustable_wrench",
+  "c_clamp",
+  "camping_lantern",
+  "wire_brush",
+  "trowel",
+  "folding_ruler",
+  "crampons",
+  "storm_matches"
+ ],
+ "count": 7,
+ "goals": 6,
+ "h_mul": 1.0,
+ "seed": 22
+}

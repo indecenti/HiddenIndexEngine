@@ -182,6 +182,55 @@ MODE_CIRCLE       = "circle"
 MODE_RECT         = "rect"
 MODE_EFFECT_PLACE = "effect_place"
 MODE_SCATTER      = "scatter"
+MODE_SURFACES     = "surfaces"   # placement surfaces of tools/place_on_surfaces.py
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PLACEMENT SURFACES (surfaces mode + "Place on surfaces")
+# ─────────────────────────────────────────────────────────────────────────────
+
+SURF_LINE_C      = (255, 0, 255)     # resting lines (same colours as the tool preview)
+SURF_AREA_C      = (0, 255, 120)     # areas seen from above
+SURF_GIZMO_C     = (0, 255, 255)     # size tick: height of a 20 cm object
+SURF_HUD_C       = (230, 60, 60, 70) # forbidden band under the game HUD
+SURF_MARGIN_C    = (230, 60, 60, 45) # frame margin kept empty
+SURF_SUPPORT_C   = (0, 255, 120, 80) # support map overlay
+SURF_LINE_W      = 2
+SURF_SEL_LINE_W  = 3
+SURF_GIZMO_W     = 2
+SURF_HIT_PX      = 7                 # pick distance on screen
+SURF_NUDGE_FAST  = 10
+SURF_H_STEP      = 1
+SURF_H_STEP_FAST = 10
+SURF_HMUL_STEP   = 0.05
+SURF_LABEL_PAD   = 3
+SURF_HUD_LABEL_C = (255, 170, 170)
+SURF_HANDLE_RIM_C = (0, 0, 0)
+PLACE_DIALOG_W   = 620
+PLACE_DIALOG_H   = 640
+PLACE_ROW_GAP    = 8
+PLACE_PAD        = 16
+PLACE_SCRIM      = (0, 0, 0, 150)
+PLACE_APPLY_BG   = (30, 90, 45)      # the button that writes into the scene
+PLACE_FIELD_BG   = (30, 32, 38)
+PLACE_PROGRESS_BG = (25, 40, 55)
+PLACE_PROGRESS_FILL = (35, 90, 130)
+PLACE_ROW_PAD_Y  = 12                # dialog row = line height + this
+PLACE_LINE_GAP   = 4
+PLACE_NUM_PAD    = 24                # number box = widest seed + this
+PLACE_NUM_MIN_W  = 90
+PLACE_TAG_MIN_W  = 60
+PLACE_RUN_MIN_W  = 110
+PLACE_TEXT_INSET = 8
+PLACE_BAR_MIN    = 6                 # smallest visible progress fill
+PLACE_STEP_FAST  = 10                # +/- with Shift in the dialog
+PLACE_GHOST_ALPHA = 235
+PLACE_ROLE_C     = {"clue": (255, 200, 60), "collectible": (255, 120, 200),
+                    "minigame": (210, 65, 65), "pool": (80, 200, 255)}
+PLACE_SEED_MAX   = 999999
+PLACE_COUNT_MAX  = 300
+PLACE_ALT_MAX    = 4
+AUDIT_MARGIN     = 40
+AUDIT_SCROLL_STEP = 80
 
 # ─────────────────────────────────────────────────────────────────────────────
 # STATI APPLICAZIONE

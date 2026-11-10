@@ -13,6 +13,10 @@ Legend: [x] done · [~] in progress/partial · [ ] to do.
 - [x] miss penalty: the progressive curve is replicated in `game.js::_missPenalty` and
   exported by `editor/web_rules.py` (was listed as an open decision, it is aligned).
 - [ ] Open decision: glow indicator, define the behavior of the visual indicator.
+- [~] Story and replay layer (`docs/engine/STORY_AND_REPLAY.md`): story cards, clue objects,
+  collectibles, alternative spots and the journal. Desktop done (`engine/story.py`,
+  `engine/story_overlay.py`, loader/save/core wiring, `pytest tests/test_story_layer.py`);
+  web runtime parity in progress.
 - Permanent constraint: the runtime is duplicated in Python (engine) and JS (web). Every
   change to shared logic must be propagated to both (see `docs/web/WEB_EXPORT_SYNC.md`).
 

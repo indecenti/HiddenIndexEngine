@@ -11,6 +11,11 @@ from typing import Optional
 
 from editor.constants import UNDO_MAX, UNDO_COALESCE_GAP_S, TXT_DIM
 
+# Editor state that lives outside scene_data but is undone with it: the
+# placement surfaces of the scene (surfaces.json, SurfacesModeMixin). It rides
+# in the snapshot under this key and never reaches scene_data itself.
+SNAPSHOT_EXTRA_KEY = "__editor_extra__"
+
 
 class HistoryMixin:
     """Undo/Redo basato su snapshot profondi di scene_data.
@@ -34,7 +39,7 @@ class HistoryMixin:
         self._undo_last_ts = now
 
         # Snapshot profondo dell'intero stato della scena
-        snap = copy.deepcopy(self.scene_data)
+        snap = self._history_capture()
 
         # Evitiamo di pushare stati identici (es. clic senza modifiche)
         if self.undo_stack and self.undo_stack[-1][0] == snap:
@@ -48,10 +53,23 @@ class HistoryMixin:
         if hasattr(self, "_mark_dirty"):
             self._mark_dirty()
 
+    def _history_capture(self) -> dict:
+        """Deep copy of the scene, plus the state undone with it."""
+        snap = copy.deepcopy(self.scene_data)
+        capture = getattr(self, "_surfaces_capture", None)
+        if capture is not None:
+            snap[SNAPSHOT_EXTRA_KEY] = {"surfaces": capture()}
+        return snap
+
     def _restore_snapshot(self, snap: dict):
         """Applica uno snapshot preservando la selezione se ancora valida."""
+        snap = dict(snap)
+        extra = snap.pop(SNAPSHOT_EXTRA_KEY, None)
         self.scene_data.clear()
         self.scene_data.update(snap)
+        restore = getattr(self, "_surfaces_restore", None)
+        if extra is not None and restore is not None:
+            restore(extra.get("surfaces"))
 
         # Selezione: mantienila per gli indici ancora validi invece di azzerarla
         n_obj = len(self.scene_data.get("objects", []))
@@ -72,7 +90,7 @@ class HistoryMixin:
 
         snap, label = self.undo_stack.pop()
         # Salva lo stato corrente nel redo prima di ripristinare
-        self.redo_stack.append((copy.deepcopy(self.scene_data), label))
+        self.redo_stack.append((self._history_capture(), label))
         self._restore_snapshot(snap)
         self._undo_last_key = None
 
@@ -86,7 +104,7 @@ class HistoryMixin:
             return
 
         snap, label = self.redo_stack.pop()
-        self.undo_stack.append((copy.deepcopy(self.scene_data), label))
+        self.undo_stack.append((self._history_capture(), label))
         self._restore_snapshot(snap)
         self._undo_last_key = None
 

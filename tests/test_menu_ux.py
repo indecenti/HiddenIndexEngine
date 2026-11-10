@@ -185,14 +185,28 @@ def test_the_list_is_clipped_under_the_header_when_drawn():
 
 # -- 5. card pages ---------------------------------------------------------------
 
+# The page tests need a level longer than one page. Real games change (Malonno's
+# 14-scene level was split into three), so the level is synthetic: the menu reads it
+# through an injected Campaign, previews fall back to the themed plate.
+PAGED_LEVEL = "paged_level"
+PAGED_SCENES = 14
+
+
+def _paged_campaign():
+    from engine.campaign import Campaign
+    scenes = [{"id": f"scene_{i:02d}", "order": i + 1} for i in range(PAGED_SCENES)]
+    return Campaign("__test__", None, game_config={"levels": [PAGED_LEVEL]},
+                    level_configs={PAGED_LEVEL: {"id": PAGED_LEVEL, "scenes": scenes}})
+
+
 def _scene_menu(theme_id: str = "default", size=(REF_W, REF_H)) -> MenuSystem:
-    menu = MenuSystem(_scaling(*size), KeyLang(), game_id="Malonno_Survivors",
-                      save_manager=None)
+    menu = MenuSystem(_scaling(*size), KeyLang(), game_id="__test__", save_manager=None)
     menu.theme = ThemeManager.get_theme(theme_id)
     from engine.menu_skins import get_skin
     menu.skin = get_skin(menu.theme)
-    menu.selected_level = "Welcome_To_Malonno"
-    menu.change_state("scenes", extra_data="Welcome_To_Malonno")
+    menu._campaign = _paged_campaign
+    menu.selected_level = PAGED_LEVEL
+    menu.change_state("scenes", extra_data=PAGED_LEVEL)
     return menu
 
 
@@ -203,7 +217,8 @@ def _cards(menu: MenuSystem) -> list:
 def test_every_scene_is_on_a_page_and_every_page_is_whole():
     menu = _scene_menu()
     cards = _cards(menu)
-    assert len(cards) == 14
+    assert len(cards) == PAGED_SCENES
+    assert menu._pages > 1, "the synthetic level must span several pages"
     assert menu._pages == -(-len(cards) // menu._per_page)
     for card in cards:
         page = int(card.ref_rect.x // REF_W)

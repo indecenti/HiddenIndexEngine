@@ -41,6 +41,7 @@ MODALS = {
                           wheel="_stats_modal_wheel"),
     "scatter":       dict(flag="_scatter_modal_open",  key="_scatter_modal_key", click="_scatter_modal_click",
                           wheel="_scatter_modal_wheel"),
+    "place":         dict(flag="_place_modal_open",    key="_place_dialog_key",  click="_place_dialog_click"),
     "recovery":      dict(flag="_recovery_modal",      click="_recovery_modal_click"),
     "confirm_leave": dict(flag="_confirm_leave_modal", click="_confirm_leave_click"),
 }

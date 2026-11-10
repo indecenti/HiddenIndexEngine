@@ -115,7 +115,14 @@ COMMANDS: Tuple[Command, ...] = (
     Command("tool_rect", "tools", "Rectangle tool", "2", ("mode", "rect")),
     Command("tool_effect", "tools", "Effect tool", "3", ("mode", "effect_place")),
     Command("tool_cluster", "tools", "Cluster tool", "4", ("mode", "scatter")),
-    Command("autoscatter", "tools", "Auto-scatter...", "",
+    Command("tool_surfaces", "tools", "Placement surfaces (draw and edit)", "5",
+            ("call", "_surfaces_toggle_mode"), needs="scene"),
+    # The believable placement (tools/place_on_surfaces.py): the one to use.
+    Command("place_surfaces", "tools", "Place on surfaces...", "",
+            ("call", "_place_open_dialog"), needs="scene"),
+    # The colour/edge camouflage scatter, kept for comparison only: it places
+    # floating, oversized and obvious objects (.claude/skills/place-objects).
+    Command("autoscatter", "tools", "Legacy colour scatter...", "",
             ("call", "_scatter_open"), needs="scene"),
 
     # ── View ────────────────────────────────────────────────────────────────

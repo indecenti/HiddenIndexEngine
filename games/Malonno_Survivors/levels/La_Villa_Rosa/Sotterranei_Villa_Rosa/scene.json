@@ -4,229 +4,637 @@
   "background_scale": 1.0,
   "objects": [
     {
-      "catalog_id": "peacock",
-      "x": 1515,
-      "y": 1883,
-      "detection_type": "circle",
+      "catalog_id": "chisel",
+      "x": 4927,
+      "y": 2060,
+      "detection_type": "rect",
+      "width": 184,
+      "height": 188,
+      "rotation": -53.3,
+      "flip_x": false,
+      "alpha": 255,
       "layer": "objects_mid",
       "is_goal": true,
       "hint_delay": 45,
-      "radius": 284,
-      "width": 568,
-      "height": 568,
-      "alpha": 239,
-      "grayscale": true,
-      "grayscale_factor": 0.5,
       "color_filter": [
-        96,
-        96,
-        96
+        139,
+        148,
+        160
+      ],
+      "shadow": {
+        "dy": 24.1,
+        "w": 85.3,
+        "a": 96
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.11,
+      "clue_key": "clue_Sotterranei_Villa_Rosa",
+      "alt_spots": [
+        {
+          "x": 1304,
+          "y": 2046,
+          "rotation": -45.8,
+          "scale": 1.0,
+          "flip_x": false,
+          "color_filter": [
+            149,
+            155,
+            158
+          ],
+          "shadow": {
+            "dy": 14.4,
+            "w": 291.1,
+            "a": 95
+          }
+        },
+        {
+          "x": 1347,
+          "y": 2115,
+          "rotation": -51.7,
+          "scale": 1.0,
+          "flip_x": false,
+          "color_filter": [
+            168,
+            177,
+            181
+          ],
+          "shadow": {
+            "dy": 21.3,
+            "w": 100.4,
+            "a": 113
+          }
+        }
       ]
     },
     {
-      "catalog_id": "seashell",
-      "x": 534,
-      "y": 1556,
-      "detection_type": "circle",
-      "layer": "objects_mid",
-      "is_goal": true,
-      "hint_delay": 25,
-      "radius": 142.25,
-      "width": 315,
-      "height": 254,
-      "grayscale": true,
-      "grayscale_factor": 0.16,
-      "color_filter": [
-        171,
-        165,
-        165
-      ]
-    },
-    {
-      "catalog_id": "harmonica",
-      "x": 3621,
-      "y": 1977,
+      "catalog_id": "rose_carved_pebble",
+      "x": 2552,
+      "y": 2344,
       "detection_type": "rect",
+      "width": 111,
+      "height": 95,
+      "rotation": 0.0,
+      "flip_x": true,
+      "alpha": 255,
       "layer": "objects_mid",
-      "is_goal": true,
-      "hint_delay": 25,
-      "width": 216,
-      "height": 160,
+      "is_goal": false,
+      "hint_delay": 45,
+      "color_filter": [
+        109,
+        109,
+        109
+      ],
       "corners": [
         [
-          0,
-          0
+          11,
+          43
+        ],
+        [
+          -11,
+          43
         ],
         [
           0,
           0
         ],
         [
-          6,
-          11
-        ],
-        [
-          -7,
-          16
+          0,
+          0
         ]
       ],
-      "rotation": 7.3,
-      "color_filter": [
-        249,
-        247,
-        124
+      "shadow": {
+        "dy": 42.2,
+        "w": 97.9,
+        "a": 57
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.17,
+      "collectible": true,
+      "alt_spots": [
+        {
+          "x": 4817,
+          "y": 2449,
+          "rotation": 0.0,
+          "scale": 1.0,
+          "flip_x": true,
+          "color_filter": [
+            160,
+            168,
+            178
+          ],
+          "shadow": {
+            "dy": 42.2,
+            "w": 97.9,
+            "a": 67
+          }
+        },
+        {
+          "x": 1926,
+          "y": 2487,
+          "rotation": 0.0,
+          "scale": 1.0,
+          "flip_x": true,
+          "color_filter": [
+            145,
+            137,
+            134
+          ],
+          "shadow": {
+            "dy": 42.2,
+            "w": 97.9,
+            "a": 57
+          }
+        }
       ]
     },
     {
-      "catalog_id": "ritual_skull",
-      "x": 4925,
-      "y": 2937,
-      "detection_type": "circle",
+      "catalog_id": "chef_knife",
+      "x": 5024,
+      "y": 2155,
+      "detection_type": "rect",
+      "width": 225,
+      "height": 221,
+      "rotation": -39.5,
+      "flip_x": false,
+      "alpha": 255,
       "layer": "objects_mid",
       "is_goal": true,
       "hint_delay": 45,
-      "radius": 127.5,
-      "width": 244,
-      "height": 266,
-      "alpha": 218,
       "color_filter": [
-        190,
-        188,
-        188
+        193,
+        204,
+        217
       ],
-      "grayscale": true,
-      "grayscale_factor": 0.36
+      "shadow": {
+        "dy": 27.6,
+        "w": 214.4,
+        "a": 143
+      }
     },
     {
-      "catalog_id": "chicken_foot",
-      "x": 2193,
-      "y": 1154,
-      "detection_type": "circle",
-      "layer": "objects_mid",
-      "is_goal": true,
-      "hint_delay": 30,
-      "radius": 100.25,
-      "width": 144,
-      "height": 257
-    },
-    {
-      "catalog_id": "coat_rack",
-      "x": 4414,
-      "y": 1273,
+      "catalog_id": "screwdriver",
+      "x": 3445,
+      "y": 2394,
       "detection_type": "rect",
+      "width": 31,
+      "height": 184,
+      "rotation": 93.6,
+      "flip_x": false,
+      "alpha": 255,
       "layer": "objects_mid",
       "is_goal": true,
       "hint_delay": 45,
-      "width": 241,
-      "height": 952,
-      "alpha": 239,
       "color_filter": [
-        126,
-        126,
-        126
-      ]
-    },
-    {
-      "catalog_id": "honey_jar",
-      "x": 4231,
-      "y": 2018,
-      "detection_type": "circle",
-      "layer": "objects_mid",
-      "is_goal": true,
-      "hint_delay": 25,
-      "radius": 96.5,
-      "width": 181,
-      "height": 205,
-      "grayscale": true,
-      "grayscale_factor": 0.09,
-      "color_filter": [
-        249,
+        243,
         240,
-        161
-      ]
+        237
+      ],
+      "shadow": {
+        "dy": 12.8,
+        "w": 205.1,
+        "a": 165
+      }
     },
     {
-      "catalog_id": "obj_garden_spade_long",
-      "x": 3406,
-      "y": 2278,
+      "catalog_id": "chestnut_roasting_pan",
+      "x": 2461,
+      "y": 1975,
       "detection_type": "rect",
+      "width": 342,
+      "height": 217,
+      "rotation": -0.4,
+      "flip_x": false,
+      "alpha": 255,
       "layer": "objects_mid",
       "is_goal": true,
-      "hint_delay": 40,
-      "width": 552,
-      "height": 674,
-      "rotation": 22.5,
+      "hint_delay": 45,
       "color_filter": [
-        96,
-        96,
-        96
-      ]
+        201,
+        206,
+        212
+      ],
+      "shadow": {
+        "dy": 97.0,
+        "w": 228.5,
+        "a": 139
+      }
     },
     {
-      "catalog_id": "obj_tetrimino_s",
-      "x": 4750,
-      "y": 1434,
+      "catalog_id": "trowel",
+      "x": 4877,
+      "y": 2284,
       "detection_type": "rect",
+      "width": 70,
+      "height": 236,
+      "rotation": -95.9,
+      "flip_x": false,
+      "alpha": 255,
       "layer": "objects_mid",
       "is_goal": true,
-      "hint_delay": 40,
-      "width": 463,
-      "height": 235,
-      "rotation": 269.5
-    },
-    {
-      "catalog_id": "obj_accordion_camera",
-      "x": 751,
-      "y": 2234,
-      "detection_type": "rect",
-      "layer": "objects_mid",
-      "is_goal": true,
-      "hint_delay": 40,
-      "width": 383,
-      "height": 369,
-      "rotation": 1.2,
+      "hint_delay": 45,
       "color_filter": [
-        202,
-        151,
-        117
-      ]
+        205,
+        216,
+        230
+      ],
+      "shadow": {
+        "dy": 34.3,
+        "w": 134.1,
+        "a": 154
+      }
     },
     {
-      "catalog_id": "obj_bench_vice",
-      "x": 2624,
-      "y": 1722,
+      "catalog_id": "nails_jar",
+      "x": 1722,
+      "y": 2233,
       "detection_type": "rect",
+      "width": 70,
+      "height": 111,
+      "rotation": -0.9,
+      "flip_x": false,
+      "alpha": 255,
       "layer": "objects_mid",
       "is_goal": true,
-      "hint_delay": 40,
-      "width": 297,
-      "height": 264,
-      "alpha": 234,
-      "grayscale": true,
-      "grayscale_factor": 0.36,
+      "hint_delay": 45,
       "color_filter": [
         215,
-        163,
-        128
+        232,
+        246
+      ],
+      "shadow": {
+        "dy": 49.6,
+        "w": 77.1,
+        "a": 167
+      }
+    },
+    {
+      "catalog_id": "oil_can_small",
+      "x": 1685,
+      "y": 1901,
+      "detection_type": "rect",
+      "width": 86,
+      "height": 129,
+      "rotation": 0.4,
+      "flip_x": true,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        152,
+        159,
+        164
+      ],
+      "shadow": {
+        "dy": 57.6,
+        "w": 62.2,
+        "a": 99
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.11
+    },
+    {
+      "catalog_id": "sheep_shears",
+      "x": 1737,
+      "y": 2042,
+      "detection_type": "rect",
+      "width": 63,
+      "height": 201,
+      "rotation": 92.0,
+      "flip_x": false,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        219,
+        237,
+        246
+      ],
+      "shadow": {
+        "dy": 24.8,
+        "w": 211.5,
+        "a": 167
+      }
+    },
+    {
+      "catalog_id": "hammer",
+      "x": 1821,
+      "y": 2317,
+      "detection_type": "rect",
+      "width": 110,
+      "height": 245,
+      "rotation": -96.9,
+      "flip_x": false,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        203,
+        209,
+        216
+      ],
+      "shadow": {
+        "dy": 60.3,
+        "w": 40.5,
+        "a": 142
+      }
+    },
+    {
+      "catalog_id": "vintage_thermos",
+      "x": 1470,
+      "y": 1830,
+      "detection_type": "rect",
+      "width": 85,
+      "height": 221,
+      "rotation": 0.4,
+      "flip_x": false,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        151,
+        152,
+        152
+      ],
+      "shadow": {
+        "dy": 98.3,
+        "w": 101.0,
+        "a": 95
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.12
+    },
+    {
+      "catalog_id": "pewter_goblet",
+      "x": 5001,
+      "y": 1959,
+      "detection_type": "rect",
+      "width": 76,
+      "height": 123,
+      "rotation": 0.1,
+      "flip_x": true,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        119,
+        126,
+        137
+      ],
+      "shadow": {
+        "dy": 54.7,
+        "w": 68.0,
+        "a": 95
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.14,
+      "alt_spots": [
+        {
+          "x": 4858,
+          "y": 1982,
+          "rotation": -0.8,
+          "scale": 0.952,
+          "flip_x": true,
+          "color_filter": [
+            117,
+            125,
+            134
+          ],
+          "shadow": {
+            "dy": 54.8,
+            "w": 68.0,
+            "a": 95
+          }
+        }
       ]
     },
     {
-      "catalog_id": "oyster_mushroom",
-      "x": 3306,
-      "y": 957,
-      "detection_type": "circle",
+      "catalog_id": "wooden_mallet",
+      "x": 4375,
+      "y": 2033,
+      "detection_type": "rect",
+      "width": 201,
+      "height": 227,
+      "rotation": 50.9,
+      "flip_x": false,
+      "alpha": 255,
       "layer": "objects_mid",
       "is_goal": true,
-      "hint_delay": 30,
-      "radius": 53.0,
-      "width": 100,
-      "height": 112,
-      "alpha": 112,
+      "hint_delay": 45,
       "color_filter": [
-        149,
-        186,
-        223
-      ]
+        183,
+        181,
+        173
+      ],
+      "shadow": {
+        "dy": 46.2,
+        "w": 95.5,
+        "a": 116
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.08
+    },
+    {
+      "catalog_id": "dusty_wine",
+      "x": 4130,
+      "y": 1743,
+      "detection_type": "rect",
+      "width": 91,
+      "height": 286,
+      "rotation": 0.9,
+      "flip_x": true,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        251,
+        230,
+        209
+      ],
+      "shadow": {
+        "dy": 127.6,
+        "w": 100.9,
+        "a": 171
+      }
+    },
+    {
+      "catalog_id": "whiskey_bottle",
+      "x": 4609,
+      "y": 2173,
+      "detection_type": "rect",
+      "width": 95,
+      "height": 208,
+      "rotation": -86.4,
+      "flip_x": false,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        197,
+        203,
+        208
+      ],
+      "shadow": {
+        "dy": 47.2,
+        "w": 177.6,
+        "a": 136
+      }
+    },
+    {
+      "catalog_id": "ceramic_wine_jug",
+      "x": 2758,
+      "y": 1672,
+      "detection_type": "rect",
+      "width": 149,
+      "height": 237,
+      "rotation": -1.4,
+      "flip_x": true,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        208,
+        210,
+        216
+      ],
+      "shadow": {
+        "dy": 106.4,
+        "w": 134.4,
+        "a": 142
+      }
+    },
+    {
+      "catalog_id": "straw_wine_flask",
+      "x": 3397,
+      "y": 2239,
+      "detection_type": "rect",
+      "width": 157,
+      "height": 278,
+      "rotation": 91.5,
+      "flip_x": false,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        220,
+        214,
+        208
+      ],
+      "shadow": {
+        "dy": 64.3,
+        "w": 204.4,
+        "a": 146
+      }
+    },
+    {
+      "catalog_id": "folding_ruler",
+      "x": 2494,
+      "y": 2216,
+      "detection_type": "rect",
+      "width": 166,
+      "height": 90,
+      "rotation": -29.3,
+      "flip_x": false,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        117,
+        124,
+        132
+      ],
+      "shadow": {
+        "dy": 30.1,
+        "w": 83.4,
+        "a": 95
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.15
+    },
+    {
+      "catalog_id": "hatchet_old",
+      "x": 2159,
+      "y": 2452,
+      "detection_type": "rect",
+      "width": 301,
+      "height": 130,
+      "rotation": 2.0,
+      "flip_x": false,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        204,
+        198,
+        194
+      ],
+      "shadow": {
+        "dy": 59.5,
+        "w": 97.5,
+        "a": 132
+      }
+    },
+    {
+      "catalog_id": "hip_flask",
+      "x": 2647,
+      "y": 2452,
+      "detection_type": "rect",
+      "width": 74,
+      "height": 120,
+      "rotation": 81.9,
+      "flip_x": false,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        164,
+        171,
+        178
+      ],
+      "shadow": {
+        "dy": 38.1,
+        "w": 122.6,
+        "a": 110
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.09
+    },
+    {
+      "catalog_id": "it_idrolitina_tin",
+      "x": 1303,
+      "y": 1983,
+      "detection_type": "rect",
+      "width": 111,
+      "height": 111,
+      "rotation": -1.5,
+      "flip_x": true,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        94,
+        99,
+        101
+      ],
+      "shadow": {
+        "dy": 35.7,
+        "w": 70.6,
+        "a": 95
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.18
     }
   ],
   "effects": [
@@ -260,7 +668,7 @@
     }
   ],
   "music": [
-    "Indecenti - Static Lullaby.mp3"
+    "Indecenti - Villa Rosa.mp3"
   ],
   "flashlight": true,
   "flashlight_radius": 179,
@@ -272,5 +680,14 @@
     "effects": false
   },
   "auto_random_finds": true,
-  "num_random_finds": 2
+  "num_random_finds": 15,
+  "story": {
+    "intro": [
+      "Sotterranei_Villa_Rosa_intro_1"
+    ],
+    "outro": [
+      "Sotterranei_Villa_Rosa_outro_1"
+    ]
+  },
+  "name_key": "Sotterranei_Villa_Rosa_name"
 }

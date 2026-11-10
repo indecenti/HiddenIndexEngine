@@ -15,6 +15,15 @@
     "flashlight":        { "type": "boolean" },
     "flashlight_radius": { "type": "number", "minimum": 1.0, "maximum": 5000.0 },
     "random_layer_selection": { "type": "boolean" },
+    "story": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chapter_key": { "type": "string" },
+        "intro":       { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "outro":       { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
     "layer_locked": {
       "type": "object",
       "additionalProperties": { "type": "boolean" }
@@ -56,6 +65,34 @@
           "grayscale_factor": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
           "color_filter":   { "type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 255}, "minItems": 3, "maxItems": 3 },
           "corners":        { "type": "array", "items": { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 }, "minItems": 4, "maxItems": 4 },
+          "scale":          { "type": "number", "minimum": 0.05 },
+          "clue_key":       { "type": "string", "minLength": 1 },
+          "collectible":    { "type": "boolean" },
+          "shadow": { "type": "object", "required": ["w"], "additionalProperties": false,
+            "properties": { "dy": { "type": "number" }, "w": { "type": "number", "exclusiveMinimum": 0 },
+                            "a": { "type": "integer", "minimum": 0, "maximum": 255 } } },
+          "alt_spots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["x", "y"],
+              "additionalProperties": false,
+              "properties": {
+                "x":            { "type": "number" },
+                "y":            { "type": "number" },
+                "rotation":     { "type": "number" },
+                "scale":        { "type": "number", "minimum": 0.05 },
+                "flip_x":       { "type": "boolean" },
+                "flip_y":       { "type": "boolean" },
+                "alpha":        { "type": "integer", "minimum": 0, "maximum": 255 },
+                "color_filter": { "type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 255}, "minItems": 3, "maxItems": 3 },
+                "layer":        { "type": "string" },
+                "shadow": { "type": "object", "required": ["w"], "additionalProperties": false,
+                  "properties": { "dy": { "type": "number" }, "w": { "type": "number", "exclusiveMinimum": 0 },
+                                  "a": { "type": "integer", "minimum": 0, "maximum": 255 } } }
+              }
+            }
+          },
           "minigame_trigger": {
             "type": "object",
             "required": ["minigame_id"],

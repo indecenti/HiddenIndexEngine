@@ -4,256 +4,332 @@
   "background_scale": 1.0,
   "objects": [
     {
-      "catalog_id": "leather_holster",
-      "x": 1242,
-      "y": 802,
+      "catalog_id": "ancient_key",
+      "x": 407,
+      "y": 716,
       "detection_type": "rect",
+      "width": 53,
+      "height": 66,
+      "rotation": -59.7,
+      "flip_x": false,
+      "alpha": 255,
       "layer": "objects_mid",
-      "hint_delay": 30,
-      "width": 114,
-      "height": 121,
       "is_goal": true,
-      "rotation": 349.8,
+      "hint_delay": 45,
       "color_filter": [
-        80,
-        128,
-        144
-      ]
-    },
-    {
-      "catalog_id": "tamer_whip",
-      "x": 330,
-      "y": 729,
-      "detection_type": "circle",
-      "layer": "objects_mid",
-      "hint_delay": 40,
-      "radius": 27,
-      "is_goal": false,
-      "color_filter": [
-        80,
-        128,
-        144
-      ]
-    },
-    {
-      "catalog_id": "gameboy",
-      "x": 729,
-      "y": 662,
-      "detection_type": "rect",
-      "layer": "objects_mid",
-      "hint_delay": 35,
-      "width": 17,
-      "height": 32,
-      "is_goal": true,
-      "rotation": 348.8,
-      "color_filter": [
-        80,
-        128,
-        144
+        165,
+        177,
+        180
       ],
-      "alpha": 234
+      "shadow": {
+        "dy": 12.4,
+        "w": 24.4,
+        "a": 113
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.09,
+      "clue_key": "clue_Villa_Rosa"
     },
     {
-      "catalog_id": "popcorn_box",
-      "x": 185,
-      "y": 614,
+      "catalog_id": "rose_carved_pebble",
+      "x": 628,
+      "y": 262,
       "detection_type": "rect",
+      "width": 39,
+      "height": 33,
+      "rotation": -0.7,
+      "flip_x": true,
+      "alpha": 255,
       "layer": "objects_mid",
-      "hint_delay": 30,
-      "width": 36,
-      "height": 43,
       "is_goal": false,
+      "hint_delay": 45,
       "color_filter": [
-        80,
-        128,
-        144
+        125,
+        109,
+        97
+      ],
+      "shadow": {
+        "dy": 14.8,
+        "w": 34.3,
+        "a": 95
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.15,
+      "collectible": true,
+      "alt_spots": [
+        {
+          "x": 85,
+          "y": 752,
+          "rotation": 0.9,
+          "scale": 1.0,
+          "flip_x": false,
+          "color_filter": [
+            109,
+            124,
+            119
+          ],
+          "shadow": {
+            "dy": 14.8,
+            "w": 34.9,
+            "a": 95
+          }
+        },
+        {
+          "x": 189,
+          "y": 685,
+          "rotation": 5.1,
+          "scale": 1.0,
+          "flip_x": false,
+          "color_filter": [
+            79,
+            89,
+            88
+          ],
+          "shadow": {
+            "dy": 14.8,
+            "w": 32.5,
+            "a": 95
+          }
+        }
       ]
     },
     {
-      "catalog_id": "top_hat",
-      "x": 135,
-      "y": 591,
+      "catalog_id": "bankers_lamp",
+      "x": 713,
+      "y": 310,
       "detection_type": "rect",
-      "layer": "objects_mid",
-      "hint_delay": 30,
-      "width": 36,
+      "width": 31,
       "height": 39,
-      "is_goal": false,
-      "rotation": 350.4,
-      "color_filter": [
-        80,
-        128,
-        144
-      ]
-    },
-    {
-      "catalog_id": "walkman",
-      "x": 216,
-      "y": 704,
-      "detection_type": "rect",
+      "rotation": -0.8,
+      "flip_x": true,
+      "alpha": 255,
       "layer": "objects_mid",
-      "hint_delay": 30,
-      "width": 37,
-      "height": 32,
-      "is_goal": false,
+      "is_goal": true,
+      "hint_delay": 45,
       "color_filter": [
-        80,
-        128,
-        144
+        221,
+        196,
+        173
       ],
-      "rotation": 3.3
+      "shadow": {
+        "dy": 17.4,
+        "w": 22.4,
+        "a": 146
+      }
     },
     {
-      "catalog_id": "hammer",
-      "x": 598,
-      "y": 782,
+      "catalog_id": "wooden_milk_pail",
+      "x": 166,
+      "y": 738,
       "detection_type": "rect",
+      "width": 35,
+      "height": 59,
+      "rotation": 1.3,
+      "flip_x": false,
+      "alpha": 255,
       "layer": "objects_mid",
-      "hint_delay": 30,
-      "width": 42,
-      "height": 99,
       "is_goal": true,
-      "alpha": 244,
+      "hint_delay": 45,
       "color_filter": [
-        148,
-        188,
-        202
-      ]
-    },
-    {
-      "catalog_id": "rubber_duck",
-      "x": 1600,
-      "y": 741,
-      "detection_type": "circle",
-      "layer": "objects_mid",
-      "hint_delay": 25,
-      "radius": 17.25,
-      "is_goal": true,
-      "width": 34,
-      "height": 35,
-      "alpha": 231,
-      "color_filter": [
-        149,
-        203,
-        222
-      ]
-    },
-    {
-      "catalog_id": "poison_mushroom",
-      "x": 554,
-      "y": 935,
-      "detection_type": "circle",
-      "layer": "objects_mid",
-      "hint_delay": 30,
-      "radius": 32,
-      "is_goal": false,
-      "color_filter": [
-        80,
-        128,
-        144
-      ]
-    },
-    {
-      "catalog_id": "poison_mushroom",
-      "x": 593,
-      "y": 956,
-      "detection_type": "circle",
-      "layer": "objects_mid",
-      "hint_delay": 30,
-      "radius": 40,
-      "is_goal": false,
-      "color_filter": [
-        80,
-        128,
-        144
-      ]
-    },
-    {
-      "catalog_id": "spirit_level",
-      "x": 1004,
-      "y": 421,
-      "detection_type": "rect",
-      "layer": "objects_mid",
-      "hint_delay": 35,
-      "width": 92,
-      "height": 94,
-      "is_goal": true,
-      "rotation": 312.6,
-      "color_filter": [
-        141,
-        141,
-        141
-      ]
-    },
-    {
-      "catalog_id": "bucket",
-      "x": 203,
-      "y": 693,
-      "detection_type": "circle",
-      "layer": "objects_mid",
-      "hint_delay": 30,
-      "radius": 21.75,
-      "is_goal": false,
-      "width": 41,
-      "height": 46,
-      "color_filter": [
-        80,
-        128,
-        144
+        184,
+        209,
+        205
       ],
-      "grayscale": true
+      "shadow": {
+        "dy": 26.4,
+        "w": 37.1,
+        "a": 136
+      }
     },
     {
-      "catalog_id": "old_syringe",
-      "x": 257,
-      "y": 141,
-      "detection_type": "rect",
-      "layer": "objects_mid",
-      "hint_delay": 35,
-      "width": 99,
-      "height": 107,
-      "is_goal": true,
-      "rotation": 286.5,
-      "alpha": 236,
-      "color_filter": [
-        118,
-        155,
-        193
-      ]
-    },
-    {
-      "catalog_id": "flintlock_pistol",
-      "x": 79,
+      "catalog_id": "fireplace_tongs",
+      "x": 1037,
       "y": 321,
       "detection_type": "rect",
+      "width": 59,
+      "height": 38,
+      "rotation": 0.9,
+      "flip_x": false,
+      "alpha": 255,
       "layer": "objects_mid",
-      "hint_delay": 45,
-      "width": 128,
-      "height": 67,
       "is_goal": true,
-      "rotation": 270.4,
+      "hint_delay": 45,
       "color_filter": [
-        74,
-        102,
-        74
+        152,
+        165,
+        169
+      ],
+      "shadow": {
+        "dy": 17.3,
+        "w": 17.2,
+        "a": 104
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.1
+    },
+    {
+      "catalog_id": "sheep_shears",
+      "x": 183,
+      "y": 794,
+      "detection_type": "rect",
+      "width": 20,
+      "height": 63,
+      "rotation": 90.3,
+      "flip_x": false,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        187,
+        210,
+        211
+      ],
+      "shadow": {
+        "dy": 8.7,
+        "w": 38.3,
+        "a": 139
+      },
+      "alt_spots": [
+        {
+          "x": 326,
+          "y": 732,
+          "rotation": 88.3,
+          "scale": 0.618,
+          "flip_x": false,
+          "color_filter": [
+            170,
+            188,
+            186
+          ],
+          "shadow": {
+            "dy": 9.7,
+            "w": 36.7,
+            "a": 119
+          }
+        }
       ]
     },
     {
-      "catalog_id": "chainsaw_engine",
-      "x": 1600,
-      "y": 777,
+      "catalog_id": "trowel",
+      "x": 558,
+      "y": 742,
       "detection_type": "rect",
+      "width": 12,
+      "height": 39,
+      "rotation": -89.0,
+      "flip_x": false,
+      "alpha": 255,
       "layer": "objects_mid",
       "is_goal": true,
-      "hint_delay": 40,
-      "width": 169,
-      "height": 67,
-      "rotation": 359.9,
+      "hint_delay": 45,
       "color_filter": [
-        48,
-        80,
-        96
+        164,
+        179,
+        187
+      ],
+      "shadow": {
+        "dy": 5.2,
+        "w": 18.7,
+        "a": 118
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.08
+    },
+    {
+      "catalog_id": "watering_can",
+      "x": 261,
+      "y": 681,
+      "detection_type": "rect",
+      "width": 50,
+      "height": 40,
+      "rotation": 4.0,
+      "flip_x": true,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        118,
+        130,
+        132
+      ],
+      "shadow": {
+        "dy": 17.6,
+        "w": 26.4,
+        "a": 95
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.15,
+      "alt_spots": [
+        {
+          "x": 720,
+          "y": 650,
+          "rotation": 0.2,
+          "scale": 1.015,
+          "flip_x": true,
+          "color_filter": [
+            125,
+            137,
+            143
+          ],
+          "shadow": {
+            "dy": 17.8,
+            "w": 26.1,
+            "a": 95
+          }
+        }
       ]
+    },
+    {
+      "catalog_id": "iron_candlestick",
+      "x": 696,
+      "y": 256,
+      "detection_type": "rect",
+      "width": 26,
+      "height": 39,
+      "rotation": -1.2,
+      "flip_x": true,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        255,
+        227,
+        192
+      ],
+      "shadow": {
+        "dy": 17.4,
+        "w": 17.3,
+        "a": 175
+      }
+    },
+    {
+      "catalog_id": "censer",
+      "x": 652,
+      "y": 310,
+      "detection_type": "rect",
+      "width": 21,
+      "height": 39,
+      "rotation": 0.6,
+      "flip_x": false,
+      "alpha": 255,
+      "layer": "objects_mid",
+      "is_goal": true,
+      "hint_delay": 45,
+      "color_filter": [
+        186,
+        165,
+        145
+      ],
+      "shadow": {
+        "dy": 17.5,
+        "w": 15.2,
+        "a": 118
+      },
+      "grayscale": true,
+      "grayscale_factor": 0.08
     }
   ],
   "effects": [
@@ -335,7 +411,9 @@
       "layer_z": 40
     }
   ],
-  "music": [],
+  "music": [
+    "Indecenti - Villa Rosa.mp3"
+  ],
   "flashlight": false,
   "flashlight_radius": 150.0,
   "layer_locked": {
@@ -344,5 +422,16 @@
     "objects_high": false,
     "overlay": false,
     "effects": false
-  }
+  },
+  "story": {
+    "intro": [
+      "Villa_Rosa_intro_1"
+    ],
+    "outro": [
+      "Villa_Rosa_outro_1"
+    ]
+  },
+  "name_key": "Villa_Rosa_name",
+  "auto_random_finds": true,
+  "num_random_finds": 6
 }
