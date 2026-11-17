@@ -14,7 +14,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import generate_qwen21 as gen  # noqa: E402
 
-GRID_SIZE = 1536
+GRID_SIZE = int(__import__("os").environ.get("GRID_SIZE", "1536"))  # 1216 (1,5 MP) sui PC con poca VRAM
 HERE = Path(__file__).resolve().parents[4] / "scratch" / "gen_assets"
 RAW_GRID = HERE / "raw_grid"
 

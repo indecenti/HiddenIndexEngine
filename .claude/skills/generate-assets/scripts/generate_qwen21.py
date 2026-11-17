@@ -11,7 +11,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-SERVER = "http://127.0.0.1:8188"
+SERVER = __import__("os").environ.get("COMFY", "http://127.0.0.1:8188")   # COMFY=http://host:porta per un altro PC
 OUT = Path(__file__).resolve().parents[4] / "scratch" / "gen_assets" / "raw"
 STEPS = 25
 SIZE = 1024
@@ -45,11 +45,32 @@ OBJECTS = {
 }
 
 
+def _loaders() -> tuple[dict, str]:
+    """Loader del modello: GGUF (Q5_K_M) se l'host ha UnetLoaderGGUF, altrimenti i pesi int8 con UNETLoader."""
+    import os
+    try:
+        with urllib.request.urlopen(SERVER + "/object_info/UnetLoaderGGUF", timeout=20) as r:
+            if "UnetLoaderGGUF" in json.loads(r.read()):
+                return ({"class_type": "UnetLoaderGGUF", "inputs": {
+                    "unet_name": os.environ.get("QWEN_UNET", "qwen-image-2.1-Q5_K_M.gguf")}},
+                        "qwen3vl_8b_fp8_scaled.safetensors")
+    except Exception:
+        pass
+    def listed(node: str, field: str, key: str) -> str:
+        with urllib.request.urlopen(f"{SERVER}/object_info/{node}", timeout=20) as r:
+            names = json.loads(r.read())[node]["input"]["required"][field][0]
+        return next(n for n in names if key in n)
+    return ({"class_type": "UNETLoader", "inputs": {"unet_name": listed("UNETLoader", "unet_name", "qwen_image_2.1"),
+                                                   "weight_dtype": "default"}},
+            listed("CLIPLoader", "clip_name", "qwen3vl"))
+
+
 def graph(prompt: str, seed: int, prefix: str) -> dict:
+    unet, clip = _loaders()
     return {
-        "478": {"class_type": "UnetLoaderGGUF", "inputs": {"unet_name": "qwen_image_2.1-Q8_0.gguf"}},
+        "478": unet,
         "472": {"class_type": "CLIPLoader", "inputs": {
-            "clip_name": "qwen3vl_8b_fp8_scaled.safetensors", "type": "qwen_image", "device": "default"}},
+            "clip_name": clip, "type": "qwen_image", "device": "default"}},
         "473": {"class_type": "VAELoader", "inputs": {"vae_name": "qwen_image_2.1_vae_bf16.safetensors"}},
         "471": {"class_type": "TextEncodeQwenImage21", "inputs": {
             "clip": ["472", 0], "prompt": prompt, "negative_prompt": NEGATIVE, "resolution": SIZE}},
